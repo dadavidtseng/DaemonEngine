@@ -6,6 +6,8 @@
 #include "windows.h"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/AABB2.hpp"
+#include "Game/GameCommon.hpp"
 
 // static variables
 Window *Window::s_mainWindow = nullptr;
@@ -208,6 +210,14 @@ Vec2 Window::GetNormalizedMouseUV() const
 	const float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 
 	return Vec2(cursorX, 1.f - cursorY);	// Flip Y; we want (0,0) bottom-left, not top-left
+}
+Vec2 Window::GetNormalizedMousePos() const
+{
+	const Vec2 mouseUV = GetNormalizedMouseUV();
+
+	const AABB2 orthoBounds(Vec2(0, 0), Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y));
+
+	return orthoBounds.GetPointAtUV(mouseUV);
 }
 
 //-----------------------------------------------------------------------------------------------

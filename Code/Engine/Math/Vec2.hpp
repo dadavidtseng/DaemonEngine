@@ -11,6 +11,8 @@ struct Vec2
 	// NOTE: this is one of the few cases where we break both the "m_" naming rule AND the avoid-public-members rule
 	float x = 0.f;
 	float y = 0.f;
+	static Vec2 ZERO;
+	static Vec2 ONE;
 
 	// Construction/Destruction
 	~Vec2()                    = default;                             // destructor (do nothing)

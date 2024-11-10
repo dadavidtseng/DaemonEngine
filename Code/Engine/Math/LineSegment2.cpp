@@ -7,32 +7,15 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------
-LineSegment2::LineSegment2()
-	: m_start(0.f, 0.f),
-	  m_end(0.f, 0.f),
-	  m_radius(0.f),
-	  m_isInfinite(false)
-{
-}
-
-//-----------------------------------------------------------------------------------------------
-LineSegment2::LineSegment2(const Vec2& start, const Vec2& end, const float radius, const bool isInfinite)
+LineSegment2::LineSegment2(const Vec2& start, const Vec2& end, const float thickness, const bool isInfinite)
 	: m_start(start),
 	  m_end(end),
-	  m_radius(radius),
+	  m_thickness(thickness),
 	  m_isInfinite(isInfinite)
 // Parameterized constructor initializes start and end points
 {
 }
 
-Vec2 LineSegment2::GetStart() const
-{
-	return m_start;
-}
-Vec2 LineSegment2::GetEnd() const
-{
-	return m_end;
-}
 float LineSegment2::GetLength() const
 {
 	return GetDistance2D(m_start, m_end);
