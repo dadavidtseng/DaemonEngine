@@ -68,7 +68,7 @@ void Renderer::ClearScreen(const Rgba8& clearColor)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BeginCamera(const SpriteSheet& camera)
+void Renderer::BeginCamera(const Camera& camera)
 {
 	Vec2 bottomLeft = camera.GetOrthoBottomLeft();
 	Vec2 topRight   = camera.GetOrthoTopRight();
@@ -80,9 +80,9 @@ void Renderer::BeginCamera(const SpriteSheet& camera)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::EndCamera(const SpriteSheet& camera)
+void Renderer::EndCamera(const Camera& camera)
 {
-	UNUSED(camera);
+	UNUSED(camera)
 }
 
 //-----------------------------------------------------------------------------------------------

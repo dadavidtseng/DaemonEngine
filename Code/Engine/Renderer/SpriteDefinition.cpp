@@ -5,7 +5,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/SpriteDefinition.hpp"
 
-#include "SpriteSheet.hpp"
+#include "Engine/Renderer/SpriteSheet.hpp"
+
+
 
 SpriteDefinition::SpriteDefinition(SpriteSheet const* spriteSheet, const int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs)
 	: m_spriteSheet(spriteSheet),

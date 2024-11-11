@@ -28,8 +28,8 @@ public:
 	void Shutdown();
 
 	void ClearScreen(const Rgba8& clearColor);
-	void BeginCamera(const SpriteSheet& camera);
-	void EndCamera(const SpriteSheet& camera);
+	void BeginCamera(const Camera& camera);
+	void EndCamera(const Camera& camera);
 	void DrawVertexArray(int numVertexes, const Vertex_PCU* vertexes);
 
 	Texture* CreateOrGetTextureFromFile(char const* imageFilePath);

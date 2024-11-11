@@ -34,4 +34,5 @@ struct IntVec2
 
 	// Operators (self-mutating)
 	IntVec2& operator=(const IntVec2& copyFrom); // IntVec2 = IntVec2
+	IntVec2 operator+(IntVec2 const& vecToAdd) const;      // IntVec2 + IntVec2
 };

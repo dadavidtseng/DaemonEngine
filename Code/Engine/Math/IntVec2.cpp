@@ -99,3 +99,9 @@ IntVec2& IntVec2::operator=(const IntVec2& copyFrom)
 
 	return *this; // Return reference to this object
 }
+
+//----------------------------------------------------------------------------------------------------
+IntVec2 IntVec2::operator+(IntVec2 const& vecToAdd) const
+{
+	return IntVec2(x + vecToAdd.x, y + vecToAdd.y);
+}

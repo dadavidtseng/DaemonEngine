@@ -4,10 +4,10 @@
 
 //-----------------------------------------------------------------------------------------------
 #pragma once
-#include <Engine/Math/Vec2.hpp>
+#include "Engine/Math/Vec2.hpp"
 
 //-----------------------------------------------------------------------------------------------
-class SpriteSheet
+class Camera
 {
 public:
 	void SetOrthoView(Vec2 const& bottomLeft, Vec2 const& topRight);
