@@ -1,21 +1,16 @@
+//----------------------------------------------------------------------------------------------------
+// AABB2.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
-//-----------------------------------------------------------------------------------------------
-AABB2::~AABB2() = default;
+//----------------------------------------------------------------------------------------------------
+AABB2 AABB2::ZERO_TO_ONE = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
 
 //-----------------------------------------------------------------------------------------------
-AABB2::AABB2() = default;
-
-//-----------------------------------------------------------------------------------------------
-AABB2::AABB2(AABB2 const& copyFrom)
-	: m_mins(copyFrom.m_mins),
-	  m_maxs(copyFrom.m_maxs)
-{
-}
-
-//-----------------------------------------------------------------------------------------------
-AABB2::AABB2(float minX, float minY, float maxX, float maxY)
+AABB2::AABB2(const float minX, const float minY, const float maxX, const float maxY)
 	: m_mins(minX, minY),
 	  m_maxs(maxX, maxY)
 {
@@ -62,7 +57,7 @@ Vec2 AABB2::GetNearestPoint(Vec2 const& referencePosition) const
 	const float clampX = GetClamped(referencePosition.x, m_mins.x, m_maxs.x);
 	const float clampY = GetClamped(referencePosition.y, m_mins.y, m_maxs.y);
 
-    return Vec2(clampX, clampY);
+	return Vec2(clampX, clampY);
 }
 
 //-----------------------------------------------------------------------------------------------

@@ -16,6 +16,6 @@ struct Rgba8
 		unsigned char red,
 		unsigned char green,
 		unsigned char blue,
-		unsigned char alpha = 255.f
+		unsigned char alpha = 255
 	);
 };

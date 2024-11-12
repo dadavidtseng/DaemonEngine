@@ -12,9 +12,9 @@ class Texture
 {
 	friend class Renderer; // Only the Renderer can create new Texture objects!
 
-	Texture();                    // can't instantiate directly; must ask Renderer to do it for you
+	Texture() = default;                    // can't instantiate directly; must ask Renderer to do it for you
 	Texture(Texture const& copy); // No copying allowed!  This represents GPU memory.
-	~Texture();
+	~Texture() = default;
 
 protected:
 	std::string m_name;

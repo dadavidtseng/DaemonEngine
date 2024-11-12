@@ -70,7 +70,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(const HWND   windowHandle, cons
 			//g_theApp->HandleQuitRequested();
 			// TODO: Use the Event system later to fix this!
 			ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
-			return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+			// return 0; // "Consumes" this message (tells Windows "okay, we handled it")
 		}
 
 	// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
