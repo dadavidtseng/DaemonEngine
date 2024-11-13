@@ -37,7 +37,7 @@ public:
 	WindowConfig const& GetConfig() const;
 	void*               GetDisplayContext() const;
 	void*               GetWindowHandle() const;
-	Vec2                GetNormalizedMousePos() const;
+	Vec2				GetNormalizedMouseUV() const;
 
 	static Window* s_mainWindow; // fancy way of advertising global variables (advertisement)
 
@@ -45,7 +45,6 @@ private:
 	void CreateOSWindow();
 	void CreateConsole();
 	void RunMessagePump();
-	Vec2 GetNormalizedMouseUV() const;
 
 	WindowConfig m_config;
 	void*        m_windowHandle   = nullptr; // Actually a Windows HWND on the Windows platform
