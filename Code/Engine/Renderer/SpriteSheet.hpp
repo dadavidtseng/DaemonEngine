@@ -17,7 +17,7 @@ class Texture;
 class SpriteSheet
 {
 public:
-	explicit SpriteSheet(Texture& texture, IntVec2 const& simpleGridLayout);
+	explicit SpriteSheet(Texture* texture, IntVec2 const& simpleGridLayout);
 
 	Texture&                GetTexture() const;
 	int                     GetNumSprites() const;
@@ -26,6 +26,6 @@ public:
 	AABB2                   GetSpriteUVs(int spriteIndex) const;
 
 protected:
-	Texture&                      m_texture;	// reference members must be set in constructor's initializer list
+	Texture*                      m_texture;	// reference members must be set in constructor's initializer list
 	std::vector<SpriteDefinition> m_spriteDefs;
 };

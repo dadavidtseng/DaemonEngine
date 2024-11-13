@@ -7,50 +7,57 @@
 #include "Engine/Renderer/SpriteDefinition.hpp"
 
 //----------------------------------------------------------------------------------------------------
-SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& simpleGridLayout)
-	: m_texture(texture)
+SpriteSheet::SpriteSheet(Texture* texture, IntVec2 const& simpleGridLayout)
+    : m_texture(texture)
 {
-	int totalSprites = simpleGridLayout.x * simpleGridLayout.y;
-	m_spriteDefs.resize(totalSprites);
+    int totalSprites = simpleGridLayout.x * simpleGridLayout.y;
+    m_spriteDefs.reserve(totalSprites);
 
-	for (int i = 0; i < totalSprites; ++i)
-	{
-		int  row    = i / simpleGridLayout.x;
-		int  col    = i % simpleGridLayout.x;
-		Vec2 uvMins = Vec2(col / static_cast<float>(simpleGridLayout.x), row / static_cast<float>(simpleGridLayout.y));
-		Vec2 uvMaxs = Vec2((col + 1) / static_cast<float>(simpleGridLayout.x), (row + 1) / static_cast<float>(simpleGridLayout.y));
+    float uvWidth  = 1.0f / static_cast<float>(simpleGridLayout.x);
+    float uvHeight = 1.0f / static_cast<float>(simpleGridLayout.y);
 
-		m_spriteDefs[i] = SpriteDefinition(this, i, uvMins, uvMaxs); // Pass 'this' as a pointer
-	}
+    for (int row = 0; row < simpleGridLayout.y; ++row)
+    {
+        for (int col = 0; col < simpleGridLayout.x; ++col)
+        {
+            Vec2 uvMins(col * uvWidth, (simpleGridLayout.y - row - 1) * uvHeight);
+            Vec2 uvMaxs((col + 1) * uvWidth, (simpleGridLayout.y - row) * uvHeight);
+            int  spriteIndex = row * simpleGridLayout.x + col;
+
+            m_spriteDefs.emplace_back(this, spriteIndex, uvMins, uvMaxs);
+
+            printf("uvMins: (%f %f) | uvMaxs: (%f, %f)\n", uvMins.x, uvMins.y, uvMaxs.x, uvMaxs.y);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 Texture& SpriteSheet::GetTexture() const
 {
-	return m_texture;
+    return *m_texture;
 }
 
 //----------------------------------------------------------------------------------------------------
 int SpriteSheet::GetNumSprites() const
 {
-	return static_cast<int>(m_spriteDefs.size());
+    return static_cast<int>(m_spriteDefs.size());
 }
 
 //----------------------------------------------------------------------------------------------------
-SpriteDefinition const& SpriteSheet::GetSpriteDef(int spriteIndex) const
+SpriteDefinition const& SpriteSheet::GetSpriteDef(int const spriteIndex) const
 {
-	return m_spriteDefs[spriteIndex];
+    return m_spriteDefs[spriteIndex];
 }
 
 //----------------------------------------------------------------------------------------------------
 void SpriteSheet::GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int spriteIndex) const
 {
-	out_uvAtMins = m_spriteDefs[spriteIndex].GetUVsMins();
-	out_uvAtMaxs = m_spriteDefs[spriteIndex].GetUVsMaxs();
+    out_uvAtMins = m_spriteDefs[spriteIndex].GetUVsMins();
+    out_uvAtMaxs = m_spriteDefs[spriteIndex].GetUVsMaxs();
 }
 
 //----------------------------------------------------------------------------------------------------
 AABB2 SpriteSheet::GetSpriteUVs(int spriteIndex) const
 {
-	return m_spriteDefs[spriteIndex].GetUVs();
+    return m_spriteDefs[spriteIndex].GetUVs();
 }

@@ -1,4 +1,11 @@
+//----------------------------------------------------------------------------------------------------
+// SimpleTriangleFont.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/SimpleTriangleFont.hpp"
+
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 
@@ -154,7 +161,7 @@ void AddVertsForTextTriangles2D(std::vector<Vertex_PCU>& verts, const std::strin
                                 float spacingFraction)
 {
 	// #ToDo: Support flipped triangle fonts (e.g. when +Y is down)
-	//	UNUSED( isFlipped );
+		UNUSED( isFlipped )
 
 	//	size_t estimatedNumberOfNewVerts = text.length() * TRITEXT_PIX_WIDE * TRITEXT_PIX_HIGH * (6 / 2); // assumes (liberally) that fewer than half of a glyph's pixels are lit on average
 	//	verts.reserve( verts.size() + estimatedNumberOfNewVerts );

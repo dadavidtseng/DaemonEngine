@@ -17,7 +17,7 @@ class SpriteDefinition
 {
 public:
 	SpriteDefinition() = default;
-	explicit SpriteDefinition(SpriteSheet const* spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
+	explicit SpriteDefinition(const SpriteSheet* spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
 
 	void               GetUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs) const;
 	AABB2              GetUVs() const;
