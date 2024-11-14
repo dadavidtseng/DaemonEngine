@@ -22,7 +22,7 @@ public:
 	void               GetUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs) const;
 	AABB2              GetUVs() const;
 	SpriteSheet const& GetSpriteSheet() const;
-	Texture&           GetTexture() const;
+	Texture*           GetTexture() const;
 	float              GetAspect() const;
 
 	Vec2 GetUVsMins() const { return m_uvAtMins; }

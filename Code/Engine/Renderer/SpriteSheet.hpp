@@ -19,7 +19,7 @@ class SpriteSheet
 public:
 	explicit SpriteSheet(Texture* texture, IntVec2 const& simpleGridLayout);
 
-	Texture&                GetTexture() const;
+	Texture*               GetTexture() const;
 	int                     GetNumSprites() const;
 	SpriteDefinition const& GetSpriteDef(int spriteIndex) const;
 	void                    GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int spriteIndex) const;

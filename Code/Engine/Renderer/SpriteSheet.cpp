@@ -26,15 +26,15 @@ SpriteSheet::SpriteSheet(Texture* texture, IntVec2 const& simpleGridLayout)
 
             m_spriteDefs.emplace_back(this, spriteIndex, uvMins, uvMaxs);
 
-            printf("uvMins: (%f %f) | uvMaxs: (%f, %f)\n", uvMins.x, uvMins.y, uvMaxs.x, uvMaxs.y);
+            // printf("uvMins: (%f %f) | uvMaxs: (%f, %f)\n", uvMins.x, uvMins.y, uvMaxs.x, uvMaxs.y);
         }
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-Texture& SpriteSheet::GetTexture() const
+Texture* SpriteSheet::GetTexture() const
 {
-    return *m_texture;
+    return m_texture;
 }
 
 //----------------------------------------------------------------------------------------------------

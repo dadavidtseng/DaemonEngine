@@ -275,11 +275,13 @@ void Renderer::BindTexture(const Texture* texture)
 {
 	if (texture)
 	{
+		// Crushing the app if m_openglTextureID is 0xFFFFFFFF
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texture->m_openglTextureID);
 	}
 	else
 	{
+		// Bind the texture with vertices color
 		glDisable(GL_TEXTURE_2D);
 	}
 }

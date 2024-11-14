@@ -34,7 +34,7 @@ SpriteSheet const& SpriteDefinition::GetSpriteSheet() const
 }
 
 //----------------------------------------------------------------------------------------------------
-Texture& SpriteDefinition::GetTexture() const
+Texture* SpriteDefinition::GetTexture() const
 {
     return m_spriteSheet->GetTexture();
 }
