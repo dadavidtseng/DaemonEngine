@@ -5,27 +5,26 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include <vector>
-#include "Engine/Math/Vec2.hpp"
 
 #include "Engine/Math/AABB2.hpp"
 
+//----------------------------------------------------------------------------------------------------
 class SpriteDefinition;
-struct IntVec2;
 class Texture;
+struct IntVec2;
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 class SpriteSheet
 {
 public:
-	explicit SpriteSheet(Texture* texture, IntVec2 const& simpleGridLayout);
+    explicit SpriteSheet(Texture& texture, IntVec2 const& spriteCoords);
 
-	Texture*               GetTexture() const;
-	int                     GetNumSprites() const;
-	SpriteDefinition const& GetSpriteDef(int spriteIndex) const;
-	void                    GetSpriteUVs(Vec2& out_uvAtMins, Vec2& out_uvAtMaxs, int spriteIndex) const;
-	AABB2                   GetSpriteUVs(int spriteIndex) const;
+    Texture&                GetTexture() const;
+    SpriteDefinition const& GetSpriteDef(int spriteIndex) const;
+    AABB2                   GetSpriteUVs(int spriteIndex) const;
+    int                     GetTotalSpritesNum() const;
 
-protected:
-	Texture*                      m_texture;	// reference members must be set in constructor's initializer list
-	std::vector<SpriteDefinition> m_spriteDefs;
+private:
+    Texture&                      m_texture;	// reference members must be set in constructor's initializer list
+    std::vector<SpriteDefinition> m_spriteDefs;
 };

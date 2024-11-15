@@ -65,8 +65,8 @@ struct Vec2
 	// Operators (self-mutating / non-const)
 	void  operator+=(Vec2 const& vecToAdd);       // vec2 += vec2
 	void  operator-=(Vec2 const& vecToSubtract);  // vec2 -= vec2
-	void  operator*=(const float uniformScale);   // vec2 *= float
-	void  operator/=(const float uniformDivisor); // vec2 /= float
+	void  operator*=(float uniformScale);   // vec2 *= float
+	void  operator/=(float uniformDivisor); // vec2 /= float
 	Vec2& operator=(Vec2 const& copyFrom);        // vec2 = vec2
 
 	// Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
