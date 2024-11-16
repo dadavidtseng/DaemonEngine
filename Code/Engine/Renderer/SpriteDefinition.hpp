@@ -29,6 +29,7 @@ public:
 
 protected:
 	SpriteSheet const* m_spriteSheet;
+	// SpriteSheet  m_spriteSheet;
 	int                m_spriteIndex = -1;
 	Vec2               m_uvAtMins    = Vec2::ZERO;
 	Vec2               m_uvAtMaxs    = Vec2::ONE;
