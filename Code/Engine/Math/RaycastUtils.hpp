@@ -6,18 +6,16 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 
+//----------------------------------------------------------------------------------------------------
 struct Ray2
 {
-    Vec2  m_origin;        // Ray's origin point
-    Vec2  m_direction;     // Direction vector of the ray
-    float m_maxDist;      // Maximum distance the ray will travel
-    // TODO: move to .cpp
-    // Constructor to initialize the ray's properties
-    Ray2(const Vec2& origin, const Vec2& direction, const float maxDist)
-        : m_origin(origin), m_direction(direction), m_maxDist(maxDist)
-    {
-    }
+    Ray2(Vec2 const& origin, Vec2 const& direction, float maxDist);
+
+    Vec2  m_origin;
+    Vec2  m_direction;
+    float m_maxDist;
 };
+
 //----------------------------------------------------------------------------------------------------
 struct RaycastResult2D
 {
@@ -33,4 +31,4 @@ struct RaycastResult2D
     float m_rayMaxLength = 1.f;
 };
 
-RaycastResult2D RaycastVsDisc2D(const Vec2& startPos, const Vec2& fwdNormal, float maxDist, const Vec2& discCenter, float discRadius);
+RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist, Vec2 const& discCenter, float discRadius);
