@@ -12,6 +12,7 @@ struct IntVec2
 	int            x = 0;
 	int            y = 0;
 	static IntVec2 ZERO;
+	static IntVec2 ONE;
 
 	// Construction/Destruction
 	IntVec2()                        = default;		// default constructor (do nothing)
