@@ -148,7 +148,7 @@ float GetTurnedTowardDegrees(const float currentDegrees,
                              const float goalDegrees,
                              const float maxDeltaDegrees)
 {
-	const float angDispDeg = GetShortestAngularDispDegrees(currentDegrees, goalDegrees);
+	float angDispDeg = GetShortestAngularDispDegrees(currentDegrees, goalDegrees);
 
 	if (fabsf(angDispDeg) < maxDeltaDegrees)
 	{

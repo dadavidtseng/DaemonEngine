@@ -32,7 +32,7 @@ SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& spriteCoords)
 }
 
 //----------------------------------------------------------------------------------------------------
-Texture& SpriteSheet::GetTexture() const
+Texture const& SpriteSheet::GetTexture() const
 {
     return m_texture;
 }

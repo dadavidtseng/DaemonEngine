@@ -16,20 +16,20 @@ class SpriteSheet;
 class SpriteDefinition
 {
 public:
-	SpriteDefinition() = default;
-	explicit SpriteDefinition( SpriteSheet const* spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
+    SpriteDefinition() = default;
+    explicit SpriteDefinition(SpriteSheet const* spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
 
-	AABB2              GetUVs() const;
-	SpriteSheet const& GetSpriteSheet() const;
-	Texture&           GetTexture() const;
-	float              GetAspect() const;
+    AABB2              GetUVs() const;
+    SpriteSheet const& GetSpriteSheet() const;
+    Texture const&     GetTexture() const;
+    float              GetAspect() const;
 
-	Vec2 GetUVsMins() const { return m_uvAtMins; }
-	Vec2 GetUVsMaxs() const { return m_uvAtMaxs; }
+    Vec2 GetUVsMins() const { return m_uvAtMins; }
+    Vec2 GetUVsMaxs() const { return m_uvAtMaxs; }
 
 protected:
-	SpriteSheet const* m_spriteSheet;
-	int                m_spriteIndex = -1;
-	Vec2               m_uvAtMins    = Vec2::ZERO;
-	Vec2               m_uvAtMaxs    = Vec2::ONE;
+    SpriteSheet const* m_spriteSheet;
+    int                m_spriteIndex = -1;
+    Vec2               m_uvAtMins    = Vec2::ZERO;
+    Vec2               m_uvAtMaxs    = Vec2::ONE;
 };

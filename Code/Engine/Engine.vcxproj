@@ -188,6 +188,7 @@
     <ClCompile Include="Math\IntRange.cpp" />
     <ClCompile Include="Math\IntVec2.cpp" />
     <ClCompile Include="Math\LineSegment2.cpp" />
+    <ClCompile Include="Math\Mat44.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
     <ClCompile Include="Math\OBB2.cpp" />
     <ClCompile Include="Math\RandomNumberGenerator.cpp" />
@@ -195,6 +196,7 @@
     <ClCompile Include="Math\Triangle2.cpp" />
     <ClCompile Include="Math\Vec2.cpp" />
     <ClCompile Include="Math\Vec3.cpp" />
+    <ClCompile Include="Math\Vec4.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Renderer\SpriteDefinition.cpp" />
@@ -233,6 +235,7 @@
     <ClInclude Include="Math\IntRange.hpp" />
     <ClInclude Include="Math\IntVec2.hpp" />
     <ClInclude Include="Math\LineSegment2.hpp" />
+    <ClInclude Include="Math\Mat44.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
     <ClInclude Include="Math\OBB2.hpp" />
     <ClInclude Include="Math\RandomNumberGenerator.hpp" />
@@ -240,6 +243,7 @@
     <ClInclude Include="Math\Triangle2.hpp" />
     <ClInclude Include="Math\Vec2.hpp" />
     <ClInclude Include="Math\Vec3.hpp" />
+    <ClInclude Include="Math\Vec4.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />

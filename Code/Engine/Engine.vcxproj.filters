@@ -130,6 +130,12 @@
     <ClCompile Include="Renderer\SpriteSheet.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Mat44.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vec4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -260,6 +266,12 @@
     </ClInclude>
     <ClInclude Include="Renderer\SpriteSheet.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Mat44.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vec4.hpp">
+      <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
