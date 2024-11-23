@@ -26,6 +26,7 @@ struct FloatRange
 	void  ClampToRange(float& value) const; // Clamps a value within the range
 	float GetLength() const;                // Gets the length of the range
 	float GetMidpoint() const;              // Gets the midpoint of the range
+	void StretchToIncludeValue(float value);
 
 	// Constants
 	static FloatRange ZERO;

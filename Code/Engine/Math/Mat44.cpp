@@ -4,90 +4,103 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Mat44.hpp"
-#include <cmath>
-#include <cstdio>
 
-#include "MathUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Mat44::Mat44()
 {
-    for (int i = 0; i < 16; ++i)
-    {
-        m_values[i] = (i % 5 == 0) ? 1.0f : 0.0f;
-    }
+    m_values[Ix] = 1.f;
+    m_values[Iy] = 0.f;
+    m_values[Iz] = 0.f;
+    m_values[Iw] = 0.f;
+    m_values[Jx] = 0.f;
+    m_values[Jy] = 1.f;
+    m_values[Jz] = 0.f;
+    m_values[Jw] = 0.f;
+    m_values[Kx] = 0.f;
+    m_values[Ky] = 0.f;
+    m_values[Kz] = 1.f;
+    m_values[Kw] = 0.f;
+    m_values[Tx] = 0.f;
+    m_values[Ty] = 0.f;
+    m_values[Tz] = 0.f;
+    m_values[Tw] = 1.f;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44::Mat44(Vec2 const& iBasis2D, Vec2 const& jBasis2D, Vec2 const& translation2D)
 {
-    // Initialize the matrix with the 2D basis vectors and translation in column-major order
-    m_values[0]  = iBasis2D.x; // First column, first row (Ix)
-    m_values[4]  = iBasis2D.y; // First column, second row (Iy)
-    m_values[8]  = 0.0f;       // First column, third row (Iz, 2D)
-    m_values[12] = 0.0f;       // First column, fourth row (Iw)
+    m_values[Ix] = iBasis2D.x;
+    m_values[Iy] = iBasis2D.y;
+    m_values[Iz] = 0.0f;
+    m_values[Iw] = 0.0f;
 
-    m_values[1]  = jBasis2D.x; // Second column, first row (Jx)
-    m_values[5]  = jBasis2D.y; // Second column, second row (Jy)
-    m_values[9]  = 0.0f;       // Second column, third row (Jz, 2D)
-    m_values[13] = 0.0f;       // Second column, fourth row (Jw)
+    m_values[Jx] = jBasis2D.x;
+    m_values[Jy] = jBasis2D.y;
+    m_values[Jz] = 0.0f;
+    m_values[Jw] = 0.0f;
 
-    m_values[2]  = 0.0f;       // Third column, first row (Kx, 2D)
-    m_values[6]  = 0.0f;       // Third column, second row (Ky, 2D)
-    m_values[10] = 1.0f;       // Third column, third row (Kz, identity for 2D)
-    m_values[14] = 0.0f;       // Third column, fourth row (Kw)
+    m_values[Kx] = 0.0f;
+    m_values[Ky] = 0.0f;
+    m_values[Kz] = 1.0f;
+    m_values[Kw] = 0.0f;
 
-    m_values[3]  = translation2D.x; // Fourth column, first row (Tx)
-    m_values[7]  = translation2D.y; // Fourth column, second row (Ty)
-    m_values[11] = 0.0f;            // Fourth column, third row (Tz, 2D)
-    m_values[15] = 1.0f;            // Fourth column, fourth row (Tw, homogeneous coordinate)
+    m_values[Tx] = translation2D.x;
+    m_values[Ty] = translation2D.y;
+    m_values[Tz] = 0.0f;
+    m_values[Tw] = 1.0f;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44::Mat44(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, Vec3 const& translation3D)
 {
-    m_values[0] = iBasis3D.x;  // First row, first column
-    m_values[4] = iBasis3D.y;  // First row, second column
-    m_values[8] = iBasis3D.z;  // First row, third column
-    m_values[12] = 0.0f;        // First row, fourth column
+    m_values[Ix] = iBasis3D.x;
+    m_values[Iy] = iBasis3D.y;
+    m_values[Iz] = iBasis3D.z;
+    m_values[Iw] = 0.f;
 
-    m_values[1] = jBasis3D.x;  // Second row, first column
-    m_values[5] = jBasis3D.y;  // Second row, second column
-    m_values[9] = jBasis3D.z;  // Second row, third column
-    m_values[13] = 0.0f;        // Second row, fourth column
+    m_values[Jx] = jBasis3D.x;
+    m_values[Jy] = jBasis3D.y;
+    m_values[Jz] = jBasis3D.z;
+    m_values[Jw] = 0.f;
 
-    m_values[2]  = kBasis3D.x; // Third row, first column
-    m_values[6]  = kBasis3D.y; // Third row, second column
-    m_values[10] = kBasis3D.z; // Third row, third column
-    m_values[14] = 0.0f;       // Third row, fourth column
+    m_values[Kx] = kBasis3D.x;
+    m_values[Ky] = kBasis3D.y;
+    m_values[Kz] = kBasis3D.z;
+    m_values[Kw] = 0.f;
 
-    m_values[3] = translation3D.x; // Fourth row, first column (translation x)
-    m_values[7] = translation3D.y; // Fourth row, second column (translation y)
-    m_values[11] = translation3D.z; // Fourth row, third column (translation z)
-    m_values[15] = 1.0f;            // Fourth row, fourth column (homogeneous coordinate)
+    m_values[Tx] = translation3D.x;
+    m_values[Ty] = translation3D.y;
+    m_values[Tz] = translation3D.z;
+    m_values[Tw] = 1.f;
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44::Mat44(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D)
 {
-    m_values[0] = iBasis4D.x;  // First row, first column
-    m_values[4] = iBasis4D.y;  // First row, second column
-    m_values[8] = iBasis4D.z;  // First row, third column
-    m_values[12] = iBasis4D.w;  // First row, fourth column
+    m_values[Ix] = iBasis4D.x;
+    m_values[Iy] = iBasis4D.y;
+    m_values[Iz] = iBasis4D.z;
+    m_values[Iw] = iBasis4D.w;
 
-    m_values[1] = jBasis4D.x;  // Second row, first column
-    m_values[5] = jBasis4D.y;  // Second row, second column
-    m_values[9] = jBasis4D.z;  // Second row, third column
-    m_values[13] = jBasis4D.w;  // Second row, fourth column
+    m_values[Jx] = jBasis4D.x;
+    m_values[Jy] = jBasis4D.y;
+    m_values[Jz] = jBasis4D.z;
+    m_values[Jw] = jBasis4D.w;
 
-    m_values[2]  = kBasis4D.x; // Third row, first column
-    m_values[6]  = kBasis4D.y; // Third row, second column
-    m_values[10] = kBasis4D.z; // Third row, third column
-    m_values[14] = kBasis4D.w; // Third row, fourth column
+    m_values[Kx] = kBasis4D.x;
+    m_values[Ky] = kBasis4D.y;
+    m_values[Kz] = kBasis4D.z;
+    m_values[Kw] = kBasis4D.w;
 
-    m_values[3] = translation4D.x; // Fourth row, first column
-    m_values[7] = translation4D.y; // Fourth row, second column
-    m_values[11] = translation4D.z; // Fourth row, third column
-    m_values[15] = translation4D.w; // Fourth row, fourth column
+    m_values[Tx] = translation4D.x;
+    m_values[Ty] = translation4D.y;
+    m_values[Tz] = translation4D.z;
+    m_values[Tw] = translation4D.w;
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44::Mat44(float const* sixteenValuesBasisMajor)
 {
     for (int i = 0; i < 16; ++i)
@@ -95,357 +108,497 @@ Mat44::Mat44(float const* sixteenValuesBasisMajor)
         m_values[i] = sixteenValuesBasisMajor[i];
     }
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeTranslation2D(Vec2 const& translationXY)
 {
-    // Create a 4x4 identity matrix and set the translation components
-    float values[16] = {
-        1.0f, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, 1.0f, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, 1.0f, 0.0f,  // Third row
-        translationXY.x, translationXY.y, 0.0f, 1.0f  // Fourth row
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Tx] = translationXY.x;
+    matrix.m_values[Ty] = translationXY.y;
+
+    return matrix;
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeTranslation3D(Vec3 const& translationXYZ)
 {
-    // Create a 4x4 identity matrix and set the translation components
-    float values[16] = {
-        1.0f, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, 1.0f, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, 1.0f, 0.0f,  // Third row
-        translationXYZ.x, translationXYZ.y, translationXYZ.z, 1.0f  // Fourth row
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Tx] = translationXYZ.x;
+    matrix.m_values[Ty] = translationXYZ.y;
+    matrix.m_values[Tz] = translationXYZ.z;
+
+    return matrix;
 }
-Mat44 const Mat44::MakeUniformScale2D(float uniformScaleXY)
+
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeUniformScale2D(float const uniformScaleXY)
 {
-    float values[16] = {
-        uniformScaleXY, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, uniformScaleXY, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, 1.0f, 0.0f,           // Third row (identity for z-axis)
-        0.0f, 0.0f, 0.0f, 1.0f            // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Ix] = uniformScaleXY;
+    matrix.m_values[Jy] = uniformScaleXY;
+
+    return matrix;
 }
-Mat44 const Mat44::MakeUniformScale3D(float uniformScaleXYZ)
+
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeUniformScale3D(float const uniformScaleXYZ)
 {
-    float values[16] = {
-        uniformScaleXYZ, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, uniformScaleXYZ, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, uniformScaleXYZ, 0.0f,  // Third row
-        0.0f, 0.0f, 0.0f, 1.0f             // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Ix] = uniformScaleXYZ;
+    matrix.m_values[Jy] = uniformScaleXYZ;
+    matrix.m_values[Kz] = uniformScaleXYZ;
+
+    return matrix;
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeNonUniformScale2D(Vec2 const& nonUniformScaleXY)
 {
-    float values[16] = {
-        nonUniformScaleXY.x, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, nonUniformScaleXY.y, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, 1.0f, 0.0f,                // Third row (identity for z-axis)
-        0.0f, 0.0f, 0.0f, 1.0f                 // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Ix] = nonUniformScaleXY.x;
+    matrix.m_values[Jy] = nonUniformScaleXY.y;
+
+    return matrix;
 }
+
+//----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeNonUniformScale3D(Vec3 const& nonUniformScaleXYZ)
 {
-    float values[16] = {
-        nonUniformScaleXYZ.x, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, nonUniformScaleXYZ.y, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, nonUniformScaleXYZ.z, 0.0f,  // Third row
-        0.0f, 0.0f, 0.0f, 1.0f                  // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Ix] = nonUniformScaleXYZ.x;
+    matrix.m_values[Jy] = nonUniformScaleXYZ.y;
+    matrix.m_values[Kz] = nonUniformScaleXYZ.z;
+
+    return matrix;
 }
-Mat44 const Mat44::MakeZRotationDegrees(float rotationDegreesAboutZ)
+
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeZRotationDegrees(float const rotationDegreesAboutZ)
 {
-    float cosTheta = CosDegrees(rotationDegreesAboutZ);
-    float sinTheta = SinDegrees(rotationDegreesAboutZ);
+    float const cosTheta = CosDegrees(rotationDegreesAboutZ);
+    float const sinTheta = SinDegrees(rotationDegreesAboutZ);
 
-    float values[16] = {
-        cosTheta, sinTheta, 0.0f, 0.0f,  // First row
-        -sinTheta, cosTheta, 0.0f, 0.0f,  // Second row
-        0.0f, 0.0f, 1.0f, 0.0f,  // Third row
-        0.0f, 0.0f, 0.0f, 1.0f   // Fourth row (homogeneous coordinate)
-    };
-    return Mat44(values);
+    Mat44 matrix;
+
+    matrix.m_values[Ix] = cosTheta;
+    matrix.m_values[Iy] = sinTheta;
+    matrix.m_values[Jx] = -sinTheta;
+    matrix.m_values[Jy] = cosTheta;
+
+    return matrix;
 }
-Mat44 const Mat44::MakeYRotationDegrees(float rotationDegreesAboutY)
+
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeYRotationDegrees(float const rotationDegreesAboutY)
 {
-    float cosTheta = CosDegrees(rotationDegreesAboutY);
-    float sinTheta = SinDegrees(rotationDegreesAboutY);
+    float const cosTheta = CosDegrees(rotationDegreesAboutY);
+    float const sinTheta = SinDegrees(rotationDegreesAboutY);
 
-    float values[16] = {
-        cosTheta, 0.0f, -sinTheta, 0.0f,  // First row
-        0.0f, 1.0f, 0.0f, 0.0f,  // Second row
-        sinTheta, 0.0f, cosTheta, 0.0f,  // Third row
-        0.0f, 0.0f, 0.0f, 1.0f   // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Ix] = cosTheta;
+    matrix.m_values[Iz] = -sinTheta;
+    matrix.m_values[Kx] = sinTheta;
+    matrix.m_values[Kz] = cosTheta;
+
+    return matrix;
 }
-Mat44 const Mat44::MakeXRotationDegrees(float rotationDegreesAboutX)
+
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeXRotationDegrees(float const rotationDegreesAboutX)
 {
-    float cosTheta = CosDegrees(rotationDegreesAboutX);
-    float sinTheta = SinDegrees(rotationDegreesAboutX);
+    float const cosTheta = CosDegrees(rotationDegreesAboutX);
+    float const sinTheta = SinDegrees(rotationDegreesAboutX);
 
-    float values[16] = {
-        1.0f, 0.0f, 0.0f, 0.0f,  // First row
-        0.0f, cosTheta, sinTheta, 0.0f,  // Second row
-        0.0f, -sinTheta, cosTheta, 0.0f,  // Third row
-        0.0f, 0.0f, 0.0f, 1.0f   // Fourth row (homogeneous coordinate)
-    };
+    Mat44 matrix;
 
-    return Mat44(values);
+    matrix.m_values[Jy] = cosTheta;
+    matrix.m_values[Jz] = sinTheta;
+    matrix.m_values[Ky] = -sinTheta;
+    matrix.m_values[Kz] = cosTheta;
+
+    return matrix;
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const
 {
-    float x = m_values[0] * vectorQuantityXY.x + m_values[4] * vectorQuantityXY.y;
-    float y = m_values[1] * vectorQuantityXY.x + m_values[5] * vectorQuantityXY.y;
+    float const x =
+        m_values[Ix] * vectorQuantityXY.x +
+        m_values[Jx] * vectorQuantityXY.y;
+
+    float const y =
+        m_values[Iy] * vectorQuantityXY.x +
+        m_values[Jy] * vectorQuantityXY.y;
+
     return Vec2(x, y);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::TransformVectorQuantity3D(Vec3 const& vectorQuantityXYZ) const
 {
-    float x = m_values[0] * vectorQuantityXYZ.x + m_values[4] * vectorQuantityXYZ.y + m_values[8] * vectorQuantityXYZ.z;
-    float y = m_values[1] * vectorQuantityXYZ.x + m_values[5] * vectorQuantityXYZ.y + m_values[9] * vectorQuantityXYZ.z;
-    float z = m_values[2] * vectorQuantityXYZ.x + m_values[6] * vectorQuantityXYZ.y + m_values[10] * vectorQuantityXYZ.z;
+    float const x =
+        m_values[Ix] * vectorQuantityXYZ.x +
+        m_values[Jx] * vectorQuantityXYZ.y +
+        m_values[Kx] * vectorQuantityXYZ.z;
+
+    float const y =
+        m_values[Iy] * vectorQuantityXYZ.x +
+        m_values[Jy] * vectorQuantityXYZ.y +
+        m_values[Ky] * vectorQuantityXYZ.z;
+
+    float const z =
+        m_values[Iz] * vectorQuantityXYZ.x +
+        m_values[Jz] * vectorQuantityXYZ.y +
+        m_values[Kz] * vectorQuantityXYZ.z;
+
     return Vec3(x, y, z);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::TransformPosition2D(Vec2 const& positionXY) const
 {
-    float x = m_values[0] * positionXY.x + m_values[4] * positionXY.y + m_values[12];
-    float y = m_values[1] * positionXY.x + m_values[5] * positionXY.y + m_values[13];
+    float const x =
+        m_values[Ix] * positionXY.x +
+        m_values[Jx] * positionXY.y +
+        m_values[Tx];
+
+    float const y =
+        m_values[Iy] * positionXY.x +
+        m_values[Jy] * positionXY.y +
+        m_values[Ty];
+
     return Vec2(x, y);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::TransformPosition3D(Vec3 const& position3D) const
 {
-    float x = m_values[0] * position3D.x + m_values[4] * position3D.y + m_values[8] * position3D.z + m_values[12];
-    float y = m_values[1] * position3D.x + m_values[5] * position3D.y + m_values[9] * position3D.z + m_values[13];
-    float z = m_values[2] * position3D.x + m_values[6] * position3D.y + m_values[10] * position3D.z + m_values[14];
+    float const x =
+        m_values[Ix] * position3D.x +
+        m_values[Jx] * position3D.y +
+        m_values[Kx] * position3D.z +
+        m_values[Tx];
+
+    float const y =
+        m_values[Iy] * position3D.x +
+        m_values[Jy] * position3D.y +
+        m_values[Ky] * position3D.z +
+        m_values[Ty];
+
+    float const z =
+        m_values[Iz] * position3D.x +
+        m_values[Jz] * position3D.y +
+        m_values[Kz] * position3D.z +
+        m_values[Tz];
+
     return Vec3(x, y, z);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec4 const Mat44::TransformHomogeneous3D(Vec4 const& homogeneousPoint3D) const
 {
-    float x = m_values[0] * homogeneousPoint3D.x + m_values[4] * homogeneousPoint3D.y + m_values[8] * homogeneousPoint3D.z + m_values[12] * homogeneousPoint3D.w;
-    float y = m_values[1] * homogeneousPoint3D.x + m_values[5] * homogeneousPoint3D.y + m_values[9] * homogeneousPoint3D.z + m_values[13] * homogeneousPoint3D.w;
-    float z = m_values[2] * homogeneousPoint3D.x + m_values[6] * homogeneousPoint3D.y + m_values[10] * homogeneousPoint3D.z + m_values[14] * homogeneousPoint3D.w;
-    float w = m_values[3] * homogeneousPoint3D.x + m_values[7] * homogeneousPoint3D.y + m_values[11] * homogeneousPoint3D.z + m_values[15] * homogeneousPoint3D.w;
+    float const x =
+        m_values[Ix] * homogeneousPoint3D.x +
+        m_values[Jx] * homogeneousPoint3D.y +
+        m_values[Kx] * homogeneousPoint3D.z +
+        m_values[Tx] * homogeneousPoint3D.w;
+
+    float const y =
+        m_values[Iy] * homogeneousPoint3D.x +
+        m_values[Jy] * homogeneousPoint3D.y +
+        m_values[Ky] * homogeneousPoint3D.z +
+        m_values[Ty] * homogeneousPoint3D.w;
+
+    float const z =
+        m_values[Iz] * homogeneousPoint3D.x +
+        m_values[Jz] * homogeneousPoint3D.y +
+        m_values[Kz] * homogeneousPoint3D.z +
+        m_values[Tz] * homogeneousPoint3D.w;
+
+    float const w =
+        m_values[Iw] * homogeneousPoint3D.x +
+        m_values[Jw] * homogeneousPoint3D.y +
+        m_values[Kw] * homogeneousPoint3D.z +
+        m_values[Tw] * homogeneousPoint3D.w;
+
     return Vec4(x, y, z, w);
 }
+
+//----------------------------------------------------------------------------------------------------
 float* Mat44::GetAsFloatArray()
 {
     return m_values;
 }
+
+//----------------------------------------------------------------------------------------------------
 float const* Mat44::GetAsFloatArray() const
 {
     return m_values;
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::GetIBasis2D() const
 {
-    return Vec2(m_values[0], m_values[1]);
+    return Vec2(m_values[Ix], m_values[Iy]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::GetJBasis2D() const
 {
-    return Vec2(m_values[4], m_values[5]);
+    return Vec2(m_values[Jx], m_values[Jy]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::GetTranslation2D() const
 {
-    return Vec2(m_values[12], m_values[13]);
+    return Vec2(m_values[Tx], m_values[Ty]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::GetIBasis3D() const
 {
-    return Vec3(m_values[0], m_values[1], m_values[2]);
+    return Vec3(m_values[Ix], m_values[Iy], m_values[Iz]);
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::GetJBasis3D() const
 {
-    return Vec3(m_values[4], m_values[5], m_values[6]);
+    return Vec3(m_values[Jx], m_values[Jy], m_values[Jz]);
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::GetKBasis3D() const
 {
-    return Vec3(m_values[8], m_values[9], m_values[10]);
+    return Vec3(m_values[Kx], m_values[Ky], m_values[Kz]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec3 const Mat44::GetTranslation3D() const
 {
-    return Vec3(m_values[12], m_values[13], m_values[14]);
+    return Vec3(m_values[Tx], m_values[Ty], m_values[Tz]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec4 const Mat44::GetIBasis4D() const
 {
-    return Vec4(m_values[0], m_values[1], m_values[2], m_values[3]);
-
+    return Vec4(m_values[Ix], m_values[Iy], m_values[Iz], m_values[Iw]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec4 const Mat44::GetJBasis4D() const
 {
-    return Vec4(m_values[4], m_values[5], m_values[6], m_values[7]);
-
+    return Vec4(m_values[Jx], m_values[Jy], m_values[Jz], m_values[Jw]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec4 const Mat44::GetKBasis4D() const
 {
-    return Vec4(m_values[8], m_values[9], m_values[10], m_values[11]);
-
+    return Vec4(m_values[Kx], m_values[Ky], m_values[Kz], m_values[Kw]);
 }
+
+//----------------------------------------------------------------------------------------------------
 Vec4 const Mat44::GetTranslation4D() const
 {
-    return Vec4(m_values[12], m_values[13], m_values[14], m_values[15]);
-
+    return Vec4(m_values[Tx], m_values[Ty], m_values[Tz], m_values[Tw]);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetTranslation2D(Vec2 const& translationXY)
 {
-    m_values[12] = translationXY.x;
-    m_values[13] = translationXY.y;
-    m_values[14] = 0.0f;  // Typically, the z-component is 0 for 2D
-    m_values[15] = 1.0f;  // Homogeneous coordinate
+    m_values[Tx] = translationXY.x;
+    m_values[Ty] = translationXY.y;
+    m_values[Tz] = 0.f;
+    m_values[Tw] = 1.f;
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetTranslation3D(Vec3 const& translationXYZ)
 {
-    m_values[12] = translationXYZ.x;
-    m_values[13] = translationXYZ.y;
-    m_values[14] = translationXYZ.z;
-    m_values[15] = 1.0f;  // Homogeneous coordinate
+    m_values[Tx] = translationXYZ.x;
+    m_values[Ty] = translationXYZ.y;
+    m_values[Tz] = translationXYZ.z;
+    m_values[Tw] = 1.f;
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetIJ2D(Vec2 const& iBasis2D, Vec2 const& jBasis2D)
 {
-    m_values[0] = iBasis2D.x;
-    m_values[1] = iBasis2D.y;
-    m_values[2] = 0.0f;  // Typically, the z-component is 0 for 2D
-    m_values[3] = 0.0f;
+    m_values[Ix] = iBasis2D.x;
+    m_values[Iy] = iBasis2D.y;
+    m_values[Iz] = 0.f;
+    m_values[Iw] = 0.f;
 
-    m_values[4] = jBasis2D.x;
-    m_values[5] = jBasis2D.y;
-    m_values[6] = 0.0f;  // Typically, the z-component is 0 for 2D
-    m_values[7] = 0.0f;
+    m_values[Jx] = jBasis2D.x;
+    m_values[Jy] = jBasis2D.y;
+    m_values[Jz] = 0.f;
+    m_values[Jw] = 0.f;
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetIJT2D(Vec2 const& iBasis2D, Vec2 const& jBasis2D, Vec2 const& translationXY)
 {
     SetIJ2D(iBasis2D, jBasis2D);
     SetTranslation2D(translationXY);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetIJK3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D)
 {
-    m_values[0] = iBasis3D.x;
-    m_values[1] = iBasis3D.y;
-    m_values[2] = iBasis3D.z;
-    m_values[3] = 0.0f;
+    m_values[Ix] = iBasis3D.x;
+    m_values[Iy] = iBasis3D.y;
+    m_values[Iz] = iBasis3D.z;
+    m_values[Iw] = 0.f;
 
-    m_values[4] = jBasis3D.x;
-    m_values[5] = jBasis3D.y;
-    m_values[6] = jBasis3D.z;
-    m_values[7] = 0.0f;
+    m_values[Jx] = jBasis3D.x;
+    m_values[Jy] = jBasis3D.y;
+    m_values[Jz] = jBasis3D.z;
+    m_values[Jw] = 0.f;
 
-    m_values[8]  = kBasis3D.x;
-    m_values[9]  = kBasis3D.y;
-    m_values[10] = kBasis3D.z;
-    m_values[11] = 0.0f;
+    m_values[Kx] = kBasis3D.x;
+    m_values[Ky] = kBasis3D.y;
+    m_values[Kz] = kBasis3D.z;
+    m_values[Kw] = 0.f;
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetIJKT3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, Vec3 const& translationXYZ)
 {
     SetIJK3D(iBasis3D, jBasis3D, kBasis3D);
     SetTranslation3D(translationXYZ);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D)
 {
-    m_values[0] = iBasis4D.x;
-    m_values[1] = iBasis4D.y;
-    m_values[2] = iBasis4D.z;
-    m_values[3] = iBasis4D.w;
+    m_values[Ix] = iBasis4D.x;
+    m_values[Iy] = iBasis4D.y;
+    m_values[Iz] = iBasis4D.z;
+    m_values[Iw] = iBasis4D.w;
 
-    m_values[4] = jBasis4D.x;
-    m_values[5] = jBasis4D.y;
-    m_values[6] = jBasis4D.z;
-    m_values[7] = jBasis4D.w;
+    m_values[Jx] = jBasis4D.x;
+    m_values[Jy] = jBasis4D.y;
+    m_values[Jz] = jBasis4D.z;
+    m_values[Jw] = jBasis4D.w;
 
-    m_values[8]  = kBasis4D.x;
-    m_values[9]  = kBasis4D.y;
-    m_values[10] = kBasis4D.z;
-    m_values[11] = kBasis4D.w;
+    m_values[Kx] = kBasis4D.x;
+    m_values[Ky] = kBasis4D.y;
+    m_values[Kz] = kBasis4D.z;
+    m_values[Kw] = kBasis4D.w;
 
-    m_values[12] = translation4D.x;
-    m_values[13] = translation4D.y;
-    m_values[14] = translation4D.z;
-    m_values[15] = translation4D.w;
+    m_values[Tx] = translation4D.x;
+    m_values[Ty] = translation4D.y;
+    m_values[Tz] = translation4D.z;
+    m_values[Tw] = translation4D.w;
 }
+
+//----------------------------------------------------------------------------------------------------
+// Subsequent point transformations will be affected by the last-appended matrix first,
+// followed by the previously appended matrices, in reverse order.
+//
+// In different notations, the transformations are represented as follows:
+//
+//  this(append(p))     // Function notation: apply the 'append' matrix to point 'p' first, 
+//                      // then apply the 'this' matrix.
+//
+//  [this][append][p]   // Column-major notation: the point 'p' is transformed by the 
+//                      // 'append' matrix first, then by the 'this' matrix (right-to-left order).
+//
+//  [p][append][this]   // Row-major notation: the point 'p' is transformed by the 
+//                      // 'append' matrix first, then by the 'this' matrix (left-to-right order).
+//
 void Mat44::Append(Mat44 const& appendThis)
 {
-    // Temporary matrix to store the result
-    float result[16] = { 0.0f };
+    Mat44 const  copyOfThis = *this;
+    float const* left       = &copyOfThis.m_values[0];
+    float const* right      = &appendThis.m_values[0];
 
-    // Perform the matrix multiplication assuming column-major storage
-    for (int i = 0; i < 4; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            result[i * 4 + j] = 0.0f;
-            for (int k = 0; k < 4; ++k)
-            {
-                result[i * 4 + j] += m_values[k * 4 + i] * appendThis.m_values[i * 4 + j];
-            }
-        }
-    }
+    m_values[Ix] = left[Ix] * right[Ix] + left[Jx] * right[Iy] + left[Kx] * right[Iz] + left[Tx] * right[Iw];
+    m_values[Iy] = left[Iy] * right[Ix] + left[Jy] * right[Iy] + left[Ky] * right[Iz] + left[Ty] * right[Iw];
+    m_values[Iz] = left[Iz] * right[Ix] + left[Jz] * right[Iy] + left[Kz] * right[Iz] + left[Tz] * right[Iw];
+    m_values[Iw] = left[Iw] * right[Ix] + left[Jw] * right[Iy] + left[Kw] * right[Iz] + left[Tw] * right[Iw];
 
-    // Safely copy the result back to m_values
-    for (int i = 0; i < 16; ++i)
-    {
-        m_values[i] = result[i];
-    }
+    m_values[Jx] = left[Ix] * right[Jx] + left[Jx] * right[Jy] + left[Kx] * right[Jz] + left[Tx] * right[Jw];
+    m_values[Jy] = left[Iy] * right[Jx] + left[Jy] * right[Jy] + left[Ky] * right[Jz] + left[Ty] * right[Jw];
+    m_values[Jz] = left[Iz] * right[Jx] + left[Jz] * right[Jy] + left[Kz] * right[Jz] + left[Tz] * right[Jw];
+    m_values[Jw] = left[Iw] * right[Jx] + left[Jw] * right[Jy] + left[Kw] * right[Jz] + left[Tw] * right[Jw];
+
+    m_values[Kx] = left[Ix] * right[Kx] + left[Jx] * right[Ky] + left[Kx] * right[Kz] + left[Tx] * right[Kw];
+    m_values[Ky] = left[Iy] * right[Kx] + left[Jy] * right[Ky] + left[Ky] * right[Kz] + left[Ty] * right[Kw];
+    m_values[Kz] = left[Iz] * right[Kx] + left[Jz] * right[Ky] + left[Kz] * right[Kz] + left[Tz] * right[Kw];
+    m_values[Kw] = left[Iw] * right[Kx] + left[Jw] * right[Ky] + left[Kw] * right[Kz] + left[Tw] * right[Kw];
+
+    m_values[Tx] = left[Ix] * right[Tx] + left[Jx] * right[Ty] + left[Kx] * right[Tz] + left[Tx] * right[Tw];
+    m_values[Ty] = left[Iy] * right[Tx] + left[Jy] * right[Ty] + left[Ky] * right[Tz] + left[Ty] * right[Tw];
+    m_values[Tz] = left[Iz] * right[Tx] + left[Jz] * right[Ty] + left[Kz] * right[Tz] + left[Tz] * right[Tw];
+    m_values[Tw] = left[Iw] * right[Tx] + left[Jw] * right[Ty] + left[Kw] * right[Tz] + left[Tw] * right[Tw];
 }
 
-void Mat44::AppendZRotation(float degreesRotationAboutZ)
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendZRotation(float const degreesRotationAboutZ)
 {
-    Mat44 rotationMatrix = MakeZRotationDegrees(degreesRotationAboutZ);
+    Mat44 const rotationMatrix = MakeZRotationDegrees(degreesRotationAboutZ);
     Append(rotationMatrix);
 }
-void Mat44::AppendYRotation(float degreesRotationAboutY)
+
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendYRotation(float const degreesRotationAboutY)
 {
-    Mat44 rotationMatrix = MakeYRotationDegrees(degreesRotationAboutY);
+    Mat44 const rotationMatrix = MakeYRotationDegrees(degreesRotationAboutY);
     Append(rotationMatrix);
 }
-void Mat44::AppendXRotation(float degreesRotationAboutX)
+
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendXRotation(float const degreesRotationAboutX)
 {
-    Mat44 rotationMatrix = Mat44::MakeXRotationDegrees(degreesRotationAboutX);
+    Mat44 const rotationMatrix = MakeXRotationDegrees(degreesRotationAboutX);
     Append(rotationMatrix);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::AppendTranslation2D(Vec2 const& translationXY)
 {
-    // Extract translation components
-    float tx = translationXY.x;
-    float ty = translationXY.y;
-
-    // Adjust the existing translation using the current basis vectors
-    m_values[12] += tx * m_values[0] + ty * m_values[4];
-    m_values[13] += tx * m_values[1] + ty * m_values[5];
-    m_values[14] += tx * m_values[2] + ty * m_values[6];
-    m_values[15] += tx * m_values[3] + ty * m_values[7];
-}
-void Mat44::AppendTranslation3D(Vec3 const& translationXYZ)
-{
-    Mat44 translationMatrix = MakeTranslation3D(translationXYZ);
+    Mat44 const translationMatrix = MakeTranslation2D(translationXY);
     Append(translationMatrix);
 }
-void Mat44::AppendScaleUniform2D(float uniformScaleXY)
+
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendTranslation3D(Vec3 const& translationXYZ)
 {
-    Mat44 scaleMatrix = Mat44::MakeUniformScale2D(uniformScaleXY);
+    Mat44 const translationMatrix = MakeTranslation3D(translationXYZ);
+    Append(translationMatrix);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendScaleUniform2D(float const uniformScaleXY)
+{
+    Mat44 const scaleMatrix = MakeUniformScale2D(uniformScaleXY);
     Append(scaleMatrix);
 }
 
-void Mat44::AppendScaleUniform3D(float uniformScaleXYZ)
+//----------------------------------------------------------------------------------------------------
+void Mat44::AppendScaleUniform3D(float const uniformScaleXYZ)
 {
-    Mat44 scaleMatrix = Mat44::MakeUniformScale3D(uniformScaleXYZ);
+    Mat44 const scaleMatrix = MakeUniformScale3D(uniformScaleXYZ);
     Append(scaleMatrix);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::AppendScaleNonUniform2D(Vec2 const& nonUniformScaleXY)
 {
-    Mat44 scaleMatrix = Mat44::MakeNonUniformScale2D(nonUniformScaleXY);
+    Mat44 const scaleMatrix = MakeNonUniformScale2D(nonUniformScaleXY);
     Append(scaleMatrix);
 }
+
+//----------------------------------------------------------------------------------------------------
 void Mat44::AppendScaleNonUniform3D(Vec3 const& nonUniformScaleXYZ)
 {
-    Mat44 scaleMatrix = Mat44::MakeNonUniformScale3D(nonUniformScaleXYZ);
+    Mat44 const scaleMatrix = MakeNonUniformScale3D(nonUniformScaleXYZ);
     Append(scaleMatrix);
 }

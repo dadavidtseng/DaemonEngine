@@ -14,11 +14,10 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
 
-
 //----------------------------------------------------------------------------------------------------
 struct Mat44
 {
-    enum { Ix, Iy, Iz, Iw, Jx, Jy, Jz, Jw, Kx, Ky, Kz, Kw, Tx, Ty, Tz, Tw }; // index nicknames, [0] thru [15]
+    enum { Ix, Iy, Iz, Iw, Jx, Jy, Jz, Jw, Kx, Ky, Kz, Kw, Tx, Ty, Tz, Tw }; // index nicknames, [0] through [15]
     float m_values[16]; // stored in "basis major" order (Ix,Iy,Iz,Iw,Jx,...), translation in [12,13,14]
 
     Mat44(); // Default constructor is IDENTITY matrix!
@@ -68,7 +67,7 @@ struct Mat44
     void Append(Mat44 const& appendThis);                   // multiply on right in column notation / on left in row notation
     void AppendZRotation(float degreesRotationAboutZ);      // same as appending (*= in column notation) a  z-rotation matrix
     void AppendYRotation(float degreesRotationAboutY);      // same as appending (*= in column notation) a y-rotation matrix
-    void AppendXRotation(float degreesRotationAboutX);      // same as appending (*= in column notation) a x-rotation matrix
+    void AppendXRotation(float degreesRotationAboutX);      // same as appending (*= in column notation) an x-rotation matrix
     void AppendTranslation2D(Vec2 const& translationXY);    // same as appending (*= in column notation) a translation matrix
     void AppendTranslation3D(Vec3 const& translationXYZ);   // same as appending (*= in column notation) a translation matrix
     void AppendScaleUniform2D(float uniformScaleXY);        // K and T bases should remain unaffected

@@ -136,6 +136,9 @@
     <ClCompile Include="Math\Vec4.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Core\TileHeatMap.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -272,6 +275,9 @@
     </ClInclude>
     <ClInclude Include="Math\Vec4.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\TileHeatMap.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
