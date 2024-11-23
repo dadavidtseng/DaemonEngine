@@ -1,12 +1,17 @@
+//----------------------------------------------------------------------------------------------------
+// StringUtils.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #pragma once
-//-----------------------------------------------------------------------------------------------
 #include <string>
 #include <vector>
 
 //----------------------------------------------------------------------------------------------------
-typedef std::vector<std::string> Strings;
+typedef std::string         String;
+typedef std::vector<String> Strings;
 
-//-----------------------------------------------------------------------------------------------
-const std::string Stringf(char const* format, ...);
-const std::string Stringf(int maxLength, char const* format, ...);
-Strings SplitStringOnDelimiter( std::string const& originalString, char delimiterToSplitOn );
+//----------------------------------------------------------------------------------------------------
+String const  Stringf(char const* format, ...);
+String const  Stringf(int maxLength, char const* format, ...);
+Strings const SplitStringOnDelimiter(String const& originalString, char delimiterToSplitOn);
