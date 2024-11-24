@@ -51,6 +51,7 @@ struct Vec2
 	void  Normalize();
 	float NormalizeAndGetPreviousLength();
 	void  Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
+	void SetFromText(char const* text);		// Parses “6,4” or “ -.3 , 0.05 ” to (x,y)
 	
 	// Operators (const)
 	bool operator==(Vec2 const& compare) const;      // vec2 == vec2

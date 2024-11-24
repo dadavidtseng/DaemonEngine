@@ -53,15 +53,21 @@ Strings const SplitStringOnDelimiter(String const& originalString, char const de
     size_t  start = 0;
     size_t  end   = originalString.find(delimiterToSplitOn);
 
+    if (originalString.empty())
+    {
+        result.push_back(String(""));
+        return result;
+    }
+
     while (end != String::npos)
     {
-        result.emplace_back(originalString.substr(start, end - start));
+        result.push_back(String(originalString.substr(start, end - start)));
         start = end + 1; // Move past the delimiter
         end   = originalString.find(delimiterToSplitOn, start);
     }
 
     // Add the last substring (or the full string if no delimiter was found)
-    result.emplace_back(originalString.substr(start));
+    result.push_back(String(originalString.substr(start)));
 
     return result;
 }

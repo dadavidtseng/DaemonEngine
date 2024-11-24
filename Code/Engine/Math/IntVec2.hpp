@@ -32,8 +32,11 @@ struct IntVec2
 	// Mutators (non-const methods)
 	void Rotate90Degrees();
 	void RotateMinus90Degrees();
+	void SetFromText(char const* text);
 
 	// Operators (self-mutating)
+	bool operator==(IntVec2 const& compare) const;      // vec2 == vec2
+
 	IntVec2& operator=(const IntVec2& copyFrom); // IntVec2 = IntVec2
 	IntVec2 operator+(IntVec2 const& vecToAdd) const;      // IntVec2 + IntVec2
 	IntVec2 operator-(IntVec2 const& vecToSubtract) const;      // IntVec2 - IntVec2
