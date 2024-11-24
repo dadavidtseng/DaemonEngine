@@ -1,0 +1,167 @@
+//----------------------------------------------------------------------------------------------------
+// XmlUtils.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/XmlUtils.hpp"
+
+//----------------------------------------------------------------------------------------------------
+int ParseXmlAttribute(XmlElement const& element, char const* attributeName, int const defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return atoi(attributeValue);
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+char ParseXmlAttribute(XmlElement const& element, char const* attributeName, char const defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue && attributeValue[0] != '\0')
+    {
+        return attributeValue[0];
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool ParseXmlAttribute(XmlElement const& element, char const* attributeName, bool const defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return
+            _stricmp(attributeValue, "true") == 0 ||
+            strcmp(attributeValue, "1") == 0;
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+float ParseXmlAttribute(XmlElement const& element, char const* attributeName, float const defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return static_cast<float>(atof(attributeValue));
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+Rgba8 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Rgba8 const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        Rgba8       result        = defaultValue;
+        Rgba8 const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.r != previousValue.r ||
+            result.g != previousValue.g ||
+            result.b != previousValue.b ||
+            result.a != previousValue.a)
+        {
+            return result;
+        }
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Vec2 const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        Vec2       result        = defaultValue;
+        Vec2 const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.x != previousValue.x || result.y != previousValue.y)
+        {
+            return result;
+        }
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+IntVec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, IntVec2 const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        IntVec2       result        = defaultValue;
+        IntVec2 const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.x != previousValue.x || result.y != previousValue.y)
+        {
+            return result;
+        }
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+String ParseXmlAttribute(XmlElement const& element, char const* attributeName, String const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return String(attributeValue);
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+Strings ParseXmlAttribute(XmlElement const& element, char const* attributeName, Strings const& defaultValues)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        Strings result = SplitStringOnDelimiter(attributeValue, ',');
+
+        return result;
+    }
+
+    return defaultValues;
+}
+
+//----------------------------------------------------------------------------------------------------
+String ParseXmlAttribute(XmlElement const& element, char const* attributeName, char const* defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return String(attributeValue);
+    }
+
+    return String(defaultValue);
+}

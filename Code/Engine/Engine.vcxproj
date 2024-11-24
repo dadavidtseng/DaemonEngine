@@ -167,6 +167,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Core\ErrorWarningAssert.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="Core\Time.cpp" />
     <ClCompile Include="Core\VertexUtils.cpp" />
     <ClCompile Include="Core\Vertex_PCU.cpp" />
+    <ClCompile Include="Core\XmlUtils.cpp" />
     <ClCompile Include="Input\AnalogJoystick.cpp" />
     <ClCompile Include="Input\InputSystem.cpp" />
     <ClCompile Include="Input\KeyButtonState.cpp" />
@@ -215,6 +217,7 @@
     <ClInclude Include="..\ThirdParty\fmod\fmod_errors.h" />
     <ClInclude Include="..\ThirdParty\fmod\fmod_output.h" />
     <ClInclude Include="..\ThirdParty\stb\stb_image.h" />
+    <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\ErrorWarningAssert.hpp" />
@@ -226,6 +229,7 @@
     <ClInclude Include="Core\Time.hpp" />
     <ClInclude Include="Core\VertexUtils.hpp" />
     <ClInclude Include="Core\Vertex_PCU.hpp" />
+    <ClInclude Include="Core\XmlUtils.hpp" />
     <ClInclude Include="Input\AnalogJoystick.hpp" />
     <ClInclude Include="Input\InputSystem.hpp" />
     <ClInclude Include="Input\KeyButtonState.hpp" />

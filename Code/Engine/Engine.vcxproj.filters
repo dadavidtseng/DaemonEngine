@@ -26,6 +26,9 @@
     <Filter Include="ThirdParty\stb">
       <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\TinyXML2">
+      <UniqueIdentifier>{f9eda815-7ba5-4c1d-975c-8ac067052fe6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -137,6 +140,12 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Core\TileHeatMap.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp">
+      <Filter>ThirdParty\TinyXML2</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\XmlUtils.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -277,6 +286,12 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Core\TileHeatMap.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h">
+      <Filter>ThirdParty\TinyXML2</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\XmlUtils.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
