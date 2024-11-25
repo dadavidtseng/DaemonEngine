@@ -4,7 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "SpriteSheet.hpp"
+#include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
@@ -16,15 +16,15 @@ class BitmapFont
     friend class Renderer; // Only the Renderer can create new BitmapFont objects!
 
 public:
-    Texture& GetTexture();
-    void     AddVertsForText2D(VertexList& vertexArray, Vec2 const& textMins, float cellHeight, String const& text, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f);
-    float    GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f);
+    Texture const& GetTexture() const;
+    void           AddVertsForText2D(VertexList& vertexArray, Vec2 const& textMins, float cellHeight, String const& text, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f) const;
+    float          GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
 
 private:
-    BitmapFont(char const* fontFilePathNameWithNoExtension, Texture& fontTexture);
+    BitmapFont(char const* fontFilePathNameWithNoExtension, Texture& fontTexture, IntVec2 const& spriteCoords);
 
 protected:
-    float GetGlyphAspect(int glyphUnicode) const; // For now this will always return m_fontDefaultAspect
+    float GetGlyphAspect(int glyphUnicode) const ; // For now this will always return m_fontDefaultAspect
 
     String      m_fontFilePathNameWithNoExtension;
     SpriteSheet m_fontGlyphsSpriteSheet;

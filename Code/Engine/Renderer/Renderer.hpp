@@ -8,6 +8,7 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 
+class BitmapFont;
 struct IntVec2;
 class Window;
 
@@ -27,24 +28,26 @@ public:
     void EndFrame() const;
     void Shutdown();
 
-    void ClearScreen(const Rgba8& clearColor);
-    void BeginCamera(const Camera& camera);
-    void EndCamera(const Camera& camera);
-    void DrawVertexArray(int numVertexes, const Vertex_PCU* vertexes);
+    void ClearScreen(Rgba8 const& clearColor);
+    void BeginCamera(Camera const& camera);
+    void EndCamera(Camera const& camera);
+    void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
 
-    Texture* CreateOrGetTextureFromFile(char const* imageFilePath);
-    void     BindTexture(const Texture* texture);
-    void     DrawTexturedQuad(const AABB2& bounds, const Texture* texture, const Rgba8& tint, float uniformScaleXY, float rotationDegreesAboutZ);
+    void BindTexture(Texture const* texture);
+    void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
+
+    Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
+    BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
 
 private:
-    // Private (internal) member function will go here
-    Texture* GetTextureForFileName(char const* imageFilePath) const;
-    void     CreateRenderingContext();
-    Texture* CreateTextureFromFile(const char* imageFilePath);
-    Texture* CreateTextureFromData(const char* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
+    Texture*    GetTextureForFileName(char const* imageFilePath) const;
+    BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
+    void        CreateRenderingContext();
+    Texture*    CreateTextureFromFile(char const* imageFilePath);
+    Texture*    CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
 
-    // Private (internal) data members will go here
-    RenderConfig          m_config;
-    void*                 m_apiRenderingContext = nullptr;
-    std::vector<Texture*> m_loadedTextures;
+    RenderConfig             m_config;
+    void*                    m_apiRenderingContext = nullptr;
+    std::vector<Texture*>    m_loadedTextures;
+    std::vector<BitmapFont*> m_loadedFonts;
 };

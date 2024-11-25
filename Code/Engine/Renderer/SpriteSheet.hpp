@@ -6,10 +6,11 @@
 #pragma once
 #include <vector>
 
+#include "Engine/Renderer/SpriteDefinition.hpp"
 #include "Engine/Math/AABB2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-class SpriteDefinition;
+// class SpriteDefinition;
 class Texture;
 struct IntVec2;
 

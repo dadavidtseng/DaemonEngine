@@ -6,7 +6,6 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 #include "Engine/Math/IntVec2.hpp"
-#include "Engine/Renderer/SpriteDefinition.hpp"
 
 //----------------------------------------------------------------------------------------------------
 SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& spriteCoords)
