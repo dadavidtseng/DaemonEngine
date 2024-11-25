@@ -11,5 +11,5 @@ extern NamedStrings g_gameConfigBlackboard; // declared in EngineCommon.hpp, def
 
 //----------------------------------------------------------------------------------------------------
 #define UNUSED(x) (void)(x);
-// #define STATIC;
 // TODO: decide to add this or not
+// #define STATIC;

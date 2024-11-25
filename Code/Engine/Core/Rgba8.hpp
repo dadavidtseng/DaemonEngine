@@ -10,6 +10,14 @@ struct Rgba8
 
     // TODO: ADD colors 
     static Rgba8 WHITE;
+    static Rgba8 BLACK;
+    static Rgba8 GREY;
+    static Rgba8 RED;
+    static Rgba8 GREEN;
+    static Rgba8 MAGENTA;
+    static Rgba8 CYAN;
+    static Rgba8 YELLOW;
+    static Rgba8 BLUE;
 
     Rgba8();
     explicit Rgba8(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255);
