@@ -198,7 +198,7 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
     IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
     int     bytesPerTexel = 0;
     // This will be filled in for us to indicate how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
-    int numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
+    constexpr int numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
 
     // Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
     stbi_set_flip_vertically_on_load(1); // We prefer uvTexCoords has origin (0,0) at BOTTOM LEFT
@@ -292,7 +292,7 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePa
     }
 
     std::string const textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture* newTexture = CreateOrGetTextureFromFile(textureFilePath.c_str());
+    Texture*          newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
 
     if (!newTexture)
     {

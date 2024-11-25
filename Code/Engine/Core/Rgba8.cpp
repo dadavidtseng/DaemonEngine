@@ -5,11 +5,15 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Rgba8.hpp"
 
-#include "StringUtils.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Rgba8::Rgba8()
-    : r(255), g(255), b(255), a(255)
+    : r(255),
+      g(255),
+      b(255),
+      a(255)
 {
 }
 
@@ -58,4 +62,14 @@ void Rgba8::SetFromText(char const* text)
 
     // If a fourth part exists, use it for the alpha value; otherwise, set alpha to 255
     a = parts.size() == 4 ? static_cast<unsigned char>(atoi(parts[3].c_str())) : 255;
+}
+
+Rgba8 Rgba8::InterpolateColor(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
+{
+    float const red   = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
+    float const green = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
+    float const blue  = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
+    float const alpha = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
+
+    return Rgba8(DenormalizeByte(red), DenormalizeByte(green), DenormalizeByte(blue), DenormalizeByte(alpha));
 }

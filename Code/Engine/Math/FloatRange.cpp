@@ -120,7 +120,9 @@ float FloatRange::GetMidpoint() const
 {
     return (m_min + m_max) * 0.5f;
 }
-void FloatRange::StretchToIncludeValue(float value)
+
+//----------------------------------------------------------------------------------------------------
+void FloatRange::StretchToIncludeValue(float const value)
 {
     if (value < m_min)
     {

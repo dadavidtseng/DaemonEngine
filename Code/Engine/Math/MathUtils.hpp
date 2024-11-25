@@ -109,3 +109,6 @@ void TransformPositionXY3D(Vec3& posToTransform, float scaleXY, float zRotationD
 void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translationXY);
 
 //-End-of-Transform-Utilities-------------------------------------------------------------------------
+
+float         NormalizeByte(unsigned char byte);
+unsigned char DenormalizeByte(float zeroToOne);

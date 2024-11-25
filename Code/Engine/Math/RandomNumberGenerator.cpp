@@ -23,3 +23,9 @@ float RandomNumberGenerator::RollRandomFloatInRange(float minInclusive, float ma
 
 	return minInclusive + randomZeroToOne * (maxInclusive - minInclusive);
 }
+
+// TODO: make this
+bool RandomNumberGenerator::RollPercentChance()
+{
+	return false;
+}

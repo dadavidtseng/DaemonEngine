@@ -9,6 +9,7 @@ public:
 	int   RollRandomIntInRange(int minInclusive, int maxInclusive) const;
 	float RollRandomFloatZeroToOne() const;
 	float RollRandomFloatInRange(float minInclusive, float maxInclusive) const;
+	bool RollPercentChance();
 
 private:
 	//unsigned int m_speed = 0;		// We will use these later on...

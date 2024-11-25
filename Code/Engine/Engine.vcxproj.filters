@@ -139,9 +139,6 @@
     <ClCompile Include="Math\Vec4.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="Core\TileHeatMap.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp">
       <Filter>ThirdParty\TinyXML2</Filter>
     </ClCompile>
@@ -153,6 +150,9 @@
     </ClCompile>
     <ClCompile Include="Renderer\BitmapFont.cpp">
       <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\HeatMaps.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -291,9 +291,6 @@
     <ClInclude Include="Math\Vec4.hpp">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="Core\TileHeatMap.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h">
       <Filter>ThirdParty\TinyXML2</Filter>
     </ClInclude>
@@ -305,6 +302,9 @@
     </ClInclude>
     <ClInclude Include="Renderer\BitmapFont.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\HeatMaps.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

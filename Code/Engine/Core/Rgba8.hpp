@@ -1,6 +1,11 @@
+//----------------------------------------------------------------------------------------------------
+// Rgba8.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #pragma once
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 struct Rgba8
 {
     unsigned char r;
@@ -24,18 +29,5 @@ struct Rgba8
 
     void SetFromText(char const* text);
 
-    // Rgba8 Interpolate(Rgba8 startColor, Rgba8 endColor, float fractionOfEnd)
-    // {
-    //     Rgba8 blendedColor;
-    //     float red = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd.r);
-    //     float green = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd.r);
-    //     float blue = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd.r);
-    //     float alpha = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd.r);
-    //
-    //     blendedColor.r = DenormalizeByte(red);
-    //     blendedColor.r = DenormalizeByte(green);
-    //     blendedColor.r = DenormalizeByte(blue);
-    //     blendedColor.r = DenormalizeByte(alpha);
-    //     return blendedColor;
-    // }
+    Rgba8 InterpolateColor(Rgba8 startColor, Rgba8 endColor, float fractionOfEnd);
 };
