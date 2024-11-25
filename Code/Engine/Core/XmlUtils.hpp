@@ -13,7 +13,7 @@
 typedef tinyxml2::XMLDocument  XmlDocument;
 typedef tinyxml2::XMLElement   XmlElement;
 typedef tinyxml2::XMLAttribute XmlAttribute;
-typedef tinyxml2::XMLError     XmlError;
+typedef tinyxml2::XMLError     XmlResult;
 
 //----------------------------------------------------------------------------------------------------
 int     ParseXmlAttribute(XmlElement const& element, char const* attributeName, int defaultValue);
