@@ -22,9 +22,9 @@ AABB2 SpriteDefinition::GetUVs() const
 }
 
 //----------------------------------------------------------------------------------------------------
-SpriteSheet const& SpriteDefinition::GetSpriteSheet() const
+SpriteSheet const* SpriteDefinition::GetSpriteSheet() const
 {
-    return *m_spriteSheet;
+    return m_spriteSheet;
 }
 
 //----------------------------------------------------------------------------------------------------

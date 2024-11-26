@@ -9,6 +9,7 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "ThirdParty/TinyXML2/tinyxml2.h"
+
 //----------------------------------------------------------------------------------------------------
 typedef tinyxml2::XMLDocument  XmlDocument;
 typedef tinyxml2::XMLElement   XmlElement;

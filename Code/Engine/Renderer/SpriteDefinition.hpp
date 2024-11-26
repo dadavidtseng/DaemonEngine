@@ -13,14 +13,13 @@ class Texture;
 class SpriteSheet;
 
 //----------------------------------------------------------------------------------------------------
-class SpriteDefinition
+struct SpriteDefinition
 {
-public:
     SpriteDefinition() = default;
     explicit SpriteDefinition(SpriteSheet const* spriteSheet, int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs);
 
     AABB2              GetUVs() const;
-    SpriteSheet const& GetSpriteSheet() const;
+    SpriteSheet const* GetSpriteSheet() const;
     Texture const&     GetTexture() const;
     float              GetAspect() const;
 
