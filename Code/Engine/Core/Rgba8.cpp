@@ -64,7 +64,8 @@ void Rgba8::SetFromText(char const* text)
     a = parts.size() == 4 ? static_cast<unsigned char>(atoi(parts[3].c_str())) : 255;
 }
 
-Rgba8 Rgba8::InterpolateColor(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
+//----------------------------------------------------------------------------------------------------
+Rgba8 Interpolate(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
 {
     float const red   = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
     float const green = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);

@@ -28,6 +28,7 @@ struct Rgba8
     explicit Rgba8(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255);
 
     void SetFromText(char const* text);
-
-    Rgba8 InterpolateColor(Rgba8 startColor, Rgba8 endColor, float fractionOfEnd);
 };
+
+//----------------------------------------------------------------------------------------------------
+Rgba8 Interpolate(Rgba8 startColor, Rgba8 endColor, float fractionOfEnd);

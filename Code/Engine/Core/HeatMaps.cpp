@@ -128,13 +128,13 @@ float TileHeatMap::GetValueAtCoords(int const tileX, int const tileY) const
     return m_values[tileIndex];
 }
 
-void TileHeatMap::AddVertsForDebugDraw(VertexList& verts,
-                                       AABB2 const&             totalBounds,
-                                       FloatRange const&        valueRange,
-                                       Rgba8 const              lowColor,
-                                       Rgba8 const              highColor,
-                                       float const              specialValue,
-                                       Rgba8 const              specialColor)
+void TileHeatMap::AddVertsForDebugDraw(VertexList&       verts,
+                                       AABB2 const&      totalBounds,
+                                       FloatRange const& valueRange,
+                                       Rgba8 const       lowColor,
+                                       Rgba8 const       highColor,
+                                       float const       specialValue,
+                                       Rgba8 const       specialColor)
 {
     // Do some math?
 
@@ -145,8 +145,8 @@ void TileHeatMap::AddVertsForDebugDraw(VertexList& verts,
             int   tileIndex           = tileX + (tileY * m_dimensions.x);
             float value               = m_values[tileIndex];
             float fractionWithinRange = GetFractionWithinRange(value, valueRange.m_min, valueRange.m_max);
-            Rgba8 color;
-            color = color.InterpolateColor(lowColor, highColor, fractionWithinRange);
+
+            Rgba8 color = Interpolate(lowColor, highColor, fractionWithinRange);
 
             if (value == specialValue)
             {
