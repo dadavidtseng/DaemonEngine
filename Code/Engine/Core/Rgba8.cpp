@@ -68,9 +68,9 @@ void Rgba8::SetFromText(char const* text)
 Rgba8 Interpolate(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
 {
     float const red   = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
-    float const green = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
-    float const blue  = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
-    float const alpha = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
+    float const green = Interpolate(NormalizeByte(startColor.g), NormalizeByte(endColor.g), fractionOfEnd);
+    float const blue  = Interpolate(NormalizeByte(startColor.b), NormalizeByte(endColor.b), fractionOfEnd);
+    float const alpha = Interpolate(NormalizeByte(startColor.a), NormalizeByte(endColor.a), fractionOfEnd);
 
     return Rgba8(DenormalizeByte(red), DenormalizeByte(green), DenormalizeByte(blue), DenormalizeByte(alpha));
 }
