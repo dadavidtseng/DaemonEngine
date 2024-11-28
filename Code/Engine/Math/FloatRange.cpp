@@ -7,8 +7,7 @@
 
 #include <cmath>
 
-//----------------------------------------------------------------------------------------------------
-constexpr float EPSILON = 1e-5f;	// Define a small tolerance value
+#include "MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 FloatRange FloatRange::ONE         = FloatRange(1, 1);
@@ -16,7 +15,7 @@ FloatRange FloatRange::ZERO        = FloatRange(0, 0);
 FloatRange FloatRange::ZERO_TO_ONE = FloatRange(0, 1);
 
 //----------------------------------------------------------------------------------------------------
-FloatRange::FloatRange(const float min, const float max)
+FloatRange::FloatRange(float const min, float const max)
     : m_min(min),
       m_max(max)
 {
@@ -71,7 +70,7 @@ bool FloatRange::IsOverlappingWith(const FloatRange& other) const
 }
 
 //----------------------------------------------------------------------------------------------------
-void FloatRange::ExpandToInclude(const float value)
+void FloatRange::ExpandToInclude(float const value)
 {
     if (value < m_min)
     {
@@ -119,18 +118,4 @@ float FloatRange::GetLength() const
 float FloatRange::GetMidpoint() const
 {
     return (m_min + m_max) * 0.5f;
-}
-
-//----------------------------------------------------------------------------------------------------
-void FloatRange::StretchToIncludeValue(float const value)
-{
-    if (value < m_min)
-    {
-        m_min = value;
-    }
-
-    if (value > m_max)
-    {
-        m_max = value;
-    }
 }

@@ -5,11 +5,12 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/SpriteSheet.hpp"
 
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& spriteCoords)
-    : m_texture(texture)
+SpriteSheet::SpriteSheet(Texture const& texture, IntVec2 const& spriteCoords)
+    : m_texture(&texture)
 {
     int const totalSprites = spriteCoords.x * spriteCoords.y;
     m_spriteDefs.reserve(totalSprites);
@@ -23,9 +24,8 @@ SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& spriteCoords)
         {
             Vec2 uvMins(static_cast<float>(col) * uvWidth, static_cast<float>(spriteCoords.y - row - 1) * uvHeight);
             Vec2 uvMaxs(static_cast<float>(col + 1) * uvWidth, static_cast<float>(spriteCoords.y - row) * uvHeight);
-            int  spriteIndex = row * spriteCoords.x + col;
 
-            m_spriteDefs.emplace_back(this, spriteIndex, uvMins, uvMaxs);
+            m_spriteDefs.emplace_back(this, uvMins, uvMaxs);
         }
     }
 }
@@ -33,7 +33,7 @@ SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& spriteCoords)
 //----------------------------------------------------------------------------------------------------
 Texture const& SpriteSheet::GetTexture() const
 {
-    return m_texture;
+    return *m_texture;
 }
 
 //----------------------------------------------------------------------------------------------------

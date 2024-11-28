@@ -4,12 +4,13 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/SpriteDefinition.hpp"
+
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 //----------------------------------------------------------------------------------------------------
-SpriteDefinition::SpriteDefinition(SpriteSheet const* spriteSheet, const int spriteIndex, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs)
+SpriteDefinition::SpriteDefinition(SpriteSheet const* spriteSheet, Vec2 const& uvAtMins, Vec2 const& uvAtMaxs)
     : m_spriteSheet(spriteSheet),
-      m_spriteIndex(spriteIndex),
       m_uvAtMins(uvAtMins),
       m_uvAtMaxs(uvAtMaxs)
 {

@@ -6,6 +6,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/AABB2.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Texture const& BitmapFont::GetTexture() const
@@ -20,21 +21,21 @@ void BitmapFont::AddVertsForText2D(std::vector<Vertex_PCU>& vertexArray, Vec2 co
 
     for (char const& c : text)
     {
-        int glyphIndex = static_cast<unsigned char>(c);
-        AABB2 uvs = m_fontGlyphsSpriteSheet.GetSpriteUVs(glyphIndex); // Get the UV coordinates for the glyph
-        float glyphAspect = GetGlyphAspect(glyphIndex);
+        int const   glyphIndex  = static_cast<unsigned char>(c);
+        AABB2       uvs         = m_fontGlyphsSpriteSheet.GetSpriteUVs(glyphIndex);
+        float const glyphAspect = GetGlyphAspect(glyphIndex);
+        Vec2 const  glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);
 
-        Vec2 glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);
         AddVertsForAABB2D(vertexArray, AABB2(currentPosition, currentPosition + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
 
-        currentPosition.x += glyphSize.x; // Move the cursor
+        currentPosition.x += glyphSize.x;
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float const cellAspectScale) const
 {
-    float totalWidth = 0.0f;
+    float totalWidth = 0.f;
 
     for (char const& c : text)
     {
@@ -47,7 +48,7 @@ float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float
 }
 
 //----------------------------------------------------------------------------------------------------
-BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture& fontTexture, IntVec2 const& spriteCoords)
+BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords)
     : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
     , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
 {

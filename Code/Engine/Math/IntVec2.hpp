@@ -39,7 +39,7 @@ struct IntVec2
 	bool operator!=(IntVec2 const& compare) const;      // IntVec2 != IntVec2
 
 	IntVec2& operator=(const IntVec2& copyFrom); // IntVec2 = IntVec2
-	IntVec2 operator+(IntVec2 const& vecToAdd) const;      // IntVec2 + IntVec2
-	IntVec2 operator-(IntVec2 const& vecToSubtract) const;      // IntVec2 - IntVec2
+	IntVec2 const operator+(IntVec2 const& vecToAdd) const;      // IntVec2 + IntVec2
+	IntVec2 const operator-(IntVec2 const& vecToSubtract) const;      // IntVec2 - IntVec2
 };	
 

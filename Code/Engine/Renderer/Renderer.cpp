@@ -282,6 +282,8 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 dimensions, i
     m_loadedTextures.push_back(newTexture);
     return newTexture;
 }
+
+//----------------------------------------------------------------------------------------------------
 BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePathWithNoExtension)
 {
     BitmapFont* existingBitMapFont = GetBitMapFontForFileName(bitmapFontFilePathWithNoExtension);
@@ -291,8 +293,8 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePa
         return existingBitMapFont;
     }
 
-    std::string const textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture*          newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
+    String const textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
+    Texture const*    newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
 
     if (!newTexture)
     {
@@ -302,6 +304,7 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePa
 
     // Consider using smart pointers for better memory management
     BitmapFont* newBitMapFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *newTexture, IntVec2(16, 16));
+    
     return newBitMapFont;
 }
 

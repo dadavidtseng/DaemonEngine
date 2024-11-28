@@ -11,7 +11,6 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-constexpr float EPSILON    = 1e-5f;	// Define a small tolerance value
 Vec2            Vec2::ZERO = Vec2(0, 0);
 Vec2            Vec2::ONE  = Vec2(1, 1);
 

@@ -21,10 +21,10 @@ public:
     float          GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
 
 private:
-    BitmapFont(char const* fontFilePathNameWithNoExtension, Texture& fontTexture, IntVec2 const& spriteCoords);
+    BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords);
 
 protected:
-    float GetGlyphAspect(int glyphUnicode) const ; // For now this will always return m_fontDefaultAspect
+    float GetGlyphAspect(int glyphUnicode) const; // For now this will always return m_fontDefaultAspect
 
     String      m_fontFilePathNameWithNoExtension;
     SpriteSheet m_fontGlyphsSpriteSheet;
