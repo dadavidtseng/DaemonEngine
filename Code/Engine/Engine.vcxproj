@@ -169,8 +169,10 @@
   <ItemGroup>
     <ClCompile Include="..\ThirdParty\TinyXML2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\DevConsole.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Core\ErrorWarningAssert.cpp" />
+    <ClCompile Include="Core\EventSystem.cpp" />
     <ClCompile Include="Core\HeatMaps.cpp" />
     <ClCompile Include="Core\Image.cpp" />
     <ClCompile Include="Core\NamedStrings.cpp" />
@@ -221,8 +223,10 @@
     <ClInclude Include="..\ThirdParty\stb\stb_image.h" />
     <ClInclude Include="..\ThirdParty\TinyXML2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\DevConsole.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\ErrorWarningAssert.hpp" />
+    <ClInclude Include="Core\EventSystem.hpp" />
     <ClInclude Include="Core\HeatMaps.hpp" />
     <ClInclude Include="Core\Image.hpp" />
     <ClInclude Include="Core\NamedStrings.hpp" />

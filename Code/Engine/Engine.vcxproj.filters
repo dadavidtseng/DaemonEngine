@@ -154,6 +154,12 @@
     <ClCompile Include="Core\HeatMaps.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\DevConsole.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\EventSystem.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -304,6 +310,12 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Core\HeatMaps.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DevConsole.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\EventSystem.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
