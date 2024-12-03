@@ -4,12 +4,14 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/SpriteSheet.hpp"
 
+//----------------------------------------------------------------------------------------------------
 class Texture;
+
 //----------------------------------------------------------------------------------------------------
 class BitmapFont
 {
@@ -28,5 +30,5 @@ protected:
 
     String      m_fontFilePathNameWithNoExtension;
     SpriteSheet m_fontGlyphsSpriteSheet;
-    float       m_fontDefaultAspect = 1.0f; // For basic (tier 1) fonts, set this to the aspect of the sprite sheet texture
+    float       m_fontDefaultAspect = 1.f; // For basic (tier 1) fonts, set this to the aspect of the sprite sheet texture
 };
