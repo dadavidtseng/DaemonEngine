@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include "Vec2.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
@@ -15,17 +16,31 @@ IntVec2 IntVec2::ZERO = IntVec2(0, 0);
 IntVec2 IntVec2::ONE  = IntVec2(1, 1);
 
 //----------------------------------------------------------------------------------------------------
-IntVec2::IntVec2(const int initialX, const int initialY)
+IntVec2::IntVec2(int const initialX, int const initialY)
     : x(initialX),
       y(initialY)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
+IntVec2::IntVec2(float const initialX, float const initialY)
+    : x(static_cast<int>(initialX)),
+      y(static_cast<int>(initialY))
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+IntVec2::IntVec2(Vec2 const& vec2)
+    : x(static_cast<int>(vec2.x)),
+      y(static_cast<int>(vec2.y))
+{
+}
+
+//----------------------------------------------------------------------------------------------------
 float IntVec2::GetLength() const
 {
-    const float floatX = static_cast<float>(x);
-    const float floatY = static_cast<float>(y);
+    float const floatX = static_cast<float>(x);
+    float const floatY = static_cast<float>(y);
 
     return sqrtf(floatX * floatX + floatY * floatY);
 }
@@ -45,9 +60,9 @@ int IntVec2::GetTaxicabLength() const
 //----------------------------------------------------------------------------------------------------
 float IntVec2::GetOrientationDegrees() const
 {
-    const float floatX  = static_cast<float>(x);
-    const float floatY  = static_cast<float>(y);
-    const float degrees = Atan2Degrees(floatY, floatX);
+    float const floatX  = static_cast<float>(x);
+    float const floatY  = static_cast<float>(y);
+    float const degrees = Atan2Degrees(floatY, floatX);
 
     return degrees;
 }
@@ -55,7 +70,7 @@ float IntVec2::GetOrientationDegrees() const
 //----------------------------------------------------------------------------------------------------
 float IntVec2::GetOrientationRadians() const
 {
-    const float degrees = GetOrientationDegrees();
+    float const degrees = GetOrientationDegrees();
 
     return ConvertDegreesToRadians(degrees);
 }
@@ -75,7 +90,7 @@ IntVec2 IntVec2::GetRotatedMinus90Degrees() const
 //----------------------------------------------------------------------------------------------------
 void IntVec2::Rotate90Degrees()
 {
-    const int oldX = x;
+    int const oldX = x;
 
     x = -y;
     y = oldX;
@@ -83,7 +98,7 @@ void IntVec2::Rotate90Degrees()
 
 void IntVec2::RotateMinus90Degrees()
 {
-    const int oldX = x;
+    int const oldX = x;
 
     x = y;
     y = -oldX;
