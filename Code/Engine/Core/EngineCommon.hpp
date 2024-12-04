@@ -15,5 +15,4 @@ extern NamedStrings g_gameConfigBlackboard; // declared in EngineCommon.hpp, def
 extern EventSystem* g_theEventSystem;
 //----------------------------------------------------------------------------------------------------
 #define UNUSED(x) (void)(x);
-// TODO: decide to add this or not
-// #define STATIC;
+#define STATIC

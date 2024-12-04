@@ -12,6 +12,12 @@
 //----------------------------------------------------------------------------------------------------
 class Texture;
 
+enum TextBoxMode
+{
+    SHRINK_TO_FIT,
+    OVERRUN
+};
+
 //----------------------------------------------------------------------------------------------------
 class BitmapFont
 {
@@ -20,7 +26,10 @@ class BitmapFont
 public:
     Texture const& GetTexture() const;
     void           AddVertsForText2D(VertexList& vertexArray, Vec2 const& textMins, float cellHeight, String const& text, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f) const;
-    float          GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
+    void           AddVertsForTextInBox2D(VertexList& vertexArray, String const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE,
+                                float                 cellAspectScale                                                                        = 1.f, Vec2 const& alignment = Vec2(.5f, .5f), TextBoxMode mode = TextBoxMode::SHRINK_TO_FIT, int maxGlyphsToDraw = 99999999);
+
+    float GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
 
 private:
     BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords);

@@ -7,9 +7,9 @@
 
 #include <cmath>
 
-#include "Vec2.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Vec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
 IntVec2 IntVec2::ZERO = IntVec2(0, 0);
@@ -96,6 +96,7 @@ void IntVec2::Rotate90Degrees()
     y = oldX;
 }
 
+//----------------------------------------------------------------------------------------------------
 void IntVec2::RotateMinus90Degrees()
 {
     int const oldX = x;
