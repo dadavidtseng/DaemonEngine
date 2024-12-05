@@ -82,6 +82,7 @@ void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, Even
 void EventSystem::FireEvent(String const& eventName, EventArgs& args)
 {
     auto const iter = m_subscriptionsByEventName.find(eventName);
+
     if (iter != m_subscriptionsByEventName.end())
     {
         SubscriptionList const& subscriptions = iter->second;

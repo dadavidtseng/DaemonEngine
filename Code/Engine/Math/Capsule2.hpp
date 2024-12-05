@@ -5,20 +5,20 @@
 //-----------------------------------------------------------------------------------------------
 struct Capsule2
 {
-	Vec2  m_start = Vec2(0.f, 0.f);
-	Vec2  m_end = Vec2(0.f, 0.f);
-	float m_radius = 0.f;
+    Vec2  m_start  = Vec2::ZERO;
+    Vec2  m_end    = Vec2::ZERO;
+    float m_radius = 0.f;
 
-	Capsule2();
-	explicit Capsule2(const Vec2& start, const Vec2& end, float radius);
+    Capsule2();
+    explicit Capsule2(Vec2 const& start, Vec2 const& end, float radius);
 
-	// Mutators (non-const methods)
-	void Translate(const Vec2& translation);
-	void SetCenter(const Vec2& newCenter);
-	void RotateAboutCenter(const Vec2& rotationDeltaDegrees);
+    // Mutators (non-const methods)
+    void Translate(Vec2 const& translation);
+    void SetCenter(Vec2 const& newCenter);
+    void RotateAboutCenter(Vec2 const& rotationDeltaDegrees);
 
-	// Accessors (const methods)
-	bool IsPointInside(Vec2 const& point) const;
-	Vec2 GetNearestPoint(const Vec2& point) const;
-	Vec2 const GetCenter() const;
+    // Accessors (const methods)
+    bool       IsPointInside(Vec2 const& point) const;
+    Vec2       GetNearestPoint(Vec2 const& point) const;
+    Vec2 const GetCenter() const;
 };

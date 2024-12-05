@@ -309,7 +309,7 @@ Vec2 GetProjectedOnto2D(Vec2 const& vectorToProject,
 
     if (vectorToProjectOntoLengthSquared == 0.f)
     {
-        return Vec2(0.f, 0.f);
+        return Vec2::ZERO;
     }
 
     const float dotProduct      = DotProduct2D(vectorToProject, vectorToProjectOnto);

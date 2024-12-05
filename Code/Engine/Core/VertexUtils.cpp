@@ -92,9 +92,9 @@ void AddVertsForTriangle2D(VertexList&  verts,
                            Vec2 const&  ccw2,
                            Rgba8 const& color)
 {
-    verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color, Vec2(0.f, 0.f));
-    verts.emplace_back(Vec3(ccw1.x, ccw1.y, 0.f), color, Vec2(0.f, 0.f));
-    verts.emplace_back(Vec3(ccw2.x, ccw2.y, 0.f), color, Vec2(0.f, 0.f));
+    verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color, Vec2::ZERO);
+    verts.emplace_back(Vec3(ccw1.x, ccw1.y, 0.f), color, Vec2::ZERO);
+    verts.emplace_back(Vec3(ccw2.x, ccw2.y, 0.f), color, Vec2::ZERO);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -152,13 +152,13 @@ void AddVertsForCapsule2D(VertexList&  verts,
     Vec2 const topLeft       = boneEnd - perpendicular;
     Vec2 const topRight      = boneEnd + perpendicular;
 
-    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2(0.f, 0.f));
+    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2::ZERO);
     verts.emplace_back(Vec3(bottomRight.x, bottomRight.y, 0.f), color, Vec2(1.f, 0.f));
-    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(1.f, 1.f));
+    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2::ONE);
 
-    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2(1.f, 1.f));
+    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2::ONE);
     verts.emplace_back(Vec3(topLeft.x, topLeft.y, 0.f), color, Vec2(0.f, 1.f));
-    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2(0.f, 0.f));
+    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2::ZERO);
 
     Vec2 const  rotatedDirection    = direction.GetRotatedMinus90Degrees();
     float const rotationAngle       = Atan2Degrees(rotatedDirection.y, rotatedDirection.x);

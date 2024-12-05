@@ -25,7 +25,9 @@
 // {
 //     OPEN_FULL,
 //     OPEN_PARTIAL,
-//     HIDDEN
+//     HIDDEN,
+//     COMMAND_LINE_PROMPT,
+//     NUM
 // };
 //
 // struct DevConsoleConfig

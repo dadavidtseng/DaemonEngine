@@ -16,6 +16,6 @@ struct Vertex_PCU
 	Vec2  m_uvTexCoords;
 
 	Vertex_PCU();
-	Vertex_PCU(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords = Vec2(0.f, 0.f));
+	Vertex_PCU(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords = Vec2::ZERO);
 	//TODO: add a bunch of explicit constructor
 };

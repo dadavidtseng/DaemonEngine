@@ -7,6 +7,7 @@
 #include <map>
 
 #include "Engine/Core/StringUtils.hpp"
+
 class NamedStrings;
 
 typedef NamedStrings EventArgs;

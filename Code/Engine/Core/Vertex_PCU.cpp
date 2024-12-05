@@ -9,7 +9,7 @@
 Vertex_PCU::Vertex_PCU()
     : m_position(Vec3(0.f, 0.f, 0.f))
     , m_color(Rgba8(255, 255, 255, 255))
-    , m_uvTexCoords(Vec2(0.f, 0.f))
+    , m_uvTexCoords(Vec2::ZERO)
 {
 }
 
