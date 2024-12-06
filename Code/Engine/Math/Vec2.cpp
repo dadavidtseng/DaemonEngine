@@ -7,13 +7,14 @@
 
 #include <cmath>
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Vec2 Vec2::ZERO = Vec2(0, 0);
-Vec2 Vec2::ONE  = Vec2(1, 1);
+STATIC Vec2 Vec2::ZERO = Vec2(0, 0);
+STATIC Vec2 Vec2::ONE  = Vec2(1, 1);
 
 //----------------------------------------------------------------------------------------------------
 Vec2::Vec2(float const initialX, float const initialY)
@@ -37,8 +38,8 @@ Vec2::Vec2(IntVec2 const& intVec2)
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 Vec2::MakeFromPolarRadians(float const orientationRadians,
-                                float const length)
+STATIC Vec2 Vec2::MakeFromPolarRadians(float const orientationRadians,
+                                       float const length)
 {
     float const degree = ConvertRadiansToDegrees(orientationRadians);
     float const x      = length * CosDegrees(degree);
@@ -48,8 +49,8 @@ Vec2 Vec2::MakeFromPolarRadians(float const orientationRadians,
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 Vec2::MakeFromPolarDegrees(float const orientationDegrees,
-                                float const length)
+STATIC Vec2 Vec2::MakeFromPolarDegrees(float const orientationDegrees,
+                                       float const length)
 {
     float const x = length * CosDegrees(orientationDegrees);
     float const y = length * SinDegrees(orientationDegrees);

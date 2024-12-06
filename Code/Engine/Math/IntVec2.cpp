@@ -7,13 +7,14 @@
 
 #include <cmath>
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-IntVec2 IntVec2::ZERO = IntVec2(0, 0);
-IntVec2 IntVec2::ONE  = IntVec2(1, 1);
+STATIC IntVec2 IntVec2::ZERO = IntVec2(0, 0);
+STATIC IntVec2 IntVec2::ONE  = IntVec2(1, 1);
 
 //----------------------------------------------------------------------------------------------------
 IntVec2::IntVec2(int const initialX, int const initialY)
