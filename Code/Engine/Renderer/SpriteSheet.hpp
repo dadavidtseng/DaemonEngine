@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "Engine/Renderer/SpriteDefinition.hpp"
-// #include "Engine/Math/AABB2.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class Texture;
