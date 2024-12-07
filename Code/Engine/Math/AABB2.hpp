@@ -22,7 +22,6 @@ struct AABB2
     explicit AABB2(Vec2 const& mins, Vec2 const& maxs);             // explicit constructor (from mins, maxs)
     explicit AABB2(IntVec2 const& mins, IntVec2 const& maxs);
 
-
     // Accessors (const methods)
     bool IsPointInside(Vec2 const& point) const;
     Vec2 GetCenter() const;
