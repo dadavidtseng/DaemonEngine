@@ -219,7 +219,7 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 
 
 //------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData)
+Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimensions, int const bytesPerTexel, uint8_t const* texelData)
 {
     // Check if the load was successful
     GUARANTEE_OR_DIE(texelData, Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!", name));
@@ -293,8 +293,8 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePa
         return existingBitMapFont;
     }
 
-    String const textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture const*    newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
+    String const   textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
+    Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
 
     if (!newTexture)
     {
@@ -304,8 +304,25 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePa
 
     // Consider using smart pointers for better memory management
     BitmapFont* newBitMapFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *newTexture, IntVec2(16, 16));
-    
+
     return newBitMapFont;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetBlendMode(BlendMode const mode)
+{
+    if (mode == BlendMode::ALPHA) // enum class BlendMode, defined near top of Renderer.hpp
+    {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    else if (mode == BlendMode::ADDITIVE)
+    {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
+    else
+    {
+        ERROR_AND_DIE(Stringf( "Unknown / unsupported blend mode #%i", mode ));
+    }
 }
 
 
