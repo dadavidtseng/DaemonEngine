@@ -24,7 +24,7 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) 
     int totalFrames = m_endSpriteIndex - m_startSpriteIndex + 1;
     int totalFrameCount = static_cast<int>(seconds * m_framesPerSecond);
 
-    printf("totalFrames: %d, totalFrameCount: %d\n", totalFrames, totalFrameCount);
+    // printf("totalFrames: %d, totalFrameCount: %d\n", totalFrames, totalFrameCount);
 
     int currentFrame = 0;
 
@@ -69,7 +69,7 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) 
     int spriteIndex = m_startSpriteIndex + currentFrame;
 
     // 調試輸出
-    printf("currentFrame: %d, spriteIndex: %d\n", currentFrame, spriteIndex);
+    // printf("currentFrame: %d, spriteIndex: %d\n", currentFrame, spriteIndex);
 
     // 返回對應的 SpriteDefinition
     return m_spriteSheet.GetSpriteDef(spriteIndex);
