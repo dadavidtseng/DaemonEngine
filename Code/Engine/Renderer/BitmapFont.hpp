@@ -26,7 +26,7 @@ class BitmapFont
 public:
     Texture const& GetTexture() const;
     void           AddVertsForText2D(VertexList& vertexArray, Vec2 const& textMins, float cellHeight, String const& text, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f) const;
-    void           AddVertsForTextInBox2D(VertexList& vertexArray, String const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f, Vec2 const& alignment = Vec2(0.5f, 0.5f), TextBoxMode mode = SHRINK_TO_FIT, int maxGlyphsToDraw = INT_MAX) const;
+    void           AddVertsForTextInBox2D(VertexList& vertexArray, String const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f, Vec2 const& alignment = Vec2(0.f, 0.f), TextBoxMode mode = SHRINK_TO_FIT, int maxGlyphsToDraw = INT_MAX) const;
 
     float GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
 
