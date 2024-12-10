@@ -58,8 +58,10 @@ void Window::EndFrame()
 // Handles Windows (Win32) messages/events; i.e. the OS is trying to tell us something happened.
 // This function is called back by Windows whenever we tell it to (by calling DispatchMessage).
 //
-LRESULT CALLBACK WindowsMessageHandlingProcedure(const HWND   windowHandle, const UINT wmMessageCode, const WPARAM wParam,
-                                                 const LPARAM lParam)
+LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
+                                                 UINT const   wmMessageCode,
+                                                 WPARAM const wParam,
+                                                 LPARAM const lParam)
 {
     InputSystem* input = nullptr;
 
@@ -97,7 +99,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(const HWND   windowHandle, cons
             {
                 if (input)
                 {
-                    const unsigned char asKey = static_cast<unsigned char>(wParam);
+                    unsigned char const asKey = static_cast<unsigned char>(wParam);
 
                     input->HandleKeyReleased(asKey);
                 }
@@ -204,15 +206,15 @@ void* Window::GetWindowHandle() const
 //
 Vec2 Window::GetNormalizedMouseUV() const
 {
-    const HWND windowHandle = static_cast<HWND>(m_windowHandle);
+    HWND const windowHandle = static_cast<HWND>(m_windowHandle);
     POINT      cursorCoords;
     RECT       clientRect;
-    ::GetCursorPos(&cursorCoords);	// in Window screen coordinates; (0,0) is top-left
-    ::ScreenToClient(windowHandle, &cursorCoords);	// get relative to this window's client area
-    ::GetClientRect(windowHandle, &clientRect);	// dimensions of client area (0,0 to width, height)
+    GetCursorPos(&cursorCoords);	// in Window screen coordinates; (0,0) is top-left
+    ScreenToClient(windowHandle, &cursorCoords);	// get relative to this window's client area
+    GetClientRect(windowHandle, &clientRect);	// dimensions of client area (0,0 to width, height)
 
-    const float cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
-    const float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
+    float const cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
+    float const cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 
     return Vec2(cursorX, 1.f - cursorY);	// Flip Y; we want (0,0) bottom-left, not top-left
 }
@@ -222,8 +224,8 @@ void Window::CreateOSWindow()
 {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-    const HMODULE applicationInstanceHandle = ::GetModuleHandle(nullptr);
-    const float   clientAspect              = m_config.m_aspectRatio;
+    HMODULE const applicationInstanceHandle = ::GetModuleHandle(nullptr);
+    float const   clientAspect              = m_config.m_aspectRatio;
 
     // Define a window style/class
     WNDCLASSEX windowClassDescription  = {};
@@ -245,11 +247,11 @@ void Window::CreateOSWindow()
 
     // Get desktop rect, dimensions, aspect
     RECT       desktopRect;
-    const HWND desktopWindowHandle = GetDesktopWindow();
+    HWND const desktopWindowHandle = GetDesktopWindow();
     GetClientRect(desktopWindowHandle, &desktopRect);
-    const float desktopWidth  = static_cast<float>(desktopRect.right - desktopRect.left);
-    const float desktopHeight = static_cast<float>(desktopRect.bottom - desktopRect.top);
-    const float desktopAspect = desktopWidth / desktopHeight;
+    float const desktopWidth  = static_cast<float>(desktopRect.right - desktopRect.left);
+    float const desktopHeight = static_cast<float>(desktopRect.bottom - desktopRect.top);
+    float const desktopAspect = desktopWidth / desktopHeight;
 
     // Calculate maximum client size (as some % of desktop size)
     constexpr float maxClientFractionOfDesktop = 0.90f;
@@ -268,8 +270,8 @@ void Window::CreateOSWindow()
     }
 
     // Calculate client rect bounds by centering the client area
-    const float clientMarginX = 0.5f * (desktopWidth - clientWidth);
-    const float clientMarginY = 0.5f * (desktopHeight - clientHeight);
+    float const clientMarginX = 0.5f * (desktopWidth - clientWidth);
+    float const clientMarginY = 0.5f * (desktopHeight - clientHeight);
     RECT        clientRect;
     clientRect.left   = static_cast<int>(clientMarginX);
     clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
@@ -303,7 +305,7 @@ void Window::CreateOSWindow()
         nullptr                               // Additional parameters passed to WM_CREATE (null if none)
     );
 
-    const HWND windowHandle = static_cast<HWND>(m_windowHandle);
+    HWND const windowHandle = static_cast<HWND>(m_windowHandle);
 
     ShowWindow(windowHandle, SW_SHOW);
     SetForegroundWindow(windowHandle);
@@ -311,7 +313,7 @@ void Window::CreateOSWindow()
 
     m_displayContext = GetDC(windowHandle);
 
-    const HCURSOR cursor = LoadCursor(nullptr, IDC_ARROW);
+    HCURSOR const cursor = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(cursor);
 }
 

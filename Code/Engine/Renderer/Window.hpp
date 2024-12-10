@@ -6,6 +6,7 @@
 #pragma once
 #include <string>
 
+#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -16,8 +17,8 @@ struct WindowConfig
 {
 	InputSystem* m_inputSystem = nullptr;
 	float        m_aspectRatio = 16.f / 9.f;
-	std::string  m_consoleTitle[11];
-	std::string  m_windowTitle = "Unnamed Application";
+	String  m_consoleTitle[11];
+	String  m_windowTitle = "Unnamed Application";
 };
 
 //-----------------------------------------------------------------------------------------------
