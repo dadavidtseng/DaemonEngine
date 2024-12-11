@@ -139,6 +139,14 @@ bool DevConsole::Command_Test(EventArgs& args)
 
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect) const
 {
+    VertexList boxVerts;
+    AABB2 box = AABB2(Vec2::ZERO, Vec2(1600.f,800.f));
+    AddVertsForAABB2D(boxVerts, box, Rgba8::TRANSLUCENT_BLACK);
+    renderer.BindTexture(nullptr);
+
+    // 繪製頂點陣列
+    renderer.DrawVertexArray(static_cast<int>(boxVerts.size()), boxVerts.data());
+    
     std::vector<Vertex_PCU> textVerts;
 
     // 計算每行文字的高度
@@ -175,5 +183,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     // 繪製頂點陣列
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
+
+    
 }
 
