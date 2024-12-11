@@ -54,6 +54,7 @@ extern unsigned char const KEYCODE_SPACE;
 extern unsigned char const KEYCODE_BACKSPACE;
 extern unsigned char const KEYCODE_LEFT_MOUSE;
 extern unsigned char const KEYCODE_RIGHT_MOUSE;
+extern unsigned char const KEYCODE_OEM_3;
 
 //-----------------------------------------------------------------------------------------------
 constexpr int NUM_KEYCODES         = 256;

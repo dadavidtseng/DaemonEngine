@@ -55,6 +55,7 @@ unsigned char const KEYCODE_SPACE       = VK_SPACE;
 unsigned char const KEYCODE_BACKSPACE   = VK_BACK;
 unsigned char const KEYCODE_LEFT_MOUSE  = VK_LBUTTON;
 unsigned char const KEYCODE_RIGHT_MOUSE = VK_RBUTTON;
+unsigned char const KEYCODE_OEM_3       = VK_OEM_3;
 
 //-----------------------------------------------------------------------------------------------
 InputSystem::InputSystem(InputSystemConfig const& config)
