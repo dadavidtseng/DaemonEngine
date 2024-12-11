@@ -9,7 +9,8 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-AABB2 AABB2::ZERO_TO_ONE = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+AABB2 AABB2::ZERO_TO_ONE      = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
+AABB2 AABB2::NEG_HALF_TO_HALF = AABB2(Vec2(-0.5f, -0.5f), Vec2(0.5f, 0.5f));
 
 //----------------------------------------------------------------------------------------------------
 AABB2::AABB2(float const minX, float const minY, float const maxX, float const maxY)
