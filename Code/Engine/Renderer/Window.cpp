@@ -10,10 +10,10 @@
 #include <iostream>
 #include <windows.h>
 
-#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
-
 
 //----------------------------------------------------------------------------------------------------
 Window* Window::s_mainWindow = nullptr; // static variables
@@ -76,8 +76,9 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
         case WM_CLOSE:
             {
                 //g_theApp->HandleQuitRequested();
-                // TODO: Use the Event system later to fix this!
-                ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
+                g_theEventSystem->FireEvent("WindowClose");
+                
+                // ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
                 // return 0; // "Consumes" this message (tells Windows "okay, we handled it")
             }
 
