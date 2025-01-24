@@ -21,9 +21,9 @@
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-float GetClamped(const float value,
-                 const float minValue,
-                 const float maxValue)
+float GetClamped(float const value,
+                 float const minValue,
+                 float const maxValue)
 {
     if (value > maxValue)
         return maxValue;
@@ -35,57 +35,57 @@ float GetClamped(const float value,
 }
 
 //----------------------------------------------------------------------------------------------------
-float GetClampedZeroToOne(const float value)
+float GetClampedZeroToOne(float const value)
 {
     return GetClamped(value, 0.f, 1.f);
 }
 
 //----------------------------------------------------------------------------------------------------
-float Interpolate(const float start,
-                  const float end,
-                  const float fractionTowardEnd)
+float Interpolate(float const start,
+                  float const end,
+                  float const fractionTowardEnd)
 {
-    const float range = end - start;
+    float const range = end - start;
 
     return start + range * fractionTowardEnd;
 }
 
 //----------------------------------------------------------------------------------------------------
-float GetFractionWithinRange(const float value,
-                             const float rangeStart,
-                             const float rangeEnd)
+float GetFractionWithinRange(float const value,
+                             float const rangeStart,
+                             float const rangeEnd)
 {
-    const float range = rangeEnd - rangeStart;
+    float const range = rangeEnd - rangeStart;
 
     return range == 0.f ? 0.f : (value - rangeStart) / range;
 }
 
 //----------------------------------------------------------------------------------------------------
-float RangeMap(const float inValue,
-               const float inStart,
-               const float inEnd,
-               const float outStart,
-               const float outEnd)
+float RangeMap(float const inValue,
+               float const inStart,
+               float const inEnd,
+               float const outStart,
+               float const outEnd)
 {
-    const float fractionTowardEnd = GetFractionWithinRange(inValue, inStart, inEnd);
+    float const fractionTowardEnd = GetFractionWithinRange(inValue, inStart, inEnd);
 
     return Interpolate(outStart, outEnd, fractionTowardEnd);
 }
 
 //----------------------------------------------------------------------------------------------------
-float RangeMapClamped(const float inValue,
-                      const float inStart,
-                      const float inEnd,
-                      const float outStart,
-                      const float outEnd)
+float RangeMapClamped(float const inValue,
+                      float const inStart,
+                      float const inEnd,
+                      float const outStart,
+                      float const outEnd)
 {
-    const float clampedInValue = GetClamped(inValue, inStart, inEnd);
+    float const clampedInValue = GetClamped(inValue, inStart, inEnd);
 
     return RangeMap(clampedInValue, inStart, inEnd, outStart, outEnd);
 }
 
 //----------------------------------------------------------------------------------------------------
-int RoundDownToInt(const float value)
+int RoundDownToInt(float const value)
 {
     return static_cast<int>(floorf(value));
 }
@@ -95,38 +95,38 @@ int RoundDownToInt(const float value)
 //-Start-of-Angle-Utilities---------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-float ConvertDegreesToRadians(const float degrees)
+float ConvertDegreesToRadians(float const degrees)
 {
     return degrees * (PI / 180.f);
 }
 
 //----------------------------------------------------------------------------------------------------
-float ConvertRadiansToDegrees(const float radians)
+float ConvertRadiansToDegrees(float const radians)
 {
     return radians * (180.f / PI);
 }
 
 //----------------------------------------------------------------------------------------------------
-float CosDegrees(const float degrees)
+float CosDegrees(float const degrees)
 {
     return cosf(ConvertDegreesToRadians(degrees));
 }
 
 //----------------------------------------------------------------------------------------------------
-float SinDegrees(const float degrees)
+float SinDegrees(float const degrees)
 {
     return sinf(ConvertDegreesToRadians(degrees));
 }
 
 //----------------------------------------------------------------------------------------------------
-float Atan2Degrees(const float y, const float x)
+float Atan2Degrees(float const y, float const x)
 {
     return ConvertRadiansToDegrees(atan2(y, x));
 }
 
 //----------------------------------------------------------------------------------------------------
-float GetShortestAngularDispDegrees(const float startDegrees,
-                                    const float endDegrees)
+float GetShortestAngularDispDegrees(float const startDegrees,
+                                    float const endDegrees)
 {
     float disp = endDegrees - startDegrees;
 
@@ -144,11 +144,11 @@ float GetShortestAngularDispDegrees(const float startDegrees,
 }
 
 //----------------------------------------------------------------------------------------------------
-float GetTurnedTowardDegrees(const float currentDegrees,
-                             const float goalDegrees,
-                             const float maxDeltaDegrees)
+float GetTurnedTowardDegrees(float const currentDegrees,
+                             float const goalDegrees,
+                             float const maxDeltaDegrees)
 {
-    float angDispDeg = GetShortestAngularDispDegrees(currentDegrees, goalDegrees);
+    float const angDispDeg = GetShortestAngularDispDegrees(currentDegrees, goalDegrees);
 
     if (fabsf(angDispDeg) < maxDeltaDegrees)
     {
@@ -167,9 +167,9 @@ float GetTurnedTowardDegrees(const float currentDegrees,
 float GetAngleDegreesBetweenVectors2D(Vec2 const& a,
                                       Vec2 const& b)
 {
-    const float dotProduct = DotProduct2D(a, b);
-    const float magnitudeA = a.GetLength();
-    const float magnitudeB = b.GetLength();
+    float const dotProduct = DotProduct2D(a, b);
+    float const magnitudeA = a.GetLength();
+    float const magnitudeB = b.GetLength();
 
     // If one of the vectors is zero, the angle is undefined, so return 0
     if (magnitudeA == 0.f || magnitudeB == 0.f)
@@ -183,8 +183,8 @@ float GetAngleDegreesBetweenVectors2D(Vec2 const& a,
     cosTheta = GetClamped(cosTheta, -1.0f, 1.0f);
 
     // Compute the angle in radians and convert to degrees
-    const float angleRadians = acosf(cosTheta);
-    const float angleDegrees = ConvertRadiansToDegrees(angleRadians);
+    float const angleRadians = acosf(cosTheta);
+    float const angleDegrees = ConvertRadiansToDegrees(angleRadians);
 
     return angleDegrees;
 }
@@ -200,6 +200,21 @@ float DotProduct2D(Vec2 const& a,
     return
         a.x * b.x +
         a.y * b.y;
+}
+
+float DotProduct3D(Vec3 const& a, Vec3 const& b)
+{
+    return 0;
+}
+
+float CrossProduct2D(Vec2 const& a, Vec2 const& b)
+{
+    return 0;
+}
+
+Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b)
+{
+    return Vec3(0, 0, 0);
 }
 
 //-End-of-Dot-and-Cross-------------------------------------------------------------------------------
@@ -288,15 +303,15 @@ int GetTaxicabDistance2D(IntVec2 const& pointA,
 float GetProjectedLength2D(Vec2 const& vectorToProject,
                            Vec2 const& vectorToProjectOnto)
 {
-    const float vectorToProjectOntoLength = vectorToProjectOnto.GetLength();
+    float const vectorToProjectOntoLength = vectorToProjectOnto.GetLength();
 
     if (vectorToProjectOntoLength == 0.f)
     {
         return 0.f;
     }
 
-    const float dotProduct      = DotProduct2D(vectorToProject, vectorToProjectOnto);
-    const float projectedLength = dotProduct / vectorToProjectOntoLength;
+    float const dotProduct      = DotProduct2D(vectorToProject, vectorToProjectOnto);
+    float const projectedLength = dotProduct / vectorToProjectOntoLength;
 
     return projectedLength;
 }
@@ -305,15 +320,15 @@ float GetProjectedLength2D(Vec2 const& vectorToProject,
 Vec2 GetProjectedOnto2D(Vec2 const& vectorToProject,
                         Vec2 const& vectorToProjectOnto)
 {
-    const float vectorToProjectOntoLengthSquared = vectorToProjectOnto.GetLengthSquared();
+    float const vectorToProjectOntoLengthSquared = vectorToProjectOnto.GetLengthSquared();
 
     if (vectorToProjectOntoLengthSquared == 0.f)
     {
         return Vec2::ZERO;
     }
 
-    const float dotProduct      = DotProduct2D(vectorToProject, vectorToProjectOnto);
-    const float projectionScale = dotProduct / vectorToProjectOntoLengthSquared;
+    float const dotProduct      = DotProduct2D(vectorToProject, vectorToProjectOnto);
+    float const projectionScale = dotProduct / vectorToProjectOntoLengthSquared;
 
     return vectorToProjectOnto * projectionScale;
 }
@@ -334,9 +349,9 @@ bool DoDiscsOverlap(Vec2 const& centerA,
 
 //----------------------------------------------------------------------------------------------------
 bool DoSpheresOverlap(Vec3 const& centerA,
-                      const float radiusA,
+                      float const radiusA,
                       Vec3 const& centerB,
-                      const float radiusB)
+                      float const radiusB)
 {
     return
         GetDistance3D(centerA, centerB) < (radiusA + radiusB);
@@ -432,6 +447,7 @@ bool IsPointInsideDisc2D(Vec2 const& point,
 
     return distSquared <= discRadiusSquared;
 }
+
 //----------------------------------------------------------------------------------------------------
 bool IsPointInsideDisc2D(Vec2 const& point, Disc2 const& disc)
 {
@@ -627,8 +643,8 @@ void TransformPosition2D(Vec2&       posToTransform,
 
 //----------------------------------------------------------------------------------------------------
 void TransformPositionXY3D(Vec3&       posToTransform,
-                           const float scaleXY,
-                           const float zRotationDegrees,
+                           float const scaleXY,
+                           float const zRotationDegrees,
                            Vec2 const& translationXY)
 {
     posToTransform.x *= scaleXY;
@@ -663,7 +679,7 @@ void TransformPositionXY3D(Vec3&       posToTransform,
 // TODO: normalize and denormalize
 float NormalizeByte(unsigned char const byte)
 {
-    float const floatZeroToOne = static_cast<float>(byte) / 255.0f;
+    float const floatZeroToOne = static_cast<float>(byte) / 255.f;
     return floatZeroToOne;
 }
 

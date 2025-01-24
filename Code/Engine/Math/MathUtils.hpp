@@ -5,16 +5,16 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
-struct LineSegment2;
-struct Triangle2;
-struct Capsule2;
-struct OBB2;
-struct Disc2;
 //----------------------------------------------------------------------------------------------------
+struct AABB2;
+struct Capsule2;
+struct Disc2;
+struct IntVec2;
+struct LineSegment2;
+struct OBB2;
+struct Triangle2;
 struct Vec2;
 struct Vec3;
-struct IntVec2;
-struct AABB2;
 
 //----------------------------------------------------------------------------------------------------
 constexpr float PI      = 3.14159265358979323846f;
@@ -48,6 +48,9 @@ float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b);
 //-Start-of-Dot-and-Cross-----------------------------------------------------------------------------
 
 float DotProduct2D(Vec2 const& a, Vec2 const& b);
+float DotProduct3D(Vec3 const& a, Vec3 const& b);
+float CrossProduct2D(Vec2 const& a, Vec2 const& b);
+Vec3  CrossProduct3D(Vec3 const& a, Vec3 const& b);
 
 //-End-of-Dot-and-Cross-------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
@@ -85,7 +88,8 @@ bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& box);
 bool IsPointInsideCapsule(Vec2 const& point, Capsule2 const& capsule);
 bool IsPointInsideTriangle(Vec2 const& point, Triangle2 const& triangle);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
-bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees, float sectorRadius);
+bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees,
+                                   float       sectorRadius);
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
