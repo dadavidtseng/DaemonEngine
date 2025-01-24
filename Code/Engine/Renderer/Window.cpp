@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Window.hpp"
 #define WIN32_LEAN_AND_MEAN
-#define CONSOLE_HANDLER handler;
+#define CONSOLE_HANDLER
 
 #include <iostream>
 #include <windows.h>
@@ -24,9 +24,6 @@ Window::Window(WindowConfig const& config)
     m_config     = config;
     s_mainWindow = this;
 }
-
-//----------------------------------------------------------------------------------------------------
-Window::~Window() = default;
 
 //----------------------------------------------------------------------------------------------------
 void Window::Startup()
@@ -65,91 +62,92 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 {
     InputSystem* input = nullptr;
 
-    if (Window::s_mainWindow && Window::s_mainWindow->GetConfig().m_inputSystem)
+    if (Window::s_mainWindow &&
+        Window::s_mainWindow->GetConfig().m_inputSystem)
     {
         input = Window::s_mainWindow->GetConfig().m_inputSystem;
     }
 
     switch (wmMessageCode)
     {
-        // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
-        case WM_CLOSE:
+    // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
+    case WM_CLOSE:
+        {
+            //g_theApp->HandleQuitRequested();
+            g_theEventSystem->FireEvent("WindowClose");
+
+            // ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
+            return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+        }
+
+    // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
+    case WM_KEYDOWN:
+        {
+            if (input)
             {
-                //g_theApp->HandleQuitRequested();
-                g_theEventSystem->FireEvent("WindowClose");
-                
-                // ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
-                // return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+                const unsigned char asKey = static_cast<unsigned char>(wParam);
+
+                input->HandleKeyPressed(asKey);
             }
 
-        // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
-        case WM_KEYDOWN:
+            break;
+        }
+
+    // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
+    case WM_KEYUP:
+        {
+            if (input)
             {
-                if (input)
-                {
-                    const unsigned char asKey = static_cast<unsigned char>(wParam);
+                unsigned char const asKey = static_cast<unsigned char>(wParam);
 
-                    input->HandleKeyPressed(asKey);
-                }
-
-                break;
+                input->HandleKeyReleased(asKey);
             }
 
-        // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
-        case WM_KEYUP:
+            break;
+        }
+
+    // Mouse left & right button down and up events; treat as a fake keyboard key
+    case WM_LBUTTONDOWN:
+        {
+            if (input)
             {
-                if (input)
-                {
-                    unsigned char const asKey = static_cast<unsigned char>(wParam);
-
-                    input->HandleKeyReleased(asKey);
-                }
-
-                break;
+                input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
             }
 
-        // Mouse left & right button down and up events; treat as a fake keyboard key
-        case WM_LBUTTONDOWN:
-            {
-                if (input)
-                {
-                    input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
-                }
+            return 0;
+        }
 
-                return 0;
+    case WM_LBUTTONUP:
+        {
+            if (input)
+            {
+                input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
             }
 
-        case WM_LBUTTONUP:
-            {
-                if (input)
-                {
-                    input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
-                }
+            return 0;
+        }
 
-                return 0;
+    case WM_RBUTTONDOWN:
+        {
+            if (input)
+            {
+                input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
             }
 
-        case WM_RBUTTONDOWN:
-            {
-                if (input)
-                {
-                    input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
-                }
+            return 0;
+        }
 
-                return 0;
+    case WM_RBUTTONUP:
+        {
+            if (input)
+            {
+                input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
             }
 
-        case WM_RBUTTONUP:
-            {
-                if (input)
-                {
-                    input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
-                }
+            return 0;
+        }
 
-                return 0;
-            }
-
-        default: ;
+    default: ;
     }
 
 
@@ -210,14 +208,21 @@ Vec2 Window::GetNormalizedMouseUV() const
     HWND const windowHandle = static_cast<HWND>(m_windowHandle);
     POINT      cursorCoords;
     RECT       clientRect;
-    GetCursorPos(&cursorCoords);	// in Window screen coordinates; (0,0) is top-left
+
+    GetCursorPos(&cursorCoords);	                // in Window screen coordinates; (0,0) is top-left
     ScreenToClient(windowHandle, &cursorCoords);	// get relative to this window's client area
-    GetClientRect(windowHandle, &clientRect);	// dimensions of client area (0,0 to width, height)
+    GetClientRect(windowHandle, &clientRect);	    // dimensions of client area (0,0 to width, height)
 
     float const cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
     float const cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 
     return Vec2(cursorX, 1.f - cursorY);	// Flip Y; we want (0,0) bottom-left, not top-left
+}
+
+//----------------------------------------------------------------------------------------------------
+IntVec2 Window::GetClientDimensions() const
+{
+    return m_clientDimensions;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -316,6 +321,8 @@ void Window::CreateOSWindow()
 
     HCURSOR const cursor = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(cursor);
+
+    m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
 }
 
 //----------------------------------------------------------------------------------------------------
