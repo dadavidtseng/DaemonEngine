@@ -7,14 +7,14 @@
 
 #include <cmath>
 
-#include "Capsule2.hpp"
+#include "Engine/Math/Capsule2.hpp"
 // #include "LineSegment2.hpp"
-#include "OBB2.hpp"
-#include "Triangle2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/OBB2.hpp"
+#include "Engine/Math/Triangle2.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 
@@ -202,19 +202,28 @@ float DotProduct2D(Vec2 const& a,
         a.y * b.y;
 }
 
+//----------------------------------------------------------------------------------------------------
 float DotProduct3D(Vec3 const& a, Vec3 const& b)
 {
-    return 0;
+    return
+        a.x * b.x +
+        a.y * b.y +
+        a.z * b.z;
 }
 
+//----------------------------------------------------------------------------------------------------
 float CrossProduct2D(Vec2 const& a, Vec2 const& b)
 {
-    return 0;
+    return
+        a.x * b.y -
+        a.y * b.x;
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b)
 {
-    return Vec3(0, 0, 0);
+    return
+        Vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
 //-End-of-Dot-and-Cross-------------------------------------------------------------------------------
@@ -541,7 +550,7 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point,
 //----------------------------------------------------------------------------------------------------
 Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition,
                              Vec2 const& discCenter,
-                             const float discRadius)
+                             float const discRadius)
 {
     const float distSquared       = GetDistanceSquared2D(referencePosition, discCenter);
     const float discRadiusSquared = discRadius * discRadius;
@@ -557,8 +566,8 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition,
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnDisc2D(const Vec2&  referencePosition,
-                             const Disc2& disc)
+Vec2 GetNearestPointOnDisc2D(Vec2 const&  referencePosition,
+                             Disc2 const& disc)
 {
     return disc.GetNearestPoint(referencePosition);
 }
@@ -617,8 +626,8 @@ Vec2 GetNearestPointOnTriangle2D(Vec2 const&      referencePos,
 
 //----------------------------------------------------------------------------------------------------
 void TransformPosition2D(Vec2&       posToTransform,
-                         const float uniformScale,
-                         const float rotationDegrees,
+                         float const uniformScale,
+                         float const rotationDegrees,
                          Vec2 const& translation)	// TODO: refactor 
 {
     posToTransform.x *= uniformScale;
@@ -675,15 +684,26 @@ void TransformPositionXY3D(Vec3&       posToTransform,
 }
 
 //-End-of-Transform-Utilities-------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+//-Start-of-Byte-Denormalization----------------------------------------------------------------------
 
-// TODO: normalize and denormalize
+//----------------------------------------------------------------------------------------------------
 float NormalizeByte(unsigned char const byte)
 {
     float const floatZeroToOne = static_cast<float>(byte) / 255.f;
     return floatZeroToOne;
 }
 
+//----------------------------------------------------------------------------------------------------
 unsigned char DenormalizeByte(float const zeroToOne)
 {
-    return static_cast<unsigned char>(zeroToOne * 255.f);
+    if (zeroToOne <= 0.0f)
+        return 0;
+
+    if (zeroToOne >= 1.0f)
+        return 255;
+
+    return static_cast<unsigned char>(zeroToOne * 256.0f);
 }
+
+//-End-of-Byte-Denormalization------------------------------------------------------------------------

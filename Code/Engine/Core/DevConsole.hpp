@@ -58,10 +58,10 @@ public:
     void           ToggleMode(DevConsoleMode mode);
     bool           Command_Test(EventArgs& args);
 
-    static const Rgba8 ERROR;
-    static const Rgba8 WARNING;
+    // static const Rgba8 ERROR;
+    // static const Rgba8 WARNING;
     static const Rgba8 INFO_MAJOR;
-    static const Rgba8 INFO_MINOR;
+    // static const Rgba8 INFO_MINOR;
 
 protected:
     void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect = 1.f) const;

@@ -151,7 +151,7 @@ void Triangle2::RotateAboutCenter(float degrees)
 {
     Vec2 center = GetCenter();
 
-    float radians = degrees * (PI / 180.0f);
+    float radians = degrees * (PI / 180.f);
 
     for (int i = 0; i < 3; ++i)
     {

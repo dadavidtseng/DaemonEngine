@@ -12,10 +12,10 @@
 DevConsole* g_theDevConsole = nullptr;
 
 // Static color constants for different message types
-const Rgba8 DevConsole::ERROR = Rgba8(255, 0, 0);
-const Rgba8 DevConsole::WARNING = Rgba8(255, 255, 0);
-const Rgba8 DevConsole::INFO_MAJOR = Rgba8(0, 255, 0);
-const Rgba8 DevConsole::INFO_MINOR = Rgba8(0, 255, 255);
+// Rgba8 const DevConsole::ERROR = Rgba8(255, 0, 0);
+// Rgba8 const DevConsole::WARNING = Rgba8(255, 255, 0);
+Rgba8 const DevConsole::INFO_MAJOR = Rgba8(0, 255, 0);
+// Rgba8 const DevConsole::INFO_MINOR = Rgba8(0, 255, 255);
 
 DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
@@ -49,16 +49,16 @@ void DevConsole::EndFrame()
 void DevConsole::Execute(String const& consoleCommandText)
 {
     std::istringstream stream(consoleCommandText);
-    std::string commandLine;
+    std::string        commandLine;
 
     while (std::getline(stream, commandLine))
     {
         std::istringstream lineStream(commandLine);
-        std::string command;
-        lineStream >> command;  // First word is the command
+        std::string        command;
+        lineStream >> command; // First word is the command
 
         std::map<String, String> args;
-        std::string arg;
+        std::string              arg;
 
         while (lineStream >> arg)
         {
@@ -93,18 +93,18 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
     // Render the console depending on the current mode
     switch (m_mode)
     {
-        case OPEN_FULL:
-            Render_OpenFull(bounds, *rendererOverride, *g_theBitmapFont, 1.f);
-            break;
-        case OPEN_PARTIAL:
-            // Render partial screen console if needed
-            break;
-        case HIDDEN:
-            // Don't render
-            break;
-        case COMMAND_LINE_PROMPT:
-            // Render the command line prompt
-            break;
+    case OPEN_FULL:
+        Render_OpenFull(bounds, *rendererOverride, *g_theBitmapFont, 1.f);
+        break;
+    case OPEN_PARTIAL:
+        // Render partial screen console if needed
+        break;
+    case HIDDEN:
+        // Don't render
+        break;
+    case COMMAND_LINE_PROMPT:
+        // Render the command line prompt
+        break;
     }
 }
 
@@ -122,7 +122,7 @@ void DevConsole::ToggleMode(DevConsoleMode const mode)
 {
     if (m_mode == mode)
     {
-        m_mode = HIDDEN;  // Hide console if already in that mode
+        m_mode = HIDDEN; // Hide console if already in that mode
     }
     else
     {
@@ -134,19 +134,19 @@ bool DevConsole::Command_Test(EventArgs& args)
 {
     UNUSED(args)
     AddLine(INFO_MAJOR, "Test command received");
-    return false;  // Continue calling other subscribers
+    return false; // Continue calling other subscribers
 }
 
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont& font, float fontAspect) const
 {
     VertexList boxVerts;
-    AABB2 box = AABB2(Vec2::ZERO, Vec2(1600.f,800.f));
+    AABB2      box = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
     AddVertsForAABB2D(boxVerts, box, Rgba8::TRANSLUCENT_BLACK);
     renderer.BindTexture(nullptr);
 
     // 繪製頂點陣列
     renderer.DrawVertexArray(static_cast<int>(boxVerts.size()), boxVerts.data());
-    
+
     std::vector<Vertex_PCU> textVerts;
 
     // 計算每行文字的高度
@@ -166,16 +166,16 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
         // 確保文字在指定區域內，使用 AddVertsForTextInBox2D 添加頂點
         font.AddVertsForTextInBox2D(
-            textVerts,               // 存放頂點的向量
-            line.m_text,             // 文字內容
-            textBounds,              // 繪製的文字邊界
-            lineHeight,              // 每行文字高度
-            line.m_color,            // 文字顏色
-            fontAspect,              // 字體比例
-            Vec2(0.f, 0.f)         // 文字靠左對齊，垂直置中,
-            
+            textVerts,     // 存放頂點的向量
+            line.m_text,   // 文字內容
+            textBounds,    // 繪製的文字邊界
+            lineHeight,    // 每行文字高度
+            line.m_color,  // 文字顏色
+            fontAspect,    // 字體比例
+            Vec2(0.f, 0.f) // 文字靠左對齊，垂直置中,
+
         );
-        printf("(%f, %f) (%f, %f)\n", textBounds.m_mins.x, textBounds.m_mins.y, textBounds.m_maxs.x, textBounds.m_maxs.y);
+        // printf("(%f, %f) (%f, %f)\n", textBounds.m_mins.x, textBounds.m_mins.y, textBounds.m_maxs.x, textBounds.m_maxs.y);
     }
 
     // 綁定字體紋理
@@ -183,7 +183,4 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     // 繪製頂點陣列
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
-
-    
 }
-

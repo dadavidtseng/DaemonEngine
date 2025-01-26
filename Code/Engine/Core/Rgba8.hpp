@@ -8,10 +8,10 @@
 //----------------------------------------------------------------------------------------------------
 struct Rgba8
 {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
+    unsigned char r = 255;
+    unsigned char g = 255;
+    unsigned char b = 255;
+    unsigned char a = 255;
 
     // TODO: ADD colors 
     static Rgba8 WHITE;
@@ -25,10 +25,11 @@ struct Rgba8
     static Rgba8 YELLOW;
     static Rgba8 BLUE;
 
-    Rgba8();
+    Rgba8() = default;
     explicit Rgba8(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255);
 
     void SetFromText(char const* text);
+    void GetAsFloats(float* colorAsFloats) const;
 };
 
 //----------------------------------------------------------------------------------------------------

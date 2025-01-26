@@ -9,14 +9,6 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Rgba8::Rgba8()
-    : r(255),
-      g(255),
-      b(255),
-      a(255)
-{
-}
-
 Rgba8 Rgba8::WHITE             = Rgba8(255, 255, 255);
 Rgba8 Rgba8::BLACK             = Rgba8(0, 0, 0);
 Rgba8 Rgba8::TRANSLUCENT_BLACK = Rgba8(0, 0, 0, 200);
@@ -31,10 +23,10 @@ Rgba8 Rgba8::BLUE              = Rgba8(0, 0, 255);
 //----------------------------------------------------------------------------------------------------
 Rgba8::Rgba8
 (
-    const unsigned char red,
-    const unsigned char green,
-    const unsigned char blue,
-    const unsigned char alpha
+    unsigned const char red,
+    unsigned const char green,
+    unsigned const char blue,
+    unsigned const char alpha
 )
     : r(red), g(green), b(blue), a(alpha)
 {
@@ -63,6 +55,16 @@ void Rgba8::SetFromText(char const* text)
 
     // If a fourth part exists, use it for the alpha value; otherwise, set alpha to 255
     a = parts.size() == 4 ? static_cast<unsigned char>(atoi(parts[3].c_str())) : 255;
+}
+
+// TODO: ask what to do if the given rgba is out of range
+//----------------------------------------------------------------------------------------------------
+void Rgba8::GetAsFloats(float* colorAsFloats) const
+{
+    colorAsFloats[0] = NormalizeByte(r);    // Red
+    colorAsFloats[1] = NormalizeByte(g);    // Green
+    colorAsFloats[2] = NormalizeByte(b);    // Blue
+    colorAsFloats[3] = NormalizeByte(a);    // Alpha
 }
 
 //----------------------------------------------------------------------------------------------------

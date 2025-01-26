@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Window.hpp"
 #define WIN32_LEAN_AND_MEAN
-#define CONSOLE_HANDLER
+// #define CONSOLE_HANDLER
 
 #include <iostream>
 #include <windows.h>

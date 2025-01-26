@@ -10,9 +10,9 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-OBB2::OBB2(const Vec2& center, const Vec2& iBasisNormal, const Vec2& halfDimensions)
+OBB2::OBB2(Vec2 const& center, Vec2 const& iBasisNormal, Vec2 const& halfDimensions)
     : m_center(center),
-      m_iBasisNormal(iBasisNormal.GetNormalized()), // Ensure the basis vector is a unit vector
+      m_iBasisNormal(iBasisNormal.GetNormalized()),
       m_halfDimensions(halfDimensions)
 {
 }
