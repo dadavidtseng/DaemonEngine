@@ -248,7 +248,7 @@ void Window::CreateOSWindow()
     RegisterClassEx(&windowClassDescription);
 
     // #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
-    constexpr DWORD windowStyleFlags   = WS_CAPTION | WS_BORDER | WS_THICKFRAME | WS_SYSMENU | WS_OVERLAPPED;
+    constexpr DWORD windowStyleFlags   = WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_OVERLAPPED;
     constexpr DWORD windowStyleExFlags = WS_EX_APPWINDOW;
 
     // Get desktop rect, dimensions, aspect
@@ -286,7 +286,8 @@ void Window::CreateOSWindow()
 
     // Calculate the outer dimensions of the physical window, including frame et al.
     RECT windowRect = clientRect;
-    AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
+    // AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
+
 
     WCHAR windowTitle[1024];
     MultiByteToWideChar(GetACP(),

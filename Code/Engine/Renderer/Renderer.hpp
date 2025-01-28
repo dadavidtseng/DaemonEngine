@@ -57,7 +57,7 @@ public:
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
-    void        CreateRenderingContext();
+    // void        CreateRenderingContext();
     Texture*    CreateTextureFromFile(char const* imageFilePath);
     Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
 

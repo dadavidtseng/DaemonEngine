@@ -11,7 +11,7 @@
 // Both of the following lines will eventually move to the top of Engine/Renderer/Renderer.cpp
 //
 #include <wingdi.h>
-#include <gl/gl.h>					// Include basic OpenGL constants and function declarations
+//#include <gl/gl.h>					// Include basic OpenGL constants and function declarations
 
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -20,7 +20,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Texture.hpp"
 
-#pragma comment( lib, "opengl32" )	// Link in the OpenGL32.lib static library
+//#pragma comment( lib, "opengl32" )	// Link in the OpenGL32.lib static library
 
 extern HWND g_hWnd;
 
@@ -32,7 +32,7 @@ Renderer::Renderer(RenderConfig const& render_config)
 //-----------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
-    CreateRenderingContext();
+    // CreateRenderingContext();
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ void Renderer::EndFrame() const
         const HDC displayContext = static_cast<HDC>(m_config.m_window->GetDisplayContext());
 
         // "Present" the back buffer by swapping the front (visible) and back (working) screen buffers
-        SwapBuffers(displayContext); // Note: call this only once at the very end of each frame
+        // SwapBuffers(displayContext); // Note: call this only once at the very end of each frame
     }
 }
 
@@ -61,13 +61,13 @@ void Renderer::Shutdown()
 void Renderer::ClearScreen(Rgba8 const& clearColor)
 {
     // Clear all screen (back buffer) pixels to clearColor
-    glClearColor(static_cast<float>(clearColor.r) / 255.0f,
-                 static_cast<float>(clearColor.g) / 255.0f,
-                 static_cast<float>(clearColor.b) / 255.0f,
-                 clearColor.a);
+    // glClearColor(static_cast<float>(clearColor.r) / 255.0f,
+    //              static_cast<float>(clearColor.g) / 255.0f,
+    //              static_cast<float>(clearColor.b) / 255.0f,
+    //              clearColor.a);
     // Note; glClearColor takes colors as floats in [0,1], not bytes in [0,255]
     // ALWAYS clear the screen at the top of each frame's Render()!
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -77,9 +77,9 @@ void Renderer::BeginCamera(const Camera& camera)
     Vec2 const topRight   = camera.GetOrthoTopRight();
 
     // Establish a 2D (orthographic) drawing coordinate system (bottom-left to top-right)
-    glLoadIdentity();
+    // glLoadIdentity();
     // arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
-    glOrtho(bottomLeft.x, topRight.x, bottomLeft.y, topRight.y, 0.f, 1.f);
+    // glOrtho(bottomLeft.x, topRight.x, bottomLeft.y, topRight.y, 0.f, 1.f);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -93,20 +93,20 @@ void Renderer::DrawVertexArray(const int numVertexes, const Vertex_PCU* vertexes
 {
     // Draw some triangles (provide 3 vertexes each)
     //
-    glBegin(GL_TRIANGLES);
-    {
-        for (int i = 0; i < numVertexes; i++)
-        {
-            const Vec3  position    = vertexes[i].m_position;
-            const Rgba8 color       = vertexes[i].m_color;
-            const Vec2  uvTexCoords = vertexes[i].m_uvTexCoords;
-
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glTexCoord2f(uvTexCoords.x, uvTexCoords.y);
-            glVertex2f(position.x, position.y);
-        }
-    }
-    glEnd();
+    // glBegin(GL_TRIANGLES);
+    // {
+    //     for (int i = 0; i < numVertexes; i++)
+    //     {
+    //         const Vec3  position    = vertexes[i].m_position;
+    //         const Rgba8 color       = vertexes[i].m_color;
+    //         const Vec2  uvTexCoords = vertexes[i].m_uvTexCoords;
+    //
+    //         glColor4ub(color.r, color.g, color.b, color.a);
+    //         glTexCoord2f(uvTexCoords.x, uvTexCoords.y);
+    //         glVertex2f(position.x, position.y);
+    //     }
+    // }
+    // glEnd();
 }
 
 Texture* Renderer::GetTextureForFileName(char const* imageFilePath) const
@@ -135,35 +135,35 @@ BitmapFont* Renderer::GetBitMapFontForFileName(const char* bitmapFontFilePathWit
 //------------------------------------------------------------------------------------------------
 // Given an existing OS Window, create a Rendering Context (RC) for OpenGL or DirectX to draw to it.
 //
-void Renderer::CreateRenderingContext()
-{
-    // Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
-    PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-
-    memset(&pixelFormatDescriptor, 0, sizeof(pixelFormatDescriptor));
-    pixelFormatDescriptor.nSize        = sizeof(pixelFormatDescriptor);
-    pixelFormatDescriptor.nVersion     = 1;
-    pixelFormatDescriptor.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pixelFormatDescriptor.iPixelType   = PFD_TYPE_RGBA;
-    pixelFormatDescriptor.cColorBits   = 24;
-    pixelFormatDescriptor.cDepthBits   = 24;
-    pixelFormatDescriptor.cAccumBits   = 0;
-    pixelFormatDescriptor.cStencilBits = 8;
-
-    HDC const displayContext = static_cast<HDC>(m_config.m_window->GetDisplayContext());
-
-    // These two OpenGL-like functions (wglCreateContext and wglMakeCurrent) will remain here for now.
-    int const pixelFormatCode = ChoosePixelFormat(displayContext, &pixelFormatDescriptor);
-
-    SetPixelFormat(displayContext, pixelFormatCode, &pixelFormatDescriptor);
-
-    m_apiRenderingContext = wglCreateContext(displayContext);
-
-    wglMakeCurrent(displayContext, static_cast<HGLRC>(m_apiRenderingContext));
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
+// void Renderer::CreateRenderingContext()
+// {
+//     // Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
+//     PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
+//
+//     memset(&pixelFormatDescriptor, 0, sizeof(pixelFormatDescriptor));
+//     pixelFormatDescriptor.nSize        = sizeof(pixelFormatDescriptor);
+//     pixelFormatDescriptor.nVersion     = 1;
+//     pixelFormatDescriptor.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+//     pixelFormatDescriptor.iPixelType   = PFD_TYPE_RGBA;
+//     pixelFormatDescriptor.cColorBits   = 24;
+//     pixelFormatDescriptor.cDepthBits   = 24;
+//     pixelFormatDescriptor.cAccumBits   = 0;
+//     pixelFormatDescriptor.cStencilBits = 8;
+//
+//     HDC const displayContext = static_cast<HDC>(m_config.m_window->GetDisplayContext());
+//
+//     // These two OpenGL-like functions (wglCreateContext and wglMakeCurrent) will remain here for now.
+//     int const pixelFormatCode = ChoosePixelFormat(displayContext, &pixelFormatDescriptor);
+//
+//     SetPixelFormat(displayContext, pixelFormatCode, &pixelFormatDescriptor);
+//
+//     m_apiRenderingContext = wglCreateContext(displayContext);
+//
+//     wglMakeCurrent(displayContext, static_cast<HGLRC>(m_apiRenderingContext));
+//
+//     glEnable(GL_BLEND);
+//     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+// }
 
 //-----------------------------------------------------------------------------------------------
 // Sample code for loading an image from disk and creating an OpenGL texture from its data.
@@ -235,49 +235,49 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimens
     newTexture->m_dimensions = dimensions;
 
     // Enable OpenGL texturing
-    glEnable(GL_TEXTURE_2D);
+    // glEnable(GL_TEXTURE_2D);
 
     // Tell OpenGL that our pixel data is single-byte aligned
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     // Ask OpenGL for an unused texName (ID number) to use for this texture
-    glGenTextures(1, (GLuint*) &newTexture->m_openglTextureID);
+    // glGenTextures(1, (GLuint*) &newTexture->m_openglTextureID);
 
     // Tell OpenGL to bind (set) this as the currently active texture
-    glBindTexture(GL_TEXTURE_2D, newTexture->m_openglTextureID);
+    // glBindTexture(GL_TEXTURE_2D, newTexture->m_openglTextureID);
 
     // Set texture clamp vs. wrap (repeat) default settings
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // GL_CLAMP or GL_REPEAT
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // GL_CLAMP or GL_REPEAT
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // GL_CLAMP or GL_REPEAT
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // GL_CLAMP or GL_REPEAT
 
     // Set magnification (texel > pixel) and minification (texel < pixel) filters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     // one of: GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR
 
     // Pick the appropriate OpenGL format (RGB or RGBA) for this texel data
-    GLenum bufferFormat = GL_RGBA;
+    // GLenum bufferFormat = GL_RGBA;
     // the format our source pixel data is in; any of: GL_RGB, GL_RGBA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, ...
     if (bytesPerTexel == 3)
     {
-        bufferFormat = GL_RGB;
+        // bufferFormat = GL_RGB;
     }
-    GLenum internalFormat = bufferFormat;
+    // GLenum internalFormat = bufferFormat;
     // the format we want the texture to be on the card; technically allows us to translate into a different texture format as we upload to OpenGL
 
     // Upload the image texel data (raw pixels bytes) to OpenGL under this textureID
-    glTexImage2D( // Upload this pixel data to our new OpenGL texture
-        GL_TEXTURE_2D, // Creating this as a 2d texture
-        0, // Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-        internalFormat, // Type of texel format we want OpenGL to use for this texture internally on the video card
-        dimensions.x,
+    // glTexImage2D( // Upload this pixel data to our new OpenGL texture
+        // GL_TEXTURE_2D, // Creating this as a 2d texture
+        // 0, // Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
+        // internalFormat, // Type of texel format we want OpenGL to use for this texture internally on the video card
+        // dimensions.x,
         // Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-        dimensions.y,
+        // dimensions.y,
         // Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-        0,                // Border size, in texels (must be 0 or 1, recommend 0)
-        bufferFormat,     // Pixel format describing the composition of the pixel data in buffer
-        GL_UNSIGNED_BYTE, // Pixel color components are unsigned bytes (one byte per color channel/component)
-        texelData);       // Address of the actual pixel data bytes/buffer in system memory
+        // 0,                // Border size, in texels (must be 0 or 1, recommend 0)
+        // bufferFormat,     // Pixel format describing the composition of the pixel data in buffer
+        // GL_UNSIGNED_BYTE, // Pixel color components are unsigned bytes (one byte per color channel/component)
+        // texelData);       // Address of the actual pixel data bytes/buffer in system memory
 
     m_loadedTextures.push_back(newTexture);
     return newTexture;
@@ -313,11 +313,11 @@ void Renderer::SetBlendMode(BlendMode const mode)
 {
     if (mode == BlendMode::ALPHA) // enum class BlendMode, defined near top of Renderer.hpp
     {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
     else if (mode == BlendMode::ADDITIVE)
     {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
     else
     {
@@ -332,13 +332,13 @@ void Renderer::BindTexture(const Texture* texture)
     if (texture)
     {
         // Crushing the app if m_openglTextureID is 0xFFFFFFFF
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, texture->m_openglTextureID);
+        // glEnable(GL_TEXTURE_2D);
+        // glBindTexture(GL_TEXTURE_2D, texture->m_openglTextureID);
     }
     else
     {
         // Bind the texture with vertices color
-        glDisable(GL_TEXTURE_2D);
+        // glDisable(GL_TEXTURE_2D);
     }
 }
 
