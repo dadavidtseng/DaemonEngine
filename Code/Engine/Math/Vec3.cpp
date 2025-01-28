@@ -1,173 +1,213 @@
+//----------------------------------------------------------------------------------------------------
+// Vec3.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Vec3.hpp"
+
+#include <cmath>
+
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "cmath"
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+STATIC Vec3 Vec3::ZERO = Vec3(0, 0, 0);
+STATIC Vec3 Vec3::ONE  = Vec3(1, 1, 1);
 
-Vec3::Vec3(float initialX, float initialY, float initialZ)
-	: x(initialX)
-	, y(initialY)
-	, z(initialZ)
+//----------------------------------------------------------------------------------------------------
+Vec3::Vec3(float const initialX, float const initialY, float const initialZ)
+    : x(initialX)
+      , y(initialY)
+      , z(initialZ)
 {
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetLength() const
 {
-	return sqrtf(x * x + y * y + z * z);
+    return
+        sqrtf(x * x + y * y + z * z);
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetLengthXY() const
 {
-	return sqrtf(x * x + y * y);
+    return
+        sqrtf(x * x + y * y);
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetLengthSquared() const
 {
-	return x * x + y * y + z * z;
+    return
+        x * x + y * y + z * z;
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetLengthXYSquared() const
 {
-	return x * x + y * y;
+    return
+        x * x + y * y;
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetAngleAboutZRadians() const
 {
-	return ConvertDegreesToRadians(Atan2Degrees(y, x));
+    return
+        ConvertDegreesToRadians(Atan2Degrees(y, x));
 }
 
+//----------------------------------------------------------------------------------------------------
 float Vec3::GetAngleAboutZDegrees() const
 {
-	return Atan2Degrees(y, x);
+    return
+        Atan2Degrees(y, x);
 }
 
-Vec3 const Vec3::GetRotatedAboutZRadians(float deltaRadians) const
+//----------------------------------------------------------------------------------------------------
+Vec3 const Vec3::GetRotatedAboutZRadians(float const deltaRadians) const
 {
-	float length = GetLengthXY();
-	float degree = GetAngleAboutZDegrees();
-	float newDegree = degree + ConvertRadiansToDegrees(deltaRadians);
+    float const length    = GetLengthXY();
+    float const degree    = GetAngleAboutZDegrees();
+    float const newDegree = degree + ConvertRadiansToDegrees(deltaRadians);
 
-	float deltaX = length * CosDegrees(newDegree);
-	float deltaY = length * SinDegrees(newDegree);
+    float const deltaX = length * CosDegrees(newDegree);
+    float const deltaY = length * SinDegrees(newDegree);
 
-	return Vec3(deltaX, deltaY, z);
+    return Vec3(deltaX, deltaY, z);
 }
 
-Vec3 const Vec3::GetRotatedAboutZDegrees(float deltaDegrees) const
+//----------------------------------------------------------------------------------------------------
+Vec3 const Vec3::GetRotatedAboutZDegrees(float const deltaDegrees) const
 {
-	float length = GetLengthXY();
-	float newDegree = GetAngleAboutZDegrees() + deltaDegrees;
+    float const length    = GetLengthXY();
+    float const newDegree = GetAngleAboutZDegrees() + deltaDegrees;
 
-	float deltaX = length * CosDegrees(newDegree);
-	float deltaY = length * SinDegrees(newDegree);
+    float const deltaX = length * CosDegrees(newDegree);
+    float const deltaY = length * SinDegrees(newDegree);
 
-	return Vec3(deltaX, deltaY, z);
+    return Vec3(deltaX, deltaY, z);
 }
 
-Vec3 const Vec3::GetClamped(float maxLength) const
+//----------------------------------------------------------------------------------------------------
+Vec3 const Vec3::GetClamped(float const maxLength) const
 {
-	float length = GetLength();
+    float const length = GetLength();
 
-	if (length > maxLength)
-	{
-		float scale = maxLength / length;
+    if (length > maxLength)
+    {
+        float const scale = maxLength / length;
 
-		return Vec3(x * scale, y * scale, z * scale);
-	}
-	else
-	{
-		return Vec3(x, y, z);
-	}
+        return Vec3(x * scale, y * scale, z * scale);
+    }
+
+    return Vec3(x, y, z);
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec3 const Vec3::GetNormalized() const
 {
-	float length = GetLength();
-	float scale = 1.f / length;
+    float const length = GetLength();
+    float const scale  = 1.f / length;
 
-	return Vec3(x * scale, y * scale, z * scale);
+    return Vec3(x * scale, y * scale, z * scale);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 bool Vec3::operator==(Vec3 const& compare) const
 {
-	return (x == compare.x) && (y == compare.y) && (z == compare.z);
+    return
+        std::fabs(x - compare.x) < EPSILON &&
+        std::fabs(y - compare.y) < EPSILON &&
+        std::fabs(z - compare.z) < EPSILON;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 bool Vec3::operator!=(Vec3 const& compare) const
 {
-	return (x != compare.x) || (y != compare.y) || (z != compare.z);
+    return
+        !(*this == compare);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 Vec3 const Vec3::operator+(Vec3 const& vecToAdd) const
 {
-	return Vec3(x + vecToAdd.x, y + vecToAdd.y, z + vecToAdd.z);
+    return
+        Vec3(x + vecToAdd.x, y + vecToAdd.y, z + vecToAdd.z);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 Vec3 const Vec3::operator-(Vec3 const& vecToSubtract) const
 {
-	return Vec3(x - vecToSubtract.x, y - vecToSubtract.y, z - vecToSubtract.z);
+    return
+        Vec3(x - vecToSubtract.x, y - vecToSubtract.y, z - vecToSubtract.z);
 }
 
-//-----------------------------------------------------------------------------------------------
-Vec3 const Vec3::operator*(float uniformScale) const
+//----------------------------------------------------------------------------------------------------
+Vec3 const Vec3::operator*(float const uniformScale) const
 {
-	return Vec3(x * uniformScale, y * uniformScale, z * uniformScale);
+    return
+        Vec3(x * uniformScale, y * uniformScale, z * uniformScale);
 }
 
-//-----------------------------------------------------------------------------------------------
-Vec3 const Vec3::operator/(float inverseScale) const
+//----------------------------------------------------------------------------------------------------
+Vec3 const Vec3::operator/(float const inverseScale) const
 {
-	float scale = 1.f / inverseScale;
-	return Vec3(x * scale, y * scale, z * scale);
+    float const scale = 1.f / inverseScale;
+
+    return Vec3(x * scale, y * scale, z * scale);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Vec3::operator+=(Vec3 const& vecToAdd)
 {
-	x += vecToAdd.x;
-	y += vecToAdd.y;
-	z += vecToAdd.z;
+    x += vecToAdd.x;
+    y += vecToAdd.y;
+    z += vecToAdd.z;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Vec3::operator-=(Vec3 const& vecToSubtract)
 {
-	x -= vecToSubtract.x;
-	y -= vecToSubtract.y;
-	z -= vecToSubtract.z;
+    x -= vecToSubtract.x;
+    y -= vecToSubtract.y;
+    z -= vecToSubtract.z;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Vec3::operator*=(const float uniformScale)
 {
-	x *= uniformScale;
-	y *= uniformScale;
-	z *= uniformScale;
+    x *= uniformScale;
+    y *= uniformScale;
+    z *= uniformScale;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Vec3::operator/=(const float uniformDivisor)
 {
-	float scale = 1.f / uniformDivisor;
-	x *= scale;
-	y *= scale;
-	z *= scale;
+    float const scale = 1.f / uniformDivisor;
+
+    x *= scale;
+    y *= scale;
+    z *= scale;
 }
 
-//-----------------------------------------------------------------------------------------------
-void Vec3::operator=(Vec3 const& copyFrom)
+//----------------------------------------------------------------------------------------------------
+Vec3& Vec3::operator=(Vec3 const& copyFrom)
 {
-	x = copyFrom.x;
-	y = copyFrom.y;
-	z = copyFrom.z;
+    // Check for self-assignment
+    if (this != &copyFrom)
+    {
+        x = copyFrom.x;
+        y = copyFrom.y;
+        z = copyFrom.z;
+    }
+
+    return *this;	// Return the current object by reference (dereference)
 }
 
-//-----------------------------------------------------------------------------------------------
-Vec3 const operator*(float uniformScale, Vec3 const& vecToScale)
+//----------------------------------------------------------------------------------------------------
+Vec3 const operator*(float const uniformScale, Vec3 const& vecToScale)
 {
-	return Vec3(uniformScale * vecToScale.x, uniformScale * vecToScale.y, uniformScale * vecToScale.z);
+    return Vec3(uniformScale * vecToScale.x, uniformScale * vecToScale.y, uniformScale * vecToScale.z);
 }

@@ -16,11 +16,11 @@ struct Vec2
     static Vec2 ZERO;
     static Vec2 ONE;
 
-    // Construction/Destruction
-    Vec2()                     = default;                             // default constructor (do nothing)
-    ~Vec2()                    = default;                             // destructor (do nothing)
-    Vec2(Vec2 const& copyFrom) = default;                    // copy constructor (from another vec2)
-    explicit Vec2(float initialX, float initialY); // explicit constructor (from x, y)
+    // Construction / Destruction
+    Vec2()                     = default;               // default constructor (do nothing)
+    ~Vec2()                    = default;               // destructor (do nothing)
+    Vec2(Vec2 const& copyFrom) = default;               // copy constructor (from another vec2)
+    explicit Vec2(float initialX, float initialY);      // explicit constructor (from x, y)
     explicit Vec2(int initialX, int initialY);
     explicit Vec2(IntVec2 const& intVec2);
 
@@ -29,10 +29,10 @@ struct Vec2
     static Vec2 MakeFromPolarDegrees(float orientationDegrees, float length = 1.f);
 
     // Accessors (const methods)
-    float GetLength() const; // Gives R for x,y
+    float GetLength() const;
     float GetLengthSquared() const;
     float GetOrientationRadians() const;
-    float GetOrientationDegrees() const; // Gives Theta for x,y
+    float GetOrientationDegrees() const;
     Vec2  GetRotated90Degrees() const;
     Vec2  GetRotatedMinus90Degrees() const;
     Vec2  GetRotatedRadians(float deltaRadians) const;
@@ -55,24 +55,24 @@ struct Vec2
     void  Normalize();
     float NormalizeAndGetPreviousLength();
     void  Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
-    void  SetFromText(char const* text);		// Parses “6,4” or “ -.3 , 0.05 ” to (x,y)
+    void  SetFromText(char const* text);		        // Parses “6,4” or “ -.3 , 0.05 ” to (x,y)
 
     // Operators (const)
-    bool operator==(Vec2 const& compare) const;      // vec2 == vec2
-    bool operator!=(Vec2 const& compare) const;      // vec2 != vec2
-    Vec2 operator+(Vec2 const& vecToAdd) const;      // vec2 + vec2
-    Vec2 operator-(Vec2 const& vecToSubtract) const; // vec2 - vec2
-    Vec2 operator-() const;                          // -vec2, i.e. "unary negation"
-    Vec2 operator*(float uniformScale) const;        // vec2 * float
-    Vec2 operator*(Vec2 const& vecToMultiply) const; // vec2 * vec2
-    Vec2 operator/(float inverseScale) const;        // vec2 / float
+    bool operator==(Vec2 const& compare) const;         // vec2 == vec2
+    bool operator!=(Vec2 const& compare) const;         // vec2 != vec2
+    Vec2 operator+(Vec2 const& vecToAdd) const;         // vec2 + vec2
+    Vec2 operator-(Vec2 const& vecToSubtract) const;    // vec2 - vec2
+    Vec2 operator-() const;                             // -vec2, i.e. "unary negation"
+    Vec2 operator*(float uniformScale) const;           // vec2 * float
+    Vec2 operator*(Vec2 const& vecToMultiply) const;    // vec2 * vec2
+    Vec2 operator/(float inverseScale) const;           // vec2 / float
 
     // Operators (self-mutating / non-const)
-    void  operator+=(Vec2 const& vecToAdd);       // vec2 += vec2
-    void  operator-=(Vec2 const& vecToSubtract);  // vec2 -= vec2
-    void  operator*=(float uniformScale);   // vec2 *= float
-    void  operator/=(float uniformDivisor); // vec2 /= float
-    Vec2& operator=(Vec2 const& copyFrom);        // vec2 = vec2
+    void  operator+=(Vec2 const& vecToAdd);         // vec2 += vec2
+    void  operator-=(Vec2 const& vecToSubtract);    // vec2 -= vec2
+    void  operator*=(float uniformScale);           // vec2 *= float
+    void  operator/=(float uniformDivisor);         // vec2 /= float
+    Vec2& operator=(Vec2 const& copyFrom);          // vec2 = vec2
 
     // Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
     friend Vec2 operator*(float uniformScale, Vec2 const& vecToScale); // float * vec2
