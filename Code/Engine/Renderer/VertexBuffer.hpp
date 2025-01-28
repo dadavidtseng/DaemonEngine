@@ -1,34 +1,31 @@
 //----------------------------------------------------------------------------------------------------
-// Shader.hpp
+// VertexBuffer.hpp
+//----------------------------------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <d3d11.h>
 
-#include "Engine/Core/StringUtils.hpp"
+struct ID3D11Device;
+struct ID3D11Buffer;
 
-//----------------------------------------------------------------------------------------------------
-struct ShaderConfig
-{
-    String m_name;
-    String m_vertexEntryPoint = "VertexMain";
-    String m_pixelEntryPoint  = "PixelMain";
-};
-
-//----------------------------------------------------------------------------------------------------
-class Shader
+class VertexBuffer
 {
     friend class Renderer;
 
 public:
-    Shader(ShaderConfig const& config);
-    Shader(Shader& copy) = delete;
-    ~Shader();
+    VertexBuffer(ID3D11Device* device, unsigned int size, unsigned int stride);
+    VertexBuffer(VertexBuffer const& copy) = delete;
+    virtual ~VertexBuffer();
 
-    String const& GetName() const;
+    void Create();
+    void Resize(unsigned int size);
+
+    unsigned int GetSize() const;
+    unsigned int GetStride() const;
 
 private:
-    ShaderConfig        m_config;
-    ID3D11VertexShader* m_vertexShader = nullptr;
-    ID3D11PixelShader*  m_pixelShader  = nullptr;
-    ID3D11InputLayout*  m_inputLayout  = nullptr;
+    ID3D11Device* m_device = nullptr;
+    ID3D11Buffer* m_buffer = nullptr;
+    unsigned int  m_size   = 0;
+    unsigned int  m_stride = 0;
 };

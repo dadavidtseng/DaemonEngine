@@ -17,8 +17,11 @@
 
 #define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
 #include <windows.h>
+#include <d3d11.h>
 #include <d3dcompiler.h>
 #include <dxgi.h>
+
+#include "Shader.hpp"
 
 
 #pragma comment(lib, "d3d11.lib")
@@ -35,6 +38,35 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
+//----------------------------------------------------------------------------------------------------
+const char* sourceShader = R"(
+struct vs_input_t
+{
+    float3 localPosition : POSITION;
+    float4 color : COLOR;
+    float2 uv : TEXCOORD;
+};
+
+struct v2p_t
+{
+    float4 position : SV_Position;
+    float4 color : COLOR;
+    float2 uv : TEXCOORD;
+};
+
+v2p_t VertexMain(vs_input_t input)
+{
+    v2p_t v2p;
+    v2p.position = float4(input.localPosition, 1);
+    v2p.color = input.color;
+    v2p.uv = input.uv;
+    return v2p;
+}
+
+float4 PixelMain(v2p_t input) : SV_Target0
+{
+    return float4(input.color);
+})";
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& render_config)
@@ -75,15 +107,15 @@ void Renderer::Startup()
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     Window const*        window        = m_config.m_window;
 
-    swapChainDesc.BufferDesc.Width     = window->GetClientDimensions().x;
-    swapChainDesc.BufferDesc.Height    = window->GetClientDimensions().y;
-    swapChainDesc.BufferDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.SampleDesc.Count     = 1;
-    swapChainDesc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount          = 2;
-    swapChainDesc.OutputWindow         = static_cast<HWND>(window->GetWindowHandle());
-    swapChainDesc.Windowed             = true;
-    swapChainDesc.SwapEffect           = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.BufferDesc.Width  = window->GetClientDimensions().x;
+    swapChainDesc.BufferDesc.Height = window->GetClientDimensions().y;
+    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.SampleDesc.Count  = 1;
+    swapChainDesc.BufferUsage       = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.BufferCount       = 2;
+    swapChainDesc.OutputWindow      = static_cast<HWND>(window->GetWindowHandle());
+    swapChainDesc.Windowed          = true;
+    swapChainDesc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
     HRESULT hr;
 
@@ -145,11 +177,20 @@ void Renderer::Startup()
     }
 
     m_deviceContext->RSSetState(m_rasterizerState);
+
+    m_currentShader = CreateShader("Default", sourceShader);
+    BindShader(m_currentShader);
+
+    // Create the immediate vertex buffer with an initial size for one Vertex_PCU
+    m_immediateVBO = new VertexBuffer(m_device, sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    m_immediateVBO->Create();
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::BeginFrame()
 {
+    // This code needs to run every frame and should be in your Render function.
+    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -175,24 +216,43 @@ void Renderer::EndFrame() const
 //-----------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
-    // Release all DirectX objects and check for memory leaks in your Shutdown function.
-    m_rasterizerState->Release();
-    m_renderTargetView->Release();
-    m_swapChain->Release();
-    m_deviceContext->Release();
-    m_device->Release();
+	// Release all DirectX objects and check for memory leaks in your Shutdown function.
+	DX_SAFE_RELEASE(m_rasterizerState);
+	DX_SAFE_RELEASE(m_renderTargetView);
+	DX_SAFE_RELEASE(m_swapChain);
+	DX_SAFE_RELEASE(m_deviceContext);
+	DX_SAFE_RELEASE(m_device);
 
-    // Report error leaks and release debug module
+	// Delete the immediate vertex buffer
+	if (m_immediateVBO)
+	{
+		delete m_immediateVBO;
+		m_immediateVBO = nullptr;
+	}
+
+	// Report error leaks and release debug module
 #if defined(ENGINE_DEBUG_RENDER)
-    constexpr DXGI_DEBUG_RLO_FLAGS flags = static_cast<DXGI_DEBUG_RLO_FLAGS>(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL);
-    static_cast<IDXGIDebug*>(m_dxgiDebug)->ReportLiveObjects(DXGI_DEBUG_ALL, flags);
+	if (m_dxgiDebug)
+	{
+		constexpr DXGI_DEBUG_RLO_FLAGS flags = static_cast<DXGI_DEBUG_RLO_FLAGS>(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL);
+		static_cast<IDXGIDebug*>(m_dxgiDebug)->ReportLiveObjects(DXGI_DEBUG_ALL, flags);
 
-    static_cast<IDXGIDebug*>(m_dxgiDebug)->Release();
-    m_dxgiDebug = nullptr;
+		static_cast<IDXGIDebug*>(m_dxgiDebug)->Release();
+		m_dxgiDebug = nullptr;
+	}
 
-    FreeLibrary(static_cast<HMODULE>(m_dxgiDebugModule));
-    m_dxgiDebugModule = nullptr;
+	if (m_dxgiDebugModule)
+	{
+		FreeLibrary(static_cast<HMODULE>(m_dxgiDebugModule));
+		m_dxgiDebugModule = nullptr;
+	}
 #endif
+
+	if (m_currentShader)
+	{
+		delete m_currentShader;
+		m_currentShader = nullptr;
+	}
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -202,7 +262,7 @@ void Renderer::ClearScreen(Rgba8 const& clearColor)
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 
     // Clear the screen
-    float       colorAsFloats[4];
+    float colorAsFloats[4];
     clearColor.GetAsFloats(colorAsFloats);
     m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 
@@ -221,10 +281,17 @@ void Renderer::BeginCamera(const Camera& camera)
     Vec2 const bottomLeft = camera.GetOrthoBottomLeft();
     Vec2 const topRight   = camera.GetOrthoTopRight();
 
-    // Establish a 2D (orthographic) drawing coordinate system (bottom-left to top-right)
-    // glLoadIdentity();
-    // arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
-    // glOrtho(bottomLeft.x, topRight.x, bottomLeft.y, topRight.y, 0.f, 1.f);
+    // Set viewport
+    D3D11_VIEWPORT viewport;
+    viewport.TopLeftX    = 0.f;
+    viewport.TopLeftY    = 0.f;
+    Window const* window = m_config.m_window;
+    viewport.Width       = static_cast<float>(window->GetClientDimensions().x);
+    viewport.Height      = static_cast<float>(window->GetClientDimensions().y);
+    viewport.MinDepth    = 0.f;
+    viewport.MaxDepth    = 1.f;
+
+    m_deviceContext->RSSetViewports(1, &viewport);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -236,22 +303,9 @@ void Renderer::EndCamera(const Camera& camera)
 //-----------------------------------------------------------------------------------------------
 void Renderer::DrawVertexArray(const int numVertexes, const Vertex_PCU* vertexes)
 {
-    // Draw some triangles (provide 3 vertexes each)
-    //
-    // glBegin(GL_TRIANGLES);
-    // {
-    //     for (int i = 0; i < numVertexes; i++)
-    //     {
-    //         const Vec3  position    = vertexes[i].m_position;
-    //         const Rgba8 color       = vertexes[i].m_color;
-    //         const Vec2  uvTexCoords = vertexes[i].m_uvTexCoords;
-    //
-    //         glColor4ub(color.r, color.g, color.b, color.a);
-    //         glTexCoord2f(uvTexCoords.x, uvTexCoords.y);
-    //         glVertex2f(position.x, position.y);
-    //     }
-    // }
-    // glEnd();
+    unsigned int const vertex_count = numVertexes * sizeof(Vertex_PCU);
+    CopyCPUToGPU(vertexes, vertex_count, m_immediateVBO);
+    DrawVertexBuffer(m_immediateVBO, vertex_count);
 }
 
 Texture* Renderer::GetTextureForFileName(char const* imageFilePath) const
@@ -429,6 +483,235 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimens
     return newTexture;
 }
 
+Shader* Renderer::CreateShader(char const* shaderName,
+                               char const* shaderSource)
+{
+    ShaderConfig const shaderConfig;
+    Shader*            shader = new Shader(shaderConfig);
+
+    std::vector<uint8_t> m_vertexShaderByteCode;
+    std::vector<uint8_t> m_pixelShaderByteCode;
+
+    CompileShaderToByteCode(m_vertexShaderByteCode, shaderName, shaderSource, shader->m_config.m_vertexEntryPoint.c_str(), "vs_5_0");
+
+    HRESULT hr;
+
+    // Create vertex shader
+    hr = m_device->CreateVertexShader(
+        m_vertexShaderByteCode.data(),
+        m_vertexShaderByteCode.size(),
+        nullptr,
+        &shader->m_vertexShader);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("Could not create vertex shader."))
+    }
+
+    CompileShaderToByteCode(m_pixelShaderByteCode, shaderName, shaderSource, shader->m_config.m_pixelEntryPoint.c_str(), "ps_5_0");
+
+    // Create pixel shader
+    hr = m_device->CreatePixelShader(
+        m_pixelShaderByteCode.data(),
+        m_pixelShaderByteCode.size(),
+        nullptr,
+        &shader->m_pixelShader);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("Could not create pixel shader."))
+    }
+
+    // Create a local array of input element descriptions that defines the vertex layout.
+    D3D11_INPUT_ELEMENT_DESC inputElementDesc[] =
+    {
+        {
+            "POSITION",
+            0,
+            DXGI_FORMAT_R32G32B32_FLOAT,
+            0,
+            0,
+            D3D11_INPUT_PER_VERTEX_DATA,
+            0
+        },
+        {
+            "COLOR",
+            0,
+            DXGI_FORMAT_R8G8B8A8_UNORM,
+            0,
+            D3D11_APPEND_ALIGNED_ELEMENT,
+            D3D11_INPUT_PER_VERTEX_DATA,
+            0
+        },
+        {
+            "TEXCOORD",
+            0,
+            DXGI_FORMAT_R32G32_FLOAT,
+            0,
+            D3D11_APPEND_ALIGNED_ELEMENT,
+            D3D11_INPUT_PER_VERTEX_DATA,
+            0
+        },
+    };
+
+    UINT numElements = ARRAYSIZE(inputElementDesc);
+
+    hr = m_device->CreateInputLayout(
+        inputElementDesc,
+        numElements,
+        m_vertexShaderByteCode.data(),
+        m_vertexShaderByteCode.size(),
+        &shader->m_inputLayout);
+
+    return shader;
+}
+
+bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode,
+                                       char const*                 name,
+                                       char const*                 source,
+                                       char const*                 entryPoint,
+                                       char const*                 target)
+{
+    // Compile vertex shader
+    DWORD shaderFlags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#if defined(ENGINE_DEBUG_RENDER)
+    shaderFlags = D3DCOMPILE_DEBUG;
+    shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+    shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+#endif
+    ID3DBlob* shaderBlob = nullptr;
+    ID3DBlob* errorBlob  = nullptr;
+
+    HRESULT hr;
+
+    hr = D3DCompile(source,
+                    strlen(source),
+                    name,
+                    nullptr,
+                    nullptr,
+                    entryPoint,
+                    target,
+                    shaderFlags,
+                    0,
+                    &shaderBlob,
+                    &errorBlob);
+
+    if (SUCCEEDED(hr))
+    {
+        outByteCode.resize(shaderBlob->GetBufferSize());
+        memcpy(
+            outByteCode.data(),
+            shaderBlob->GetBufferPointer(),
+            shaderBlob->GetBufferSize());
+    }
+    else
+    {
+        if (errorBlob)
+        {
+            DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
+        }
+        ERROR_AND_DIE(Stringf("Could not compile shader."))
+    }
+
+    shaderBlob->Release();
+
+    if (errorBlob)
+    {
+        errorBlob->Release();
+    }
+
+    return SUCCEEDED(hr);
+    // // Compile pixel shader
+    // hr = D3DCompile(
+    //     shaderSource,
+    //     strlen(shaderSource),
+    //     "PixelShader",
+    //     nullptr,
+    //     nullptr,
+    //     "PixelMain",
+    //     "ps_5_0",
+    //     shaderFlags,
+    //     0,
+    //     &shaderBlob,
+    //     &errorBlob);
+    //
+    // if (SUCCEEDED(hr))
+    // {
+    //     outByteCode.resize(shaderBlob->GetBufferSize());
+    //     memcpy(
+    //         outByteCode.data(),
+    //         shaderBlob->GetBufferPointer(),
+    //         shaderBlob->GetBufferSize());
+    // }
+    // else
+    // {
+    //     if (!errorBlob)
+    //     {
+    //         DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
+    //     }
+    //     ERROR_AND_DIE(Stringf("Could not compile pixel shader."))
+    // }
+    //
+    // shaderBlob->Release();
+    //
+    // if (errorBlob)
+    // {
+    //     errorBlob->Release();
+    // }
+}
+
+void Renderer::BindShader(Shader const* shader) const
+{
+    m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(shader->m_inputLayout);
+}
+
+VertexBuffer* Renderer::CreateVertexBuffer(unsigned int size, unsigned int stride)
+{
+    // Create a new VertexBuffer object
+    VertexBuffer* vertexBuffer = new VertexBuffer(m_device, size, stride);
+
+    // Create the buffer
+    vertexBuffer->Create();
+
+    return vertexBuffer;
+}
+
+void Renderer::CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo)
+{
+    // Check if the vertex buffer is large enough to hold the data
+    if (vbo->GetSize() < size)
+    {
+        vbo->Resize(size);
+    }
+
+    // Map the buffer
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT                  hr = m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (FAILED(hr))
+    {
+        ERROR_AND_DIE("Failed to map vertex buffer.");
+    }
+
+    // Copy the data
+    memcpy(mappedResource.pData, data, size);
+
+    // Unmap the buffer
+    m_deviceContext->Unmap(vbo->m_buffer, 0);
+}
+
+void Renderer::BindVertexBuffer(VertexBuffer* vbo)
+{
+    // Bind the vertex buffer
+    UINT stride = vbo->GetStride();
+    UINT offset = 0;
+    m_deviceContext->IASetVertexBuffers(0, 1, &vbo->m_buffer, &stride, &offset);
+
+    // Set the primitive topology
+    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
 //----------------------------------------------------------------------------------------------------
 BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(const char* bitmapFontFilePathWithNoExtension)
 {
@@ -469,6 +752,14 @@ void Renderer::SetBlendMode(BlendMode const mode)
     {
         ERROR_AND_DIE(Stringf( "Unknown / unsupported blend mode #%i", mode ));
     }
+}
+
+void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
+{
+    BindVertexBuffer(vbo);
+
+    // Draw
+    m_deviceContext->Draw(3, 0);
 }
 
 

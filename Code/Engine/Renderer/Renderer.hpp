@@ -4,10 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#define DX_SAFE_RELEASE
-#include <d3d11.h>
 #include <vector>
 
+#include "VertexBuffer.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -15,10 +14,23 @@
 #include "Engine/Renderer/Texture.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
+struct ID3D11RasterizerState;
+struct ID3D11RenderTargetView;
+struct ID3D11Device;
+struct ID3D11DeviceContext;
+struct IDXGISwapChain;
+
+class Shader;
 //----------------------------------------------------------------------------------------------------
 class BitmapFont;
 struct IntVec2;
 class Window;
+
+#define DX_SAFE_RELEASE(dxObject) \
+if ((dxObject) != nullptr) {    \
+dxObject->Release();      \
+dxObject = nullptr;       \
+}
 
 //----------------------------------------------------------------------------------------------------
 enum class BlendMode
@@ -56,12 +68,22 @@ public:
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
     void        SetBlendMode(BlendMode mode);
 
+    void DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount);
+
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
     // void        CreateRenderingContext();
     Texture* CreateTextureFromFile(char const* imageFilePath);
     Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
+
+    Shader* CreateShader(char const* shaderName, char const* shaderSource);
+    bool CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name, char const* source, char const* entryPoint, char const* target);
+    void BindShader(Shader const* shader) const;
+
+    VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride);
+    void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo);
+    void          BindVertexBuffer(VertexBuffer* vbo);
 
     RenderConfig             m_config;
     void*                    m_apiRenderingContext = nullptr;
@@ -75,9 +97,13 @@ protected:
     ID3D11Device*           m_device           = nullptr;
     ID3D11DeviceContext*    m_deviceContext    = nullptr;
     IDXGISwapChain*         m_swapChain        = nullptr;
+    std::vector<Shader*>    m_loadedShaders;
+    Shader*                 m_currentShader = nullptr;
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
     void* m_dxgiDebugModule = nullptr;
 #endif
+
+    VertexBuffer* m_immediateVBO = nullptr;
 };
