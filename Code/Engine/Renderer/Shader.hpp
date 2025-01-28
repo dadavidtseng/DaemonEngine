@@ -1,26 +1,34 @@
 //----------------------------------------------------------------------------------------------------
-// Texture.hpp
-//----------------------------------------------------------------------------------------------------
-
+// Shader.hpp
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <string>
+#include <d3d11.h>
 
-#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Core/StringUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-class Texture
+struct ShaderConfig
 {
-    friend class Renderer; // Only the Renderer can create new Texture objects!
+    String m_name;
+    String m_vertexEntryPoint = "VertexMain";
+    String m_pixelEntryPoint  = "PixelMain";
+};
+
+//----------------------------------------------------------------------------------------------------
+class Shader
+{
+    friend class Renderer;
 
 public:
-    // Add a getter for texture dimensions
-    IntVec2 GetDimensions() const { return m_dimensions; }
-    
-protected:
-    std::string m_name;
-    IntVec2     m_dimensions;
+    Shader(ShaderConfig const& config);
+    Shader(Shader& copy) = delete;
+    ~Shader();
 
-    // #ToDo: generalize/replace this for D3D11 support!
-    unsigned int m_openglTextureID = 0xFFFFFFFF;
+    String const& GetName() const;
+
+private:
+    ShaderConfig        m_config;
+    ID3D11VertexShader* m_vertexShader = nullptr;
+    ID3D11PixelShader*  m_pixelShader  = nullptr;
+    ID3D11InputLayout*  m_inputLayout  = nullptr;
 };

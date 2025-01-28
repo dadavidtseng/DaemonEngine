@@ -166,6 +166,9 @@
     <ClCompile Include="Math\EulerAngles.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Shader.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -329,6 +332,9 @@
     </ClInclude>
     <ClInclude Include="Math\EulerAngles.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Shader.hpp">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
