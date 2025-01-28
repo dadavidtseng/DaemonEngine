@@ -4,7 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <cstdint>
+#define DX_SAFE_RELEASE
+#include <d3d11.h>
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
@@ -12,6 +13,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Game/EngineBuildPreferences.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class BitmapFont;
@@ -58,11 +60,24 @@ private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
     // void        CreateRenderingContext();
-    Texture*    CreateTextureFromFile(char const* imageFilePath);
-    Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
+    Texture* CreateTextureFromFile(char const* imageFilePath);
+    Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
 
     RenderConfig             m_config;
     void*                    m_apiRenderingContext = nullptr;
     std::vector<Texture*>    m_loadedTextures;
     std::vector<BitmapFont*> m_loadedFonts;
+
+protected:
+    // Create variables to store DirectX state.
+    ID3D11RasterizerState*  m_rasterizerState  = nullptr;
+    ID3D11RenderTargetView* m_renderTargetView = nullptr;
+    ID3D11Device*           m_device           = nullptr;
+    ID3D11DeviceContext*    m_deviceContext    = nullptr;
+    IDXGISwapChain*         m_swapChain        = nullptr;
+
+#if defined(ENGINE_DEBUG_RENDER)
+    void* m_dxgiDebug       = nullptr;
+    void* m_dxgiDebugModule = nullptr;
+#endif
 };

@@ -1,29 +1,42 @@
+//----------------------------------------------------------------------------------------------------
+// Renderer.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "ThirdParty/stb/stb_image.h"
-#define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
 #include "Engine/Renderer/Renderer.hpp"
 
-#include <Windows.h>
-
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Renderer/Window.hpp"
-
-//-----------------------------------------------------------------------------------------------
-// Both of the following lines will eventually move to the top of Engine/Renderer/Renderer.cpp
-//
-#include <wingdi.h>
-//#include <gl/gl.h>					// Include basic OpenGL constants and function declarations
-
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/Window.hpp"
 
-//#pragma comment( lib, "opengl32" )	// Link in the OpenGL32.lib static library
+#define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
+#include <windows.h>
+#include <d3dcompiler.h>
+#include <dxgi.h>
 
-extern HWND g_hWnd;
 
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
+// Define ENGINE_DEBUG_RENDERER if this is a Debug configuration and link debug libraries if it is.
+#if defined(_DEBUG)
+#define ENGINE_DEBUG_RENDER
+#endif
+
+#if defined(ENGINE_DEBUG_RENDER)
+#include <dxgidebug.h>
+#pragma comment(lib, "dxguid.lib")
+#endif
+
+
+//----------------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& render_config)
 {
     m_config = render_config;
@@ -32,7 +45,106 @@ Renderer::Renderer(RenderConfig const& render_config)
 //-----------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
-    // CreateRenderingContext();
+    // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
+    unsigned int deviceFlags = 0;
+
+#if defined(ENGINE_DEBUG_RENDER)
+    deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    // Create the DXGI debug module in Startup, before creating the device and swap chain.
+#if defined(ENGINE_DEBUG_RENDER)
+    m_dxgiDebugModule = static_cast<void*>(LoadLibraryA("dxgidebug.dll"));
+
+    if (!m_dxgiDebugModule)
+    {
+        ERROR_AND_DIE("Could not load dxgidebug.dll.")
+    }
+
+    typedef HRESULT (WINAPI*GetDebugModuleCB)(REFIID, void**);
+    ((GetDebugModuleCB)GetProcAddress(static_cast<HMODULE>(m_dxgiDebugModule), "DXGIGetDebugInterface"))
+        (__uuidof(IDXGIDebug), &m_dxgiDebug);
+
+    if (!m_dxgiDebug)
+    {
+        ERROR_AND_DIE("Could not load debug module.")
+    }
+#endif
+
+    // Create device and swap chain
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+    Window const*        window        = m_config.m_window;
+
+    swapChainDesc.BufferDesc.Width     = window->GetClientDimensions().x;
+    swapChainDesc.BufferDesc.Height    = window->GetClientDimensions().y;
+    swapChainDesc.BufferDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.SampleDesc.Count     = 1;
+    swapChainDesc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.BufferCount          = 2;
+    swapChainDesc.OutputWindow         = static_cast<HWND>(window->GetWindowHandle());
+    swapChainDesc.Windowed             = true;
+    swapChainDesc.SwapEffect           = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+    HRESULT hr;
+
+    hr = D3D11CreateDeviceAndSwapChain(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        deviceFlags,
+        nullptr,
+        0,
+        D3D11_SDK_VERSION,
+        &swapChainDesc,
+        &m_swapChain,
+        &m_device,
+        nullptr,
+        &m_deviceContext);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
+    }
+
+    // Get back buffer texture
+    ID3D11Texture2D* backBuffer;
+    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Could not get swap chain buffer.")
+    }
+
+    hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Could create render target view for swap chain buffer.")
+    }
+
+    backBuffer->Release();
+
+    // Set rasterizer state
+    D3D11_RASTERIZER_DESC rasterizerDesc = {};
+    rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
+    rasterizerDesc.CullMode              = D3D11_CULL_NONE;
+    rasterizerDesc.FrontCounterClockwise = false;
+    rasterizerDesc.DepthBias             = 0;
+    rasterizerDesc.DepthBiasClamp        = 0.f;
+    rasterizerDesc.SlopeScaledDepthBias  = 0.f;
+    rasterizerDesc.DepthClipEnable       = true;
+    rasterizerDesc.ScissorEnable         = false;
+    rasterizerDesc.MultisampleEnable     = false;
+    rasterizerDesc.AntialiasedLineEnable = true;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Could not create rasterizer state.")
+    }
+
+    m_deviceContext->RSSetState(m_rasterizerState);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -49,12 +161,38 @@ void Renderer::EndFrame() const
 
         // "Present" the back buffer by swapping the front (visible) and back (working) screen buffers
         // SwapBuffers(displayContext); // Note: call this only once at the very end of each frame
+        // Present
+        HRESULT const hr = m_swapChain->Present(0, 0);
+
+        if (hr == DXGI_ERROR_DEVICE_REMOVED ||
+            hr == DXGI_ERROR_DEVICE_RESET)
+        {
+            ERROR_AND_DIE("Device has been lost, application will now terminate.")
+        }
     }
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
+    // Release all DirectX objects and check for memory leaks in your Shutdown function.
+    m_rasterizerState->Release();
+    m_renderTargetView->Release();
+    m_swapChain->Release();
+    m_deviceContext->Release();
+    m_device->Release();
+
+    // Report error leaks and release debug module
+#if defined(ENGINE_DEBUG_RENDER)
+    constexpr DXGI_DEBUG_RLO_FLAGS flags = static_cast<DXGI_DEBUG_RLO_FLAGS>(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL);
+    static_cast<IDXGIDebug*>(m_dxgiDebug)->ReportLiveObjects(DXGI_DEBUG_ALL, flags);
+
+    static_cast<IDXGIDebug*>(m_dxgiDebug)->Release();
+    m_dxgiDebug = nullptr;
+
+    FreeLibrary(static_cast<HMODULE>(m_dxgiDebugModule));
+    m_dxgiDebugModule = nullptr;
+#endif
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -120,6 +258,7 @@ Texture* Renderer::GetTextureForFileName(char const* imageFilePath) const
     }
     return nullptr;
 }
+
 BitmapFont* Renderer::GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const
 {
     for (BitmapFont* font : m_loadedFonts)
@@ -267,17 +406,17 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimens
 
     // Upload the image texel data (raw pixels bytes) to OpenGL under this textureID
     // glTexImage2D( // Upload this pixel data to our new OpenGL texture
-        // GL_TEXTURE_2D, // Creating this as a 2d texture
-        // 0, // Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-        // internalFormat, // Type of texel format we want OpenGL to use for this texture internally on the video card
-        // dimensions.x,
-        // Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-        // dimensions.y,
-        // Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-        // 0,                // Border size, in texels (must be 0 or 1, recommend 0)
-        // bufferFormat,     // Pixel format describing the composition of the pixel data in buffer
-        // GL_UNSIGNED_BYTE, // Pixel color components are unsigned bytes (one byte per color channel/component)
-        // texelData);       // Address of the actual pixel data bytes/buffer in system memory
+    // GL_TEXTURE_2D, // Creating this as a 2d texture
+    // 0, // Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
+    // internalFormat, // Type of texel format we want OpenGL to use for this texture internally on the video card
+    // dimensions.x,
+    // Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
+    // dimensions.y,
+    // Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
+    // 0,                // Border size, in texels (must be 0 or 1, recommend 0)
+    // bufferFormat,     // Pixel format describing the composition of the pixel data in buffer
+    // GL_UNSIGNED_BYTE, // Pixel color components are unsigned bytes (one byte per color channel/component)
+    // texelData);       // Address of the actual pixel data bytes/buffer in system memory
 
     m_loadedTextures.push_back(newTexture);
     return newTexture;
