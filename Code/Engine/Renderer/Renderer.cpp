@@ -198,14 +198,21 @@ void Renderer::Shutdown()
 //-----------------------------------------------------------------------------------------------
 void Renderer::ClearScreen(Rgba8 const& clearColor)
 {
-    // Clear all screen (back buffer) pixels to clearColor
-    // glClearColor(static_cast<float>(clearColor.r) / 255.0f,
-    //              static_cast<float>(clearColor.g) / 255.0f,
-    //              static_cast<float>(clearColor.b) / 255.0f,
-    //              clearColor.a);
-    // Note; glClearColor takes colors as floats in [0,1], not bytes in [0,255]
-    // ALWAYS clear the screen at the top of each frame's Render()!
-    // glClear(GL_COLOR_BUFFER_BIT);
+    // This code needs to run every frame and should be in your Render function.
+    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+
+    // Clear the screen
+    float       colorAsFloats[4];
+    clearColor.GetAsFloats(colorAsFloats);
+    m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
+
+    // constexpr UINT stride      = sizeof(Vertex_PCU);
+    // constexpr UINT startOffset = 0;
+    // m_deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &startOffset);
+    // m_deviceContext->IASetInputLayout(m_inputLayoutForVertex_PCU);
+    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // m_deviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+    // m_deviceContext->PSSetShader(m_pixelShader, nullptr, 0);
 }
 
 //-----------------------------------------------------------------------------------------------
