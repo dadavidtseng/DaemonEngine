@@ -8,7 +8,6 @@
 #include <d3d11.h>
 
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
 
 //----------------------------------------------------------------------------------------------------
 VertexBuffer::VertexBuffer(ID3D11Device* device, unsigned int const size, unsigned int const stride)
@@ -41,9 +40,9 @@ void VertexBuffer::Create()
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
     HRESULT hr = m_device->CreateBuffer(&bufferDesc, nullptr, &m_buffer);
-    if (FAILED(hr))
+    if (!SUCCEEDED(hr))
     {
-        ERROR_AND_DIE("Failed to create vertex buffer.");
+        ERROR_AND_DIE("Failed to create vertex buffer.")
     }
 }
 

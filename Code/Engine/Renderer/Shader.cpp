@@ -5,6 +5,8 @@
 
 #include <d3d11.h>
 
+#include "Engine/Renderer/Renderer.hpp"
+
 //----------------------------------------------------------------------------------------------------
 Shader::Shader(ShaderConfig const& config)
     : m_config(config)
@@ -14,9 +16,9 @@ Shader::Shader(ShaderConfig const& config)
 //----------------------------------------------------------------------------------------------------
 Shader::~Shader()
 {
-    m_vertexShader->Release();
-    m_pixelShader->Release();
-    m_inputLayout->Release();
+    DX_SAFE_RELEASE(m_vertexShader)
+    DX_SAFE_RELEASE(m_pixelShader)
+    DX_SAFE_RELEASE(m_inputLayout)
 }
 
 //----------------------------------------------------------------------------------------------------

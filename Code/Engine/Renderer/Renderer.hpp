@@ -6,25 +6,24 @@
 #pragma once
 #include <vector>
 
-#include "VertexBuffer.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
+//----------------------------------------------------------------------------------------------------
+class Shader;
+class BitmapFont;
+struct IntVec2;
+class Window;
 struct ID3D11RasterizerState;
 struct ID3D11RenderTargetView;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct IDXGISwapChain;
-
-class Shader;
-//----------------------------------------------------------------------------------------------------
-class BitmapFont;
-struct IntVec2;
-class Window;
 
 #define DX_SAFE_RELEASE(dxObject) \
 if ((dxObject) != nullptr) {    \
@@ -59,7 +58,7 @@ public:
     void ClearScreen(Rgba8 const& clearColor);
     void BeginCamera(Camera const& camera);
     void EndCamera(Camera const& camera);
-    void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
+    void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes) const;
 
     void BindTexture(Texture const* texture);
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
@@ -68,25 +67,24 @@ public:
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
     void        SetBlendMode(BlendMode mode);
 
-    void DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount);
+    void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount) const;
 
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
-    // void        CreateRenderingContext();
-    Texture* CreateTextureFromFile(char const* imageFilePath);
-    Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
+    Texture*    CreateTextureFromFile(char const* imageFilePath);
+    Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     bool CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name, char const* source, char const* entryPoint, char const* target);
     void BindShader(Shader const* shader) const;
 
-    VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride);
-    void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo);
-    void          BindVertexBuffer(VertexBuffer* vbo);
+    VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride) const;
+    void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+    void          BindVertexBuffer(VertexBuffer const* vbo) const;
 
-    RenderConfig             m_config;
-    void*                    m_apiRenderingContext = nullptr;
+    RenderConfig m_config;
+    // void*                    m_apiRenderingContext = nullptr;
     std::vector<Texture*>    m_loadedTextures;
     std::vector<BitmapFont*> m_loadedFonts;
 
@@ -99,11 +97,10 @@ protected:
     IDXGISwapChain*         m_swapChain        = nullptr;
     std::vector<Shader*>    m_loadedShaders;
     Shader*                 m_currentShader = nullptr;
+    VertexBuffer*           m_immediateVBO  = nullptr;
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
     void* m_dxgiDebugModule = nullptr;
 #endif
-
-    VertexBuffer* m_immediateVBO = nullptr;
 };
