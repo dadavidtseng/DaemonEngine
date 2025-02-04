@@ -71,6 +71,22 @@ float4 PixelMain(v2p_t input) : SV_Target0
 })";
 
 //----------------------------------------------------------------------------------------------------
+struct CameraConstants
+{
+    float OrthoMinX;
+    float OrthoMinY;
+    float OrthoMinZ;
+    float OrthoMaxX;
+    float OrthoMaxY;
+    float OrthoMaxZ;
+    float pad0;
+    float pad1;
+};
+
+//----------------------------------------------------------------------------------------------------
+static const int k_cameraConstantSlot = 2;
+
+//----------------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& render_config)
 {
     m_config = render_config;
@@ -179,11 +195,14 @@ void Renderer::Startup()
     m_deviceContext->RSSetState(m_rasterizerState);
 
     m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
+
+
     BindShader(m_currentShader);
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
     m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-
+    // Create the camera constant buffer with an initial size for one CameraConstants
+    m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
 
     // Test FileReadToBuffer()
     String const filename = "Data/test.txt";
@@ -251,6 +270,18 @@ void Renderer::Shutdown()
         m_currentShader = nullptr;
     }
 
+    if (m_defaultShader)
+    {
+        delete m_defaultShader;
+        m_defaultShader = nullptr;
+    }
+
+    if (m_cameraCBO)
+    {
+        delete m_cameraCBO;
+        m_cameraCBO = nullptr;
+    }
+
     // Report error leaks and release debug module
 #if defined(ENGINE_DEBUG_RENDER)
     if (m_dxgiDebug)
@@ -296,6 +327,23 @@ void Renderer::BeginCamera(Camera const& camera)
     viewport.MaxDepth = 1.f;
 
     m_deviceContext->RSSetViewports(1, &viewport);
+
+    // Create a local CameraConstants structure
+    CameraConstants cameraConstants;
+    cameraConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
+    cameraConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
+    cameraConstants.OrthoMinZ = 0.f;
+    cameraConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
+    cameraConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
+    cameraConstants.OrthoMaxZ = 1.f;
+    cameraConstants.pad0      = 0.f;
+    cameraConstants.pad1      = 0.f;
+
+    // Copy the data from the local structure to the constant buffer
+    CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
+
+    // Bind the constant buffer
+    BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
 }
 
 //-----------------------------------------------------------------------------------------------

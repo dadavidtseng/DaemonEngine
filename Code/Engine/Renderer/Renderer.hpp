@@ -104,6 +104,7 @@ protected:
     Shader*                 m_currentShader = nullptr;
     VertexBuffer*           m_immediateVBO  = nullptr;
     Shader*                 m_defaultShader = nullptr;
+    ConstantBuffer*         m_cameraCBO     = nullptr;
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
