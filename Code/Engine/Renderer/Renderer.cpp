@@ -177,7 +177,7 @@ void Renderer::Startup()
 
     m_deviceContext->RSSetState(m_rasterizerState);
 
-    m_currentShader = CreateShader("Default", sourceShader);
+    m_currentShader = CreateShader("Default");
     BindShader(m_currentShader);
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
@@ -565,7 +565,24 @@ Shader* Renderer::CreateShader(char const* shaderName,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode,
+Shader* Renderer::CreateShader(char const* shaderName)
+{
+    // Append the .hlsl extension to the shader name
+    String const shaderFileName = Stringf("Data/Shaders/%s.hlsl", shaderName);
+
+    String shaderSource;
+
+    if (!FileReadToString(shaderSource, shaderFileName))
+    {
+        ERROR_AND_DIE(Stringf("Failed to read shader file: %s", shaderFileName.c_str()))
+    }
+
+    // Create the shader using the file contents
+    return CreateShader(shaderName, shaderSource.c_str());
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
                                        char const*                 name,
                                        char const*                 source,
                                        char const*                 entryPoint,
@@ -597,9 +614,9 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode,
 
     if (SUCCEEDED(hr))
     {
-        outByteCode.resize(shaderBlob->GetBufferSize());
+        out_byteCode.resize(shaderBlob->GetBufferSize());
         memcpy(
-            outByteCode.data(),
+            out_byteCode.data(),
             shaderBlob->GetBufferPointer(),
             shaderBlob->GetBufferSize());
     }

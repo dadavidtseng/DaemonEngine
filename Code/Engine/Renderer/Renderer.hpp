@@ -76,8 +76,9 @@ private:
     Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
-    bool CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-    void BindShader(Shader const* shader) const;
+    Shader* CreateShader(char const* shaderName);
+    bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
+    void    BindShader(Shader const* shader) const;
 
     VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride) const;
     void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
