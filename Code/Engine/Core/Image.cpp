@@ -38,6 +38,12 @@ Image::Image(char const* imageFilePath)
     stbi_image_free(imageData);
 }
 
+Image::Image(IntVec2 const& size, Rgba8 const color)
+    : m_dimensions(size)
+{
+    m_rgbaTexels.resize(static_cast<unsigned long long>(size.x) * size.y, color);
+}
+
 //----------------------------------------------------------------------------------------------------
 String const& Image::GetImageFilePath() const
 {
@@ -59,6 +65,12 @@ Rgba8 Image::GetTexelColor(IntVec2 const& texelCoords) const
 
     size_t const index = texelCoords.y * m_dimensions.x + texelCoords.x;
     return m_rgbaTexels[index];
+}
+
+//----------------------------------------------------------------------------------------------------
+void const* Image::GetRawData() const
+{
+    return m_rgbaTexels.data();
 }
 
 //----------------------------------------------------------------------------------------------------

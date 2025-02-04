@@ -26,6 +26,8 @@
 #include <dxgi.h>
 #include <windows.h>
 
+#include "Engine/Core/Image.hpp"
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -209,7 +211,7 @@ void Renderer::Startup()
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
 
     // Create blend states and store the state in m_blendState
-    D3D11_BLEND_DESC blendDesc ={};
+    D3D11_BLEND_DESC blendDesc                      = {};
     blendDesc.RenderTarget[0].BlendEnable           = TRUE;
     blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
     blendDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_ZERO;
@@ -558,6 +560,48 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimens
     Texture* newTexture      = new Texture();
     newTexture->m_name       = name; // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
     newTexture->m_dimensions = dimensions;
+
+    m_loadedTextures.push_back(newTexture);
+    return newTexture;
+}
+
+Image Renderer::CreateImageFromFile(char const* imageFilePath)
+{
+    return Image(imageFilePath);
+}
+
+Texture* Renderer::CreateTextureFromImage(Image const& image)
+{
+    Texture* newTexture         = CreateTextureFromFile(image.GetImageFilePath().c_str());
+
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width                = image.GetDimensions().x;
+    textureDesc.Height               = image.GetDimensions().y;
+    textureDesc.MipLevels            = 1;
+    textureDesc.ArraySize            = 1;
+    textureDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.SampleDesc.Count     = 1;
+    textureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
+    textureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA textureData;
+    textureData.pSysMem     = image.GetRawData();
+    textureData.SysMemPitch = 4 * image.GetDimensions().x;
+
+    HRESULT hr;
+    hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+    }
+
+    hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+    }
 
     m_loadedTextures.push_back(newTexture);
     return newTexture;

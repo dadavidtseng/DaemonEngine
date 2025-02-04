@@ -13,11 +13,13 @@ class Image
 {
 public:
     explicit Image(char const* imageFilePath);
+    Image(const IntVec2& size, Rgba8 color);
 
     // Accessors
     String const& GetImageFilePath() const;
     IntVec2       GetDimensions() const;
     Rgba8         GetTexelColor(IntVec2 const& texelCoords) const;
+    void const*   GetRawData() const;
 
     // Mutators
     void SetTexelColor(IntVec2 const& texelCoords, Rgba8 const& newColor);

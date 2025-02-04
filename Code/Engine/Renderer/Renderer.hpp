@@ -7,6 +7,7 @@
 
 #include <vector>
 
+
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -18,6 +19,7 @@
 struct IntVec2;
 class BitmapFont;
 class ConstantBuffer;
+class Image;
 class Shader;
 class VertexBuffer;
 class Window;
@@ -84,6 +86,8 @@ private:
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
     Texture*    CreateTextureFromFile(char const* imageFilePath);
     Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
+    Image       CreateImageFromFile(char const* imageFilePath);
+    Texture*    CreateTextureFromImage(Image const& image);
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     Shader* CreateShader(char const* shaderName);
@@ -111,13 +115,13 @@ protected:
     ID3D11DeviceContext*    m_deviceContext    = nullptr;
     IDXGISwapChain*         m_swapChain        = nullptr;
     std::vector<Shader*>    m_loadedShaders;
-    Shader*                 m_currentShader = nullptr;
-    VertexBuffer*           m_immediateVBO  = nullptr;
-    Shader*                 m_defaultShader = nullptr;
-    ConstantBuffer*         m_cameraCBO     = nullptr;
-    ID3D11BlendState* m_blendState = nullptr;
-    BlendMode m_desiredBlendMode = BlendMode::ALPHA;
-    ID3D11BlendState* m_blendStates[(int)(BlendMode::COUNT)] = {};
+    Shader*                 m_currentShader                        = nullptr;
+    VertexBuffer*           m_immediateVBO                         = nullptr;
+    Shader*                 m_defaultShader                        = nullptr;
+    ConstantBuffer*         m_cameraCBO                            = nullptr;
+    ID3D11BlendState*       m_blendState                           = nullptr;
+    BlendMode               m_desiredBlendMode                     = BlendMode::ALPHA;
+    ID3D11BlendState*       m_blendStates[(int)(BlendMode::COUNT)] = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
