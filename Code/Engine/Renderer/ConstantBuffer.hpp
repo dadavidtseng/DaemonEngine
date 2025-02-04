@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// VertexBuffer.hpp
+// ConstantBuffer.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -9,24 +9,21 @@ struct ID3D11Buffer;
 struct ID3D11Device;
 
 //----------------------------------------------------------------------------------------------------
-class VertexBuffer
+class ConstantBuffer
 {
     friend class Renderer;
 
 public:
-    VertexBuffer(ID3D11Device* device, unsigned int size, unsigned int stride);
-    VertexBuffer(VertexBuffer const& copy) = delete;
-    virtual ~VertexBuffer();
+    ConstantBuffer(ID3D11Device* device, size_t size);
+    ConstantBuffer(ConstantBuffer const& copy) = delete;
+    virtual ~ConstantBuffer();
 
     void Create();
-    void Resize(unsigned int size);
-
-    unsigned int GetSize() const;
-    unsigned int GetStride() const;
+    void Resize(size_t size);
+    size_t GetSize() const;
 
 private:
     ID3D11Buffer* m_buffer = nullptr;
     ID3D11Device* m_device = nullptr;
-    unsigned int  m_size   = 0;
-    unsigned int  m_stride = 0;
+    size_t        m_size   = 0;
 };

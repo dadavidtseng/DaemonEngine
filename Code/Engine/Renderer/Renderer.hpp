@@ -11,13 +11,14 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
-#include "Engine/Renderer/VertexBuffer.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
 //----------------------------------------------------------------------------------------------------
-class Shader;
-class BitmapFont;
 struct IntVec2;
+class BitmapFont;
+class ConstantBuffer;
+class Shader;
+class VertexBuffer;
 class Window;
 struct ID3D11RasterizerState;
 struct ID3D11RenderTargetView;
@@ -80,9 +81,12 @@ private:
     bool CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
     void BindShader(Shader const* shader) const;
 
-    VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride) const;
-    void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
-    void          BindVertexBuffer(VertexBuffer const* vbo) const;
+    VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+    void            BindVertexBuffer(VertexBuffer const* vbo) const;
+    ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
+    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;

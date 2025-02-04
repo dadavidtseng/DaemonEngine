@@ -12,9 +12,11 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Renderer/DefaultShader.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/Window.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
@@ -691,11 +693,7 @@ void Renderer::BindShader(Shader const* shader) const
 //----------------------------------------------------------------------------------------------------
 VertexBuffer* Renderer::CreateVertexBuffer(unsigned int const size, unsigned int const stride) const
 {
-    // Create a new VertexBuffer object
     VertexBuffer* vertexBuffer = new VertexBuffer(m_device, size, stride);
-
-    // Create the buffer
-    //vertexBuffer->Create();
 
     return vertexBuffer;
 }
@@ -739,4 +737,41 @@ void Renderer::BindVertexBuffer(VertexBuffer const* vbo) const
 
     // Set the primitive topology
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+ConstantBuffer* Renderer::CreateConstantBuffer(unsigned int const size) const
+{
+    ConstantBuffer* constantBuffer = new ConstantBuffer(m_device, size);
+
+    return constantBuffer;
+}
+
+void Renderer::CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const
+{
+    // Check if the constant buffer is large enough to hold the data
+    if (cbo->GetSize() < size)
+    {
+        cbo->Resize(size);
+    }
+
+    // Map the buffer
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT const            hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Failed to map constant buffer.")
+    }
+
+    // Copy the data
+    memcpy(mappedResource.pData, data, size);
+
+    // Unmap the buffer
+    m_deviceContext->Unmap(cbo->m_buffer, 0);
+}
+
+void Renderer::BindConstantBuffer(int slot, ConstantBuffer const* cbo) const
+{
+    m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+    m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
 }
