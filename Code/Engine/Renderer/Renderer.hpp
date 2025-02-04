@@ -77,8 +77,8 @@ private:
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     Shader* CreateShader(char const* shaderName);
-    bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-    void    BindShader(Shader const* shader) const;
+    bool CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
+    void BindShader(Shader const* shader) const;
 
     VertexBuffer* CreateVertexBuffer(unsigned int size, unsigned int stride) const;
     void          CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
@@ -99,6 +99,7 @@ protected:
     std::vector<Shader*>    m_loadedShaders;
     Shader*                 m_currentShader = nullptr;
     VertexBuffer*           m_immediateVBO  = nullptr;
+    Shader*                 m_defaultShader = nullptr;
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;

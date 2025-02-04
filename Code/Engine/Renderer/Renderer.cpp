@@ -4,26 +4,25 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Renderer.hpp"
-#include "ThirdParty/stb/stb_image.h"
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/DefaultShader.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/Window.hpp"
+#include "ThirdParty/stb/stb_image.h"
 
 #define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <dxgi.h>
 #include <windows.h>
-
-#include "Engine/Core/FileUtils.hpp"
-#include "Engine/Renderer/Shader.hpp"
-
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -177,7 +176,7 @@ void Renderer::Startup()
 
     m_deviceContext->RSSetState(m_rasterizerState);
 
-    m_currentShader = CreateShader("Default");
+    m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
     BindShader(m_currentShader);
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
@@ -679,6 +678,11 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
 //----------------------------------------------------------------------------------------------------
 void Renderer::BindShader(Shader const* shader) const
 {
+    if (!shader)
+    {
+        shader = m_defaultShader;
+    }
+
     m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
     m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
     m_deviceContext->IASetInputLayout(shader->m_inputLayout);

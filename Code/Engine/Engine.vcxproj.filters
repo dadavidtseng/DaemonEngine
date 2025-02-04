@@ -348,5 +348,8 @@
     <ClInclude Include="Core\FileUtils.hpp">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\DefaultShader.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
