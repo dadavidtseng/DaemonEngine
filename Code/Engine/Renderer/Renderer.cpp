@@ -40,6 +40,10 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
+#if defined(OPAQUE)
+#undef OPAQUE
+#endif
+
 //----------------------------------------------------------------------------------------------------
 const char* sourceShader = R"(
 struct vs_input_t
@@ -204,28 +208,61 @@ void Renderer::Startup()
     // Create the camera constant buffer with an initial size for one CameraConstants
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
 
-    // Test FileReadToBuffer()
-    String const filename = "Data/test.txt";
-
-    std::vector<uint8_t> buffer;
-
-    if (FileReadToBuffer(buffer, filename))
+    // Create blend states and store the state in m_blendState
+    D3D11_BLEND_DESC blendDesc ={};
+    blendDesc.RenderTarget[0].BlendEnable           = TRUE;
+    blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha         = blendDesc.RenderTarget[0].SrcBlend;
+    blendDesc.RenderTarget[0].DestBlendAlpha        = blendDesc.RenderTarget[0].DestBlend;
+    blendDesc.RenderTarget[0].BlendOpAlpha          = blendDesc.RenderTarget[0].BlendOp;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    hr                                              = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::OPAQUE)]);
+    if (!SUCCEEDED(hr))
     {
-        DebuggerPrintf("FileReadToBuffer succeeded, bytes read: %zd", buffer.size());
+        ERROR_AND_DIE("CreateBlendState for BlendMode::OPAQUE failed.")
     }
 
-    // Test FileReadToString()
-    String content;
-    if (FileReadToString(content, filename))
+    blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    hr                                  = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ALPHA)]);
+    if (!SUCCEEDED(hr))
     {
-        // Print the content of the file if reading is successful
-        DebuggerPrintf("FileReadToString succeeded, content: %s\n", content.c_str());
+        ERROR_AND_DIE("CreateBlendState for BlendMode::ALPHA failed.")
     }
-    else
+
+    blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+    hr                                  = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ADDITIVE)]);
+    if (!SUCCEEDED(hr))
     {
-        // Handle failure (e.g., file couldn't be read)
-        DebuggerPrintf("Failed to read the file.\n");
+        ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
     }
+
+
+    // // Test FileReadToBuffer()
+    // String const filename = "Data/test.txt";
+    //
+    // std::vector<uint8_t> buffer;
+    //
+    // if (FileReadToBuffer(buffer, filename))
+    // {
+    //     DebuggerPrintf("FileReadToBuffer succeeded, bytes read: %zd", buffer.size());
+    // }
+    //
+    // // Test FileReadToString()
+    // String content;
+    // if (FileReadToString(content, filename))
+    // {
+    //     // Print the content of the file if reading is successful
+    //     DebuggerPrintf("FileReadToString succeeded, content: %s\n", content.c_str());
+    // }
+    // else
+    // {
+    //     // Handle failure (e.g., file couldn't be read)
+    //     DebuggerPrintf("Failed to read the file.\n");
+    // }
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -256,6 +293,13 @@ void Renderer::Shutdown()
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
+    DX_SAFE_RELEASE(m_blendState)
+
+    // Release all blend states
+    for (int i = 0; i < static_cast<int>(BlendMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_blendStates[i])
+    }
 
     // Delete the immediate vertex buffer
     if (m_immediateVBO)
@@ -351,8 +395,9 @@ void Renderer::EndCamera(Camera const& camera)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes) const
+void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes)
 {
+    SetStatesIfChanged();
     CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_PCU), m_immediateVBO);
     DrawVertexBuffer(m_immediateVBO, numVertexes);
 }
@@ -433,18 +478,7 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
 //----------------------------------------------------------------------------------------------------
 void Renderer::SetBlendMode(BlendMode const mode)
 {
-    if (mode == BlendMode::ALPHA) // enum class BlendMode, defined near top of Renderer.hpp
-    {
-        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    else if (mode == BlendMode::ADDITIVE)
-    {
-        // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    }
-    else
-    {
-        ERROR_AND_DIE(Stringf( "Unknown / unsupported blend mode #%i", mode ))
-    }
+    m_desiredBlendMode = mode;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -820,4 +854,15 @@ void Renderer::BindConstantBuffer(int slot, ConstantBuffer const* cbo) const
 {
     m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
     m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+}
+
+void Renderer::SetStatesIfChanged()
+{
+    if (m_blendState != m_blendStates[static_cast<int>(m_desiredBlendMode)])
+    {
+        float constexpr blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
+        UINT constexpr  sampleMask     = 0xffffffff;
+
+        m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
+    }
 }

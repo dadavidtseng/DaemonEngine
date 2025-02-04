@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
@@ -25,6 +26,7 @@ struct ID3D11RenderTargetView;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct IDXGISwapChain;
+struct ID3D11BlendState;
 
 #define DX_SAFE_RELEASE(dxObject) \
 if ((dxObject) != nullptr) {    \
@@ -32,12 +34,19 @@ dxObject->Release();      \
 dxObject = nullptr;       \
 }
 
+#if defined(OPAQUE)
+#undef OPAQUE
+#endif
+
 //----------------------------------------------------------------------------------------------------
 enum class BlendMode
 {
+    OPAQUE,
     ALPHA,
     ADDITIVE,
+    COUNT
 };
+
 
 //----------------------------------------------------------------------------------------------------
 struct RenderConfig
@@ -59,7 +68,7 @@ public:
     void ClearScreen(Rgba8 const& clearColor);
     void BeginCamera(Camera const& camera);
     void EndCamera(Camera const& camera);
-    void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes) const;
+    void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
 
     void BindTexture(Texture const* texture);
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
@@ -87,6 +96,7 @@ private:
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
     void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
+    void            SetStatesIfChanged();
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;
@@ -105,6 +115,9 @@ protected:
     VertexBuffer*           m_immediateVBO  = nullptr;
     Shader*                 m_defaultShader = nullptr;
     ConstantBuffer*         m_cameraCBO     = nullptr;
+    ID3D11BlendState* m_blendState = nullptr;
+    BlendMode m_desiredBlendMode = BlendMode::ALPHA;
+    ID3D11BlendState* m_blendStates[(int)(BlendMode::COUNT)] = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
