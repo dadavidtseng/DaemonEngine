@@ -21,6 +21,7 @@
 #include <dxgi.h>
 #include <windows.h>
 
+#include "Engine/Core/FileUtils.hpp"
 #include "Engine/Renderer/Shader.hpp"
 
 
@@ -181,6 +182,30 @@ void Renderer::Startup()
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
     m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+
+
+    // Test FileReadToBuffer()
+    String const filename = "Data/test.txt";
+
+    std::vector<uint8_t> buffer;
+
+    if (FileReadToBuffer(buffer, filename))
+    {
+        DebuggerPrintf("FileReadToBuffer succeeded, bytes read: %zd", buffer.size());
+    }
+
+    // Test FileReadToString()
+    String content;
+    if (FileReadToString(content, filename))
+    {
+        // Print the content of the file if reading is successful
+        DebuggerPrintf("FileReadToString succeeded, content: %s\n", content.c_str());
+    }
+    else
+    {
+        // Handle failure (e.g., file couldn't be read)
+        DebuggerPrintf("Failed to read the file.\n");
+    }
 }
 
 //-----------------------------------------------------------------------------------------------

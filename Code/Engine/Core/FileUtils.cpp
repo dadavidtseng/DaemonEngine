@@ -1,34 +1,82 @@
-//-----------------------------------------------------------------------------------------------
-// Time.cpp
-//
+//----------------------------------------------------------------------------------------------------
+// FileUtils.cpp
+//----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------
-#include "Engine/Core/Time.hpp"
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/FileUtils.hpp"
 
-//-----------------------------------------------------------------------------------------------
-double InitializeTime(LARGE_INTEGER& out_initialTime)
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
+//----------------------------------------------------------------------------------------------------
+bool FileReadToBuffer(std::vector<uint8_t>& out_buffer, String const& fileName)
 {
-	LARGE_INTEGER countsPerSecond;
+    FILE*         file = nullptr;
+    errno_t const err  = fopen_s(&file, fileName.c_str(), "rb");
 
-	QueryPerformanceFrequency(&countsPerSecond);
-	QueryPerformanceCounter(&out_initialTime);
+    if (err != 0 || !file)
+    {
+        ERROR_RECOVERABLE("Error: Failed to open file.")
+        return false;
+    }
 
-	return 1.0 / static_cast<double>(countsPerSecond.QuadPart);
+    if (fseek(file, 0, SEEK_END) != 0)
+    {
+        ERROR_RECOVERABLE("Error: Failed to seek to end of file.")
+        fclose(file);
+        return false;
+    }
+
+    long const fileSize = ftell(file);
+
+    if (fileSize <= 0)
+    {
+        ERROR_RECOVERABLE("Error: File is empty or invalid size.")
+        fclose(file);
+        return false;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0)
+    {
+        ERROR_RECOVERABLE("Error: Failed to seek back to file start.")
+        fclose(file);
+        return false;
+    }
+
+    out_buffer.resize(fileSize);
+
+    size_t const bytesRead = fread(out_buffer.data(), 1, fileSize, file);
+
+    if (bytesRead != static_cast<size_t>(fileSize))
+    {
+        ERROR_RECOVERABLE("Error: Failed to read the entire file.")
+        fclose(file);
+        return false;
+    }
+
+    int const closeErr = fclose(file);
+
+    if (closeErr != 0)
+    {
+        ERROR_RECOVERABLE("Error: Failed to close file.")
+        return false;
+    }
+
+    return true;
 }
 
-//-----------------------------------------------------------------------------------------------
-double GetCurrentTimeSeconds()
+//----------------------------------------------------------------------------------------------------
+bool FileReadToString(String& out_string, String const& fileName)
 {
-	static LARGE_INTEGER initialTime;
-	static double        secondsPerCount = InitializeTime(initialTime);
+    std::vector<uint8_t> buffer;
 
-	LARGE_INTEGER currentCount;
-	QueryPerformanceCounter(&currentCount);
+    if (!FileReadToBuffer(buffer, fileName))
+    {
+        return false;
+    }
 
-	const LONGLONG elapsedCountsSinceInitialTime = currentCount.QuadPart - initialTime.QuadPart;
-	const double   currentSeconds                = static_cast<double>(elapsedCountsSinceInitialTime) * secondsPerCount;
+    buffer.push_back('\0');
 
-	return currentSeconds;
+    out_string.assign(reinterpret_cast<char*>(buffer.data()));
+
+    return true;
 }
