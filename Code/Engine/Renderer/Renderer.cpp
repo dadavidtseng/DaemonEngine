@@ -313,8 +313,6 @@ void Renderer::ClearScreen(Rgba8 const& clearColor)
 //-----------------------------------------------------------------------------------------------
 void Renderer::BeginCamera(Camera const& camera)
 {
-    UNUSED(camera)
-
     // Set viewport
     D3D11_VIEWPORT viewport;
     Window const*  window = m_config.m_window;
