@@ -15,6 +15,7 @@ class Texture
     friend class Renderer; // Only the Renderer can create new Texture objects!
 
 public:
+    ~Texture();
     // Add a getter for texture dimensions
     IntVec2 GetDimensions() const { return m_dimensions; }
 

@@ -55,7 +55,15 @@ v2p_t VertexMain(vs_input_t input)
     return v2p;
 }
 
+Texture2D diffuseTexture : register(t0);
+SamplerState diffuseSampler : register(s0);
+
 float4 PixelMain(v2p_t input) : SV_Target0
 {
-    return float4(input.color);
+    float4 textureColor = diffuseTexture.Sample(diffuseSampler, input.uv);
+    float4 vertexColor = input.color;
+    float4 color = textureColor * vertexColor;
+    clip(color.a - 0.1f);
+
+    return float4(color);
 })";

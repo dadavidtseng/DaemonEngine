@@ -7,7 +7,6 @@
 
 #include <vector>
 
-
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -16,13 +15,13 @@
 #include "Game/EngineBuildPreferences.hpp"
 
 //----------------------------------------------------------------------------------------------------
-struct IntVec2;
 class BitmapFont;
 class ConstantBuffer;
 class Image;
 class Shader;
 class VertexBuffer;
 class Window;
+struct IntVec2;
 struct ID3D11RasterizerState;
 struct ID3D11RenderTargetView;
 struct ID3D11Device;
@@ -41,6 +40,14 @@ dxObject = nullptr;       \
 #endif
 
 //----------------------------------------------------------------------------------------------------
+enum class SamplerMode
+{
+    POINT_CLAMP,
+    BILINEAR_CLAMP,
+    COUNT
+};
+
+//----------------------------------------------------------------------------------------------------
 enum class BlendMode
 {
     OPAQUE,
@@ -48,7 +55,6 @@ enum class BlendMode
     ADDITIVE,
     COUNT
 };
-
 
 //----------------------------------------------------------------------------------------------------
 struct RenderConfig
@@ -72,7 +78,7 @@ public:
     void EndCamera(Camera const& camera);
     void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
 
-    void BindTexture(Texture const* texture);
+    void BindTexture(Texture const* texture) const;
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
 
     Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
@@ -86,8 +92,8 @@ private:
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
     Texture*    CreateTextureFromFile(char const* imageFilePath);
     Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
-    Image       CreateImageFromFile(char const* imageFilePath);
     Texture*    CreateTextureFromImage(Image const& image);
+    Image       CreateImageFromFile(char const* imageFilePath);
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     Shader* CreateShader(char const* shaderName);
@@ -101,6 +107,7 @@ private:
     void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
     void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
     void            SetStatesIfChanged();
+    void            SetSamplerMode(SamplerMode mode);
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;
@@ -115,13 +122,17 @@ protected:
     ID3D11DeviceContext*    m_deviceContext    = nullptr;
     IDXGISwapChain*         m_swapChain        = nullptr;
     std::vector<Shader*>    m_loadedShaders;
-    Shader*                 m_currentShader                        = nullptr;
-    VertexBuffer*           m_immediateVBO                         = nullptr;
-    Shader*                 m_defaultShader                        = nullptr;
-    ConstantBuffer*         m_cameraCBO                            = nullptr;
-    ID3D11BlendState*       m_blendState                           = nullptr;
-    BlendMode               m_desiredBlendMode                     = BlendMode::ALPHA;
-    ID3D11BlendState*       m_blendStates[(int)(BlendMode::COUNT)] = {};
+    Shader*                 m_currentShader                            = nullptr;
+    VertexBuffer*           m_immediateVBO                             = nullptr;
+    Shader*                 m_defaultShader                            = nullptr;
+    ConstantBuffer*         m_cameraCBO                                = nullptr;
+    ID3D11BlendState*       m_blendState                               = nullptr;
+    BlendMode               m_desiredBlendMode                         = BlendMode::ALPHA;
+    ID3D11BlendState*       m_blendStates[(int)(BlendMode::COUNT)]     = {};
+    Texture*                m_defaultTexture                           = nullptr;
+    ID3D11SamplerState*     m_samplerState                             = nullptr;
+    SamplerMode             m_desiredSamplerMode                       = SamplerMode::POINT_CLAMP;
+    ID3D11SamplerState*     m_samplerStates[(int)(SamplerMode::COUNT)] = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;

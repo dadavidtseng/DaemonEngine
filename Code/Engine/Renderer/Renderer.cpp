@@ -98,7 +98,6 @@ Renderer::Renderer(RenderConfig const& render_config)
     m_config = render_config;
 }
 
-//-----------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
     // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
@@ -242,30 +241,48 @@ void Renderer::Startup()
         ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
     }
 
+    // Initialize m_defaultTexture to a 2x2 white image
+    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+    m_defaultTexture         = CreateTextureFromImage(defaultImage);
+    m_defaultTexture->m_name = "Default";
+    //m_loadedTextures.push_back(m_defaultTexture);
 
-    // // Test FileReadToBuffer()
-    // String const filename = "Data/test.txt";
-    //
-    // std::vector<uint8_t> buffer;
-    //
-    // if (FileReadToBuffer(buffer, filename))
-    // {
-    //     DebuggerPrintf("FileReadToBuffer succeeded, bytes read: %zd", buffer.size());
-    // }
-    //
-    // // Test FileReadToString()
-    // String content;
-    // if (FileReadToString(content, filename))
-    // {
-    //     // Print the content of the file if reading is successful
-    //     DebuggerPrintf("FileReadToString succeeded, content: %s\n", content.c_str());
-    // }
-    // else
-    // {
-    //     // Handle failure (e.g., file couldn't be read)
-    //     DebuggerPrintf("Failed to read the file.\n");
-    // }
+    // Bind the default texture
+    BindTexture(m_defaultTexture);
+
+    // Create sampler states
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
+    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(SamplerMode::POINT_CLAMP)]);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
+    }
+
+    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(SamplerMode::BILINEAR_CLAMP)]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_CLAMP failed.")
+    }
+
+    // Default the sampler state to point clamp
+    m_samplerState = m_samplerStates[static_cast<int>(SamplerMode::POINT_CLAMP)];
+    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 }
+
+//-----------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::BeginFrame()
@@ -289,19 +306,43 @@ void Renderer::EndFrame() const
 //-----------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
+    // Release all blend states
+    for (int i = 0; i < static_cast<int>(BlendMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_blendStates[i])
+    }
+
+    // Release all sampler states
+    for (int i = 0; i < static_cast<int>(SamplerMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_samplerStates[i])
+    }
+
+    for (int i = 0; i < static_cast<unsigned int>(m_loadedTextures.size()); ++i)
+    {
+        delete m_loadedTextures[i];
+        m_loadedTextures[i] = nullptr;
+    }
+
+    m_loadedTextures.clear();
+
+    //for (int i = 0; i < static_cast<unsigned int>(m_loadedFonts.size()); ++i)
+    //{
+        //    delete m_loadedFonts[i];
+        //m_loadedFonts[i] = nullptr;
+    //}
+
+    //m_loadedFonts.clear();
+
+
     // Release all DirectX objects and check for memory leaks in your Shutdown function.
     DX_SAFE_RELEASE(m_rasterizerState)
     DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
-    DX_SAFE_RELEASE(m_blendState)
-
-    // Release all blend states
-    for (int i = 0; i < static_cast<int>(BlendMode::COUNT); ++i)
-    {
-        DX_SAFE_RELEASE(m_blendStates[i])
-    }
+    // DX_SAFE_RELEASE(m_blendState)
+    // DX_SAFE_RELEASE(m_samplerState)
 
     // Delete the immediate vertex buffer
     if (m_immediateVBO)
@@ -405,19 +446,14 @@ void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BindTexture(Texture const* texture)
+void Renderer::BindTexture(Texture const* texture) const
 {
-    if (texture)
+    if (!texture)
     {
-        // Crushing the app if m_openglTextureID is 0xFFFFFFFF
-        // glEnable(GL_TEXTURE_2D);
-        // glBindTexture(GL_TEXTURE_2D, texture->m_openglTextureID);
+        texture = m_defaultTexture;
     }
-    else
-    {
-        // Bind the texture with vertices color
-        // glDisable(GL_TEXTURE_2D);
-    }
+
+    m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -536,12 +572,13 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 
     GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
 
-    Texture* newTexture = CreateTextureFromData(imageFilePath, dimensions, bytesPerTexel, texelData);
+    Image    fileImage(imageFilePath);
+    Texture* newTexture = CreateTextureFromImage(fileImage);
 
     // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
     stbi_image_free(texelData);
 
-    m_loadedTextures.push_back(newTexture);
+    //m_loadedTextures.push_back(newTexture);
     return newTexture;
 }
 
@@ -561,18 +598,15 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimens
     newTexture->m_name       = name; // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
     newTexture->m_dimensions = dimensions;
 
-    m_loadedTextures.push_back(newTexture);
+    //m_loadedTextures.push_back(newTexture);
     return newTexture;
-}
-
-Image Renderer::CreateImageFromFile(char const* imageFilePath)
-{
-    return Image(imageFilePath);
 }
 
 Texture* Renderer::CreateTextureFromImage(Image const& image)
 {
-    Texture* newTexture         = CreateTextureFromFile(image.GetImageFilePath().c_str());
+    Texture* newTexture      = new Texture();
+    newTexture->m_name       = image.GetImageFilePath();
+    newTexture->m_dimensions = image.GetDimensions();
 
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width                = image.GetDimensions().x;
@@ -605,6 +639,11 @@ Texture* Renderer::CreateTextureFromImage(Image const& image)
 
     m_loadedTextures.push_back(newTexture);
     return newTexture;
+}
+
+Image Renderer::CreateImageFromFile(char const* imageFilePath)
+{
+    return Image(imageFilePath);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -904,9 +943,17 @@ void Renderer::SetStatesIfChanged()
 {
     if (m_blendState != m_blendStates[static_cast<int>(m_desiredBlendMode)])
     {
+        m_blendState                   = m_blendStates[static_cast<int>(m_desiredBlendMode)];
         float constexpr blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
         UINT constexpr  sampleMask     = 0xffffffff;
 
         m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
     }
+}
+
+void Renderer::SetSamplerMode(SamplerMode mode)
+{
+    m_desiredSamplerMode = mode;
+    m_samplerState       = m_samplerStates[static_cast<int>(mode)];
+    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 }
