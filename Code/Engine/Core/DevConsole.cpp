@@ -1,3 +1,5 @@
+
+
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
@@ -94,7 +96,7 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
     switch (m_mode)
     {
     case OPEN_FULL:
-        Render_OpenFull(bounds, *rendererOverride, *g_theBitmapFont, 1.f);
+        Render_OpenFull(bounds, *m_config.m_defaultRenderer, *g_theBitmapFont, 1.f);
         break;
     case OPEN_PARTIAL:
         // Render partial screen console if needed

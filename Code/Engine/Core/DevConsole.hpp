@@ -58,7 +58,7 @@ public:
     void           ToggleMode(DevConsoleMode mode);
     bool           Command_Test(EventArgs& args);
 
-    // static const Rgba8 ERROR;
+     //static const Rgba8 ERROR;
     // static const Rgba8 WARNING;
     static const Rgba8 INFO_MAJOR;
     // static const Rgba8 INFO_MINOR;

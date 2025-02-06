@@ -245,7 +245,7 @@ void Renderer::Startup()
     Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
     m_defaultTexture         = CreateTextureFromImage(defaultImage);
     m_defaultTexture->m_name = "Default";
-    //m_loadedTextures.push_back(m_defaultTexture);
+    m_loadedTextures.push_back(m_defaultTexture);
 
     // Bind the default texture
     BindTexture(m_defaultTexture);
@@ -440,7 +440,7 @@ void Renderer::EndCamera(Camera const& camera)
 //-----------------------------------------------------------------------------------------------
 void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes)
 {
-    SetStatesIfChanged();
+    // SetStatesIfChanged();
     CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_PCU), m_immediateVBO);
     DrawVertexBuffer(m_immediateVBO, numVertexes);
 }
@@ -448,7 +448,7 @@ void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes
 //-----------------------------------------------------------------------------------------------
 void Renderer::BindTexture(Texture const* texture) const
 {
-    if (!texture)
+    if (texture == nullptr)
     {
         texture = m_defaultTexture;
     }
@@ -637,7 +637,7 @@ Texture* Renderer::CreateTextureFromImage(Image const& image)
         ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
     }
 
-    m_loadedTextures.push_back(newTexture);
+    /*m_loadedTextures.push_back(newTexture);*/
     return newTexture;
 }
 
