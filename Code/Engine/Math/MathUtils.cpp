@@ -211,6 +211,11 @@ float DotProduct3D(Vec3 const& a, Vec3 const& b)
         a.z * b.z;
 }
 
+float DotProduct4D(Vec4 const& a, Vec4 const& b)
+{
+    return 0.f;
+}
+
 //----------------------------------------------------------------------------------------------------
 float CrossProduct2D(Vec2 const& a, Vec2 const& b)
 {

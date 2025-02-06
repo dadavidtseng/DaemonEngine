@@ -226,6 +226,16 @@ Mat44 const Mat44::MakeXRotationDegrees(float const rotationDegreesAboutX)
     return matrix;
 }
 
+Mat44 const Mat44::MakeOrthoProjection(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+    return {};
+}
+
+Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar)
+{
+    return {};
+}
+
 //----------------------------------------------------------------------------------------------------
 Vec2 const Mat44::TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const
 {
@@ -409,6 +419,11 @@ Vec4 const Mat44::GetTranslation4D() const
     return Vec4(m_values[Tx], m_values[Ty], m_values[Tz], m_values[Tw]);
 }
 
+Mat44 const Mat44::GetOrthonormalInverse() const
+{
+    return {};
+}
+
 //----------------------------------------------------------------------------------------------------
 void Mat44::SetTranslation2D(Vec2 const& translationXY)
 {
@@ -496,6 +511,14 @@ void Mat44::SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kB
     m_values[Ty] = translation4D.y;
     m_values[Tz] = translation4D.z;
     m_values[Tw] = translation4D.w;
+}
+
+void Mat44::Transpose()
+{
+}
+
+void Mat44::Orthonormalize_XFwd_YLeft_ZUp()
+{
 }
 
 //----------------------------------------------------------------------------------------------------

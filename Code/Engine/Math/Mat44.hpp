@@ -35,6 +35,8 @@ struct Mat44
     static Mat44 const MakeZRotationDegrees(float rotationDegreesAboutZ);
     static Mat44 const MakeYRotationDegrees(float rotationDegreesAboutY);
     static Mat44 const MakeXRotationDegrees(float rotationDegreesAboutX);
+    static Mat44 const MakeOrthoProjection(float left, float right, float bottom, float top, float zNear, float zFar);
+    static Mat44 const MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar);
 
     Vec2 const TransformVectorQuantity2D(Vec2 const& vectorQuantityXY) const;        // assumes z=0, w=0
     Vec3 const TransformVectorQuantity3D(Vec3 const& vectorQuantityXYZ) const;      // assumes w=0
@@ -55,6 +57,7 @@ struct Mat44
     Vec4 const   GetJBasis4D() const;
     Vec4 const   GetKBasis4D() const;
     Vec4 const   GetTranslation4D() const;
+    Mat44 const  GetOrthonormalInverse() const;      // Only works for orthonormal affine matrices
 
     void SetTranslation2D(Vec2 const& translationXY);          // Sets translationZ = 0, translationW = 1
     void SetTranslation3D(Vec3 const& translationXYZ);         // Sets translationW = 1
@@ -63,6 +66,8 @@ struct Mat44
     void SetIJK3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D); //Sets w=0 for ijk; does not modify t
     void SetIJKT3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, Vec3 const& translationXYZ); //Sets w=0 for ijk, w=1 for t
     void SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D);    // All 16 values provided
+    void Transpose(); // swaps columns with rows
+    void Orthonormalize_XFwd_YLeft_ZUp(); // Forward is canonical, Up is secondary, Left tertiary
 
     void Append(Mat44 const& appendThis);                   // multiply on right in column notation / on left in row notation
     void AppendZRotation(float degreesRotationAboutZ);      // same as appending (*= in column notation) a  z-rotation matrix

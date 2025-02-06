@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Vec4.hpp"
 
 //----------------------------------------------------------------------------------------------------
 struct AABB2;
@@ -49,6 +50,7 @@ float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b);
 
 float DotProduct2D(Vec2 const& a, Vec2 const& b);
 float DotProduct3D(Vec3 const& a, Vec3 const& b);
+float DotProduct4D(Vec4 const& a, Vec4 const& b);
 float CrossProduct2D(Vec2 const& a, Vec2 const& b);
 Vec3  CrossProduct3D(Vec3 const& a, Vec3 const& b);
 
