@@ -1,7 +1,8 @@
-#pragma once
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // ErrorWarningAssert.hpp
-//
+//----------------------------------------------------------------------------------------------------
+
+#pragma once
 // Summary of error and assertion macros:
 //	#define ERROR_AND_DIE( errorText )						// "MUST not reach this point"; Show error dialogue, then shut down the app
 //	#define ERROR_RECOVERABLE( errorText )					// "SHOULD not reach this point"; Show warning dialogue, then proceed
@@ -11,10 +12,10 @@
 //	#define ASSERT_RECOVERABLE( condition, errorText )		// Same as GUARANTEE_RECOVERABLE, but removed if DISABLE_ASSERTS is #defined
 //
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 #include <string>
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 enum class MsgSeverityLevel
 {
 	INFORMATION,
@@ -23,7 +24,7 @@ enum class MsgSeverityLevel
 	FATAL
 };
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void DebuggerPrintf(char const* messageFormat, ...);
 bool IsDebuggerAvailable();
 __declspec(noreturn) void FatalError(char const* filePath, char const* functionName, int lineNum, std::string const& reasonForError, char const* conditionText = nullptr);
@@ -33,7 +34,7 @@ bool SystemDialogue_YesNo(std::string const& messageTitle, std::string const& me
 bool SystemDialogue_OkayCancel(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
 int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // ERROR_AND_DIE
 //
 // Present in all builds.
@@ -52,7 +53,7 @@ int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string cons
 	FatalError( __FILE__,  __FUNCTION__, __LINE__, errorMessageText );								\
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // ERROR_RECOVERABLE
 //
 // Present in all builds.
@@ -68,7 +69,7 @@ int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string cons
 	RecoverableWarning( __FILE__,  __FUNCTION__, __LINE__, errorMessageText );						\
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // GUARANTEE_OR_DIE
 //
 // Present in all builds.
@@ -88,7 +89,7 @@ int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string cons
 	}																								\
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // GUARANTEE_RECOVERABLE
 //
 // Present in all builds.
@@ -108,7 +109,7 @@ int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string cons
 	}																								\
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // ASSERT_OR_DIE
 //
 // Removed if DISABLE_ASSERTS is defined, typically in a Final build configuration.
@@ -132,7 +133,7 @@ int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string cons
 }
 #endif
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // ASSERT_RECOVERABLE
 //
 // Removed if DISABLE_ASSERTS is defined, typically in a Final build configuration.

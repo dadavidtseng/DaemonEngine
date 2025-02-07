@@ -35,7 +35,8 @@ struct DevConsoleConfig
 {
     Renderer* m_defaultRenderer = nullptr;
     String    m_defaultFontName = "System";
-    // float m_lineOnScreen = 
+    float m_defaultFontAspect = 1.f;
+    float m_maxLinesDisplay = 29.5f;
 };
 
 //----------------------------------------------------------------------------------------------------

@@ -146,7 +146,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
     AddVertsForAABB2D(boxVerts, box, Rgba8::TRANSLUCENT_BLACK);
     renderer.BindTexture(nullptr);
 
-    // 繪製頂點陣列
+    
     renderer.DrawVertexArray(static_cast<int>(boxVerts.size()), boxVerts.data());
 
     std::vector<Vertex_PCU> textVerts;
@@ -166,23 +166,19 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
         textBounds.m_maxs.y = bounds.m_maxs.y + (i * lineHeight);
         textBounds.m_mins.y = textBounds.m_maxs.y - lineHeight;
 
-        // 確保文字在指定區域內，使用 AddVertsForTextInBox2D 添加頂點
         font.AddVertsForTextInBox2D(
-            textVerts,     // 存放頂點的向量
-            line.m_text,   // 文字內容
-            textBounds,    // 繪製的文字邊界
-            lineHeight,    // 每行文字高度
-            line.m_color,  // 文字顏色
-            fontAspect,    // 字體比例
-            Vec2(0.f, 0.f) // 文字靠左對齊，垂直置中,
+			textVerts,
+			line.m_text,
+			textBounds,
+			lineHeight,
+			line.m_color,
+			fontAspect,
+            Vec2::ZERO 
 
         );
         // printf("(%f, %f) (%f, %f)\n", textBounds.m_mins.x, textBounds.m_mins.y, textBounds.m_maxs.x, textBounds.m_maxs.y);
     }
 
-    // 綁定字體紋理
     renderer.BindTexture(&font.GetTexture());
-
-    // 繪製頂點陣列
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
 }

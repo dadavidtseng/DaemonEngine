@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#define STB_IMAGE_IMPLEMENTATION // Exactly one .CPP (this Image.cpp) should #define this before #including stb_image.h
+#define STB_IMAGE_IMPLEMENTATION    // Exactly one .CPP (this Image.cpp) should #define this before #including stb_image.h
 #include "Engine/Core/Image.hpp"
 
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -18,8 +18,14 @@ Image::Image(char const* imageFilePath)
     int numComponents = 0;
 
     // Load image using stb_image
-    unsigned char* imageData = stbi_load(imageFilePath, &width, &height, &numComponents, 4); // Force 4 components (RGBA)
-    GUARANTEE_OR_DIE(imageData != nullptr, "Failed to load image")
+    unsigned char* imageData = stbi_load(imageFilePath,
+                                         &width,
+                                         &height,
+                                         &numComponents,
+                                         4);    // Force 4 components (RGBA)
+
+    GUARANTEE_OR_DIE(imageData != nullptr,
+                     "Failed to load image")
 
     // Set dimensions
     m_dimensions = IntVec2(width, height);
@@ -38,6 +44,7 @@ Image::Image(char const* imageFilePath)
     stbi_image_free(imageData);
 }
 
+//----------------------------------------------------------------------------------------------------
 Image::Image(IntVec2 const& size, Rgba8 const color)
     : m_dimensions(size)
 {
@@ -59,11 +66,14 @@ IntVec2 Image::GetDimensions() const
 //----------------------------------------------------------------------------------------------------
 Rgba8 Image::GetTexelColor(IntVec2 const& texelCoords) const
 {
-    GUARANTEE_OR_DIE(texelCoords.x >= 0 && texelCoords.x < m_dimensions.x &&
-                     texelCoords.y >= 0 && texelCoords.y < m_dimensions.y,
+    GUARANTEE_OR_DIE(texelCoords.x >= 0 &&
+                     texelCoords.x < m_dimensions.x &&
+                     texelCoords.y >= 0 &&
+                     texelCoords.y < m_dimensions.y,
                      "Texel coordinates out of bounds")
 
     size_t const index = texelCoords.y * m_dimensions.x + texelCoords.x;
+
     return m_rgbaTexels[index];
 }
 
@@ -76,8 +86,10 @@ void const* Image::GetRawData() const
 //----------------------------------------------------------------------------------------------------
 void Image::SetTexelColor(IntVec2 const& texelCoords, Rgba8 const& newColor)
 {
-    GUARANTEE_OR_DIE(texelCoords.x >= 0 && texelCoords.x < m_dimensions.x &&
-                     texelCoords.y >= 0 && texelCoords.y < m_dimensions.y,
+    GUARANTEE_OR_DIE(texelCoords.x >= 0 &&
+                     texelCoords.x < m_dimensions.x &&
+                     texelCoords.y >= 0 &&
+                     texelCoords.y < m_dimensions.y,
                      "Texel coordinates out of bounds")
 
     size_t const index  = texelCoords.y * m_dimensions.x + texelCoords.x;

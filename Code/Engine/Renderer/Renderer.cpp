@@ -5,9 +5,14 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Renderer.hpp"
 
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <dxgi.h>
+
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
+#include "Engine/Core/Image.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
@@ -19,14 +24,6 @@
 #include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/Window.hpp"
 #include "ThirdParty/stb/stb_image.h"
-
-#define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
-#include <d3d11.h>
-#include <d3dcompiler.h>
-#include <dxgi.h>
-#include <windows.h>
-
-#include "Engine/Core/Image.hpp"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -42,39 +39,8 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
-#if defined(OPAQUE)
-#undef OPAQUE
-#endif
-
 //----------------------------------------------------------------------------------------------------
-const char* sourceShader = R"(
-struct vs_input_t
-{
-    float3 localPosition : POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
-};
-
-struct v2p_t
-{
-    float4 position : SV_Position;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
-};
-
-v2p_t VertexMain(vs_input_t input)
-{
-    v2p_t v2p;
-    v2p.position = float4(input.localPosition, 1);
-    v2p.color = input.color;
-    v2p.uv = input.uv;
-    return v2p;
-}
-
-float4 PixelMain(v2p_t input) : SV_Target0
-{
-    return float4(input.color);
-})";
+static constexpr int k_cameraConstantSlot = 2;
 
 //----------------------------------------------------------------------------------------------------
 struct CameraConstants
@@ -90,14 +56,12 @@ struct CameraConstants
 };
 
 //----------------------------------------------------------------------------------------------------
-static const int k_cameraConstantSlot = 2;
-
-//----------------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& render_config)
 {
     m_config = render_config;
 }
 
+//----------------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
     // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
@@ -245,7 +209,6 @@ void Renderer::Startup()
     Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
     m_defaultTexture         = CreateTextureFromImage(defaultImage);
     m_defaultTexture->m_name = "Default";
-    m_loadedTextures.push_back(m_defaultTexture);
 
     // Bind the default texture
     BindTexture(m_defaultTexture);
@@ -282,16 +245,14 @@ void Renderer::Startup()
     m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 }
 
-//-----------------------------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------------------------
-void Renderer::BeginFrame()
+//----------------------------------------------------------------------------------------------------
+void Renderer::BeginFrame() const
 {
     // This code needs to run every frame and should be in your Render function.
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Renderer::EndFrame() const
 {
     HRESULT const hr = m_swapChain->Present(0, 0);
@@ -303,7 +264,7 @@ void Renderer::EndFrame() const
     }
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
     // Release all blend states
@@ -318,7 +279,7 @@ void Renderer::Shutdown()
         DX_SAFE_RELEASE(m_samplerStates[i])
     }
 
-    for (int i = 0; i < static_cast<unsigned int>(m_loadedTextures.size()); ++i)
+    for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
     {
         delete m_loadedTextures[i];
         m_loadedTextures[i] = nullptr;
@@ -328,8 +289,8 @@ void Renderer::Shutdown()
 
     //for (int i = 0; i < static_cast<unsigned int>(m_loadedFonts.size()); ++i)
     //{
-        //    delete m_loadedFonts[i];
-        //m_loadedFonts[i] = nullptr;
+    //    delete m_loadedFonts[i];
+    //m_loadedFonts[i] = nullptr;
     //}
 
     //m_loadedFonts.clear();
@@ -388,8 +349,8 @@ void Renderer::Shutdown()
 #endif
 }
 
-//-----------------------------------------------------------------------------------------------
-void Renderer::ClearScreen(Rgba8 const& clearColor)
+//----------------------------------------------------------------------------------------------------
+void Renderer::ClearScreen(Rgba8 const& clearColor) const
 {
     // Clear the screen
     float colorAsFloats[4];
@@ -397,8 +358,8 @@ void Renderer::ClearScreen(Rgba8 const& clearColor)
     m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 }
 
-//-----------------------------------------------------------------------------------------------
-void Renderer::BeginCamera(Camera const& camera)
+//----------------------------------------------------------------------------------------------------
+void Renderer::BeginCamera(Camera const& camera) const
 {
     // Set viewport
     D3D11_VIEWPORT viewport;
@@ -431,21 +392,21 @@ void Renderer::BeginCamera(Camera const& camera)
     BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Renderer::EndCamera(Camera const& camera)
 {
     UNUSED(camera)
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Renderer::DrawVertexArray(int const numVertexes, Vertex_PCU const* vertexes)
 {
-    // SetStatesIfChanged();
+    SetStatesIfChanged();
     CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_PCU), m_immediateVBO);
     DrawVertexBuffer(m_immediateVBO, numVertexes);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void Renderer::BindTexture(Texture const* texture) const
 {
     if (texture == nullptr)
@@ -474,7 +435,7 @@ void Renderer::DrawTexturedQuad(AABB2 const&   bounds,
     DrawVertexArray(static_cast<int>(quadVerts.size()), quadVerts.data());
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
 {
     // See if we already have this texture previously loaded
@@ -491,9 +452,7 @@ Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
 //----------------------------------------------------------------------------------------------------
 BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension)
 {
-    BitmapFont* existingBitMapFont = GetBitMapFontForFileName(bitmapFontFilePathWithNoExtension);
-
-    if (existingBitMapFont)
+    if (BitmapFont* existingBitMapFont = GetBitMapFontForFileName(bitmapFontFilePathWithNoExtension))
     {
         return existingBitMapFont;
     }
@@ -554,7 +513,7 @@ BitmapFont* Renderer::GetBitMapFontForFileName(const char* bitmapFontFilePathWit
     return nullptr;
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 {
     IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
@@ -572,8 +531,8 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 
     GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
 
-    Image    fileImage(imageFilePath);
-    Texture* newTexture = CreateTextureFromImage(fileImage);
+    Image const fileImage(imageFilePath);
+    Texture*    newTexture = CreateTextureFromImage(fileImage);
 
     // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
     stbi_image_free(texelData);
@@ -582,26 +541,35 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
     return newTexture;
 }
 
-//------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 const& dimensions, int const bytesPerTexel, uint8_t const* texelData)
+//----------------------------------------------------------------------------------------------------
+Texture* Renderer::CreateTextureFromData(char const*    name,
+                                         IntVec2 const& dimensions,
+                                         int const      bytesPerTexel,
+                                         uint8_t const* texelData)
 {
     // Check if the load was successful
-    GUARANTEE_OR_DIE(texelData, Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!", name))
+    GUARANTEE_OR_DIE(texelData,
+                     Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!",
+                         name))
+
     GUARANTEE_OR_DIE(bytesPerTexel >= 3 && bytesPerTexel <= 4,
-                     Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)", name,
+                     Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)",
+                         name,
                          bytesPerTexel))
+
     GUARANTEE_OR_DIE(dimensions.x > 0 && dimensions.y > 0,
-                     Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)", name,
+                     Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)",
+                         name,
                          dimensions.x, dimensions.y))
 
     Texture* newTexture      = new Texture();
-    newTexture->m_name       = name; // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
+    newTexture->m_name       = name;            // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
     newTexture->m_dimensions = dimensions;
 
-    //m_loadedTextures.push_back(newTexture);
     return newTexture;
 }
 
+//----------------------------------------------------------------------------------------------------
 Texture* Renderer::CreateTextureFromImage(Image const& image)
 {
     Texture* newTexture      = new Texture();
@@ -622,8 +590,7 @@ Texture* Renderer::CreateTextureFromImage(Image const& image)
     textureData.pSysMem     = image.GetRawData();
     textureData.SysMemPitch = 4 * image.GetDimensions().x;
 
-    HRESULT hr;
-    hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
+    HRESULT hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
 
     if (!SUCCEEDED(hr))
     {
@@ -637,10 +604,11 @@ Texture* Renderer::CreateTextureFromImage(Image const& image)
         ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
     }
 
-    /*m_loadedTextures.push_back(newTexture);*/
+    m_loadedTextures.push_back(newTexture);
     return newTexture;
 }
 
+//----------------------------------------------------------------------------------------------------
 Image Renderer::CreateImageFromFile(char const* imageFilePath)
 {
     return Image(imageFilePath);
@@ -902,6 +870,7 @@ void Renderer::BindVertexBuffer(VertexBuffer const* vbo) const
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
+//----------------------------------------------------------------------------------------------------
 ConstantBuffer* Renderer::CreateConstantBuffer(unsigned int const size) const
 {
     ConstantBuffer* constantBuffer = new ConstantBuffer(m_device, size);
@@ -909,7 +878,8 @@ ConstantBuffer* Renderer::CreateConstantBuffer(unsigned int const size) const
     return constantBuffer;
 }
 
-void Renderer::CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const
+//----------------------------------------------------------------------------------------------------
+void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, ConstantBuffer* cbo) const
 {
     // Check if the constant buffer is large enough to hold the data
     if (cbo->GetSize() < size)
@@ -933,12 +903,14 @@ void Renderer::CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer*
     m_deviceContext->Unmap(cbo->m_buffer, 0);
 }
 
-void Renderer::BindConstantBuffer(int slot, ConstantBuffer const* cbo) const
+//----------------------------------------------------------------------------------------------------
+void Renderer::BindConstantBuffer(int const slot, ConstantBuffer const* cbo) const
 {
     m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
     m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
 }
 
+//----------------------------------------------------------------------------------------------------
 void Renderer::SetStatesIfChanged()
 {
     if (m_blendState != m_blendStates[static_cast<int>(m_desiredBlendMode)])
@@ -951,6 +923,7 @@ void Renderer::SetStatesIfChanged()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void Renderer::SetSamplerMode(SamplerMode mode)
 {
     m_desiredSamplerMode = mode;
