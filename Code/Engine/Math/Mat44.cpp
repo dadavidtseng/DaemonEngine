@@ -30,31 +30,36 @@ Mat44::Mat44()
 }
 
 //----------------------------------------------------------------------------------------------------
-Mat44::Mat44(Vec2 const& iBasis2D, Vec2 const& jBasis2D, Vec2 const& translation2D)
+Mat44::Mat44(Vec2 const& iBasis2D,
+             Vec2 const& jBasis2D,
+             Vec2 const& translation2D)
 {
     m_values[Ix] = iBasis2D.x;
     m_values[Iy] = iBasis2D.y;
-    m_values[Iz] = 0.0f;
-    m_values[Iw] = 0.0f;
+    m_values[Iz] = 0.f;
+    m_values[Iw] = 0.f;
 
     m_values[Jx] = jBasis2D.x;
     m_values[Jy] = jBasis2D.y;
-    m_values[Jz] = 0.0f;
-    m_values[Jw] = 0.0f;
+    m_values[Jz] = 0.f;
+    m_values[Jw] = 0.f;
 
-    m_values[Kx] = 0.0f;
-    m_values[Ky] = 0.0f;
-    m_values[Kz] = 1.0f;
-    m_values[Kw] = 0.0f;
+    m_values[Kx] = 0.f;
+    m_values[Ky] = 0.f;
+    m_values[Kz] = 1.f;
+    m_values[Kw] = 0.f;
 
     m_values[Tx] = translation2D.x;
     m_values[Ty] = translation2D.y;
-    m_values[Tz] = 0.0f;
-    m_values[Tw] = 1.0f;
+    m_values[Tz] = 0.f;
+    m_values[Tw] = 1.f;
 }
 
 //----------------------------------------------------------------------------------------------------
-Mat44::Mat44(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, Vec3 const& translation3D)
+Mat44::Mat44(Vec3 const& iBasis3D,
+             Vec3 const& jBasis3D,
+             Vec3 const& kBasis3D,
+             Vec3 const& translation3D)
 {
     m_values[Ix] = iBasis3D.x;
     m_values[Iy] = iBasis3D.y;
@@ -78,7 +83,10 @@ Mat44::Mat44(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, V
 }
 
 //----------------------------------------------------------------------------------------------------
-Mat44::Mat44(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D)
+Mat44::Mat44(Vec4 const& iBasis4D,
+             Vec4 const& jBasis4D,
+             Vec4 const& kBasis4D,
+             Vec4 const& translation4D)
 {
     m_values[Ix] = iBasis4D.x;
     m_values[Iy] = iBasis4D.y;
@@ -113,70 +121,70 @@ Mat44::Mat44(float const* sixteenValuesBasisMajor)
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeTranslation2D(Vec2 const& translationXY)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Tx] = translationXY.x;
-    matrix.m_values[Ty] = translationXY.y;
+    result.m_values[Tx] = translationXY.x;
+    result.m_values[Ty] = translationXY.y;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeTranslation3D(Vec3 const& translationXYZ)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Tx] = translationXYZ.x;
-    matrix.m_values[Ty] = translationXYZ.y;
-    matrix.m_values[Tz] = translationXYZ.z;
+    result.m_values[Tx] = translationXYZ.x;
+    result.m_values[Ty] = translationXYZ.y;
+    result.m_values[Tz] = translationXYZ.z;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeUniformScale2D(float const uniformScaleXY)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = uniformScaleXY;
-    matrix.m_values[Jy] = uniformScaleXY;
+    result.m_values[Ix] = uniformScaleXY;
+    result.m_values[Jy] = uniformScaleXY;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeUniformScale3D(float const uniformScaleXYZ)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = uniformScaleXYZ;
-    matrix.m_values[Jy] = uniformScaleXYZ;
-    matrix.m_values[Kz] = uniformScaleXYZ;
+    result.m_values[Ix] = uniformScaleXYZ;
+    result.m_values[Jy] = uniformScaleXYZ;
+    result.m_values[Kz] = uniformScaleXYZ;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeNonUniformScale2D(Vec2 const& nonUniformScaleXY)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = nonUniformScaleXY.x;
-    matrix.m_values[Jy] = nonUniformScaleXY.y;
+    result.m_values[Ix] = nonUniformScaleXY.x;
+    result.m_values[Jy] = nonUniformScaleXY.y;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
 Mat44 const Mat44::MakeNonUniformScale3D(Vec3 const& nonUniformScaleXYZ)
 {
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = nonUniformScaleXYZ.x;
-    matrix.m_values[Jy] = nonUniformScaleXYZ.y;
-    matrix.m_values[Kz] = nonUniformScaleXYZ.z;
+    result.m_values[Ix] = nonUniformScaleXYZ.x;
+    result.m_values[Jy] = nonUniformScaleXYZ.y;
+    result.m_values[Kz] = nonUniformScaleXYZ.z;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -185,14 +193,14 @@ Mat44 const Mat44::MakeZRotationDegrees(float const rotationDegreesAboutZ)
     float const cosTheta = CosDegrees(rotationDegreesAboutZ);
     float const sinTheta = SinDegrees(rotationDegreesAboutZ);
 
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = cosTheta;
-    matrix.m_values[Iy] = sinTheta;
-    matrix.m_values[Jx] = -sinTheta;
-    matrix.m_values[Jy] = cosTheta;
+    result.m_values[Ix] = cosTheta;
+    result.m_values[Iy] = sinTheta;
+    result.m_values[Jx] = -sinTheta;
+    result.m_values[Jy] = cosTheta;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -201,14 +209,14 @@ Mat44 const Mat44::MakeYRotationDegrees(float const rotationDegreesAboutY)
     float const cosTheta = CosDegrees(rotationDegreesAboutY);
     float const sinTheta = SinDegrees(rotationDegreesAboutY);
 
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Ix] = cosTheta;
-    matrix.m_values[Iz] = -sinTheta;
-    matrix.m_values[Kx] = sinTheta;
-    matrix.m_values[Kz] = cosTheta;
+    result.m_values[Ix] = cosTheta;
+    result.m_values[Iz] = -sinTheta;
+    result.m_values[Kx] = sinTheta;
+    result.m_values[Kz] = cosTheta;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -217,14 +225,14 @@ Mat44 const Mat44::MakeXRotationDegrees(float const rotationDegreesAboutX)
     float const cosTheta = CosDegrees(rotationDegreesAboutX);
     float const sinTheta = SinDegrees(rotationDegreesAboutX);
 
-    Mat44 matrix;
+    Mat44 result;
 
-    matrix.m_values[Jy] = cosTheta;
-    matrix.m_values[Jz] = sinTheta;
-    matrix.m_values[Ky] = -sinTheta;
-    matrix.m_values[Kz] = cosTheta;
+    result.m_values[Jy] = cosTheta;
+    result.m_values[Jz] = sinTheta;
+    result.m_values[Ky] = -sinTheta;
+    result.m_values[Kz] = cosTheta;
 
-    return matrix;
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -475,17 +483,17 @@ Mat44 const Mat44::GetOrthonormalInverse() const
     result.m_values[Ix] = m_values[Ix];
     result.m_values[Jx] = m_values[Iy];
     result.m_values[Kx] = m_values[Iz];
-    result.m_values[Tx] = 0.0f;  // We'll handle translation below
+    result.m_values[Tx] = 0.f;  // We'll handle translation below
 
     result.m_values[Iy] = m_values[Jx];
     result.m_values[Jy] = m_values[Jy];
     result.m_values[Ky] = m_values[Jz];
-    result.m_values[Ty] = 0.0f;
+    result.m_values[Ty] = 0.f;
 
     result.m_values[Iz] = m_values[Kx];
     result.m_values[Jz] = m_values[Ky];
     result.m_values[Kz] = m_values[Kz];
-    result.m_values[Tz] = 0.0f;
+    result.m_values[Tz] = 0.f;
 
     // Negate and apply rotation to translation
     result.m_values[Tx] = -(result.m_values[Ix] * m_values[Tx] + result.m_values[Jx] * m_values[Ty] + result.m_values[Kx] * m_values[Tz]);
@@ -493,7 +501,7 @@ Mat44 const Mat44::GetOrthonormalInverse() const
     result.m_values[Tz] = -(result.m_values[Iz] * m_values[Tx] + result.m_values[Jz] * m_values[Ty] + result.m_values[Kz] * m_values[Tz]);
 
     //  bottom row for an affine transformation is always [0, 0, 0, 1]
-    result.m_values[Tw] = 1.0f;
+    result.m_values[Tw] = 1.f;
 
     return result;
 }
@@ -517,7 +525,8 @@ void Mat44::SetTranslation3D(Vec3 const& translationXYZ)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Mat44::SetIJ2D(Vec2 const& iBasis2D, Vec2 const& jBasis2D)
+void Mat44::SetIJ2D(Vec2 const& iBasis2D,
+                    Vec2 const& jBasis2D)
 {
     m_values[Ix] = iBasis2D.x;
     m_values[Iy] = iBasis2D.y;
@@ -531,14 +540,18 @@ void Mat44::SetIJ2D(Vec2 const& iBasis2D, Vec2 const& jBasis2D)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Mat44::SetIJT2D(Vec2 const& iBasis2D, Vec2 const& jBasis2D, Vec2 const& translationXY)
+void Mat44::SetIJT2D(Vec2 const& iBasis2D,
+                     Vec2 const& jBasis2D,
+                     Vec2 const& translationXY)
 {
     SetIJ2D(iBasis2D, jBasis2D);
     SetTranslation2D(translationXY);
 }
 
 //----------------------------------------------------------------------------------------------------
-void Mat44::SetIJK3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D)
+void Mat44::SetIJK3D(Vec3 const& iBasis3D,
+                     Vec3 const& jBasis3D,
+                     Vec3 const& kBasis3D)
 {
     m_values[Ix] = iBasis3D.x;
     m_values[Iy] = iBasis3D.y;
@@ -557,14 +570,20 @@ void Mat44::SetIJK3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBa
 }
 
 //----------------------------------------------------------------------------------------------------
-void Mat44::SetIJKT3D(Vec3 const& iBasis3D, Vec3 const& jBasis3D, Vec3 const& kBasis3D, Vec3 const& translationXYZ)
+void Mat44::SetIJKT3D(Vec3 const& iBasis3D,
+                      Vec3 const& jBasis3D,
+                      Vec3 const& kBasis3D,
+                      Vec3 const& translationXYZ)
 {
     SetIJK3D(iBasis3D, jBasis3D, kBasis3D);
     SetTranslation3D(translationXYZ);
 }
 
 //----------------------------------------------------------------------------------------------------
-void Mat44::SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kBasis4D, Vec4 const& translation4D)
+void Mat44::SetIJKT4D(Vec4 const& iBasis4D,
+                      Vec4 const& jBasis4D,
+                      Vec4 const& kBasis4D,
+                      Vec4 const& translation4D)
 {
     m_values[Ix] = iBasis4D.x;
     m_values[Iy] = iBasis4D.y;
