@@ -227,26 +227,61 @@ Mat44 const Mat44::MakeXRotationDegrees(float const rotationDegreesAboutX)
     return matrix;
 }
 
-Mat44 const Mat44::MakeOrthoProjection(float left, float right, float bottom, float top, float zNear, float zFar)
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakeOrthoProjection(float const left,
+                                       float const right,
+                                       float const bottom,
+                                       float const top,
+                                       float const zNear,
+                                       float const zFar)
 {
-    UNUSED(left)
-    UNUSED(right)
-    UNUSED(bottom)
-    UNUSED(top)
-    UNUSED(zNear)
-    UNUSED(zFar)
+    Mat44 result;
 
-    return {};
+    result.m_values[Ix] = 2.f / (right - left);
+    result.m_values[Jy] = 2.f / (top - bottom);
+    result.m_values[Kz] = 1.f / (zFar - zNear);
+
+    result.m_values[Tx] = -(right + left) / (right - left);
+    result.m_values[Ty] = -(top + bottom) / (top - bottom);
+    result.m_values[Tz] = -zNear / (zFar - zNear);
+
+    result.m_values[Tw] = 1.f;
+
+    return result;
 }
 
-Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar)
+//----------------------------------------------------------------------------------------------------
+Mat44 const Mat44::MakePerspectiveProjection(float const fovYDegrees,
+                                             float const aspect,
+                                             float const zNear,
+                                             float const zFar)
 {
-    UNUSED(fovYDegrees)
-    UNUSED(aspect)
-    UNUSED(zNear)
-    UNUSED(zFar)
+    Mat44 result;
 
-    return {};
+    float const fovYRadians = ConvertDegreesToRadians(fovYDegrees);
+    float const tanHalfFovY = tanf(fovYRadians / 2.f);
+
+    result.m_values[Ix] = 1.f / (aspect * tanHalfFovY);
+    result.m_values[Iy] = 0.f;
+    result.m_values[Iz] = 0.f;
+    result.m_values[Iw] = 0.f;
+
+    result.m_values[Jx] = 0.f;
+    result.m_values[Jy] = 1.f / tanHalfFovY;
+    result.m_values[Jz] = 0.f;
+    result.m_values[Jw] = 0.f;
+
+    result.m_values[Kx] = 0.f;
+    result.m_values[Ky] = 0.f;
+    result.m_values[Kz] = zFar / (zFar - zNear);
+    result.m_values[Kw] = 1.f;
+
+    result.m_values[Tx] = 0.f;
+    result.m_values[Ty] = 0.f;
+    result.m_values[Tz] = -(zFar * zNear) / (zFar - zNear);
+    result.m_values[Tw] = 0.f;
+
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -434,7 +469,33 @@ Vec4 const Mat44::GetTranslation4D() const
 
 Mat44 const Mat44::GetOrthonormalInverse() const
 {
-    return {};
+    Mat44 result;
+
+    // Transpose the rotation part (i.e., the 3x3 top-left submatrix)
+    result.m_values[Ix] = m_values[Ix];
+    result.m_values[Jx] = m_values[Iy];
+    result.m_values[Kx] = m_values[Iz];
+    result.m_values[Tx] = 0.0f;  // We'll handle translation below
+
+    result.m_values[Iy] = m_values[Jx];
+    result.m_values[Jy] = m_values[Jy];
+    result.m_values[Ky] = m_values[Jz];
+    result.m_values[Ty] = 0.0f;
+
+    result.m_values[Iz] = m_values[Kx];
+    result.m_values[Jz] = m_values[Ky];
+    result.m_values[Kz] = m_values[Kz];
+    result.m_values[Tz] = 0.0f;
+
+    // Negate and apply rotation to translation
+    result.m_values[Tx] = -(result.m_values[Ix] * m_values[Tx] + result.m_values[Jx] * m_values[Ty] + result.m_values[Kx] * m_values[Tz]);
+    result.m_values[Ty] = -(result.m_values[Iy] * m_values[Tx] + result.m_values[Jy] * m_values[Ty] + result.m_values[Ky] * m_values[Tz]);
+    result.m_values[Tz] = -(result.m_values[Iz] * m_values[Tx] + result.m_values[Jz] * m_values[Ty] + result.m_values[Kz] * m_values[Tz]);
+
+    //  bottom row for an affine transformation is always [0, 0, 0, 1]
+    result.m_values[Tw] = 1.0f;
+
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------
