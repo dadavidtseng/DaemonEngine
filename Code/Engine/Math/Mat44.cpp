@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Mat44.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -228,11 +229,23 @@ Mat44 const Mat44::MakeXRotationDegrees(float const rotationDegreesAboutX)
 
 Mat44 const Mat44::MakeOrthoProjection(float left, float right, float bottom, float top, float zNear, float zFar)
 {
+    UNUSED(left)
+    UNUSED(right)
+    UNUSED(bottom)
+    UNUSED(top)
+    UNUSED(zNear)
+    UNUSED(zFar)
+
     return {};
 }
 
 Mat44 const Mat44::MakePerspectiveProjection(float fovYDegrees, float aspect, float zNear, float zFar)
 {
+    UNUSED(fovYDegrees)
+    UNUSED(aspect)
+    UNUSED(zNear)
+    UNUSED(zFar)
+
     return {};
 }
 
@@ -513,12 +526,64 @@ void Mat44::SetIJKT4D(Vec4 const& iBasis4D, Vec4 const& jBasis4D, Vec4 const& kB
     m_values[Tw] = translation4D.w;
 }
 
+//----------------------------------------------------------------------------------------------------
 void Mat44::Transpose()
 {
+    float temp   = m_values[Iy];
+    m_values[Iy] = m_values[Jx];
+    m_values[Jx] = temp;
+
+    temp         = m_values[Iz];
+    m_values[Iz] = m_values[Kx];
+    m_values[Kx] = temp;
+
+    temp         = m_values[Iw];
+    m_values[Iw] = m_values[Tx];
+    m_values[Tx] = temp;
+
+    temp         = m_values[Jz];
+    m_values[Jz] = m_values[Ky];
+    m_values[Ky] = temp;
+
+    temp         = m_values[Jw];
+    m_values[Jw] = m_values[Ty];
+    m_values[Ty] = temp;
+
+    temp         = m_values[Kw];
+    m_values[Kw] = m_values[Tz];
+    m_values[Tz] = temp;
 }
 
-void Mat44::Orthonormalize_XFwd_YLeft_ZUp()
+//----------------------------------------------------------------------------------------------------
+void Mat44::Orthonormalize_IFwd_JLeft_KUp()
 {
+    // Assuming m_values is a 1D array representing the 4x4 matrix in row-major order
+    Vec3 i(m_values[Ix], m_values[Iy], m_values[Iz]);
+    Vec3 j(m_values[Jx], m_values[Jy], m_values[Jz]);
+    Vec3 k(m_values[Kx], m_values[Ky], m_values[Kz]);
+
+    // Normalize i
+    i = i.GetNormalized();
+
+    // Make j orthogonal to i
+    j -= DotProduct3D(j, i) * i;
+    j = j.GetNormalized();
+
+    // Make k orthogonal to both i and j
+    k -= DotProduct3D(k, i) * i;
+    k -= DotProduct3D(k, j) * j;
+    k = k.GetNormalized();
+
+    // Update the matrix with the orthonormalized vectors
+    m_values[Ix] = i.x;
+    m_values[Iy] = i.y;
+    m_values[Iz] = i.z;
+    m_values[Jx] = j.x;
+    m_values[Jy] = j.y;
+    m_values[Jz] = j.z;
+    m_values[Kx] = k.x;
+    m_values[Ky] = k.y;
+    m_values[Kz] = k.z;
 }
 
 //----------------------------------------------------------------------------------------------------

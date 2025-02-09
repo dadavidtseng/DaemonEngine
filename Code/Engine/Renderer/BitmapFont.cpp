@@ -7,7 +7,6 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/AABB2.hpp"
-#include "Engine/Math/FloatRange.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Texture const& BitmapFont::GetTexture() const
