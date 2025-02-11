@@ -4,13 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <string>
 
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
 class InputSystem;
 
 //----------------------------------------------------------------------------------------------------
@@ -29,7 +28,6 @@ public:
     friend class Renderer;
     explicit Window(WindowConfig const& config);
     ~Window() = default;
-
     void Startup();
     void Shutdown();
 

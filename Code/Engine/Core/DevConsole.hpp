@@ -5,17 +5,23 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
-#include "EventSystem.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Core/StringUtils.hpp"
+// #include "Engine/Core/StringUtils.hpp"
 
-class Timer;
+//----------------------------------------------------------------------------------------------------
+#if defined ERROR
+#undef ERROR
+#endif
+
 //----------------------------------------------------------------------------------------------------
 class BitmapFont;
 class Camera;
 class Renderer;
+class Timer;
 struct AABB2;
 
+//----------------------------------------------------------------------------------------------------
 struct DevConsoleLine
 {
     Rgba8  m_color;
@@ -24,6 +30,7 @@ struct DevConsoleLine
     double m_timePrinted;
 };
 
+//----------------------------------------------------------------------------------------------------
 enum DevConsoleMode
 {
     OPEN_FULL,
@@ -33,6 +40,7 @@ enum DevConsoleMode
     NUM
 };
 
+//----------------------------------------------------------------------------------------------------
 struct DevConsoleConfig
 {
     Renderer* m_defaultRenderer   = nullptr;
@@ -63,6 +71,7 @@ public:
     DevConsoleMode GetMode() const;
     void           SetMode(DevConsoleMode mode);
     void           ToggleMode(DevConsoleMode mode);
+    bool           IsOpened() const;
     bool           Command_Test(EventArgs& args);
 
     static bool Event_KeyPressed(EventArgs& args);

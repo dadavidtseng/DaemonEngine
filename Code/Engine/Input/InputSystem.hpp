@@ -4,6 +4,8 @@
 
 //-----------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Input/XboxController.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -61,8 +63,8 @@ extern unsigned char const KEYCODE_END;
 extern unsigned char const KEYCODE_TILDE;
 
 //-----------------------------------------------------------------------------------------------
-constexpr int NUM_KEYCODES         = 256;
-constexpr int NUM_XBOX_CONTROLLERS = 4;
+int constexpr NUM_KEYCODES         = 256;
+int constexpr NUM_XBOX_CONTROLLERS = 4;
 
 struct InputSystemConfig
 {
@@ -73,7 +75,7 @@ class InputSystem
 {
 public:
     explicit InputSystem(InputSystemConfig const& config);
-    ~InputSystem();
+    ~InputSystem() = default;
     void                  Startup();
     void                  Shutdown();
     void                  BeginFrame();
@@ -84,6 +86,9 @@ public:
     void                  HandleKeyPressed(unsigned char keyCode);
     void                  HandleKeyReleased(unsigned char keyCode);
     XboxController const& GetController(int controllerID);
+
+    static bool Event_KeyPressed(EventArgs& args);
+    static bool Event_KeyReleased(EventArgs& args);
 
 protected:
     KeyButtonState m_keyStates[NUM_KEYCODES];

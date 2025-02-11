@@ -4,7 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Input/InputSystem.hpp"
-#include <cstdio>
+
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -62,30 +65,33 @@ unsigned char const KEYCODE_HOME        = VK_RBUTTON;
 unsigned char const KEYCODE_END         = VK_RBUTTON;
 unsigned char const KEYCODE_TILDE       = 0xC0;
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+InputSystem* g_theInput = nullptr;
+
+//----------------------------------------------------------------------------------------------------
 InputSystem::InputSystem(InputSystemConfig const& config)
 {
     m_inputConfig = config;
 }
 
-//-----------------------------------------------------------------------------------------------
-InputSystem::~InputSystem() = default;
-
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
     {
         m_controllers[controllerIndex].m_id = controllerIndex;
     }
+
+    g_theEventSystem->SubscribeEventCallbackFunction("KeyPressed", Event_KeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("KeyReleased", Event_KeyReleased);
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void InputSystem::Shutdown()
 {
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void InputSystem::BeginFrame()
 {
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
@@ -94,7 +100,7 @@ void InputSystem::BeginFrame()
     }
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void InputSystem::EndFrame()
 {
     //Copy current-frame key state to "previous" in preparation of new WM_KEYDOWN, etc. messages
@@ -104,40 +110,68 @@ void InputSystem::EndFrame()
     }
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustPressed(const unsigned char keyCode) const
 {
     return m_keyStates[keyCode].m_isKeyDown &&
         !m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustReleased(const unsigned char keyCode) const
 {
     return !m_keyStates[keyCode].m_isKeyDown &&
         m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 bool InputSystem::IsKeyDown(const unsigned char keyCode) const
 {
     return m_keyStates[keyCode].m_isKeyDown;
 }
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 void InputSystem::HandleKeyPressed(const unsigned char keyCode)
 {
     m_keyStates[keyCode].m_isKeyDown = true;
 }
 
-//-----------------------------------------------------------------------------------------------
-void InputSystem::HandleKeyReleased(const unsigned char keyCode)
+//----------------------------------------------------------------------------------------------------
+void InputSystem::HandleKeyReleased(unsigned char const keyCode)
 {
     m_keyStates[keyCode].m_isKeyDown = false;
 }
 
-//-----------------------------------------------------------------------------------------------
-XboxController const& InputSystem::GetController(const int controllerID)
+//----------------------------------------------------------------------------------------------------
+XboxController const& InputSystem::GetController(int const controllerID)
 {
     return m_controllers[controllerID];
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
+{
+    if (g_theInput == nullptr)
+    {
+        return false;
+    }
+
+    unsigned char const keyCode = static_cast<unsigned char>(args.GetValue("KeyCode", -1));
+    g_theInput->HandleKeyPressed(keyCode);
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool InputSystem::Event_KeyReleased(EventArgs& args)
+{
+    if (g_theInput == nullptr)
+    {
+        return false;
+    }
+
+    unsigned char const keyCode = static_cast<unsigned char>(args.GetValue("KeyCode", -1));
+    g_theInput->HandleKeyReleased(keyCode);
+
+    return true;
 }

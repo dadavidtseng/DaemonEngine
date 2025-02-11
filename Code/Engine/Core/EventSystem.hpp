@@ -8,19 +8,22 @@
 
 #include "Engine/Core/StringUtils.hpp"
 
+//-Forward-Declaration--------------------------------------------------------------------------------
 class NamedStrings;
 
+//----------------------------------------------------------------------------------------------------
 typedef NamedStrings EventArgs;
-typedef bool (*EventCallbackFunction) (EventArgs& args);
+typedef bool (*      EventCallbackFunction)(EventArgs& args);
 
+//----------------------------------------------------------------------------------------------------
 struct EventSubscription
 {
     EventCallbackFunction callbackFunction;
 };
 
+//----------------------------------------------------------------------------------------------------
 struct EventSystemConfig
 {
-    
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -32,7 +35,7 @@ class EventSystem
 public:
     explicit EventSystem(EventSystemConfig const& config);
     ~EventSystem();
-    
+
     void Startup();
     void Shutdown();
     void BeginFrame();

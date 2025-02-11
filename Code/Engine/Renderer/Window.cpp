@@ -4,19 +4,21 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Window.hpp"
-#define WIN32_LEAN_AND_MEAN
-// #define CONSOLE_HANDLER
 
 #include <iostream>
-#include <windows.h>
 
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
 
+// #define CONSOLE_HANDLER
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 //----------------------------------------------------------------------------------------------------
-Window* Window::s_mainWindow = nullptr; // static variables
+STATIC Window* Window::s_mainWindow = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 Window::Window(WindowConfig const& config)
@@ -62,7 +64,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 {
     InputSystem* input = nullptr;
 
-    if (Window::s_mainWindow &&
+    if (Window::s_mainWindow != nullptr &&
         Window::s_mainWindow->GetConfig().m_inputSystem)
     {
         input = Window::s_mainWindow->GetConfig().m_inputSystem;
@@ -73,34 +75,53 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
-            //g_theApp->HandleQuitRequested();
             g_theEventSystem->FireEvent("WindowClose");
 
-            // ERROR_AND_DIE("WM_CLOSE (clicking x)not yet support")
             return 0; // "Consumes" this message (tells Windows "okay, we handled it")
         }
 
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            if (input)
+            if (g_theDevConsole != nullptr &&
+                g_theDevConsole->IsOpened())
             {
-                const unsigned char asKey = static_cast<unsigned char>(wParam);
-
-                input->HandleKeyPressed(asKey);
+                return 0;
             }
 
-            break;
+            EventArgs args;
+            args.SetValue("KeyCode", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("KeyPressed", args);
+
+            return 0;
         }
 
     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
-            if (input)
+            if (g_theDevConsole != nullptr &&
+                g_theDevConsole->IsOpened())
             {
-                unsigned char const asKey = static_cast<unsigned char>(wParam);
+                return 0;
+            }
 
-                input->HandleKeyReleased(asKey);
+            EventArgs args;
+            args.SetValue("KeyCode", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("KeyReleased", args);
+
+            return 0;
+        }
+
+    case WM_CHAR:
+        {
+            if (g_theDevConsole != nullptr &&
+                g_theDevConsole->IsOpened())
+            {
+                EventArgs args;
+                args.SetValue("Char", Stringf("%c", static_cast<char>(wParam)));
+                FireEvent("DevConsoleChar", args);
+
+                return 0;
             }
 
             break;
@@ -109,7 +130,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Mouse left & right button down and up events; treat as a fake keyboard key
     case WM_LBUTTONDOWN:
         {
-            if (input)
+            if (input != nullptr)
             {
                 input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
             }
@@ -119,7 +140,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     case WM_LBUTTONUP:
         {
-            if (input)
+            if (input != nullptr)
             {
                 input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
             }
@@ -129,7 +150,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     case WM_RBUTTONDOWN:
         {
-            if (input)
+            if (input != nullptr)
             {
                 input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
             }
@@ -139,7 +160,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     case WM_RBUTTONUP:
         {
-            if (input)
+            if (input != nullptr)
             {
                 input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
             }

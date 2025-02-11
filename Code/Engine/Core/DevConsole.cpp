@@ -6,7 +6,6 @@
 #include "Engine/Core/DevConsole.hpp"
 #include <sstream>
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
@@ -158,6 +157,12 @@ void DevConsole::ToggleMode(DevConsoleMode const mode)
     {
         m_mode = mode;
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool DevConsole::IsOpened() const
+{
+    return m_isOpen;
 }
 
 //----------------------------------------------------------------------------------------------------
