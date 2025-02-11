@@ -54,7 +54,11 @@ extern unsigned char const KEYCODE_SPACE;
 extern unsigned char const KEYCODE_BACKSPACE;
 extern unsigned char const KEYCODE_LEFT_MOUSE;
 extern unsigned char const KEYCODE_RIGHT_MOUSE;
-extern unsigned char const KEYCODE_OEM_3;
+extern unsigned char const KEYCODE_INSERT;
+extern unsigned char const KEYCODE_DELETE;
+extern unsigned char const KEYCODE_HOME;
+extern unsigned char const KEYCODE_END;
+extern unsigned char const KEYCODE_TILDE;
 
 //-----------------------------------------------------------------------------------------------
 constexpr int NUM_KEYCODES         = 256;
@@ -68,23 +72,23 @@ struct InputSystemConfig
 class InputSystem
 {
 public:
-	explicit InputSystem(InputSystemConfig const& config);
-	~InputSystem();
-	void                  Startup();
-	void                  Shutdown();
-	void                  BeginFrame();
-	void                  EndFrame();
-	bool                  WasKeyJustPressed(unsigned char keyCode) const;
-	bool                  WasKeyJustReleased(unsigned char keyCode) const;
-	bool                  IsKeyDown(unsigned char keyCode) const;
-	void                  HandleKeyPressed(unsigned char keyCode);
-	void                  HandleKeyReleased(unsigned char keyCode);
-	XboxController const& GetController(int controllerID);
+    explicit InputSystem(InputSystemConfig const& config);
+    ~InputSystem();
+    void                  Startup();
+    void                  Shutdown();
+    void                  BeginFrame();
+    void                  EndFrame();
+    bool                  WasKeyJustPressed(unsigned char keyCode) const;
+    bool                  WasKeyJustReleased(unsigned char keyCode) const;
+    bool                  IsKeyDown(unsigned char keyCode) const;
+    void                  HandleKeyPressed(unsigned char keyCode);
+    void                  HandleKeyReleased(unsigned char keyCode);
+    XboxController const& GetController(int controllerID);
 
 protected:
-	KeyButtonState m_keyStates[NUM_KEYCODES];
-	XboxController m_controllers[NUM_XBOX_CONTROLLERS];
+    KeyButtonState m_keyStates[NUM_KEYCODES];
+    XboxController m_controllers[NUM_XBOX_CONTROLLERS];
 
 private:
-	InputSystemConfig m_inputConfig;
+    InputSystemConfig m_inputConfig;
 };

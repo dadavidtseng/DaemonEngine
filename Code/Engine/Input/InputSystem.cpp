@@ -56,12 +56,16 @@ unsigned char const KEYCODE_SPACE       = VK_SPACE;
 unsigned char const KEYCODE_BACKSPACE   = VK_BACK;
 unsigned char const KEYCODE_LEFT_MOUSE  = VK_LBUTTON;
 unsigned char const KEYCODE_RIGHT_MOUSE = VK_RBUTTON;
-unsigned char const KEYCODE_OEM_3       = VK_OEM_3;
+unsigned char const KEYCODE_INSERT      = VK_RBUTTON;
+unsigned char const KEYCODE_DELETE      = VK_RBUTTON;
+unsigned char const KEYCODE_HOME        = VK_RBUTTON;
+unsigned char const KEYCODE_END         = VK_RBUTTON;
+unsigned char const KEYCODE_TILDE       = 0xC0;
 
 //-----------------------------------------------------------------------------------------------
 InputSystem::InputSystem(InputSystemConfig const& config)
 {
-	m_inputConfig = config;
+    m_inputConfig = config;
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -70,10 +74,10 @@ InputSystem::~InputSystem() = default;
 //-----------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
-	for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
-	{
-		m_controllers[controllerIndex].m_id = controllerIndex;
-	}
+    for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
+    {
+        m_controllers[controllerIndex].m_id = controllerIndex;
+    }
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -84,56 +88,56 @@ void InputSystem::Shutdown()
 //-----------------------------------------------------------------------------------------------
 void InputSystem::BeginFrame()
 {
-	for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
-	{
-		m_controllers[controllerIndex].Update();
-	}
+    for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
+    {
+        m_controllers[controllerIndex].Update();
+    }
 }
 
 //-----------------------------------------------------------------------------------------------
 void InputSystem::EndFrame()
 {
-	//Copy current-frame key state to "previous" in preparation of new WM_KEYDOWN, etc. messages
-	for (int keyCode = 0; keyCode < NUM_KEYCODES; ++keyCode)
-	{
-		m_keyStates[keyCode].m_wasKeyDownLastFrame = m_keyStates[keyCode].m_isKeyDown;
-	}
+    //Copy current-frame key state to "previous" in preparation of new WM_KEYDOWN, etc. messages
+    for (int keyCode = 0; keyCode < NUM_KEYCODES; ++keyCode)
+    {
+        m_keyStates[keyCode].m_wasKeyDownLastFrame = m_keyStates[keyCode].m_isKeyDown;
+    }
 }
 
 //-----------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustPressed(const unsigned char keyCode) const
 {
-	return m_keyStates[keyCode].m_isKeyDown &&
-		!m_keyStates[keyCode].m_wasKeyDownLastFrame;
+    return m_keyStates[keyCode].m_isKeyDown &&
+        !m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
 //-----------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustReleased(const unsigned char keyCode) const
 {
-	return !m_keyStates[keyCode].m_isKeyDown &&
-		m_keyStates[keyCode].m_wasKeyDownLastFrame;
+    return !m_keyStates[keyCode].m_isKeyDown &&
+        m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
 //-----------------------------------------------------------------------------------------------
 bool InputSystem::IsKeyDown(const unsigned char keyCode) const
 {
-	return m_keyStates[keyCode].m_isKeyDown;
+    return m_keyStates[keyCode].m_isKeyDown;
 }
 
 //-----------------------------------------------------------------------------------------------
 void InputSystem::HandleKeyPressed(const unsigned char keyCode)
 {
-	m_keyStates[keyCode].m_isKeyDown = true;
+    m_keyStates[keyCode].m_isKeyDown = true;
 }
 
 //-----------------------------------------------------------------------------------------------
 void InputSystem::HandleKeyReleased(const unsigned char keyCode)
 {
-	m_keyStates[keyCode].m_isKeyDown = false;
+    m_keyStates[keyCode].m_isKeyDown = false;
 }
 
 //-----------------------------------------------------------------------------------------------
 XboxController const& InputSystem::GetController(const int controllerID)
 {
-	return m_controllers[controllerID];
+    return m_controllers[controllerID];
 }

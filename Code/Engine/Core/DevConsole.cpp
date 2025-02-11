@@ -80,7 +80,8 @@ void DevConsole::Execute(String const& consoleCommandText)
         while (lineStream >> arg)
         {
             // Parse arguments key=value
-            auto pos = arg.find('=');
+            size_t pos = arg.find('=');
+
             if (pos != std::string::npos)
             {
                 String key   = arg.substr(0, pos);
