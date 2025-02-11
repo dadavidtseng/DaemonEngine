@@ -12,6 +12,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 
+//----------------------------------------------------------------------------------------------------
 #if defined ERROR
 #undef ERROR
 #endif
@@ -164,6 +165,26 @@ bool DevConsole::Command_Test(EventArgs& args)
     UNUSED(args)
     AddLine(INFO_MAJOR, "Test command received");
     return false; // Continue calling other subscribers
+}
+
+bool DevConsole::Event_KeyPressed(EventArgs& args)
+{
+    return false;
+}
+
+bool DevConsole::Event_CharInput(EventArgs& args)
+{
+    return false;
+}
+
+bool DevConsole::Command_Clear(EventArgs& args)
+{
+    return false;
+}
+
+bool DevConsole::Command_Help(EventArgs& args)
+{
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------
