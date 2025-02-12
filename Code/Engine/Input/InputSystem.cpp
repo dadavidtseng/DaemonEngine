@@ -72,6 +72,9 @@ InputSystem* g_theInput = nullptr;
 InputSystem::InputSystem(InputSystemConfig const& config)
 {
     m_inputConfig = config;
+
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYUP", Event_KeyReleased);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -81,9 +84,6 @@ void InputSystem::Startup()
     {
         m_controllers[controllerIndex].m_id = controllerIndex;
     }
-
-    g_theEventSystem->SubscribeEventCallbackFunction("KeyPressed", Event_KeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("KeyReleased", Event_KeyReleased);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -113,14 +113,16 @@ void InputSystem::EndFrame()
 //----------------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustPressed(const unsigned char keyCode) const
 {
-    return m_keyStates[keyCode].m_isKeyDown &&
+    return
+        m_keyStates[keyCode].m_isKeyDown &&
         !m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool InputSystem::WasKeyJustReleased(const unsigned char keyCode) const
 {
-    return !m_keyStates[keyCode].m_isKeyDown &&
+    return
+        !m_keyStates[keyCode].m_isKeyDown &&
         m_keyStates[keyCode].m_wasKeyDownLastFrame;
 }
 
@@ -151,12 +153,18 @@ XboxController const& InputSystem::GetController(int const controllerID)
 //----------------------------------------------------------------------------------------------------
 STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
+    if (g_theDevConsole == nullptr)
+    {
+        return false;
+    }
+
     if (g_theInput == nullptr)
     {
         return false;
     }
 
-    unsigned char const keyCode = static_cast<unsigned char>(args.GetValue("KeyCode", -1));
+    int const           value   = args.GetValue("WM_KEYDOWN", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyPressed(keyCode);
 
     return true;
@@ -165,12 +173,18 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool InputSystem::Event_KeyReleased(EventArgs& args)
 {
+    if (g_theDevConsole == nullptr)
+    {
+        return false;
+    }
+
     if (g_theInput == nullptr)
     {
         return false;
     }
 
-    unsigned char const keyCode = static_cast<unsigned char>(args.GetValue("KeyCode", -1));
+    int const           value   = args.GetValue("WM_KEYUP", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyReleased(keyCode);
 
     return true;

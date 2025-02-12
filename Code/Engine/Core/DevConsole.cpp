@@ -5,9 +5,12 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/DevConsole.hpp"
 #include <sstream>
+
+#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 
@@ -30,6 +33,16 @@ STATIC Rgba8 const DevConsole::INFO_MINOR = Rgba8(0, 255, 255);
 DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
+
+    Strings eventList = g_theEventSystem->GetAllRegisteredEventNames();
+
+    for (int i = 0; i < static_cast<int>(eventList.size()); ++i)
+    {
+        AddLine(INFO_MAJOR, eventList[i]);
+    }
+    // AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -38,6 +51,8 @@ DevConsole::~DevConsole()
 }
 
 //----------------------------------------------------------------------------------------------------
+// Subscribes to any events needed, prints an initial line of text, and starts the blink timer.
+//
 void DevConsole::StartUp()
 {
     // Initialize any necessary resources for the console (fonts, etc.)
@@ -62,6 +77,10 @@ void DevConsole::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
+// Parses the current input line and executes it using the event system. Commands and arguments
+// are delimited from each other with space (' ') and argument names and values are delimited
+// with equals ('='). Echos the command to the dev console as well as any command output.
+//
 void DevConsole::Execute(String const& consoleCommandText)
 {
     std::istringstream stream(consoleCommandText);
@@ -96,6 +115,9 @@ void DevConsole::Execute(String const& consoleCommandText)
 }
 
 //----------------------------------------------------------------------------------------------------
+// Adds a line of text to the current list of lines being shown. Individual lines are delimited
+// with the newline ('\n') character.
+//
 void DevConsole::AddLine(Rgba8 const& color, String const& text)
 {
     DevConsoleLine line;
@@ -107,6 +129,10 @@ void DevConsole::AddLine(Rgba8 const& color, String const& text)
 }
 
 //----------------------------------------------------------------------------------------------------
+// Renders just visible text lines within the bounds specified. Bounds are in terms of the
+// camera being used to render. The current input line renders at the bottom with all other
+// lines rendered above it, with the most recent lines at the bottom.
+//
 void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
 {
     if (rendererOverride == nullptr)
@@ -147,6 +173,8 @@ void DevConsole::SetMode(DevConsoleMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
+// Toggles between open and closed.
+//
 void DevConsole::ToggleMode(DevConsoleMode const mode)
 {
     if (m_mode == mode)
@@ -166,29 +194,49 @@ bool DevConsole::IsOpened() const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DevConsole::Command_Test(EventArgs& args)
+// Handle key input.
+//
+STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 {
-    UNUSED(args)
-    AddLine(INFO_MAJOR, "Test command received");
-    return false; // Continue calling other subscribers
+    String const keyCode   = args.GetValue("WM_KEYDOWN", "0");
+    int const    inputChar = std::stoi(keyCode);
+
+    if (inputChar == KEYCODE_ENTER)
+    {
+        g_theDevConsole->AddLine(INFO_MAJOR, "SHO  OT");
+    }
+
+    return true;
 }
 
-bool DevConsole::Event_KeyPressed(EventArgs& args)
+//----------------------------------------------------------------------------------------------------
+// Handle char input by appending valid characters to our current input line.
+//
+STATIC bool DevConsole::Event_CharInput(EventArgs& args)
+{
+    String const keyCode   = args.GetValue("WM_CHAR", "0");
+    int const    inputChar = std::stoi(keyCode);
+
+    if (inputChar >= KEYCODE_SPACE && inputChar < KEYCODE_TILDE)
+    {
+        g_theDevConsole->m_inputText += (char)inputChar;
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Clear all lines of text.
+//
+STATIC bool DevConsole::Command_Clear(EventArgs& args)
 {
     return false;
 }
 
-bool DevConsole::Event_CharInput(EventArgs& args)
-{
-    return false;
-}
-
-bool DevConsole::Command_Clear(EventArgs& args)
-{
-    return false;
-}
-
-bool DevConsole::Command_Help(EventArgs& args)
+//----------------------------------------------------------------------------------------------------
+// Display all currently registered commands in the event system.
+//
+STATIC bool DevConsole::Command_Help(EventArgs& args)
 {
     return false;
 }
@@ -204,14 +252,16 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     VertexList textVerts;
 
-    AABB2           textBounds = bounds;
-    float constexpr lineHeight = 50.f;
+    AABB2 textBounds = bounds;
+
+    // float lineHeight = box.GetDimensions().y / static_cast<float>(m_config.m_maxLinesDisplay);
+    float lineHeight = 30.f;
 
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
         DevConsoleLine const& line = m_lines[i];
 
-        textBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i) * lineHeight;
+        textBounds.m_maxs.y = bounds.m_maxs.y+static_cast<float>(i) * lineHeight;
         textBounds.m_mins.y = textBounds.m_maxs.y - lineHeight;
 
         font.AddVertsForTextInBox2D(
@@ -224,6 +274,8 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
             Vec2::ZERO
         );
     }
+
+    font.AddVertsForTextInBox2D(textVerts, m_inputText, textBounds, lineHeight, Rgba8::WHITE, fontAspect);
 
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());

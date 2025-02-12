@@ -46,7 +46,7 @@ void EventSystem::EndFrame()
 //----------------------------------------------------------------------------------------------------
 void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
-    EventSubscription const subscription = { functionPtr };
+    EventSubscription const subscription = {functionPtr};
 
     m_subscriptionsByEventName[eventName].push_back(subscription);
 }
@@ -104,6 +104,20 @@ void EventSystem::FireEvent(String const& eventName)
 }
 
 //----------------------------------------------------------------------------------------------------
+Strings EventSystem::GetAllRegisteredEventNames() const
+{
+    std::vector<String> eventNames;
+    eventNames.reserve(m_subscriptionsByEventName.size());
+
+    for (std::pair<String const, SubscriptionList> const& pair : m_subscriptionsByEventName)
+    {
+        eventNames.push_back(pair.first);   // first for key, second for value in std::map
+    }
+
+    return eventNames;
+}
+
+//----------------------------------------------------------------------------------------------------
 void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
     if (g_theEventSystem)
@@ -124,7 +138,7 @@ void UnsubscribeEventCallbackFunction(String const& eventName, EventCallbackFunc
 //----------------------------------------------------------------------------------------------------
 void FireEvent(String const& eventName, EventArgs& args)
 {
-    if (g_theEventSystem)
+    if (g_theEventSystem != nullptr)
     {
         g_theEventSystem->FireEvent(eventName, args);
     }
@@ -133,7 +147,7 @@ void FireEvent(String const& eventName, EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 void FireEvent(String const& eventName)
 {
-    if (g_theEventSystem)
+    if (g_theEventSystem != nullptr)
     {
         g_theEventSystem->FireEvent(eventName);
     }

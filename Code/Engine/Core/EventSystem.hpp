@@ -46,6 +46,8 @@ public:
     void FireEvent(String const& eventName, EventArgs& args);
     void FireEvent(String const& eventName);
 
+    Strings GetAllRegisteredEventNames() const;
+
 protected:
     EventSystemConfig                  m_config;
     std::map<String, SubscriptionList> m_subscriptionsByEventName;

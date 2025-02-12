@@ -22,6 +22,8 @@ class Timer;
 struct AABB2;
 
 //----------------------------------------------------------------------------------------------------
+// Stores the text and color for an individual line of text.
+//
 struct DevConsoleLine
 {
     Rgba8  m_color;
@@ -41,6 +43,8 @@ enum DevConsoleMode
 };
 
 //----------------------------------------------------------------------------------------------------
+// Dev console defaults. A Renderer and Camera must be provided.
+//
 struct DevConsoleConfig
 {
     Renderer* m_defaultRenderer   = nullptr;
@@ -52,7 +56,12 @@ struct DevConsoleConfig
     bool      m_startOpen         = false;
 };
 
+
 //----------------------------------------------------------------------------------------------------
+// Class for a dev console that allows entering text and executing commands. Can be toggled with
+// tilde ('~') and renders within a transparent box with configurable bounds. Other features
+// include specific coloring for different lines of text and a blinking insertion point.
+//
 class DevConsole
 {
 public:
@@ -72,7 +81,6 @@ public:
     void           SetMode(DevConsoleMode mode);
     void           ToggleMode(DevConsoleMode mode);
     bool           IsOpened() const;
-    bool           Command_Test(EventArgs& args);
 
     static bool Event_KeyPressed(EventArgs& args);
     static bool Event_CharInput(EventArgs& args);
@@ -89,16 +97,30 @@ public:
 protected:
     void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float fontAspect = 1.f) const;
 
-    DevConsoleConfig            m_config;
-    DevConsoleMode              m_mode = HIDDEN;
+    DevConsoleConfig m_config;
+    DevConsoleMode   m_mode = OPEN_FULL;
+    // All lines added to the dev console since the last time it was cleared.
     std::vector<DevConsoleLine> m_lines;     //TODO: support a max limited # of lines (e.g. fixed circular buffer)
     int                         m_frameNumber = 0;
 
-    bool    m_isOpen = false;
-    String  m_inputText;
-    int     m_insertionPointPosition = 0;
-    bool    m_insertionPointVisible  = false;
-    Timer*  m_insertionPointBlinkTimer;
+    // True if the dev console is currently visible and accepting input.
+    bool m_isOpen = false;
+
+    // Our current line of input text.
+    String m_inputText;
+
+    // Index of the insertion point in our current input text.
+    int m_insertionPointPosition = 0;
+
+    // True if our insertion point is currently in the visible phase of blinking.
+    bool m_insertionPointVisible = false;
+
+    // Timer for controlling insertion point visibility.
+    Timer* m_insertionPointBlinkTimer = nullptr;
+
+    // History of all commands executed.
     Strings m_commandHistory;
-    int     m_historyIndex = -1;
+
+    // Our current index in our history of commands as we are scrolling.
+    int m_historyIndex = -1;
 };

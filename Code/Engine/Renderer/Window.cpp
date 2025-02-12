@@ -17,6 +17,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
 
@@ -75,7 +77,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
-            g_theEventSystem->FireEvent("WindowClose");
+            g_theEventSystem->FireEvent("WM_CLOSE");
 
             return 0; // "Consumes" this message (tells Windows "okay, we handled it")
         }
@@ -83,15 +85,15 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            if (g_theDevConsole != nullptr &&
-                g_theDevConsole->IsOpened())
-            {
-                return 0;
-            }
+            // if (g_theDevConsole != nullptr &&
+            //     g_theDevConsole->IsOpened())
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
-            args.SetValue("KeyCode", Stringf("%d", static_cast<unsigned char>(wParam)));
-            FireEvent("KeyPressed", args);
+            args.SetValue("WM_KEYDOWN", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("WM_KEYDOWN", args);
 
             return 0;
         }
@@ -99,30 +101,30 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
-            if (g_theDevConsole != nullptr &&
-                g_theDevConsole->IsOpened())
-            {
-                return 0;
-            }
+            // if (g_theDevConsole != nullptr &&
+            //     g_theDevConsole->IsOpened())
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
-            args.SetValue("KeyCode", Stringf("%d", static_cast<unsigned char>(wParam)));
-            FireEvent("KeyReleased", args);
+            args.SetValue("WM_KEYUP", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("WM_KEYUP", args);
 
             return 0;
         }
 
     case WM_CHAR:
         {
-            if (g_theDevConsole != nullptr &&
-                g_theDevConsole->IsOpened())
-            {
-                EventArgs args;
-                args.SetValue("Char", Stringf("%c", static_cast<char>(wParam)));
-                FireEvent("DevConsoleChar", args);
+            // if (g_theDevConsole != nullptr &&
+            //     g_theDevConsole->IsOpened())
+            // {
+            //     return 0;
+            // }
 
-                return 0;
-            }
+            EventArgs args;
+            args.SetValue("WM_CHAR", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("WM_CHAR", args);
 
             break;
         }
