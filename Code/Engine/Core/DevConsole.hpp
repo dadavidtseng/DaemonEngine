@@ -98,7 +98,7 @@ protected:
     void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float fontAspect = 1.f) const;
 
     DevConsoleConfig m_config;
-    DevConsoleMode   m_mode = OPEN_FULL;
+    DevConsoleMode   m_mode = HIDDEN;
     // All lines added to the dev console since the last time it was cleared.
     std::vector<DevConsoleLine> m_lines;     //TODO: support a max limited # of lines (e.g. fixed circular buffer)
     int                         m_frameNumber = 0;

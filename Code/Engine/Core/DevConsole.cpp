@@ -115,7 +115,7 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
 
         if (!isCommandValid)
         {
-            AddLine(ERROR, "Command not found!");
+            AddLine(ERROR, "Your command: '" + command + "' is not valid!");
         }
     }
 
@@ -190,6 +190,15 @@ DevConsoleMode DevConsole::GetMode() const
 void DevConsole::SetMode(DevConsoleMode const mode)
 {
     m_mode = mode;
+
+    if (m_mode == HIDDEN)
+    {
+        m_isOpen = false;
+    }
+    else
+    {
+        m_isOpen = true;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -199,11 +208,13 @@ void DevConsole::ToggleMode(DevConsoleMode const mode)
 {
     if (m_mode == mode)
     {
-        m_mode = HIDDEN; // Hide console if already in that mode
+        m_mode   = HIDDEN; // Hide console if already in that mode
+        m_isOpen = false;
     }
     else
     {
-        m_mode = mode;
+        m_mode   = mode;
+        m_isOpen = true;
     }
 }
 
@@ -218,6 +229,11 @@ bool DevConsole::IsOpen() const
 //
 STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 {
+    if (g_theDevConsole->m_isOpen == false)
+    {
+        return false;
+    }
+
     int const           value   = args.GetValue("WM_KEYDOWN", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
@@ -241,6 +257,11 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 //
 STATIC bool DevConsole::Event_CharInput(EventArgs& args)
 {
+    if (g_theDevConsole->m_isOpen == false)
+    {
+        return false;
+    }
+
     int const           value   = args.GetValue("WM_CHAR", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
