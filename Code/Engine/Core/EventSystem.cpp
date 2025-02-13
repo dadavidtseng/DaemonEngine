@@ -80,18 +80,19 @@ void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, Even
 //----------------------------------------------------------------------------------------------------
 void EventSystem::FireEvent(String const& eventName, EventArgs& args)
 {
-    auto const iter = m_subscriptionsByEventName.find(eventName);
+    std::map<std::string, std::vector<EventSubscription>>::iterator const iter = m_subscriptionsByEventName.find(eventName);
 
     if (iter != m_subscriptionsByEventName.end())
     {
         SubscriptionList const& subscriptions = iter->second;
 
-        for (auto const& subscription : subscriptions)
+        for (EventSubscription const& subscription : subscriptions)
         {
-            if (subscription.callbackFunction(args))
-            {
-                break; // Event consumed; stop notifying further subscribers
-            }
+            subscription.callbackFunction(args);
+            // if (subscription.callbackFunction(args))
+            // {
+            //     break; // Event consumed; stop notifying further subscribers
+            // }
         }
     }
 }

@@ -72,15 +72,15 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    void Execute(String const& consoleCommandText);
-    // void Execute(String const& consoleCommandText, bool echoCommand = true);
+    // void Execute(String const& consoleCommandText);
+    void Execute(String const& consoleCommandText, bool echoCommand = true);
     void AddLine(Rgba8 const& color, String const& text);
     void Render(AABB2 const& bounds, Renderer* rendererOverride = nullptr) const;
 
     DevConsoleMode GetMode() const;
     void           SetMode(DevConsoleMode mode);
     void           ToggleMode(DevConsoleMode mode);
-    bool           IsOpened() const;
+    bool           IsOpen() const;
 
     static bool Event_KeyPressed(EventArgs& args);
     static bool Event_CharInput(EventArgs& args);

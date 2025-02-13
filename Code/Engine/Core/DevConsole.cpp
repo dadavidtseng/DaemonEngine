@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/DevConsole.hpp"
+
+#include <iostream>
 #include <sstream>
 
 #include "ErrorWarningAssert.hpp"
@@ -33,16 +35,7 @@ STATIC Rgba8 const DevConsole::INFO_MINOR = Rgba8(0, 255, 255);
 DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
-
-    Strings eventList = g_theEventSystem->GetAllRegisteredEventNames();
-
-    for (int i = 0; i < static_cast<int>(eventList.size()); ++i)
-    {
-        AddLine(INFO_MAJOR, eventList[i]);
-    }
-    // AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
+    AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -56,6 +49,8 @@ DevConsole::~DevConsole()
 void DevConsole::StartUp()
 {
     // Initialize any necessary resources for the console (fonts, etc.)
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -81,37 +76,51 @@ void DevConsole::EndFrame()
 // are delimited from each other with space (' ') and argument names and values are delimited
 // with equals ('='). Echos the command to the dev console as well as any command output.
 //
-void DevConsole::Execute(String const& consoleCommandText)
+void DevConsole::Execute(String const& consoleCommandText, bool const echoCommand)
 {
-    std::istringstream stream(consoleCommandText);
-    std::string        commandLine;
+    // Create an input stream and initialize it
+    std::istringstream stream;
+    stream.str(consoleCommandText);
 
-    while (std::getline(stream, commandLine))
+    std::string command;
+    stream >> command; // Read first word and write it into command
+
+    std::map<String, String> args;
+    std::string              arg;
+
+    while (stream >> arg)
     {
-        std::istringstream lineStream(commandLine);
-        std::string        command;
-        lineStream >> command; // First word is the command
+        // Parse arguments key=value
+        size_t const pos = arg.find('=');
 
-        std::map<String, String> args;
-        std::string              arg;
-
-        while (lineStream >> arg)
+        if (pos != std::string::npos)
         {
-            // Parse arguments key=value
-            size_t pos = arg.find('=');
-
-            if (pos != std::string::npos)
-            {
-                String key   = arg.substr(0, pos);
-                String value = arg.substr(pos + 1);
-                args[key]    = value;
-            }
+            String       key   = arg.substr(0, pos);
+            String const value = arg.substr(pos + 1);
+            args[key]          = value;
         }
-
-        // Fire the event for the command with the parsed arguments
-        EventArgs eventArgs;
-        g_theEventSystem->FireEvent(command, eventArgs);
     }
+
+    // Echo command if required
+    if (echoCommand == true)
+    {
+        AddLine(INFO_MINOR, "Command: " + command);
+
+        for (std::pair<String const, String> const& pair : args)
+        {
+            AddLine(INFO_MINOR, "Arg: " + pair.first + "=" + pair.second);
+        }
+    }
+
+    // Fire the event for the command with the parsed arguments
+    EventArgs eventArgs;
+
+    for (std::pair<String const, String> const& pair : args)
+    {
+        eventArgs.SetValue(pair.first, pair.second);
+    }
+
+    g_theEventSystem->FireEvent(command, eventArgs);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -188,7 +197,7 @@ void DevConsole::ToggleMode(DevConsoleMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DevConsole::IsOpened() const
+bool DevConsole::IsOpen() const
 {
     return m_isOpen;
 }
@@ -203,7 +212,7 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 
     if (inputChar == KEYCODE_ENTER)
     {
-        g_theDevConsole->AddLine(INFO_MAJOR, "SHO  OT");
+        g_theDevConsole->AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
     }
 
     return true;
@@ -261,7 +270,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
     {
         DevConsoleLine const& line = m_lines[i];
 
-        textBounds.m_maxs.y = bounds.m_maxs.y+static_cast<float>(i) * lineHeight;
+        textBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i) * lineHeight;
         textBounds.m_mins.y = textBounds.m_maxs.y - lineHeight;
 
         font.AddVertsForTextInBox2D(
