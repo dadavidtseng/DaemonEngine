@@ -260,7 +260,9 @@ STATIC bool DevConsole::Event_CharInput(EventArgs& args)
 //
 STATIC bool DevConsole::Command_Clear(EventArgs& args)
 {
-    return false;
+    g_theDevConsole->m_lines.clear();
+
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -275,7 +277,7 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
         g_theDevConsole->AddLine(INFO_MINOR, registeredEventNames[i]);
     }
 
-    return false;
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
