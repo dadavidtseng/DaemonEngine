@@ -15,6 +15,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
@@ -51,6 +52,8 @@ void DevConsole::StartUp()
     // Initialize any necessary resources for the console (fonts, etc.)
     g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
     g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
+    g_theEventSystem->SubscribeEventCallbackFunction("help", Command_Help);
+    g_theEventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -104,11 +107,15 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
     // Echo command if required
     if (echoCommand == true)
     {
-        AddLine(INFO_MINOR, "Command: " + command);
+        AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
 
-        for (std::pair<String const, String> const& pair : args)
+        Strings registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+
+        bool isCommandValid = std::find(registeredEventNames.begin(), registeredEventNames.end(), command) != registeredEventNames.end();
+
+        if (!isCommandValid)
         {
-            AddLine(INFO_MINOR, "Arg: " + pair.first + "=" + pair.second);
+            AddLine(ERROR, "Command not found!");
         }
     }
 
@@ -144,6 +151,8 @@ void DevConsole::AddLine(Rgba8 const& color, String const& text)
 //
 void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
 {
+    g_theRenderer->BeginCamera(*m_config.m_defaultCamera);
+
     if (rendererOverride == nullptr)
     {
         rendererOverride = m_config.m_defaultRenderer;
@@ -167,6 +176,8 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
         // Render the command line prompt
         break;
     }
+
+    g_theRenderer->EndCamera(*m_config.m_defaultCamera);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -212,8 +223,14 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 
     if (keyCode == KEYCODE_ENTER)
     {
-        g_theDevConsole->AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
+        g_theDevConsole->Execute(g_theDevConsole->m_inputText);
         g_theDevConsole->m_inputText.clear();
+    }
+
+    if (keyCode == KEYCODE_BACKSPACE &&
+        !g_theDevConsole->m_inputText.empty())
+    {
+        g_theDevConsole->m_inputText.pop_back();
     }
 
     return true;
@@ -227,8 +244,10 @@ STATIC bool DevConsole::Event_CharInput(EventArgs& args)
     int const           value   = args.GetValue("WM_CHAR", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
-    if (keyCode >= KEYCODE_SPACE &&
-        keyCode < KEYCODE_TILDE)
+    if (keyCode >= 32 &&
+        keyCode <= 126 &&
+        keyCode != '~' &&
+        keyCode != '`')
     {
         g_theDevConsole->m_inputText += static_cast<char>(keyCode);
     }
@@ -249,6 +268,13 @@ STATIC bool DevConsole::Command_Clear(EventArgs& args)
 //
 STATIC bool DevConsole::Command_Help(EventArgs& args)
 {
+    Strings const registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+
+    for (int i = 0; i < static_cast<int>(registeredEventNames.size()); i++)
+    {
+        g_theDevConsole->AddLine(INFO_MINOR, registeredEventNames[i]);
+    }
+
     return false;
 }
 

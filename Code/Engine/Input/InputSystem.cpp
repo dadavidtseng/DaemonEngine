@@ -49,6 +49,10 @@ unsigned char const KEYCODE_F8          = VK_F8;
 unsigned char const KEYCODE_F9          = VK_F9;
 unsigned char const KEYCODE_F10         = VK_F10;
 unsigned char const KEYCODE_F11         = VK_F11;
+unsigned char const KEYCODE_F12         = VK_F12;
+unsigned char const KEYCODE_F13         = VK_F13;
+unsigned char const KEYCODE_F14         = VK_F14;
+unsigned char const KEYCODE_F15         = VK_F15;
 unsigned char const KEYCODE_ESC         = VK_ESCAPE;
 unsigned char const KEYCODE_UPARROW     = VK_UP;
 unsigned char const KEYCODE_DOWNARROW   = VK_DOWN;
@@ -63,7 +67,7 @@ unsigned char const KEYCODE_INSERT      = VK_RBUTTON;
 unsigned char const KEYCODE_DELETE      = VK_RBUTTON;
 unsigned char const KEYCODE_HOME        = VK_RBUTTON;
 unsigned char const KEYCODE_END         = VK_RBUTTON;
-unsigned char const KEYCODE_TILDE       = 0xC0;
+unsigned char const KEYCODE_TILDE       = VK_OEM_3;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_theInput = nullptr;
