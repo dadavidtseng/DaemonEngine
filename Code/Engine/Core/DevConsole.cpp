@@ -207,12 +207,13 @@ bool DevConsole::IsOpen() const
 //
 STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 {
-    String const keyCode   = args.GetValue("WM_KEYDOWN", "0");
-    int const    inputChar = std::stoi(keyCode);
+    int const           value   = args.GetValue("WM_KEYDOWN", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
 
-    if (inputChar == KEYCODE_ENTER)
+    if (keyCode == KEYCODE_ENTER)
     {
         g_theDevConsole->AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
+        g_theDevConsole->m_inputText.clear();
     }
 
     return true;
@@ -223,12 +224,13 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 //
 STATIC bool DevConsole::Event_CharInput(EventArgs& args)
 {
-    String const keyCode   = args.GetValue("WM_CHAR", "0");
-    int const    inputChar = std::stoi(keyCode);
+    int const           value   = args.GetValue("WM_CHAR", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
 
-    if (inputChar >= KEYCODE_SPACE && inputChar < KEYCODE_TILDE)
+    if (keyCode >= KEYCODE_SPACE &&
+        keyCode < KEYCODE_TILDE)
     {
-        g_theDevConsole->m_inputText += (char)inputChar;
+        g_theDevConsole->m_inputText += static_cast<char>(keyCode);
     }
 
     return true;
@@ -253,38 +255,42 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect) const
 {
-    VertexList  boxVerts;
-    AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
-    AddVertsForAABB2D(boxVerts, box, Rgba8::TRANSLUCENT_BLACK);
+    // Render background box
+    VertexList  backgroundBoxVerts;
+    AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
+
+    AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
     renderer.BindTexture(nullptr);
-    renderer.DrawVertexArray(static_cast<int>(boxVerts.size()), boxVerts.data());
+    renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());
 
     VertexList textVerts;
 
-    AABB2 textBounds = bounds;
+    AABB2 commandHistoryTextBounds = bounds;
 
-    // float lineHeight = box.GetDimensions().y / static_cast<float>(m_config.m_maxLinesDisplay);
-    float lineHeight = 30.f;
+    float const lineHeight = backgroundBox.GetDimensions().y / static_cast<float>(m_config.m_maxLinesDisplay);
+
+    font.AddVertsForTextInBox2D(textVerts, m_inputText, commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+
+    std::vector<DevConsoleLine> reversedLines = m_lines;
+    std::reverse(reversedLines.begin(), reversedLines.end());
 
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
-        DevConsoleLine const& line = m_lines[i];
+        commandHistoryTextBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i + 1) * lineHeight;
+        commandHistoryTextBounds.m_mins.y = commandHistoryTextBounds.m_maxs.y - lineHeight;
 
-        textBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i) * lineHeight;
-        textBounds.m_mins.y = textBounds.m_maxs.y - lineHeight;
+        DevConsoleLine const& reversedLine = reversedLines[i];
 
         font.AddVertsForTextInBox2D(
             textVerts,
-            line.m_text,
-            textBounds,
+            reversedLine.m_text,
+            commandHistoryTextBounds,
             lineHeight,
-            line.m_color,
+            reversedLine.m_color,
             fontAspect,
             Vec2::ZERO
         );
     }
-
-    font.AddVertsForTextInBox2D(textVerts, m_inputText, textBounds, lineHeight, Rgba8::WHITE, fontAspect);
 
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
