@@ -21,20 +21,6 @@
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-float GetClamped(float const value,
-                 float const minValue,
-                 float const maxValue)
-{
-    if (value > maxValue)
-        return maxValue;
-
-    if (value < minValue)
-        return minValue;
-
-    return value;
-}
-
-//----------------------------------------------------------------------------------------------------
 float GetClampedZeroToOne(float const value)
 {
     return GetClamped(value, 0.f, 1.f);

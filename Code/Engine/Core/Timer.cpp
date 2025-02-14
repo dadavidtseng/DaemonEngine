@@ -9,8 +9,19 @@
 // Create a clock with a period and the specified clock. If the clock
 // is null, use the system clock.
 //
-Timer::Timer(float period, Clock const*)
+Timer::Timer(float const period, Clock const* clock)
+    : m_period(period),
+      m_clock(clock ? clock : &Clock::GetSystemClock())
+
 {
+    if (clock == nullptr)
+    {
+        m_clock = &Clock::GetSystemClock();
+    }
+    else
+    {
+        m_clock = clock;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -18,6 +29,7 @@ Timer::Timer(float period, Clock const*)
 //
 void Timer::Start()
 {
+    m_startTime = m_clock->GetTotalSeconds();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -25,6 +37,7 @@ void Timer::Start()
 //
 void Timer::Stop()
 {
+    m_startTime = 0.0;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -33,7 +46,12 @@ void Timer::Stop()
 //
 float Timer::GetElapsedTime() const
 {
-    return 0.f;
+    if (IsStopped())
+    {
+        return 0.f;
+    }
+
+    return static_cast<float>(m_clock->GetTotalSeconds() - m_startTime);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -41,7 +59,9 @@ float Timer::GetElapsedTime() const
 //
 float Timer::GetElapsedFraction() const
 {
-    return 0.f;
+    float const elapsedFraction = GetElapsedTime() / static_cast<float>(m_period);
+
+    return elapsedFraction;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -49,15 +69,17 @@ float Timer::GetElapsedFraction() const
 //
 bool Timer::IsStopped() const
 {
-    return false;
+    return m_startTime == 0.0;
 }
 
 //----------------------------------------------------------------------------------------------------
-// Returns true if our elapsed time is greater than our period and we are not stopped.
+// Returns true if our elapsed time is greater than our period, and we are not stopped.
 //
 bool Timer::HasPeriodElapsed() const
 {
-    return false;
+    bool const periodElapsed = !IsStopped() && GetElapsedTime() >= m_period;
+
+    return periodElapsed;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -67,5 +89,20 @@ bool Timer::HasPeriodElapsed() const
 //
 bool Timer::DecrementPeriodIfElapsed()
 {
-    return false;
+    bool hasElapsed = false;
+
+    while (HasPeriodElapsed())
+    {
+        m_startTime += m_period;
+        hasElapsed = true;
+    }
+
+    return hasElapsed;
+
+    // if (HasPeriodElapsed())
+    // {
+    //     m_startTime += m_period;
+    //     return true;
+    // }
+    // return false;
 }

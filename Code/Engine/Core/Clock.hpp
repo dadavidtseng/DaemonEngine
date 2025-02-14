@@ -7,7 +7,7 @@
 #include <vector>
 
 //----------------------------------------------------------------------------------------------------
-// Hierarchical clock that inherits time scale. Parent clocks pass scaled delta seconds down to
+// Hierarchical clock that inherits timescale. Parent clocks pass scaled delta seconds down to
 // child clocks to be used as their base delta seconds. Child clocks in turn scale that time and
 // pass that down to their children. There is one system clock at the root of the hierarchy.
 //
@@ -17,7 +17,7 @@ public:
     Clock();
     explicit Clock(Clock& parent);
     ~Clock();
-    Clock(Clock const& copy);
+    Clock(Clock const& copy) = delete;
 
     void Reset();
     bool IsPaused() const;
@@ -25,37 +25,38 @@ public:
     void Unpause();
     void TogglePause();
 
-    void  StepSingleFrame();
-    void  SetTimeScale(float timeScale);
-    float GetTimeScale() const;
+    void StepSingleFrame();
+    void SetTimeScale(float timeScale);
 
-    float GetDeltaSeconds() const;
-    float GetTotalSeconds() const;
-    int   GetFrameCount() const;
+    float  GetTimeScale() const;
+    double GetDeltaSeconds() const;
+    double GetTotalSeconds() const;
+    int    GetFrameCount() const;
 
     static Clock& GetSystemClock();
     static void   TickSystemClock();
+    static Clock  s_systemClock;
 
 protected:
     void Tick();
     void Advance(double deltaTimeSeconds);
     void AddChild(Clock* childClock);
-    void RemoveChild(Clock* childClock);
+    void RemoveChild(Clock const* childClock);
 
-    // Parent clock. Will be nullptr for the root clock.
-    Clock*              m_parent = nullptr;
+    // Parent clock. Will be nullptr for the root clock(system clock).
+    Clock* m_parent = nullptr;
 
     // All children of this clock.
     std::vector<Clock*> m_children;
 
-    // Book keeping variables.
-    double m_lastUpdateTimeInSeconds = 0.f;
-    double m_totalSeconds = 0.f;
-    double m_deltaSeconds = 0.f;
-    int m_frameCount = 0;
+    // Bookkeeping variables.
+    double m_lastUpdateTimeInSeconds = 0.0;
+    double m_totalSeconds            = 0.0;
+    double m_deltaSeconds            = 0.0;
+    int    m_frameCount              = 0;
 
-    // Time scale for this clock.
-    double m_timeScale = 1.f;
+    // Timescale for this clock.
+    float m_timeScale = 2.f;
 
     // Pauses the clock completely.
     bool m_isPaused = false;
@@ -64,5 +65,5 @@ protected:
     bool m_stepSingleFrame = false;
 
     // Max delta time. Useful for preventing large time steps when stepping in a debugger.
-    double m_maxDeltaSeconds = 0.1f;
+    double m_maxDeltaSeconds = 0.1;
 };

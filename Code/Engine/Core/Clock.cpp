@@ -5,13 +5,19 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Clock.hpp"
 
-#include "EngineCommon.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Time.hpp"
+#include "Engine/Math/MathUtils.hpp"
+
+//----------------------------------------------------------------------------------------------------
+STATIC Clock Clock::s_systemClock;
 
 //----------------------------------------------------------------------------------------------------
 // Default constructor, uses the system clock as the parent of the new clock.
 //
 Clock::Clock()
 {
+    m_parent = &GetSystemClock();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -19,6 +25,8 @@ Clock::Clock()
 //
 Clock::Clock(Clock& parent)
 {
+    m_parent = &parent;
+    m_parent->AddChild(this);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -27,40 +35,53 @@ Clock::Clock(Clock& parent)
 //
 Clock::~Clock()
 {
+    if (m_parent != nullptr)
+    {
+        m_parent->RemoveChild(this);
+    }
+
+    for (int i = 0, n = static_cast<int>(m_children.size()); i < n; ++i)
+    {
+        m_children[i]->m_parent = nullptr;
+    }
+
+    m_children.clear();
 }
 
 //----------------------------------------------------------------------------------------------------
-Clock::Clock(Clock const& copy)
-{
-}
-
-//----------------------------------------------------------------------------------------------------
-// Reset all book keeping variables values back to zero and then setr the last updated time
+// Reset all book keeping variables values back to zero and then set the last updated time
 // to be the current system time.
 //
 void Clock::Reset()
 {
+    m_totalSeconds            = 0.0;
+    m_deltaSeconds            = 0.0;
+    m_frameCount              = 0;
+    m_lastUpdateTimeInSeconds = GetCurrentTimeSeconds();
 }
 
 //----------------------------------------------------------------------------------------------------
 bool Clock::IsPaused() const
 {
-    return false;
+    return m_isPaused;
 }
 
 //----------------------------------------------------------------------------------------------------
 void Clock::Pause()
 {
+    m_isPaused = true;
 }
 
 //----------------------------------------------------------------------------------------------------
 void Clock::Unpause()
 {
+    m_isPaused = false;
 }
 
 //----------------------------------------------------------------------------------------------------
 void Clock::TogglePause()
 {
+    m_isPaused = !m_isPaused;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -68,33 +89,46 @@ void Clock::TogglePause()
 //
 void Clock::StepSingleFrame()
 {
+    if (m_isPaused != true)
+    {
+        Pause();
+    }
+
+    Unpause();
+    m_stepSingleFrame = true;
+    Tick();
 }
 
 //----------------------------------------------------------------------------------------------------
 // Set and get the value by which this clock scales delta seconds.
 //
-void Clock::SetTimeScale(float timeScale)
+void Clock::SetTimeScale(float const timeScale)
 {
+    m_timeScale = timeScale;
 }
 
+//----------------------------------------------------------------------------------------------------
 float Clock::GetTimeScale() const
 {
-    return 0.f;
+    return m_timeScale;
 }
 
-float Clock::GetDeltaSeconds() const
+//----------------------------------------------------------------------------------------------------
+double Clock::GetDeltaSeconds() const
 {
-    return 0.f;
+    return m_deltaSeconds;
 }
 
-float Clock::GetTotalSeconds() const
+//----------------------------------------------------------------------------------------------------
+double Clock::GetTotalSeconds() const
 {
-    return 0.f;
+    return m_totalSeconds;
 }
 
+//----------------------------------------------------------------------------------------------------
 int Clock::GetFrameCount() const
 {
-    return 0;
+    return m_frameCount;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -103,9 +137,7 @@ int Clock::GetFrameCount() const
 //
 STATIC Clock& Clock::GetSystemClock()
 {
-    static Clock systemClock;
-
-    return systemClock;
+    return s_systemClock;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -114,6 +146,7 @@ STATIC Clock& Clock::GetSystemClock()
 //
 void Clock::TickSystemClock()
 {
+    GetSystemClock().Tick();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -122,15 +155,62 @@ void Clock::TickSystemClock()
 //
 void Clock::Tick()
 {
+    double const currentTime  = GetCurrentTimeSeconds();
+    double       deltaTime    = currentTime - m_lastUpdateTimeInSeconds;
+    m_lastUpdateTimeInSeconds = currentTime;
+
+    deltaTime = GetClamped(deltaTime, 0.0, m_maxDeltaSeconds);
+
+    if (m_isPaused == true)
+    {
+        m_deltaSeconds = 0.0;
+        m_timeScale    = 0.f;
+    }
+
+    m_deltaSeconds = deltaTime * m_timeScale;
+    m_totalSeconds += m_deltaSeconds;
+    ++m_frameCount;
+
+    if (!m_children.empty())
+    {
+        for (int i = 0; i < static_cast<int>(m_children.size()); ++i)
+        {
+            m_children[i]->Advance(m_deltaSeconds);
+        }
+    }
+
+    if (m_stepSingleFrame == true)
+    {
+        m_stepSingleFrame = false;
+        Pause();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
-// Calculates delta seconds based on pausing and time scale, updates all remaining book
+// Calculates delta seconds based on pausing and timescale, updates all remaining book
 // keeping variables, calls Advance on all child clocks and passes down our delta seconds,
 // and handles pausing after frames for stepping single frames.
 //
-void Clock::Advance(double deltaTimeSeconds)
+void Clock::Advance(double const deltaTimeSeconds)
 {
+    // if (m_isPaused == true)
+    // {
+    //     m_deltaSeconds = 0.0;
+    //     m_timeScale    = 0.f;
+    // }
+
+    m_deltaSeconds = deltaTimeSeconds * m_timeScale;
+    m_totalSeconds += m_deltaSeconds;
+    ++m_frameCount;
+
+
+    if (!m_children.empty())
+    {
+        for (int i = 0; i < static_cast<int>(m_children.size()); ++i)
+        {
+            m_children[i]->Advance(m_deltaSeconds);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -139,11 +219,21 @@ void Clock::Advance(double deltaTimeSeconds)
 //
 void Clock::AddChild(Clock* childClock)
 {
+    if (childClock != nullptr)
+    {
+        m_children.push_back(childClock);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 // Removes a child clock from our children if it is a child, otherwise does nothing.
 //
-void Clock::RemoveChild(Clock* childClock)
+void Clock::RemoveChild(Clock const* childClock)
 {
+    std::vector<Clock*>::iterator const it = std::find(m_children.begin(), m_children.end(), childClock);
+
+    if (it != m_children.end())
+    {
+        m_children.erase(it);
+    }
 }

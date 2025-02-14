@@ -23,7 +23,18 @@ constexpr float EPSILON = 1e-5f;	// Define a small tolerance value
 
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
-float GetClamped(float value, float minValue, float maxValue);
+template <typename T>
+T GetClamped(T const value, T const minValue, T const maxValue)
+{
+    if (value > maxValue)
+        return maxValue;
+
+    if (value < minValue)
+        return minValue;
+
+    return value;
+}
+
 float GetClampedZeroToOne(float value);
 float Interpolate(float start, float end, float fractionTowardEnd);
 float GetFractionWithinRange(float value, float rangeStart, float rangeEnd);
