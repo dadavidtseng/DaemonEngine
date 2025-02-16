@@ -161,7 +161,7 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
     if (g_theDevConsole == nullptr)
     {
-        ERROR_RECOVERABLE("g_theDevConsole is null", return false)
+        ERROR_RECOVERABLE("g_theDevConsole is null")
     }
 
     if (g_theInput == nullptr)

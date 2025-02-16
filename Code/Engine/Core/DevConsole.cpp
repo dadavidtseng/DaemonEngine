@@ -392,6 +392,8 @@ STATIC bool DevConsole::Event_CharInput(EventArgs& args)
 //
 STATIC bool DevConsole::Command_Clear(EventArgs& args)
 {
+    UNUSED(args)
+
     g_theDevConsole->m_lines.clear();
 
     return true;
@@ -402,6 +404,8 @@ STATIC bool DevConsole::Command_Clear(EventArgs& args)
 //
 STATIC bool DevConsole::Command_Help(EventArgs& args)
 {
+    UNUSED(args)
+
     Strings const registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
 
     for (int i = 0; i < static_cast<int>(registeredEventNames.size()); i++)
