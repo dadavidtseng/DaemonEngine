@@ -90,10 +90,11 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr||
+            //     !g_theDevConsole->IsOpen())
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("WM_KEYDOWN", Stringf("%d", static_cast<unsigned char>(wParam)));

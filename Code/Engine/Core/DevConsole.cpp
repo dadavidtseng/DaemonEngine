@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "ErrorWarningAssert.hpp"
+#include "Timer.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
@@ -54,6 +55,10 @@ void DevConsole::StartUp()
     g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
     g_theEventSystem->SubscribeEventCallbackFunction("help", Command_Help);
     g_theEventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
+
+    m_insertionPointBlinkTimer = new Timer(0.5f);
+    Clock::TickSystemClock();
+    m_insertionPointBlinkTimer->Start();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -149,9 +154,20 @@ void DevConsole::AddLine(Rgba8 const& color, String const& text)
 // camera being used to render. The current input line renders at the bottom with all other
 // lines rendered above it, with the most recent lines at the bottom.
 //
-void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride) const
+void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
 {
     g_theRenderer->BeginCamera(*m_config.m_defaultCamera);
+
+    if (m_insertionPointBlinkTimer->HasPeriodElapsed())
+    {
+        m_insertionPointVisible = !m_insertionPointVisible;
+        // DebuggerPrintf("DevConsoleClock: %f\n", m_insertionPointBlinkTimer->GetElapsedTime());
+        m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
+    }
+
+    DebuggerPrintf("m_historyIndex: %d\n", m_historyIndex);
+    DebuggerPrintf("m_insertionPointPosition: %d\n", m_insertionPointPosition);
+
 
     if (rendererOverride == nullptr)
     {
@@ -229,25 +245,122 @@ bool DevConsole::IsOpen() const
 //
 STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 {
+    int const           value   = args.GetValue("WM_KEYDOWN", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
+
+    if (keyCode == KEYCODE_TILDE)
+    {
+        g_theDevConsole->ToggleMode(OPEN_FULL);
+    }
+
     if (g_theDevConsole->m_isOpen == false)
     {
         return false;
     }
 
-    int const           value   = args.GetValue("WM_KEYDOWN", -1);
-    unsigned char const keyCode = static_cast<unsigned char>(value);
 
     if (keyCode == KEYCODE_ENTER)
     {
-        g_theDevConsole->Execute(g_theDevConsole->m_inputText);
-        g_theDevConsole->m_inputText.clear();
+        if (g_theDevConsole->m_inputText.empty() == true)
+        {
+            g_theDevConsole->SetMode(HIDDEN);
+        }
+        else
+        {
+            g_theDevConsole->m_commandHistory.push_back(g_theDevConsole->m_inputText);
+            g_theDevConsole->Execute(g_theDevConsole->m_inputText);
+            g_theDevConsole->m_inputText.clear();
+            g_theDevConsole->m_historyIndex           = -1;
+            g_theDevConsole->m_insertionPointPosition = 0;
+        }
     }
 
     if (keyCode == KEYCODE_BACKSPACE &&
         !g_theDevConsole->m_inputText.empty())
     {
-        g_theDevConsole->m_inputText.pop_back();
+        g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition - 1, 1);
+        g_theDevConsole->m_insertionPointPosition -= 1;
+        g_theDevConsole->m_historyIndex = -1;
     }
+
+    if (keyCode == KEYCODE_DELETE &&
+        !g_theDevConsole->m_inputText.empty())
+    {
+        g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition, 1);
+        g_theDevConsole->m_historyIndex = -1;
+    }
+
+    if (keyCode == KEYCODE_UPARROW)
+    {
+        if (g_theDevConsole->m_historyIndex + 1 < (int)g_theDevConsole->m_commandHistory.size())
+        {
+            g_theDevConsole->m_historyIndex += 1;
+            g_theDevConsole->m_inputText              = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
+            g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+        }
+    }
+
+    if (keyCode == KEYCODE_DOWNARROW)
+    {
+        if (g_theDevConsole->m_historyIndex != -1)
+        {
+            g_theDevConsole->m_historyIndex -= 1;
+
+            if (g_theDevConsole->m_historyIndex == -1)
+            {
+                g_theDevConsole->m_inputText              = "";
+                g_theDevConsole->m_insertionPointPosition = 0;
+            }
+            else
+            {
+                g_theDevConsole->m_inputText              = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
+                g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+            }
+        }
+    }
+
+    if (keyCode == KEYCODE_LEFTARROW)
+    {
+        if (g_theDevConsole->m_insertionPointPosition != 0)
+        {
+            g_theDevConsole->m_insertionPointPosition -= 1;
+        }
+    }
+
+    if (keyCode == KEYCODE_RIGHTARROW)
+    {
+        if (g_theDevConsole->m_insertionPointPosition != (int)g_theDevConsole->m_inputText.size())
+        {
+            g_theDevConsole->m_insertionPointPosition += 1;
+        }
+    }
+
+    if (keyCode == KEYCODE_HOME)
+    {
+        g_theDevConsole->m_insertionPointPosition = 0;
+    }
+
+    if (keyCode == KEYCODE_END)
+    {
+        g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+    }
+
+    if (keyCode == KEYCODE_ESC)
+    {
+        if (g_theDevConsole->m_inputText.empty() == true)
+        {
+            g_theDevConsole->SetMode(HIDDEN);
+        }
+        else
+        {
+            g_theDevConsole->m_inputText.clear();
+            g_theDevConsole->m_historyIndex           = -1;
+            g_theDevConsole->m_insertionPointPosition = 0;
+        }
+    }
+
+    g_theDevConsole->m_insertionPointBlinkTimer->Start();
+    g_theDevConsole->m_insertionPointVisible = true;
 
     return true;
 }
@@ -271,6 +384,9 @@ STATIC bool DevConsole::Event_CharInput(EventArgs& args)
         keyCode != '`')
     {
         g_theDevConsole->m_inputText += static_cast<char>(keyCode);
+        g_theDevConsole->m_insertionPointPosition += 1;
+        g_theDevConsole->m_historyIndex = -1;
+        g_theDevConsole->m_insertionPointBlinkTimer->Start();
     }
 
     return true;
@@ -318,7 +434,28 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     float const lineHeight = backgroundBox.GetDimensions().y / static_cast<float>(m_config.m_maxLinesDisplay);
 
-    font.AddVertsForTextInBox2D(textVerts, m_inputText, commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+    AABB2 inputTextBounds = AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_inputText.size()), lineHeight));
+
+    if (m_historyIndex == -1)
+    {
+        font.AddVertsForTextInBox2D(textVerts, m_inputText, inputTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+    }
+    else if (m_historyIndex >= 0 && m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
+    {
+        AABB2 commandHistoryTextBounds =
+            AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_commandHistory[m_historyIndex].size()), lineHeight));
+        font.AddVertsForTextInBox2D(textVerts, m_commandHistory[m_historyIndex], commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+    }
+
+    VertexList  insertionPointVerts;
+    AABB2 const insertionPointBound = AABB2(commandHistoryTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
+                                            Vec2(5.f, commandHistoryTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
+
+    if (m_insertionPointVisible == true)
+    {
+        AddVertsForAABB2D(insertionPointVerts, insertionPointBound, Rgba8::WHITE);
+        renderer.DrawVertexArray(static_cast<int>(insertionPointVerts.size()), insertionPointVerts.data());
+    }
 
     std::vector<DevConsoleLine> reversedLines = m_lines;
     std::reverse(reversedLines.begin(), reversedLines.end());
@@ -340,6 +477,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
             Vec2::ZERO
         );
     }
+
 
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());

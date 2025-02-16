@@ -56,7 +56,7 @@ protected:
     int    m_frameCount              = 0;
 
     // Timescale for this clock.
-    float m_timeScale = 2.f;
+    float m_timeScale = 1.f;
 
     // Pauses the clock completely.
     bool m_isPaused = false;

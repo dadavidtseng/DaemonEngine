@@ -199,7 +199,7 @@ void Clock::Advance(double const deltaTimeSeconds)
     //     m_timeScale    = 0.f;
     // }
 
-    m_deltaSeconds = deltaTimeSeconds * m_timeScale;
+    m_deltaSeconds = deltaTimeSeconds;
     m_totalSeconds += m_deltaSeconds;
     ++m_frameCount;
 

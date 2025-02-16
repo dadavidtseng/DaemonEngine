@@ -11,6 +11,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 //----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_A           = 0x41;
 unsigned char const KEYCODE_B           = 0x42;
@@ -63,10 +65,10 @@ unsigned char const KEYCODE_SPACE       = VK_SPACE;
 unsigned char const KEYCODE_BACKSPACE   = VK_BACK;
 unsigned char const KEYCODE_LEFT_MOUSE  = VK_LBUTTON;
 unsigned char const KEYCODE_RIGHT_MOUSE = VK_RBUTTON;
-unsigned char const KEYCODE_INSERT      = VK_RBUTTON;
-unsigned char const KEYCODE_DELETE      = VK_RBUTTON;
-unsigned char const KEYCODE_HOME        = VK_RBUTTON;
-unsigned char const KEYCODE_END         = VK_RBUTTON;
+unsigned char const KEYCODE_INSERT      = VK_INSERT;
+unsigned char const KEYCODE_DELETE      = VK_DELETE;
+unsigned char const KEYCODE_HOME        = VK_HOME;
+unsigned char const KEYCODE_END         = VK_END;
 unsigned char const KEYCODE_TILDE       = VK_OEM_3;
 
 //----------------------------------------------------------------------------------------------------
@@ -76,14 +78,14 @@ InputSystem* g_theInput = nullptr;
 InputSystem::InputSystem(InputSystemConfig const& config)
 {
     m_inputConfig = config;
-
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYUP", Event_KeyReleased);
 }
 
 //----------------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYUP", Event_KeyReleased);
+
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
     {
         m_controllers[controllerIndex].m_id = controllerIndex;
@@ -159,7 +161,7 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
 {
     if (g_theDevConsole == nullptr)
     {
-        return false;
+        ERROR_RECOVERABLE("g_theDevConsole is null", return false)
     }
 
     if (g_theInput == nullptr)
