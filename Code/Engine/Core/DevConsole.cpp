@@ -161,13 +161,8 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
     if (m_insertionPointBlinkTimer->HasPeriodElapsed())
     {
         m_insertionPointVisible = !m_insertionPointVisible;
-        // DebuggerPrintf("DevConsoleClock: %f\n", m_insertionPointBlinkTimer->GetElapsedTime());
         m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
     }
-
-    DebuggerPrintf("m_historyIndex: %d\n", m_historyIndex);
-    DebuggerPrintf("m_insertionPointPosition: %d\n", m_insertionPointPosition);
-
 
     if (rendererOverride == nullptr)
     {

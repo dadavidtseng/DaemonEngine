@@ -98,11 +98,4 @@ bool Timer::DecrementPeriodIfElapsed()
     }
 
     return hasElapsed;
-
-    // if (HasPeriodElapsed())
-    // {
-    //     m_startTime += m_period;
-    //     return true;
-    // }
-    // return false;
 }
