@@ -28,10 +28,12 @@ DevConsole* g_theDevConsole = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 // Static color constants for different message types
-STATIC Rgba8 const DevConsole::ERROR      = Rgba8(255, 0, 0);
-STATIC Rgba8 const DevConsole::WARNING    = Rgba8(255, 255, 0);
-STATIC Rgba8 const DevConsole::INFO_MAJOR = Rgba8(0, 255, 0);
-STATIC Rgba8 const DevConsole::INFO_MINOR = Rgba8(0, 255, 255);
+STATIC Rgba8 const DevConsole::ERROR                 = Rgba8(255, 0, 0);
+STATIC Rgba8 const DevConsole::WARNING               = Rgba8(255, 255, 0);
+STATIC Rgba8 const DevConsole::INFO_MAJOR            = Rgba8(0, 255, 0);
+STATIC Rgba8 const DevConsole::INFO_MINOR            = Rgba8(0, 255, 255);
+STATIC Rgba8 const DevConsole::INPUT_TEXT            = Rgba8(255, 255, 255);
+STATIC Rgba8 const DevConsole::INPUT_INSERTION_POINT = Rgba8(255, 255, 255, 200);
 
 //----------------------------------------------------------------------------------------------------
 DevConsole::DevConsole(DevConsoleConfig const& config)
@@ -273,6 +275,15 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
     if (keyCode == KEYCODE_BACKSPACE &&
         !g_theDevConsole->m_inputText.empty())
     {
+        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
+        //
+        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
+        // {
+        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
+        //     g_theDevConsole->m_inputTextPosition += lineWidth;
+        //     g_theDevConsole->m_insertionPointPosition += 1;
+        // }
+
         g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition - 1, 1);
         g_theDevConsole->m_insertionPointPosition -= 1;
         g_theDevConsole->m_historyIndex = -1;
@@ -281,6 +292,15 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
     if (keyCode == KEYCODE_DELETE &&
         !g_theDevConsole->m_inputText.empty())
     {
+        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
+        //
+        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
+        // {
+        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
+        //     g_theDevConsole->m_inputTextPosition += lineWidth;
+        //     g_theDevConsole->m_insertionPointPosition += 1;
+        // }
+
         g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition, 1);
         g_theDevConsole->m_historyIndex = -1;
     }
@@ -378,10 +398,29 @@ STATIC bool DevConsole::Event_CharInput(EventArgs& args)
         keyCode != '~' &&
         keyCode != '`')
     {
+        float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
+
+
+        if ((float)g_theDevConsole->m_inputText.size() * lineWidth >= 1600.f)
+        {
+            return false;
+        }
+
         g_theDevConsole->m_inputText += static_cast<char>(keyCode);
         g_theDevConsole->m_insertionPointPosition += 1;
         g_theDevConsole->m_historyIndex = -1;
         g_theDevConsole->m_insertionPointBlinkTimer->Start();
+
+        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
+        //
+        //
+        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
+        // {
+        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
+        //     g_theDevConsole->m_inputTextPosition -= lineWidth;
+        //     g_theDevConsole->m_insertionPointPosition -= 1;
+        //
+        // }
     }
 
     return true;
@@ -417,7 +456,7 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect) const
+void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect)
 {
     // Render background box
     VertexList  backgroundBoxVerts;
@@ -429,30 +468,31 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     VertexList textVerts;
 
-    AABB2 commandHistoryTextBounds = bounds;
+    float const lineHeight = backgroundBox.GetDimensions().y / m_config.m_maxLinesDisplay;
 
-    float const lineHeight = backgroundBox.GetDimensions().y / static_cast<float>(m_config.m_maxLinesDisplay);
-
-    AABB2 inputTextBounds = AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_inputText.size()), lineHeight));
+    AABB2 const inputTextBounds = AABB2(Vec2(m_inputTextPosition, 0.f), Vec2(1600.f / lineHeight * static_cast<float>(m_inputText.size()), lineHeight));
 
     if (m_historyIndex == -1)
     {
-        font.AddVertsForTextInBox2D(textVerts, m_inputText, inputTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+        font.AddVertsForTextInBox2D(textVerts, m_inputText, inputTextBounds, lineHeight, INPUT_TEXT, fontAspect);
     }
-    else if (m_historyIndex >= 0 && m_historyIndex < (int)g_theDevConsole->m_commandHistory.size())
+    else if (m_historyIndex >= 0 && m_historyIndex < static_cast<int>(g_theDevConsole->m_commandHistory.size()))
     {
-        AABB2 commandHistoryTextBounds =
+        AABB2 const commandHistoryTextBounds =
             AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_commandHistory[m_historyIndex].size()), lineHeight));
+
         font.AddVertsForTextInBox2D(textVerts, m_commandHistory[m_historyIndex], commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
     }
 
+    AABB2 commandTextBounds = bounds;
+
     VertexList  insertionPointVerts;
-    AABB2 const insertionPointBound = AABB2(commandHistoryTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
-                                            Vec2(5.f, commandHistoryTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
+    AABB2 const insertionPointBound = AABB2(commandTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
+                                            Vec2(5.f, commandTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
 
     if (m_insertionPointVisible == true)
     {
-        AddVertsForAABB2D(insertionPointVerts, insertionPointBound, Rgba8::WHITE);
+        AddVertsForAABB2D(insertionPointVerts, insertionPointBound, INPUT_INSERTION_POINT);
         renderer.DrawVertexArray(static_cast<int>(insertionPointVerts.size()), insertionPointVerts.data());
     }
 
@@ -461,22 +501,26 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     for (size_t i = 0; i < m_lines.size(); ++i)
     {
-        commandHistoryTextBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i + 1) * lineHeight;
-        commandHistoryTextBounds.m_mins.y = commandHistoryTextBounds.m_maxs.y - lineHeight;
+        commandTextBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i + 1) * lineHeight;
+        commandTextBounds.m_mins.y = commandTextBounds.m_maxs.y - lineHeight;
+
+        if (i > (size_t)m_config.m_maxLinesDisplay - 1)
+        {
+            break;
+        }
 
         DevConsoleLine const& reversedLine = reversedLines[i];
 
         font.AddVertsForTextInBox2D(
             textVerts,
             reversedLine.m_text,
-            commandHistoryTextBounds,
+            commandTextBounds,
             lineHeight,
             reversedLine.m_color,
             fontAspect,
             Vec2::ZERO
         );
     }
-
 
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());

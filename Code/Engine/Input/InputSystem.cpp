@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -169,6 +170,11 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
         return false;
     }
 
+    if (g_theDevConsole->IsOpen())
+    {
+        return false;
+    }
+
     int const           value   = args.GetValue("WM_KEYDOWN", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyPressed(keyCode);
@@ -185,6 +191,11 @@ STATIC bool InputSystem::Event_KeyReleased(EventArgs& args)
     }
 
     if (g_theInput == nullptr)
+    {
+        return false;
+    }
+
+    if (g_theDevConsole->IsOpen())
     {
         return false;
     }

@@ -95,7 +95,7 @@ public:
     static const Rgba8 INPUT_INSERTION_POINT;
 
 protected:
-    void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float fontAspect = 1.f) const;
+    void Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float fontAspect = 1.f) ;
 
     DevConsoleConfig m_config;
     DevConsoleMode   m_mode = HIDDEN;
@@ -111,6 +111,7 @@ protected:
 
     // Index of the insertion point in our current input text.
     int m_insertionPointPosition = 0;
+    float m_inputTextPosition = 0;
 
     // True if our insertion point is currently in the visible phase of blinking.
     bool m_insertionPointVisible = false;

@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Clock.hpp"
 
+#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -97,6 +98,7 @@ void Clock::StepSingleFrame()
     Unpause();
     m_stepSingleFrame = true;
     Tick();
+    Pause();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -155,6 +157,8 @@ void Clock::TickSystemClock()
 //
 void Clock::Tick()
 {
+
+
     double const currentTime  = GetCurrentTimeSeconds();
     double       deltaTime    = currentTime - m_lastUpdateTimeInSeconds;
     m_lastUpdateTimeInSeconds = currentTime;
@@ -171,18 +175,18 @@ void Clock::Tick()
     m_totalSeconds += m_deltaSeconds;
     ++m_frameCount;
 
+    if (m_stepSingleFrame == true)
+    {
+        m_stepSingleFrame = false;
+        m_deltaSeconds = 1/60.0;
+    }
+
     if (!m_children.empty())
     {
         for (int i = 0; i < static_cast<int>(m_children.size()); ++i)
         {
             m_children[i]->Advance(m_deltaSeconds);
         }
-    }
-
-    if (m_stepSingleFrame == true)
-    {
-        m_stepSingleFrame = false;
-        Pause();
     }
 }
 
@@ -193,13 +197,13 @@ void Clock::Tick()
 //
 void Clock::Advance(double const deltaTimeSeconds)
 {
-    // if (m_isPaused == true)
-    // {
-    //     m_deltaSeconds = 0.0;
-    //     m_timeScale    = 0.f;
-    // }
+    if (m_isPaused == true)
+    {
+        m_deltaSeconds = 0.0;
+        m_timeScale    = 0.f;
+    }
 
-    m_deltaSeconds = deltaTimeSeconds;
+    m_deltaSeconds = deltaTimeSeconds*m_timeScale;
     m_totalSeconds += m_deltaSeconds;
     ++m_frameCount;
 
@@ -211,6 +215,12 @@ void Clock::Advance(double const deltaTimeSeconds)
             m_children[i]->Advance(m_deltaSeconds);
         }
     }
+
+    // if (m_stepSingleFrame == true)
+    // {
+    //     m_stepSingleFrame = false;
+    //     Pause();
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------
