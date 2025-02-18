@@ -16,9 +16,9 @@ Shader::Shader(ShaderConfig const& config)
 //----------------------------------------------------------------------------------------------------
 Shader::~Shader()
 {
-    DX_SAFE_RELEASE(m_vertexShader)
-    DX_SAFE_RELEASE(m_pixelShader)
-    DX_SAFE_RELEASE(m_inputLayout)
+    // DX_SAFE_RELEASE(m_vertexShader)
+    // DX_SAFE_RELEASE(m_pixelShader)
+    // DX_SAFE_RELEASE(m_inputLayout)
 }
 
 //----------------------------------------------------------------------------------------------------

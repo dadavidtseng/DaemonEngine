@@ -164,6 +164,7 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
     {
         m_insertionPointVisible = !m_insertionPointVisible;
         m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
+        // DebuggerPrintf("m_insertionPointBlinkTimer: %f \n", m_insertionPointBlinkTimer->GetElapsedTime());
     }
 
     if (rendererOverride == nullptr)

@@ -22,11 +22,8 @@ public:
     bool     HasPeriodElapsed() const;
     bool     DecrementPeriodIfElapsed();
 
-    // The time interval it takes for a period to elapse.
-    double m_period = 0.0;
-
-    // The clock to use for getting the current time.
-    Clock const* m_clock = nullptr;
+    double       m_period = 0.0;        // The time interval it takes for a period to elapse.
+    Clock const* m_clock  = nullptr;    // The clock to use for getting the current time.
 
     // Clock time at which the timer was started. This is incremented by one period each
     // time we decrement a period, however, so it is not an absolute start time. It is

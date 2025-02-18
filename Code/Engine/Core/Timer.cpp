@@ -12,16 +12,7 @@
 Timer::Timer(float const period, Clock const* clock)
     : m_period(period),
       m_clock(clock ? clock : &Clock::GetSystemClock())
-
 {
-    if (clock == nullptr)
-    {
-        m_clock = &Clock::GetSystemClock();
-    }
-    else
-    {
-        m_clock = clock;
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -51,7 +42,9 @@ float Timer::GetElapsedTime() const
         return 0.f;
     }
 
-    return static_cast<float>(m_clock->GetTotalSeconds() - m_startTime);
+    float const elapsedTimeBetweenClockAndOurStartTime = static_cast<float>(m_clock->GetTotalSeconds() - m_startTime);
+
+    return elapsedTimeBetweenClockAndOurStartTime;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -77,7 +70,7 @@ bool Timer::IsStopped() const
 //
 bool Timer::HasPeriodElapsed() const
 {
-    bool const periodElapsed = !IsStopped() && GetElapsedTime() >= m_period;
+    bool const periodElapsed = !IsStopped() && GetElapsedTime() > m_period;
 
     return periodElapsed;
 }
@@ -94,6 +87,7 @@ bool Timer::DecrementPeriodIfElapsed()
     while (HasPeriodElapsed())
     {
         m_startTime += m_period;
+
         hasElapsed = true;
     }
 

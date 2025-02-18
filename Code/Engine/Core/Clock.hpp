@@ -43,27 +43,14 @@ protected:
     void AddChild(Clock* childClock);
     void RemoveChild(Clock const* childClock);
 
-    // Parent clock. Will be nullptr for the root clock(system clock).
-    Clock* m_parent = nullptr;
-
-    // All children of this clock.
-    std::vector<Clock*> m_children;
-
-    // Bookkeeping variables.
-    double m_lastUpdateTimeInSeconds = 0.0;
-    double m_totalSeconds            = 0.0;
-    double m_deltaSeconds            = 0.0;
-    int    m_frameCount              = 0;
-
-    // Timescale for this clock.
-    float m_timeScale = 1.f;
-
-    // Pauses the clock completely.
-    bool m_isPaused = false;
-
-    // For single stepping frames.
-    bool m_stepSingleFrame = false;
-
-    // Max delta time. Useful for preventing large time steps when stepping in a debugger.
-    double m_maxDeltaSeconds = 0.1;
+    Clock*              m_parent = nullptr;                 // Parent clock. Will be nullptr for the root clock(system clock).
+    std::vector<Clock*> m_children;                         // All children of this clock.
+    double              m_lastUpdateTimeInSeconds = 0.0;    // Bookkeeping variables.
+    double              m_totalSeconds            = 0.0;    // Bookkeeping variables.
+    double              m_deltaSeconds            = 0.0;    // Bookkeeping variables.
+    int                 m_frameCount              = 0;      // Bookkeeping variables.
+    float               m_timeScale               = 1.f;    // Timescale for this clock.
+    bool                m_isPaused                = false;  // Pauses the clock completely.
+    bool                m_stepSingleFrame         = false;  // For single stepping frames.
+    double              m_maxDeltaSeconds         = 0.1;    // Max delta time. Useful for preventing large time steps when stepping in a debugger.
 };

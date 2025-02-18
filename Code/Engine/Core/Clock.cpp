@@ -31,7 +31,7 @@ Clock::Clock(Clock& parent)
 }
 
 //----------------------------------------------------------------------------------------------------
-// Destructor, unparents ourselves and our children to avoid crashes but does not otherwise try
+// Destructor, un-parents ourselves and our children to avoid crashes but does not otherwise try
 // to fix up the clock hierarchy. That is the responsibility of the user of this class.
 //
 Clock::~Clock()
@@ -90,15 +90,14 @@ void Clock::TogglePause()
 //
 void Clock::StepSingleFrame()
 {
-    if (m_isPaused != true)
+    m_stepSingleFrame = true;
+
+    if (m_isPaused == false)
     {
         Pause();
     }
 
     Unpause();
-    m_stepSingleFrame = true;
-    Tick();
-    Pause();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -157,37 +156,13 @@ void Clock::TickSystemClock()
 //
 void Clock::Tick()
 {
+    double const currentSeconds    = GetCurrentTimeSeconds();
+    double       deltaDeltaSeconds = currentSeconds - m_lastUpdateTimeInSeconds;
+    m_lastUpdateTimeInSeconds      = currentSeconds;
 
+    deltaDeltaSeconds = GetClamped(deltaDeltaSeconds, 0.0, m_maxDeltaSeconds);
 
-    double const currentTime  = GetCurrentTimeSeconds();
-    double       deltaTime    = currentTime - m_lastUpdateTimeInSeconds;
-    m_lastUpdateTimeInSeconds = currentTime;
-
-    deltaTime = GetClamped(deltaTime, 0.0, m_maxDeltaSeconds);
-
-    if (m_isPaused == true)
-    {
-        m_deltaSeconds = 0.0;
-        m_timeScale    = 0.f;
-    }
-
-    m_deltaSeconds = deltaTime * m_timeScale;
-    m_totalSeconds += m_deltaSeconds;
-    ++m_frameCount;
-
-    if (m_stepSingleFrame == true)
-    {
-        m_stepSingleFrame = false;
-        m_deltaSeconds = 1/60.0;
-    }
-
-    if (!m_children.empty())
-    {
-        for (int i = 0; i < static_cast<int>(m_children.size()); ++i)
-        {
-            m_children[i]->Advance(m_deltaSeconds);
-        }
-    }
+    Advance(deltaDeltaSeconds);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -199,14 +174,12 @@ void Clock::Advance(double const deltaTimeSeconds)
 {
     if (m_isPaused == true)
     {
-        m_deltaSeconds = 0.0;
         m_timeScale    = 0.f;
     }
 
-    m_deltaSeconds = deltaTimeSeconds*m_timeScale;
+    m_deltaSeconds = deltaTimeSeconds * m_timeScale;
     m_totalSeconds += m_deltaSeconds;
     ++m_frameCount;
-
 
     if (!m_children.empty())
     {
@@ -216,11 +189,11 @@ void Clock::Advance(double const deltaTimeSeconds)
         }
     }
 
-    // if (m_stepSingleFrame == true)
-    // {
-    //     m_stepSingleFrame = false;
-    //     Pause();
-    // }
+    if (m_stepSingleFrame == true)
+    {
+        m_stepSingleFrame = false;
+        Pause();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
