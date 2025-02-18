@@ -16,10 +16,10 @@
 #include "Engine/Math/Triangle2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-void TransformVertexArrayXY3D(const int   numVerts,
+void TransformVertexArrayXY3D(int const   numVerts,
                               Vertex_PCU* verts,
-                              const float uniformScaleXY,
-                              const float rotationDegreesAboutZ,
+                              float const uniformScaleXY,
+                              float const rotationDegreesAboutZ,
                               Vec2 const& translationXY)
 {
     for (int vertIndex = 0; vertIndex < numVerts; ++vertIndex)
@@ -278,4 +278,18 @@ void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPos, Vec2 const& tipP
     verts.emplace_back(rightTipLeft, color);
     verts.emplace_back(rightEndRight, color);
     verts.emplace_back(rightTipRight, color);
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForQuad3D(VertexList& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& uv)
+{
+    // Starting at BL, add triangle A with vertexes BL, BR, TR.
+    verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
+    verts.push_back(Vertex_PCU(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y)));
+    verts.push_back(Vertex_PCU(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y)));
+
+    // Starting again at BL, add triangle B with vertexes BL, TR, TL.
+    verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
+    verts.push_back(Vertex_PCU(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y)));
+    verts.push_back(Vertex_PCU(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y)));
 }

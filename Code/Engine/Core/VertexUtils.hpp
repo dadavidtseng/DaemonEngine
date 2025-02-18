@@ -1,22 +1,22 @@
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // VertexUtils.hpp
-//
+//----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 #pragma once
 #include <vector>
 
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Vec2.hpp"
 
-//-----------------------------------------------------------------------------------------------
-struct Rgba8;
+//----------------------------------------------------------------------------------------------------
 struct Triangle2;
 struct Capsule2;
 struct LineSegment2;
 struct Disc2;
-struct Vec2;
+struct Vec3;
 struct Vertex_PCU;
-struct AABB2;
 struct OBB2;
 
 //----------------------------------------------------------------------------------------------------
@@ -36,3 +36,4 @@ void AddVertsForCapsule2D(VertexList& verts, Vec2 const& boneStart, Vec2 const& 
 void AddVertsForCapsule2D(VertexList& verts, Capsule2 const& capsule, Rgba8 const& color);
 void AddVertsForHalfDisc2D(VertexList& verts, Vec2 const& discCenter, float discRadius, Rgba8 const& color, bool isTopHalf, float rotationDegrees);
 void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPos, Vec2 const& tipPos, float arrowSize, float thickness, Rgba8 const& color);
+void AddVertsForQuad3D(VertexList& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
