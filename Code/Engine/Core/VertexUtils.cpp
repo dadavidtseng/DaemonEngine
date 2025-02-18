@@ -281,7 +281,7 @@ void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPos, Vec2 const& tipP
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForQuad3D(VertexList& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& uv)
+void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& uv)
 {
     // Starting at BL, add triangle A with vertexes BL, BR, TR.
     verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
