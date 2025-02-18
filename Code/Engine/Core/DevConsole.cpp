@@ -40,6 +40,8 @@ DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
     AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
+
+
 }
 
 //----------------------------------------------------------------------------------------------------
