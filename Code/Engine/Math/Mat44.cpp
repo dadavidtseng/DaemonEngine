@@ -264,7 +264,25 @@ Mat44 const Mat44::MakePerspectiveProjection(float const fovYDegrees,
                                              float const zNear,
                                              float const zFar)
 {
-    Mat44 result;
+    Mat44 perspective;
+
+    float const c          = CosDegrees(fovYDegrees * 0.5f);
+    float const s          = SinDegrees(fovYDegrees * 0.5f);
+    float const scaleY     = c / s;
+    float const scaleX     = scaleY / aspect;
+    float const scaleZ     = zFar / (zFar - zNear);
+    float const translateZ = (zNear * zFar) / (zNear - zFar);
+
+    perspective.m_values[Ix] = scaleX;
+    perspective.m_values[Jy] = scaleY;
+    perspective.m_values[Kz] = scaleZ;
+    perspective.m_values[Kw] = 1.f;
+    perspective.m_values[Tz] = translateZ;
+    perspective.m_values[Tw] = 0.f;
+
+    return perspective;
+
+    /*Mat44 result;
 
     float const fovYRadians = ConvertDegreesToRadians(fovYDegrees);
     float const tanHalfFovY = tanf(fovYRadians / 2.f);
@@ -289,7 +307,7 @@ Mat44 const Mat44::MakePerspectiveProjection(float const fovYDegrees,
     result.m_values[Tz] = -(zFar * zNear) / (zFar - zNear);
     result.m_values[Tw] = 0.f;
 
-    return result;
+    return result;*/
 }
 
 //----------------------------------------------------------------------------------------------------

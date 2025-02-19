@@ -8,15 +8,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "ErrorWarningAssert.hpp"
-#include "Timer.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Core/Timer.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
@@ -40,8 +38,6 @@ DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
     AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
-
-
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -160,18 +156,18 @@ void DevConsole::AddLine(Rgba8 const& color, String const& text)
 //
 void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
 {
-    g_theRenderer->BeginCamera(*m_config.m_defaultCamera);
+    if (rendererOverride == nullptr)
+    {
+        rendererOverride = m_config.m_defaultRenderer;
+    }
+
+    rendererOverride->BeginCamera(*m_config.m_defaultCamera);
 
     if (m_insertionPointBlinkTimer->HasPeriodElapsed())
     {
         m_insertionPointVisible = !m_insertionPointVisible;
         m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
         // DebuggerPrintf("m_insertionPointBlinkTimer: %f \n", m_insertionPointBlinkTimer->GetElapsedTime());
-    }
-
-    if (rendererOverride == nullptr)
-    {
-        rendererOverride = m_config.m_defaultRenderer;
     }
 
     BitmapFont const* font = rendererOverride->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + m_config.m_defaultFontName).c_str());
@@ -193,7 +189,7 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
         break;
     }
 
-    g_theRenderer->EndCamera(*m_config.m_defaultCamera);
+    rendererOverride->EndCamera(*m_config.m_defaultCamera);
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -9,47 +9,34 @@
 const char* const DEFAULT_SHADER_SOURCE = R"(
 struct vs_input_t
 {
-    float3 localPosition : POSITION;
+    float3 modelSpacePosition : POSITION;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
 
 struct v2p_t
 {
-    float4 position : SV_Position;
+    float4 clipSpacePosition : SV_Position;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
 
 cbuffer CameraConstants : register(b2)
 {
-    float OrthoMinX;
-    float OrthoMinY;
-    float OrthoMinZ;
-    float OrthoMaxX;
-    float OrthoMaxY;
-    float OrthoMaxZ;
-    float pad0;
-    float pad1;
-}
-
-float RangeMap(float value, float inMin, float inMax, float outMin, float outMax)
-{
-    return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin));
+    float4x4 WorldToCameraTransform;
+    float4x4 CameraToRenderTransform;
+    float4x4 RenderToClipTransform;
 }
 
 v2p_t VertexMain(vs_input_t input)
 {
-    float4 localPosition = float4(input.localPosition, 1);
-
-    float4 clipPosition;
-    clipPosition.x = RangeMap(localPosition.x, OrthoMinX, OrthoMaxX, -1.f, 1.f);
-    clipPosition.y = RangeMap(localPosition.y, OrthoMinY, OrthoMaxY, -1.f, 1.f);
-    clipPosition.z = RangeMap(localPosition.z, OrthoMinZ, OrthoMaxZ, 0.f, 1.f);
-    clipPosition.w = localPosition.w;
+    float4 modelSpacePosition = float4(input.modelSpacePosition, 1);
+    float4 worldSpacePosition = mul(WorldToCameraTransform, modelSpacePosition);
+    float4 renderSpacePosition = mul(CameraToRenderTransform, worldSpacePosition);
+    float4 clipSpacePosition = mul(RenderToClipTransform, renderSpacePosition);
 
     v2p_t v2p;
-    v2p.position = clipPosition;
+    v2p.clipSpacePosition  = clipSpacePosition;
     v2p.color = input.color;
     v2p.uv = input.uv;
     return v2p;

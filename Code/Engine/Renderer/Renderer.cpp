@@ -389,8 +389,8 @@ void Renderer::BeginCamera(Camera const& camera) const
     // cameraConstants.pad0      = 0.f;
     // cameraConstants.pad1      = 0.f;
 
-    // cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
-    // cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+    cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
+    cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
     cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
 
     // Copy the data from the local structure to the constant buffer
