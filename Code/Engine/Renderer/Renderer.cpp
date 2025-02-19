@@ -149,23 +149,50 @@ void Renderer::Startup()
     D3D11_RASTERIZER_DESC rasterizerDesc;
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.CullMode              = D3D11_CULL_NONE;
-    rasterizerDesc.FrontCounterClockwise = false;
+    rasterizerDesc.FrontCounterClockwise = true;
     rasterizerDesc.DepthBias             = 0;
     rasterizerDesc.DepthBiasClamp        = 0.f;
     rasterizerDesc.SlopeScaledDepthBias  = 0.f;
-    rasterizerDesc.DepthClipEnable       = true;
+    rasterizerDesc.DepthClipEnable = true;
     rasterizerDesc.ScissorEnable         = false;
     rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
-
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_NONE)]);
     if (!SUCCEEDED(hr))
     {
-        ERROR_AND_DIE("Could not create rasterizer state.")
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
     }
 
-    m_deviceContext->RSSetState(m_rasterizerState);
+    rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed.")
+    }
+
+    rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rasterizerDesc.CullMode = D3D11_CULL_NONE;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(RasterizerMode::WIREFRAME_CULL_NONE)]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed.")
+    }
+
+    rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(RasterizerMode::WIREFRAME_CULL_BACK)]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
+    }
+
+    // SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+    SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+    // m_rasterizerState = m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
+    // m_deviceContext->RSSetState(m_rasterizerState);
 
     m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
 
@@ -187,7 +214,8 @@ void Renderer::Startup()
     blendDesc.RenderTarget[0].DestBlendAlpha        = blendDesc.RenderTarget[0].DestBlend;
     blendDesc.RenderTarget[0].BlendOpAlpha          = blendDesc.RenderTarget[0].BlendOp;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    hr                                              = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::OPAQUE)]);
+
+    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::OPAQUE)]);
     if (!SUCCEEDED(hr))
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::OPAQUE failed.")
@@ -195,7 +223,8 @@ void Renderer::Startup()
 
     blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
     blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    hr                                  = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ALPHA)]);
+
+    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ALPHA)]);
     if (!SUCCEEDED(hr))
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::ALPHA failed.")
@@ -203,7 +232,8 @@ void Renderer::Startup()
 
     blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_ONE;
     blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-    hr                                  = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ADDITIVE)]);
+
+    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(BlendMode::ADDITIVE)]);
     if (!SUCCEEDED(hr))
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
@@ -245,8 +275,9 @@ void Renderer::Startup()
     }
 
     // Default the sampler state to point clamp
-    m_samplerState = m_samplerStates[static_cast<int>(SamplerMode::POINT_CLAMP)];
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+    // m_samplerState = m_samplerStates[static_cast<int>(SamplerMode::POINT_CLAMP)];
+    // m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+    SetSamplerMode(SamplerMode::POINT_CLAMP);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -271,6 +302,12 @@ void Renderer::EndFrame() const
 //----------------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
+    // Release all rasterizer states
+    for (int i = 0; i < static_cast<int>(RasterizerMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_rasterizerStates[i])
+    }
+
     // Release all blend states
     for (int i = 0; i < static_cast<int>(BlendMode::COUNT); ++i)
     {
@@ -301,7 +338,7 @@ void Renderer::Shutdown()
 
 
     // Release all DirectX objects and check for memory leaks in your Shutdown function.
-    DX_SAFE_RELEASE(m_rasterizerState)
+    // DX_SAFE_RELEASE(m_rasterizerStates)
     DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
@@ -937,4 +974,12 @@ void Renderer::SetSamplerMode(SamplerMode mode)
     m_desiredSamplerMode = mode;
     m_samplerState       = m_samplerStates[static_cast<int>(mode)];
     m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetRasterizerMode(RasterizerMode mode)
+{
+    m_desiredRasterizerMode = mode;
+    m_rasterizerState       = m_rasterizerStates[static_cast<int>(mode)];
+    m_deviceContext->RSSetState(m_rasterizerState);
 }

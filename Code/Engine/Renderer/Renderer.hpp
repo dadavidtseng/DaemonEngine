@@ -40,6 +40,16 @@ dxObject = nullptr;       \
 #endif
 
 //----------------------------------------------------------------------------------------------------
+enum class RasterizerMode
+{
+    SOLID_CULL_NONE,
+    SOLID_CULL_BACK,
+    WIREFRAME_CULL_NONE,
+    WIREFRAME_CULL_BACK,
+    COUNT
+};
+
+//----------------------------------------------------------------------------------------------------
 enum class SamplerMode
 {
     POINT_CLAMP,
@@ -95,9 +105,9 @@ private:
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     Shader* CreateShader(char const* shaderName);
-    bool CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-    void BindShader(Shader const* shader) const;
-    void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount) const;
+    bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
+    void    BindShader(Shader const* shader) const;
+    void    DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount) const;
 
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
@@ -107,13 +117,13 @@ private:
     void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
     void            SetStatesIfChanged();
     void            SetSamplerMode(SamplerMode mode);
+    void            SetRasterizerMode(RasterizerMode mode);
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;
 
 protected:
     // Create variables to store DirectX state.
-    ID3D11RasterizerState*   m_rasterizerState                          = nullptr;
     ID3D11RenderTargetView*  m_renderTargetView                         = nullptr;
     ID3D11Device*            m_device                                   = nullptr;
     ID3D11DeviceContext*     m_deviceContext                            = nullptr;
@@ -126,12 +136,15 @@ protected:
     BlendMode                m_desiredBlendMode                         = BlendMode::ALPHA;
     ID3D11BlendState*        m_blendStates[(int)(BlendMode::COUNT)]     = {};
     Texture*                 m_defaultTexture                           = nullptr;
-    ID3D11SamplerState*      m_samplerState                             = nullptr;
     SamplerMode              m_desiredSamplerMode                       = SamplerMode::POINT_CLAMP;
+    ID3D11SamplerState*      m_samplerState                             = nullptr;
     ID3D11SamplerState*      m_samplerStates[(int)(SamplerMode::COUNT)] = {};
     std::vector<Shader*>     m_loadedShaders;
     std::vector<Texture*>    m_loadedTextures;
     std::vector<BitmapFont*> m_loadedFonts;
+    RasterizerMode           m_desiredRasterizerMode                          = RasterizerMode::SOLID_CULL_BACK;
+    ID3D11RasterizerState*   m_rasterizerState                                = nullptr;
+    ID3D11RasterizerState*   m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
