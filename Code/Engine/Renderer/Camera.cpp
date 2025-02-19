@@ -77,12 +77,20 @@ EulerAngles Camera::GetOrientation() const
 
 Mat44 Camera::GetCameraToWorldTransform() const
 {
-    return {};
+    Mat44 c2w;
+
+    c2w.AppendZRotation(m_orientation.m_yawDegrees);
+    c2w.AppendYRotation(m_orientation.m_pitchDegrees);
+    c2w.AppendXRotation(m_orientation.m_rollDegrees);
+
+    c2w.AppendTranslation3D(m_position);
+
+    return c2w;
 }
 
 Mat44 Camera::GetWorldToCameraTransform() const
 {
-    return {};
+    return GetCameraToWorldTransform().GetOrthonormalInverse();
 }
 
 void Camera::SetCameraToRenderTransform(Mat44 const& m)
