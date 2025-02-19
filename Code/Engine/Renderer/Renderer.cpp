@@ -45,14 +45,18 @@ static constexpr int k_cameraConstantSlot = 2;
 //----------------------------------------------------------------------------------------------------
 struct CameraConstants
 {
-    float OrthoMinX;
-    float OrthoMinY;
-    float OrthoMinZ;
-    float OrthoMaxX;
-    float OrthoMaxY;
-    float OrthoMaxZ;
-    float pad0;
-    float pad1;
+    // float OrthoMinX;
+    // float OrthoMinY;
+    // float OrthoMinZ;
+    // float OrthoMaxX;
+    // float OrthoMaxY;
+    // float OrthoMaxZ;
+    // float pad0;
+    // float pad1;
+
+    Mat44 WorldToCameraTransform;       // View transform
+    Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
+    Mat44 RenderToClipTransform;        // Projection transform
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -376,14 +380,18 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     // Create a local CameraConstants structure
     CameraConstants cameraConstants;
-    cameraConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
-    cameraConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
-    cameraConstants.OrthoMinZ = 0.f;
-    cameraConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
-    cameraConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
-    cameraConstants.OrthoMaxZ = 1.f;
-    cameraConstants.pad0      = 0.f;
-    cameraConstants.pad1      = 0.f;
+    // cameraConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
+    // cameraConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
+    // cameraConstants.OrthoMinZ = 0.f;
+    // cameraConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
+    // cameraConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
+    // cameraConstants.OrthoMaxZ = 1.f;
+    // cameraConstants.pad0      = 0.f;
+    // cameraConstants.pad1      = 0.f;
+
+    // cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
+    // cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+    cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
 
     // Copy the data from the local structure to the constant buffer
     CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
