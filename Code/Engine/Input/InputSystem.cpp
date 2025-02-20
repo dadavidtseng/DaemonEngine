@@ -105,6 +105,63 @@ void InputSystem::BeginFrame()
     {
         m_controllers[controllerIndex].Update();
     }
+    // Check if our hidden mode matches Windows cursor state
+    static bool cursorHidden = false;
+    bool shouldHideCursor = (m_cursorState.m_cursorMode == CursorMode::FPS);
+
+    if (shouldHideCursor != cursorHidden)
+    {
+        while (ShowCursor(!shouldHideCursor) >= 0 && shouldHideCursor) {}
+        while (ShowCursor(!shouldHideCursor) < 0 && !shouldHideCursor) {}
+        cursorHidden = shouldHideCursor;
+    }
+
+    // // desired state of cursor
+    // bool const shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
+    //
+    // // Windows shows cursor when shouldHideCursor is false, hides it when true
+    // int currentCursorState = ShowCursor(shouldHideCursor);
+    //
+    // // If the current state doesn't match the desired state, continue toggling
+    // while ((shouldHideCursor && currentCursorState >= 0) ||
+    //     (!shouldHideCursor && currentCursorState < 0))
+    // {
+    //     currentCursorState = ShowCursor(shouldHideCursor);  // Toggle until it matches the desired state
+    // }
+
+    // Save off the previous cursor client position from last frame.
+    IntVec2 const previousCursorClientPosition = IntVec2(GetCursorClientPosition());
+
+    // Get the current cursor client position from Windows.
+    POINT currentCursorPosition;
+    GetCursorPos(&currentCursorPosition);
+    ScreenToClient(GetActiveWindow(), &currentCursorPosition);
+    m_cursorState.m_cursorClientPosition.x = currentCursorPosition.x;
+    m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
+
+    // If we are in relative mode
+    if (m_cursorState.m_cursorMode == CursorMode::FPS)
+    {
+        // Calculate our cursor client delta
+        m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorClientPosition;
+
+        // Set the Windows cursor position back to the center of our client region
+        RECT clientRect;
+        GetClientRect(GetActiveWindow(), &clientRect);
+        POINT center = {clientRect.right / 2, clientRect.bottom / 2};
+        ClientToScreen(GetActiveWindow(), &center);
+        SetCursorPos(center.x, center.y);
+
+        // Get the Windows cursor position again and save that as our current cursor client position.
+        GetCursorPos(&currentCursorPosition);
+        ScreenToClient(GetActiveWindow(), &currentCursorPosition);
+        m_cursorState.m_cursorClientPosition.x = currentCursorPosition.x;
+        m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
+    }
+    else
+    {
+        m_cursorState.m_cursorClientDelta = IntVec2::ZERO;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -155,6 +212,95 @@ void InputSystem::HandleKeyReleased(unsigned char const keyCode)
 XboxController const& InputSystem::GetController(int const controllerID)
 {
     return m_controllers[controllerID];
+}
+
+//----------------------------------------------------------------------------------------------------
+// In pointer mode, the cursor should be visible, freely able to move, and not
+// locked to the window. In FPS mode, the cursor should be hidden, reset to the
+// center of the window each frame, and record the delta each frame.
+//
+void InputSystem::SetCursorMode(CursorMode const mode)
+{
+    m_cursorState.m_cursorMode = mode;
+
+    m_cursorState.m_cursorClientDelta = IntVec2::ZERO;
+
+    switch (mode)
+    {
+    case CursorMode::POINTER:
+        {
+            ShowCursor(true);
+            break;
+        }
+    case CursorMode::FPS:
+        {
+            // Hide the cursor
+            ShowCursor(false);
+
+            // Reset the cursor to the center of the window each frame
+            RECT clientRect;
+            GetClientRect(GetActiveWindow(), &clientRect);
+            POINT center = {clientRect.right / 2, clientRect.bottom / 2};
+            ClientToScreen(GetActiveWindow(), &center);
+            SetCursorPos(center.x, center.y);
+
+            // Record the delta
+            IntVec2 const previousCursorPosition = m_cursorState.m_cursorClientPosition;
+
+            POINT currentCursorPosition;
+            GetCursorPos(&currentCursorPosition);
+            ScreenToClient(GetActiveWindow(), &currentCursorPosition);
+            m_cursorState.m_cursorClientPosition.x = currentCursorPosition.x;
+            m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
+
+            m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorPosition;
+
+            break;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// Returns the current frame cursor delta in pixels, relative to the client
+// region. This is how much the cursor moved last frame before it was reset
+// to the center of the screen. Only valid in FPS mode, will be zero otherwise.
+//
+Vec2 InputSystem::GetCursorClientDelta() const
+{
+    switch (m_cursorState.m_cursorMode)
+    {
+    case CursorMode::POINTER: return Vec2::ZERO;
+    case CursorMode::FPS: return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
+    }
+
+    return Vec2::ZERO;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Returns the cursor position, in pixels relative to the client region.
+//
+Vec2 InputSystem::GetCursorClientPosition() const
+{
+    return static_cast<Vec2>(m_cursorState.m_cursorClientPosition);
+}
+
+//----------------------------------------------------------------------------------------------------
+// Returns the cursor position, normalized to the range [0, 1], relative
+// to the client region, with the y-axis inverted to map from Windows
+// conventions to game screen camera conventions.
+//
+Vec2 InputSystem::GetCursorNormalizedPosition() const
+{
+    RECT clientRect;
+    GetClientRect(GetActiveWindow(), &clientRect);
+
+    Vec2 const  clientPosition = Vec2(m_cursorState.m_cursorClientPosition);
+    float const normalizedX    = clientPosition.x / static_cast<float>(clientRect.right);
+    float const normalizedY    = clientPosition.y / static_cast<float>(clientRect.bottom);
+
+    Vec2 cursorPosition = Vec2(normalizedX, 1.f - normalizedY);
+
+    return cursorPosition;
 }
 
 //----------------------------------------------------------------------------------------------------

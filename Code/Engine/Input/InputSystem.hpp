@@ -1,8 +1,8 @@
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // InputSystem.hpp
-//
+//----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 #pragma once
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/NamedStrings.hpp"
@@ -66,15 +66,31 @@ extern unsigned char const KEYCODE_HOME;
 extern unsigned char const KEYCODE_END;
 extern unsigned char const KEYCODE_TILDE;
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 int constexpr NUM_KEYCODES         = 256;
 int constexpr NUM_XBOX_CONTROLLERS = 4;
+
+//----------------------------------------------------------------------------------------------------
+enum class CursorMode
+{
+    POINTER,
+    FPS
+};
+
+//----------------------------------------------------------------------------------------------------
+struct CursorState
+{
+    IntVec2 m_cursorClientDelta;
+    IntVec2 m_cursorClientPosition;
+
+    CursorMode m_cursorMode = CursorMode::POINTER;
+};
 
 struct InputSystemConfig
 {
 };
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 class InputSystem
 {
 public:
@@ -91,12 +107,18 @@ public:
     void                  HandleKeyReleased(unsigned char keyCode);
     XboxController const& GetController(int controllerID);
 
+    void SetCursorMode(CursorMode mode);
+    Vec2 GetCursorClientDelta() const;
+    Vec2 GetCursorClientPosition() const;
+    Vec2 GetCursorNormalizedPosition() const;
+
     static bool Event_KeyPressed(EventArgs& args);
     static bool Event_KeyReleased(EventArgs& args);
 
 protected:
     KeyButtonState m_keyStates[NUM_KEYCODES];
     XboxController m_controllers[NUM_XBOX_CONTROLLERS];
+    CursorState    m_cursorState;
 
 private:
     InputSystemConfig m_inputConfig;
