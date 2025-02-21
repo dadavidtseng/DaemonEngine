@@ -9,7 +9,6 @@
 #include <d3dcompiler.h>
 #include <dxgi.h>
 
-#include "ModelBuffer.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
@@ -117,19 +116,18 @@ void Renderer::Startup()
     swapChainDesc.Windowed          = true;
     swapChainDesc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        deviceFlags,
-        nullptr,
-        0,
-        D3D11_SDK_VERSION,
-        &swapChainDesc,
-        &m_swapChain,
-        &m_device,
-        nullptr,
-        &m_deviceContext);
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr,
+                                               D3D_DRIVER_TYPE_HARDWARE,
+                                               nullptr,
+                                               deviceFlags,
+                                               nullptr,
+                                               0,
+                                               D3D11_SDK_VERSION,
+                                               &swapChainDesc,
+                                               &m_swapChain,
+                                               &m_device,
+                                               nullptr,
+                                               &m_deviceContext);
 
     if (!SUCCEEDED(hr))
     {
@@ -212,7 +210,7 @@ void Renderer::Startup()
     m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     // Create the camera constant buffer with an initial size for one CameraConstants
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
-    m_modelCBO  = CreateModelBuffer(sizeof(ModelConstants));
+    m_modelCBO  = CreateConstantBuffer(sizeof(ModelConstants));
 
     // Create blend states and store the state in m_blendState
     D3D11_BLEND_DESC blendDesc                      = {};
@@ -525,14 +523,7 @@ void Renderer::BeginCamera(Camera const& camera) const
 
 
     // Set model constants to default
-    ModelConstants modelConstants;
-    modelConstants.ModelToWorldTransform = Mat44();
-    modelConstants.ModelColor[0] = modelConstants.ModelColor[1] = modelConstants.ModelColor[2] = 1.f;
-    // SetModelConstants(modelConstants.ModelToWorldTransform,
-    //     Rgba8(modelConstants.ModelColor[0], modelConstants.ModelColor[1], modelConstants.ModelColor[2]));
-
-    CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
-    BindModelBuffer(k_modelConstantsSlot, m_modelCBO);
+    SetModelConstants();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -624,7 +615,15 @@ void Renderer::SetBlendMode(BlendMode const mode)
 //----------------------------------------------------------------------------------------------------
 void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform, Rgba8 const& modelColor) const
 {
+    ModelConstants modelConstants;
+    modelConstants.ModelToWorldTransform = modelToWorldTransform;
+    modelConstants.ModelColor[0]         = modelColor.r;
+    modelConstants.ModelColor[1]         = modelColor.g;
+    modelConstants.ModelColor[2]         = modelColor.b;
+    modelConstants.ModelColor[3]         = modelColor.a;
 
+    CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
+    BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1028,14 +1027,6 @@ ConstantBuffer* Renderer::CreateConstantBuffer(unsigned int const size) const
 }
 
 //----------------------------------------------------------------------------------------------------
-ModelBuffer* Renderer::CreateModelBuffer(unsigned int const size) const
-{
-    ModelBuffer* modelBuffer = new ModelBuffer(m_device, size);
-
-    return modelBuffer;
-}
-
-//----------------------------------------------------------------------------------------------------
 void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, ConstantBuffer* cbo) const
 {
     // Check if the constant buffer is large enough to hold the data
@@ -1061,39 +1052,7 @@ void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, ConstantB
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::CopyCPUToGPU(void const* data, unsigned int size, ModelBuffer* cbo) const
-{
-    // Check if the constant buffer is large enough to hold the data
-    if (cbo->GetSize() < size)
-    {
-        cbo->Resize(size);
-    }
-
-    // Map the buffer
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Failed to map constant buffer.")
-    }
-
-    // Copy the data
-    memcpy(mappedResource.pData, data, size);
-
-    // Unmap the buffer
-    m_deviceContext->Unmap(cbo->m_buffer, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
 void Renderer::BindConstantBuffer(int const slot, ConstantBuffer const* cbo) const
-{
-    m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
-    m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
-}
-
-//----------------------------------------------------------------------------------------------------
-void Renderer::BindModelBuffer(int const slot, ModelBuffer const* cbo) const
 {
     m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
     m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);

@@ -21,7 +21,7 @@ struct v2p_t
     float2 uv : TEXCOORD;
 };
 
-cbuffer ModelConstants: register(b0)
+cbuffer ModelConstants: register(b3)
 {
     float4x4 ModelToWorldTransform;
     float4 ModelColor;
@@ -37,8 +37,9 @@ cbuffer CameraConstants : register(b2)
 v2p_t VertexMain(vs_input_t input)
 {
     float4 modelSpacePosition = float4(input.modelSpacePosition, 1);
-    float4 worldSpacePosition = mul(WorldToCameraTransform, modelSpacePosition);
-    float4 renderSpacePosition = mul(CameraToRenderTransform, worldSpacePosition);
+    float4 worldSpacePosition = mul(ModelToWorldTransform, modelSpacePosition);
+    float4 cameraSpacePosition = mul(WorldToCameraTransform, worldSpacePosition);
+    float4 renderSpacePosition = mul(CameraToRenderTransform, cameraSpacePosition);
     float4 clipSpacePosition = mul(RenderToClipTransform, renderSpacePosition);
 
     v2p_t v2p;
@@ -55,7 +56,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 {
     float4 textureColor = diffuseTexture.Sample(diffuseSampler, input.uv);
     float4 vertexColor = input.color;
-    float4 color = textureColor * vertexColor*ModelColor;
+    float4 color = ModelColor * textureColor * vertexColor;
     clip(color.a - 0.1f);
 
     return float4(color);

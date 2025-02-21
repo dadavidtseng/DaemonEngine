@@ -160,7 +160,6 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
     {
         rendererOverride = m_config.m_defaultRenderer;
     }
-
     rendererOverride->BeginCamera(*m_config.m_defaultCamera);
 
     if (m_insertionPointBlinkTimer->HasPeriodElapsed())

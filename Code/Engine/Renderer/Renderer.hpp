@@ -14,7 +14,6 @@
 #include "Engine/Renderer/Texture.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
-class ModelBuffer;
 //-Forward-Declaration--------------------------------------------------------------------------------
 class BitmapFont;
 class ConstantBuffer;
@@ -126,11 +125,11 @@ private:
     void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
     void            BindVertexBuffer(VertexBuffer const* vbo) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
-    ModelBuffer*    CreateModelBuffer(unsigned int size) const;
+    // ModelBuffer*    CreateModelBuffer(unsigned int size) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
-    void            CopyCPUToGPU(void const* data, unsigned int size, ModelBuffer* cbo) const;
+    // void            CopyCPUToGPU(void const* data, unsigned int size, ModelBuffer* cbo) const;
     void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
-    void            BindModelBuffer(int slot, ModelBuffer const* cbo) const;
+    // void            BindModelBuffer(int slot, ModelBuffer const* cbo) const;
     void            SetStatesIfChanged();
     void            SetSamplerMode(SamplerMode mode);
     void            SetRasterizerMode(RasterizerMode mode);
@@ -149,7 +148,7 @@ protected:
     VertexBuffer*            m_immediateVBO                             = nullptr;
     Shader*                  m_defaultShader                            = nullptr;
     ConstantBuffer*          m_cameraCBO                                = nullptr;
-    ModelBuffer*             m_modelCBO                                 = nullptr;
+    ConstantBuffer*             m_modelCBO                                 = nullptr;
     ID3D11BlendState*        m_blendState                               = nullptr;
     BlendMode                m_desiredBlendMode                         = BlendMode::ALPHA;
     ID3D11BlendState*        m_blendStates[(int)(BlendMode::COUNT)]     = {};

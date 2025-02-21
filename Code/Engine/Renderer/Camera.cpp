@@ -134,13 +134,10 @@ Mat44 Camera::GetRenderToClipTransform() const
     {
     case eMode_Orthographic:
         {
-            Vec2 const  orthographicTopLeft  = m_orthographicBottomLeft;
-            Vec2 const  orthographicTopRight = m_orthographicTopRight;
-            float const left                 = orthographicTopLeft.x;
-            float const right                = orthographicTopRight.x;
-            float const bottom               = orthographicTopRight.y;
-            float const top                  = orthographicTopLeft.y;
-
+            float const left   = m_orthographicBottomLeft.x;
+            float const right  = m_orthographicTopRight.x;
+            float const bottom = m_orthographicBottomLeft.y;
+            float const top    = m_orthographicTopRight.y;
 
             r2c = Mat44::MakeOrthoProjection(left, right, bottom, top, m_orthographicNear, m_orthographicFar);
 
