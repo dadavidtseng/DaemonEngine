@@ -40,6 +40,16 @@ dxObject = nullptr;       \
 #endif
 
 //----------------------------------------------------------------------------------------------------
+enum class DepthMode
+{
+    DISABLED,
+    READ_ONLY_ALWAYS,
+    READ_ONLY_LESS_EQUAL,
+    READ_WRITE_LESS_EQUAL,
+    COUNT
+};
+
+//----------------------------------------------------------------------------------------------------
 enum class RasterizerMode
 {
     SOLID_CULL_NONE,
@@ -118,6 +128,7 @@ private:
     void            SetStatesIfChanged();
     void            SetSamplerMode(SamplerMode mode);
     void            SetRasterizerMode(RasterizerMode mode);
+    void            SetDepthMode(DepthMode mode);
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;
@@ -145,6 +156,11 @@ protected:
     RasterizerMode           m_desiredRasterizerMode                          = RasterizerMode::SOLID_CULL_BACK;
     ID3D11RasterizerState*   m_rasterizerState                                = nullptr;
     ID3D11RasterizerState*   m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
+    ID3D11Texture2D*         m_depthStencilTexture                            = nullptr;
+    ID3D11DepthStencilView*  m_depthStencilDSV                                = nullptr;
+    DepthMode                m_desiredDepthMode                               = DepthMode::READ_WRITE_LESS_EQUAL;
+    ID3D11DepthStencilState* m_depthStencilState                              = nullptr;
+    ID3D11DepthStencilState* m_depthStencilStates[(int)(DepthMode::COUNT)]    = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;
