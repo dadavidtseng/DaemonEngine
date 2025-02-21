@@ -9,6 +9,7 @@
 #include <d3dcompiler.h>
 #include <dxgi.h>
 
+#include "ModelBuffer.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
@@ -41,6 +42,14 @@
 
 //----------------------------------------------------------------------------------------------------
 static constexpr int k_cameraConstantSlot = 2;
+static constexpr int k_modelConstantsSlot = 3;
+
+//----------------------------------------------------------------------------------------------------
+struct ModelConstants
+{
+    Mat44 ModelToWorldTransform;
+    float ModelColor[4];
+};
 
 //----------------------------------------------------------------------------------------------------
 struct CameraConstants
@@ -203,6 +212,7 @@ void Renderer::Startup()
     m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     // Create the camera constant buffer with an initial size for one CameraConstants
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
+    m_modelCBO  = CreateModelBuffer(sizeof(ModelConstants));
 
     // Create blend states and store the state in m_blendState
     D3D11_BLEND_DESC blendDesc                      = {};
@@ -441,6 +451,12 @@ void Renderer::Shutdown()
         m_cameraCBO = nullptr;
     }
 
+    if (m_modelCBO)
+    {
+        delete m_modelCBO;
+        m_modelCBO = nullptr;
+    }
+
     // Report error leaks and release debug module
 #if defined(ENGINE_DEBUG_RENDER)
     if (m_dxgiDebug)
@@ -506,6 +522,17 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     // Bind the constant buffer
     BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
+
+
+    // Set model constants to default
+    ModelConstants modelConstants;
+    modelConstants.ModelToWorldTransform = Mat44();
+    modelConstants.ModelColor[0] = modelConstants.ModelColor[1] = modelConstants.ModelColor[2] = 1.f;
+    // SetModelConstants(modelConstants.ModelToWorldTransform,
+    //     Rgba8(modelConstants.ModelColor[0], modelConstants.ModelColor[1], modelConstants.ModelColor[2]));
+
+    CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
+    BindModelBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -592,6 +619,12 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
 void Renderer::SetBlendMode(BlendMode const mode)
 {
     m_desiredBlendMode = mode;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform, Rgba8 const& modelColor) const
+{
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -995,7 +1028,40 @@ ConstantBuffer* Renderer::CreateConstantBuffer(unsigned int const size) const
 }
 
 //----------------------------------------------------------------------------------------------------
+ModelBuffer* Renderer::CreateModelBuffer(unsigned int const size) const
+{
+    ModelBuffer* modelBuffer = new ModelBuffer(m_device, size);
+
+    return modelBuffer;
+}
+
+//----------------------------------------------------------------------------------------------------
 void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, ConstantBuffer* cbo) const
+{
+    // Check if the constant buffer is large enough to hold the data
+    if (cbo->GetSize() < size)
+    {
+        cbo->Resize(size);
+    }
+
+    // Map the buffer
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT const            hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("Failed to map constant buffer.")
+    }
+
+    // Copy the data
+    memcpy(mappedResource.pData, data, size);
+
+    // Unmap the buffer
+    m_deviceContext->Unmap(cbo->m_buffer, 0);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::CopyCPUToGPU(void const* data, unsigned int size, ModelBuffer* cbo) const
 {
     // Check if the constant buffer is large enough to hold the data
     if (cbo->GetSize() < size)
@@ -1027,6 +1093,13 @@ void Renderer::BindConstantBuffer(int const slot, ConstantBuffer const* cbo) con
 }
 
 //----------------------------------------------------------------------------------------------------
+void Renderer::BindModelBuffer(int const slot, ModelBuffer const* cbo) const
+{
+    m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+    m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Renderer::SetStatesIfChanged()
 {
     if (m_blendState != m_blendStates[static_cast<int>(m_desiredBlendMode)])
@@ -1038,11 +1111,10 @@ void Renderer::SetStatesIfChanged()
         m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
     }
 
-    if (m_samplerState != m_samplerStates[static_cast<int>(m_desiredSamplerMode)])
+    if (m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)] != m_rasterizerState)
     {
-        m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
-
-        m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+        m_rasterizerState = m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)];
+        m_deviceContext->RSSetState(m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)]);
     }
 
     if (m_depthStencilState != m_depthStencilStates[static_cast<int>(m_desiredDepthMode)])

@@ -21,6 +21,12 @@ struct v2p_t
     float2 uv : TEXCOORD;
 };
 
+cbuffer ModelConstants: register(b0)
+{
+    float4x4 ModelToWorldTransform;
+    float4 ModelColor;
+}
+
 cbuffer CameraConstants : register(b2)
 {
     float4x4 WorldToCameraTransform;
@@ -49,7 +55,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 {
     float4 textureColor = diffuseTexture.Sample(diffuseSampler, input.uv);
     float4 vertexColor = input.color;
-    float4 color = textureColor * vertexColor;
+    float4 color = textureColor * vertexColor*ModelColor;
     clip(color.a - 0.1f);
 
     return float4(color);

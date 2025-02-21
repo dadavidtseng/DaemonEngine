@@ -211,6 +211,7 @@
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\ConstantBuffer.cpp" />
+    <ClCompile Include="Renderer\ModelBuffer.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
     <ClCompile Include="Renderer\SpriteAnimDefinition.cpp" />
@@ -275,6 +276,7 @@
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\ConstantBuffer.hpp" />
     <ClInclude Include="Renderer\DefaultShader.hpp" />
+    <ClInclude Include="Renderer\ModelBuffer.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
     <ClInclude Include="Renderer\Shader.hpp" />
     <ClInclude Include="Renderer\SpriteAnimDefinition.hpp" />
