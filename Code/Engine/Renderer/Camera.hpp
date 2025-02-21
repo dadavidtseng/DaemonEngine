@@ -41,7 +41,7 @@ public:
     Mat44 GetCameraToWorldTransform() const;
     Mat44 GetWorldToCameraTransform() const;
 
-    void  SetCameraToRenderTransform(Mat44 const& m);
+    void  SetCameraToRenderTransform(Mat44 const& c2rTransform);
     Mat44 GetCameraToRenderTransform() const;
 
     Mat44 GetRenderToClipTransform() const;

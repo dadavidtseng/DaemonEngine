@@ -71,6 +71,7 @@ unsigned char const KEYCODE_DELETE      = VK_DELETE;
 unsigned char const KEYCODE_HOME        = VK_HOME;
 unsigned char const KEYCODE_END         = VK_END;
 unsigned char const KEYCODE_TILDE       = VK_OEM_3;
+unsigned char const KEYCODE_SHIFT       = VK_SHIFT;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_theInput = nullptr;
@@ -106,13 +107,17 @@ void InputSystem::BeginFrame()
         m_controllers[controllerIndex].Update();
     }
     // Check if our hidden mode matches Windows cursor state
-    static bool cursorHidden = false;
-    bool shouldHideCursor = (m_cursorState.m_cursorMode == CursorMode::FPS);
+    static bool cursorHidden     = false;
+    bool const  shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
 
     if (shouldHideCursor != cursorHidden)
     {
-        while (ShowCursor(!shouldHideCursor) >= 0 && shouldHideCursor) {}
-        while (ShowCursor(!shouldHideCursor) < 0 && !shouldHideCursor) {}
+        while (ShowCursor(!shouldHideCursor) >= 0 && shouldHideCursor)
+        {
+        }
+        while (ShowCursor(!shouldHideCursor) < 0 && !shouldHideCursor)
+        {
+        }
         cursorHidden = shouldHideCursor;
     }
 
@@ -153,10 +158,11 @@ void InputSystem::BeginFrame()
         SetCursorPos(center.x, center.y);
 
         // Get the Windows cursor position again and save that as our current cursor client position.
-        GetCursorPos(&currentCursorPosition);
-        ScreenToClient(GetActiveWindow(), &currentCursorPosition);
-        m_cursorState.m_cursorClientPosition.x = currentCursorPosition.x;
-        m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
+        POINT currentCursorPositionX;
+        GetCursorPos(&currentCursorPositionX);
+        ScreenToClient(GetActiveWindow(), &currentCursorPositionX);
+        m_cursorState.m_cursorClientPosition.x = currentCursorPositionX.x;
+        m_cursorState.m_cursorClientPosition.y = currentCursorPositionX.y;
     }
     else
     {
@@ -222,42 +228,6 @@ XboxController const& InputSystem::GetController(int const controllerID)
 void InputSystem::SetCursorMode(CursorMode const mode)
 {
     m_cursorState.m_cursorMode = mode;
-
-    m_cursorState.m_cursorClientDelta = IntVec2::ZERO;
-
-    switch (mode)
-    {
-    case CursorMode::POINTER:
-        {
-            ShowCursor(true);
-            break;
-        }
-    case CursorMode::FPS:
-        {
-            // Hide the cursor
-            ShowCursor(false);
-
-            // Reset the cursor to the center of the window each frame
-            RECT clientRect;
-            GetClientRect(GetActiveWindow(), &clientRect);
-            POINT center = {clientRect.right / 2, clientRect.bottom / 2};
-            ClientToScreen(GetActiveWindow(), &center);
-            SetCursorPos(center.x, center.y);
-
-            // Record the delta
-            IntVec2 const previousCursorPosition = m_cursorState.m_cursorClientPosition;
-
-            POINT currentCursorPosition;
-            GetCursorPos(&currentCursorPosition);
-            ScreenToClient(GetActiveWindow(), &currentCursorPosition);
-            m_cursorState.m_cursorClientPosition.x = currentCursorPosition.x;
-            m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
-
-            m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorPosition;
-
-            break;
-        }
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -269,8 +239,11 @@ Vec2 InputSystem::GetCursorClientDelta() const
 {
     switch (m_cursorState.m_cursorMode)
     {
-    case CursorMode::POINTER: return Vec2::ZERO;
-    case CursorMode::FPS: return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
+    case CursorMode::POINTER:
+        return Vec2::ZERO;
+    case CursorMode::FPS:
+        // DebuggerPrintf("[InputSystem::GetCursorClientDelta]: (%f, %f)\n", static_cast<Vec2>(m_cursorState.m_cursorClientDelta).x, static_cast<Vec2>(m_cursorState.m_cursorClientDelta).y);
+        return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
     }
 
     return Vec2::ZERO;
