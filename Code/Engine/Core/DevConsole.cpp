@@ -15,6 +15,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
@@ -160,13 +161,13 @@ void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
     {
         rendererOverride = m_config.m_defaultRenderer;
     }
+
     rendererOverride->BeginCamera(*m_config.m_defaultCamera);
 
     if (m_insertionPointBlinkTimer->HasPeriodElapsed())
     {
         m_insertionPointVisible = !m_insertionPointVisible;
         m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
-        // DebuggerPrintf("m_insertionPointBlinkTimer: %f \n", m_insertionPointBlinkTimer->GetElapsedTime());
     }
 
     BitmapFont const* font = rendererOverride->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + m_config.m_defaultFontName).c_str());
@@ -252,7 +253,6 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
     {
         return false;
     }
-
 
     if (keyCode == KEYCODE_ENTER)
     {
@@ -460,7 +460,9 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
     VertexList  backgroundBoxVerts;
     AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
+    g_theRenderer->SetBlendMode(BlendMode::ALPHA);
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
+
     renderer.BindTexture(nullptr);
     renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());
 

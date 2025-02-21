@@ -198,7 +198,7 @@ Mat44 Camera::GetOrthographicMatrix() const
 //----------------------------------------------------------------------------------------------------
 Mat44 Camera::GetPerspectiveMatrix() const
 {
-    Mat44 const r2c = Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);;
+    Mat44 const r2c = Mat44::MakePerspectiveProjection(m_perspectiveFOV, m_perspectiveAspect, m_perspectiveNear, m_perspectiveFar);
 
     return r2c;
 }

@@ -617,10 +617,14 @@ void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform, Rgba8 const
 {
     ModelConstants modelConstants;
     modelConstants.ModelToWorldTransform = modelToWorldTransform;
-    modelConstants.ModelColor[0]         = modelColor.r;
-    modelConstants.ModelColor[1]         = modelColor.g;
-    modelConstants.ModelColor[2]         = modelColor.b;
-    modelConstants.ModelColor[3]         = modelColor.a;
+
+    float colorAsFloat[4];
+    modelColor.GetAsFloats(colorAsFloat);
+
+    modelConstants.ModelColor[0] = colorAsFloat[0];
+    modelConstants.ModelColor[1] = colorAsFloat[1];
+    modelConstants.ModelColor[2] = colorAsFloat[2];
+    modelConstants.ModelColor[3] = colorAsFloat[3];
 
     CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
     BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
