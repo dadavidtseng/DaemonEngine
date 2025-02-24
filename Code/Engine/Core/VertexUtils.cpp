@@ -298,117 +298,63 @@ void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, V
 //----------------------------------------------------------------------------------------------------
 void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, AABB3 const& bounds, Rgba8 const& color, AABB2 const& UVs)
 {
-    Vec3 min = bounds.m_mins;
-    Vec3 max = bounds.m_maxs;
+    Vec3 const min = bounds.m_mins;
+    Vec3 const max = bounds.m_maxs;
 
-    Vec3 frontBottomLeft  = Vec3(max.x, min.y, min.z);
-    Vec3 frontBottomRight = Vec3(max.x, max.y, min.z);
-    Vec3 frontTopLeft     = Vec3(max.x, min.y, max.z);
-    Vec3 frontTopRight    = Vec3(max.x, max.y, max.z);
+    Vec3 const frontBottomLeft  = Vec3(max.x, min.y, min.z);
+    Vec3 const frontBottomRight = Vec3(max.x, max.y, min.z);
+    Vec3 const frontTopLeft     = Vec3(max.x, min.y, max.z);
+    Vec3 const frontTopRight    = Vec3(max.x, max.y, max.z);
 
-    Vec3 backBottomLeft  = Vec3(min.x, max.y, min.z);
-    Vec3 backBottomRight = Vec3(min.x, min.y, min.z);
-    Vec3 backTopLeft     = Vec3(min.x, max.y, max.z);
-    Vec3 backTopRight    = Vec3(min.x, min.y, max.z);
+    Vec3 const backBottomLeft  = Vec3(min.x, max.y, min.z);
+    Vec3 const backBottomRight = Vec3(min.x, min.y, min.z);
+    Vec3 const backTopLeft     = Vec3(min.x, max.y, max.z);
+    Vec3 const backTopRight    = Vec3(min.x, min.y, max.z);
 
-    float uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
-    float uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
 
-    // Front
-    AddVertsForQuad3D(verts,
-                      frontBottomLeft,
-                      frontBottomRight,
-                      frontTopRight,
-                      frontTopLeft,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+    AABB2 const uv(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight));
 
-    // Back
-    AddVertsForQuad3D(verts,
-                      backBottomLeft,
-                      backBottomRight,
-                      backTopRight,
-                      backTopLeft,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
-
-    // Left
-    AddVertsForQuad3D(verts,
-                      backBottomRight,
-                      frontBottomLeft,
-                      frontTopLeft,
-                      backTopRight,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
-
-    // Right
-    AddVertsForQuad3D(verts,
-                      frontBottomRight,
-                      backBottomLeft,
-                      backTopLeft,
-                      frontTopRight,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
-
-    // Top
-    AddVertsForQuad3D(verts,
-                      frontTopLeft,
-                      frontTopRight,
-                      backTopLeft,
-                      backTopRight,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
-
-    // Bottom
-    AddVertsForQuad3D(verts,
-                      backBottomRight,
-                      backBottomLeft,
-                      frontBottomRight,
-                      frontBottomLeft,
-                      color,
-                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+    AddVertsForQuad3D(verts, frontBottomLeft, frontBottomRight, frontTopRight, frontTopLeft, color, uv);        // Front
+    AddVertsForQuad3D(verts, backBottomLeft, backBottomRight, backTopRight, backTopLeft, color, uv);            // Back
+    AddVertsForQuad3D(verts, backBottomRight, frontBottomLeft, frontTopLeft, backTopRight, color, uv);          // Left
+    AddVertsForQuad3D(verts, frontBottomRight, backBottomLeft, backTopLeft, frontTopRight, color, uv);          // Right
+    AddVertsForQuad3D(verts, frontTopLeft, frontTopRight, backTopLeft, backTopRight, color, uv);                // Top
+    AddVertsForQuad3D(verts, backBottomRight, backBottomLeft, frontBottomRight, frontBottomLeft, color, uv);    // Bottom
 }
 
 //----------------------------------------------------------------------------------------------------
 void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, float const radius, Rgba8 const& color, AABB2 const& UVs, int const numSlices, int const numStacks)
 {
-    // float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
-    // float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
 
     for (int stack = 0; stack < numStacks; ++stack)
     {
-        float uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
-        float uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+        float const phi1 = (1.0f - (float)stack / (float)numStacks) * PI;
+        float const phi2 = (1.0f - ((float)stack + 1.f) / (float)numStacks) * PI;
 
-        for (int stack = 0; stack < numStacks; ++stack)
+        float const v1 = (float)stack / (float)numStacks;
+        float const v2 = ((float)stack + 1.f) / (float)numStacks;
+
+        for (int slice = 0; slice < numSlices; ++slice)
         {
-            float phi1 = (1.0f - stack / (float)numStacks) * PI;
-            float phi2 = (1.0f - (stack + 1) / (float)numStacks) * PI;
+            float theta1 = ((float)slice / (float)numSlices) * 2.0f * PI;
+            float theta2 = (((float)slice + 1.f) / (float)numSlices) * 2.0f * PI;
 
-            float v1 = stack / (float)numStacks;
-            float v2 = (stack + 1) / (float)numStacks;
+            float u1 = (float)slice / (float)numSlices;
+            float u2 = ((float)slice + 1.f) / (float)numSlices;
 
-            for (int slice = 0; slice < numSlices; ++slice)
-            {
-                float theta1 = (slice / (float)numSlices) * 2.0f * PI;
-                float theta2 = ((slice + 1) / (float)numSlices) * 2.0f * PI;
+            Vec3 bottomLeft  = Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
+            Vec3 bottomRight = Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
+            Vec3 topRight    = Vec3(radius * sinf(phi2) * cosf(theta2), radius * sinf(phi2) * sinf(theta2), radius * cosf(phi2));
+            Vec3 topLeft     = Vec3(radius * sinf(phi2) * cosf(theta1), radius * sinf(phi2) * sinf(theta1), radius * cosf(phi2));
 
-                float u1 = slice / (float)numSlices;
-                float u2 = (slice + 1) / (float)numSlices;
+            AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
+                         Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
 
-                // 計算四個角的 3D 位置
-                Vec3 bottomLeft  = Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
-                Vec3 bottomRight = Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
-                Vec3 topRight    = Vec3(radius * sinf(phi2) * cosf(theta2), radius * sinf(phi2) * sinf(theta2), radius * cosf(phi2));
-                Vec3 topLeft     = Vec3(radius * sinf(phi2) * cosf(theta1), radius * sinf(phi2) * sinf(theta1), radius * cosf(phi2));
-
-                // 計算對應的 UV 座標
-                AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
-                             Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
-
-                // 添加該區域的頂點
-                AddVertsForQuad3D(verts, bottomLeft, bottomRight, topRight, topLeft, color, quadUV);
-            }
+            AddVertsForQuad3D(verts, bottomLeft, bottomRight, topRight, topLeft, color, quadUV);
         }
     }
 }
