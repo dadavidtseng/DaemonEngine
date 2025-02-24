@@ -281,6 +281,10 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
         //     g_theDevConsole->m_inputTextPosition += lineWidth;
         //     g_theDevConsole->m_insertionPointPosition += 1;
         // }
+        if (g_theDevConsole->m_insertionPointPosition == 0)
+        {
+            return false;
+        }
 
         g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition - 1, 1);
         g_theDevConsole->m_insertionPointPosition -= 1;
