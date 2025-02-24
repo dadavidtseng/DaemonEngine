@@ -159,7 +159,7 @@ protected:
     std::vector<Shader*>     m_loadedShaders;
     std::vector<Texture*>    m_loadedTextures;
     std::vector<BitmapFont*> m_loadedFonts;
-    RasterizerMode           m_desiredRasterizerMode                          = RasterizerMode::SOLID_CULL_BACK;
+    RasterizerMode           m_desiredRasterizerMode                          = RasterizerMode::WIREFRAME_CULL_NONE;
     ID3D11RasterizerState*   m_rasterizerState                                = nullptr;
     ID3D11RasterizerState*   m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
     ID3D11Texture2D*         m_depthStencilTexture                            = nullptr;

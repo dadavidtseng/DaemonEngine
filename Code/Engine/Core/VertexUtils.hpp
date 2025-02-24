@@ -10,6 +10,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Vec2.hpp"
 
+struct AABB3;
 //----------------------------------------------------------------------------------------------------
 struct Triangle2;
 struct Capsule2;
@@ -37,3 +38,5 @@ void AddVertsForCapsule2D(VertexList& verts, Capsule2 const& capsule, Rgba8 cons
 void AddVertsForHalfDisc2D(VertexList& verts, Vec2 const& discCenter, float discRadius, Rgba8 const& color, bool isTopHalf, float rotationDegrees);
 void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPos, Vec2 const& tipPos, float arrowSize, float thickness, Rgba8 const& color);
 void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
+void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);

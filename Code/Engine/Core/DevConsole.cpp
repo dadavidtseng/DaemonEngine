@@ -460,8 +460,8 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
     VertexList  backgroundBoxVerts;
     AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
-    // g_theRenderer->SetBlendMode(BlendMode::ALPHA);
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
+    g_theRenderer->SetBlendMode(BlendMode::ALPHA);
 
     renderer.BindTexture(nullptr);
     renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());

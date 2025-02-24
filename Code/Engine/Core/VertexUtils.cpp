@@ -8,6 +8,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Capsule2.hpp"
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/LineSegment2.hpp"
@@ -16,7 +17,7 @@
 #include "Engine/Math/Triangle2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-void TransformVertexArrayXY3D(int const   numVerts,
+void TransformVertexArrayXY3D(int const numVerts,
                               Vertex_PCU* verts,
                               float const uniformScaleXY,
                               float const rotationDegreesAboutZ,
@@ -31,12 +32,12 @@ void TransformVertexArrayXY3D(int const   numVerts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList&  verts,
-                       Vec2 const&  discCenter,
-                       float const  discRadius,
+void AddVertsForDisc2D(VertexList& verts,
+                       Vec2 const& discCenter,
+                       float const discRadius,
                        Rgba8 const& color)
 {
-    constexpr int   NUM_SIDES        = 32;
+    constexpr int NUM_SIDES          = 32;
     constexpr float DEGREES_PER_SIDE = 360.f / static_cast<float>(NUM_SIDES);
 
     for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
@@ -59,7 +60,7 @@ void AddVertsForDisc2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList&  verts,
+void AddVertsForDisc2D(VertexList& verts,
                        Disc2 const& disc,
                        Rgba8 const& color)
 {
@@ -68,9 +69,9 @@ void AddVertsForDisc2D(VertexList&  verts,
 
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList&  verts,
-                              Vec2 const&  startPos,
-                              Vec2 const&  endPos,
+void AddVertsForLineSegment2D(VertexList& verts,
+                              Vec2 const& startPos,
+                              Vec2 const& endPos,
                               Rgba8 const& color)
 {
     verts.emplace_back(Vec3(startPos.x, startPos.y, 0.f), color, Vec2::ZERO);
@@ -78,18 +79,18 @@ void AddVertsForLineSegment2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList&         verts,
+void AddVertsForLineSegment2D(VertexList& verts,
                               LineSegment2 const& lineSegment,
-                              Rgba8 const&        color)
+                              Rgba8 const& color)
 {
     AddVertsForLineSegment2D(verts, lineSegment.m_start, lineSegment.m_end, color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList&  verts,
-                           Vec2 const&  ccw0,
-                           Vec2 const&  ccw1,
-                           Vec2 const&  ccw2,
+void AddVertsForTriangle2D(VertexList& verts,
+                           Vec2 const& ccw0,
+                           Vec2 const& ccw1,
+                           Vec2 const& ccw2,
                            Rgba8 const& color)
 {
     verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color, Vec2::ZERO);
@@ -98,9 +99,9 @@ void AddVertsForTriangle2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList&      verts,
+void AddVertsForTriangle2D(VertexList& verts,
                            Triangle2 const& triangle,
-                           Rgba8 const&     color)
+                           Rgba8 const& color)
 {
     AddVertsForTriangle2D(verts,
                           triangle.m_positionCounterClockwise[0],
@@ -110,11 +111,11 @@ void AddVertsForTriangle2D(VertexList&      verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList&  verts,
+void AddVertsForAABB2D(VertexList& verts,
                        AABB2 const& aabb2Box,
                        Rgba8 const& color,
-                       Vec2 const&  uvMins,
-                       Vec2 const&  uvMaxs)
+                       Vec2 const& uvMins,
+                       Vec2 const& uvMaxs)
 {
     verts.emplace_back(Vec3(aabb2Box.m_mins.x, aabb2Box.m_mins.y, 0.f), color, uvMins);
     verts.emplace_back(Vec3(aabb2Box.m_maxs.x, aabb2Box.m_mins.y, 0.f), color, Vec2(uvMaxs.x, uvMins.y));
@@ -126,8 +127,8 @@ void AddVertsForAABB2D(VertexList&  verts,
 }
 
 //-----------------------------------------------------------------------------------------------
-void AddVertsForOBB2D(VertexList&  verts,
-                      OBB2 const&  obb2Box,
+void AddVertsForOBB2D(VertexList& verts,
+                      OBB2 const& obb2Box,
                       Rgba8 const& color)
 {
     Vec2 cornerPoints[4];
@@ -137,10 +138,10 @@ void AddVertsForOBB2D(VertexList&  verts,
     AddVertsForTriangle2D(verts, cornerPoints[0], cornerPoints[2], cornerPoints[3], color);
 }
 
-void AddVertsForCapsule2D(VertexList&  verts,
-                          Vec2 const&  boneStart,
-                          Vec2 const&  boneEnd,
-                          float const  radius,
+void AddVertsForCapsule2D(VertexList& verts,
+                          Vec2 const& boneStart,
+                          Vec2 const& boneEnd,
+                          float const radius,
                           Rgba8 const& color)
 {
     Vec2 direction = boneEnd - boneStart;
@@ -160,7 +161,7 @@ void AddVertsForCapsule2D(VertexList&  verts,
     verts.emplace_back(Vec3(topLeft.x, topLeft.y, 0.f), color, Vec2(0.f, 1.f));
     verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2::ZERO);
 
-    Vec2 const  rotatedDirection    = direction.GetRotatedMinus90Degrees();
+    Vec2 const rotatedDirection     = direction.GetRotatedMinus90Degrees();
     float const rotationAngle       = Atan2Degrees(rotatedDirection.y, rotatedDirection.x);
     Vec2 const& halfDiscCenterStart = boneStart;
     Vec2 const& halfDiscCenterEnd   = boneEnd;
@@ -170,22 +171,22 @@ void AddVertsForCapsule2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList&     verts,
+void AddVertsForCapsule2D(VertexList& verts,
                           Capsule2 const& capsule,
-                          Rgba8 const&    color)
+                          Rgba8 const& color)
 {
     AddVertsForCapsule2D(verts, capsule.m_start, capsule.m_end, capsule.m_radius, color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForHalfDisc2D(VertexList&  verts,
-                           Vec2 const&  discCenter,
-                           float const  discRadius,
+void AddVertsForHalfDisc2D(VertexList& verts,
+                           Vec2 const& discCenter,
+                           float const discRadius,
                            Rgba8 const& color,
-                           bool const   isTopHalf,
-                           float const  rotationDegrees)
+                           bool const isTopHalf,
+                           float const rotationDegrees)
 {
-    constexpr int   NUM_SIDES        = 32;
+    constexpr int NUM_SIDES          = 32;
     constexpr float DEGREES_PER_SIDE = 180.f / static_cast<float>(NUM_SIDES); // ????180?
 
     for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
@@ -292,4 +293,122 @@ void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, V
     verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
     verts.push_back(Vertex_PCU(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y)));
     verts.push_back(Vertex_PCU(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y)));
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, AABB3 const& bounds, Rgba8 const& color, AABB2 const& UVs)
+{
+    Vec3 min = bounds.m_mins;
+    Vec3 max = bounds.m_maxs;
+
+    Vec3 frontBottomLeft  = Vec3(max.x, min.y, min.z);
+    Vec3 frontBottomRight = Vec3(max.x, max.y, min.z);
+    Vec3 frontTopLeft     = Vec3(max.x, min.y, max.z);
+    Vec3 frontTopRight    = Vec3(max.x, max.y, max.z);
+
+    Vec3 backBottomLeft  = Vec3(min.x, max.y, min.z);
+    Vec3 backBottomRight = Vec3(min.x, min.y, min.z);
+    Vec3 backTopLeft     = Vec3(min.x, max.y, max.z);
+    Vec3 backTopRight    = Vec3(min.x, min.y, max.z);
+
+    float uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    // Front
+    AddVertsForQuad3D(verts,
+                      frontBottomLeft,
+                      frontBottomRight,
+                      frontTopRight,
+                      frontTopLeft,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+
+    // Back
+    AddVertsForQuad3D(verts,
+                      backBottomLeft,
+                      backBottomRight,
+                      backTopRight,
+                      backTopLeft,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+
+    // Left
+    AddVertsForQuad3D(verts,
+                      backBottomRight,
+                      frontBottomLeft,
+                      frontTopLeft,
+                      backTopRight,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+
+    // Right
+    AddVertsForQuad3D(verts,
+                      frontBottomRight,
+                      backBottomLeft,
+                      backTopLeft,
+                      frontTopRight,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+
+    // Top
+    AddVertsForQuad3D(verts,
+                      frontTopLeft,
+                      frontTopRight,
+                      backTopLeft,
+                      backTopRight,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+
+    // Bottom
+    AddVertsForQuad3D(verts,
+                      backBottomRight,
+                      backBottomLeft,
+                      frontBottomRight,
+                      frontBottomLeft,
+                      color,
+                      AABB2(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight)));
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, float const radius, Rgba8 const& color, AABB2 const& UVs, int const numSlices, int const numStacks)
+{
+    // float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    // float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    for (int stack = 0; stack < numStacks; ++stack)
+    {
+        float uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+        float uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+        for (int stack = 0; stack < numStacks; ++stack)
+        {
+            float phi1 = (1.0f - stack / (float)numStacks) * PI;
+            float phi2 = (1.0f - (stack + 1) / (float)numStacks) * PI;
+
+            float v1 = stack / (float)numStacks;
+            float v2 = (stack + 1) / (float)numStacks;
+
+            for (int slice = 0; slice < numSlices; ++slice)
+            {
+                float theta1 = (slice / (float)numSlices) * 2.0f * PI;
+                float theta2 = ((slice + 1) / (float)numSlices) * 2.0f * PI;
+
+                float u1 = slice / (float)numSlices;
+                float u2 = (slice + 1) / (float)numSlices;
+
+                // 計算四個角的 3D 位置
+                Vec3 bottomLeft  = Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
+                Vec3 bottomRight = Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
+                Vec3 topRight    = Vec3(radius * sinf(phi2) * cosf(theta2), radius * sinf(phi2) * sinf(theta2), radius * cosf(phi2));
+                Vec3 topLeft     = Vec3(radius * sinf(phi2) * cosf(theta1), radius * sinf(phi2) * sinf(theta1), radius * cosf(phi2));
+
+                // 計算對應的 UV 座標
+                AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
+                             Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
+
+                // 添加該區域的頂點
+                AddVertsForQuad3D(verts, bottomLeft, bottomRight, topRight, topLeft, color, quadUV);
+            }
+        }
+    }
 }

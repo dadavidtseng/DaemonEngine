@@ -5,7 +5,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/EulerAngles.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
+
+//----------------------------------------------------------------------------------------------------
+STATIC EulerAngles EulerAngles::ZERO = EulerAngles(0.f, 0.f, 0.f);
 
 //----------------------------------------------------------------------------------------------------
 EulerAngles::EulerAngles(float const yawDegrees,
