@@ -380,6 +380,12 @@ void Renderer::EndFrame() const
 //----------------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
+    // Release all depth states
+    for (int i = 0; i < static_cast<int>(DepthMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_depthStencilStates[i])
+    }
+
     // Release all rasterizer states
     for (int i = 0; i < static_cast<int>(RasterizerMode::COUNT); ++i)
     {
@@ -416,13 +422,12 @@ void Renderer::Shutdown()
 
 
     // Release all DirectX objects and check for memory leaks in your Shutdown function.
-    // DX_SAFE_RELEASE(m_rasterizerStates)
+    DX_SAFE_RELEASE(m_depthStencilTexture)
+    DX_SAFE_RELEASE(m_depthStencilDSV)
     DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
-    // DX_SAFE_RELEASE(m_blendState)
-    // DX_SAFE_RELEASE(m_samplerState)
 
     // Delete the immediate vertex buffer
     if (m_immediateVBO)
