@@ -197,7 +197,7 @@ void Renderer::Startup()
     }
 
     // SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-    SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
+    // SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
     // m_rasterizerState = m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
     // m_deviceContext->RSSetState(m_rasterizerState);
 

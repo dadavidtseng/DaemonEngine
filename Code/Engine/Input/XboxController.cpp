@@ -9,6 +9,8 @@
 #include <Windows.h>
 #include <Xinput.h>
 
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #pragma comment(lib, "xinput")
 
@@ -79,7 +81,7 @@ void XboxController::Update()
 {
     // Read raw controller state via XInput API
     XINPUT_STATE xboxControllerState = {};
-    DWORD const  errorStatus         = XInputGetState(m_id, &xboxControllerState);
+    DWORD const errorStatus          = XInputGetState(m_id, &xboxControllerState);
 
     if (errorStatus != ERROR_SUCCESS)
     {
@@ -134,8 +136,8 @@ void XboxController::Reset()
 //----------------------------------------------------------------------------------------------------
 void XboxController::UpdateJoystick(AnalogJoystick& out_joystick, short const rawX, short const rawY)
 {
-    const float rawNormalizedX = RangeMap(rawX, -32768, 32767, -1, 1);
-    const float rawNormalizedY = RangeMap(rawY, -32768, 32767, -1, 1);
+    float const rawNormalizedX = RangeMap(rawX, -32768, 32767, -1, 1);
+    float const rawNormalizedY = RangeMap(rawY, -32768, 32767, -1, 1);
 
     out_joystick.UpdatePosition(rawNormalizedX, rawNormalizedY);
 }
@@ -153,4 +155,19 @@ void XboxController::UpdateButton(XboxButtonID const buttonID, unsigned short co
 
     button.m_wasKeyDownLastFrame = button.m_isKeyDown;
     button.m_isKeyDown           = (buttonFlags & buttonFlag) != 0;
+
+    FireButtonEvent(buttonID, "OnXboxButtonPressed", &XboxController::WasButtonJustPressed);
+    FireButtonEvent(buttonID, "OnXboxButtonReleased", &XboxController::WasButtonJustReleased);
+    FireButtonEvent(buttonID, "OnXboxButtonDown", &XboxController::IsButtonDown);
+}
+
+//----------------------------------------------------------------------------------------------------
+void XboxController::FireButtonEvent(XboxButtonID const buttonID, std::string const& eventName, bool (XboxController::*buttonCheckFunction)(XboxButtonID) const)
+{
+    if ((this->*buttonCheckFunction)(buttonID))
+    {
+        EventArgs args;
+        args.SetValue(eventName, Stringf("%d", static_cast<unsigned char>(buttonID)));
+        g_theEventSystem->FireEvent(eventName, args);
+    }
 }

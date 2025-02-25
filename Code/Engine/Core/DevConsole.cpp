@@ -39,6 +39,14 @@ DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
     AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!");
+
+    AddLine(INFO_MAJOR, "Controls");
+    AddLine(INFO_MINOR, "(Mouse) Aim");
+    AddLine(INFO_MINOR, "(W/A)   Move");
+    AddLine(INFO_MINOR, "(S/D)   Strafe");
+    AddLine(INFO_MINOR, "(Q/E)   Roll");
+    AddLine(INFO_MINOR, "(Z/C)   Elevate");
+    AddLine(INFO_MINOR, "(Shift) Sprint");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -52,8 +60,8 @@ DevConsole::~DevConsole()
 void DevConsole::StartUp()
 {
     // Initialize any necessary resources for the console (fonts, etc.)
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_CHAR", Event_CharInput);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowCharInput", OnWindowCharInput);
     g_theEventSystem->SubscribeEventCallbackFunction("help", Command_Help);
     g_theEventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
 
@@ -239,9 +247,9 @@ bool DevConsole::IsOpen() const
 //----------------------------------------------------------------------------------------------------
 // Handle key input.
 //
-STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
+STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 {
-    int const           value   = args.GetValue("WM_KEYDOWN", -1);
+    int const           value   = args.GetValue("OnWindowKeyPressed", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
     if (keyCode == KEYCODE_TILDE)
@@ -385,14 +393,14 @@ STATIC bool DevConsole::Event_KeyPressed(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 // Handle char input by appending valid characters to our current input line.
 //
-STATIC bool DevConsole::Event_CharInput(EventArgs& args)
+STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
 {
     if (g_theDevConsole->m_isOpen == false)
     {
         return false;
     }
 
-    int const           value   = args.GetValue("WM_CHAR", -1);
+    int const           value   = args.GetValue("OnWindowCharInput", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
     if (keyCode >= 32 &&

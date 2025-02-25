@@ -5,14 +5,13 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Input/InputSystem.hpp"
 
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
-#include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_A           = 0x41;
@@ -85,8 +84,8 @@ InputSystem::InputSystem(InputSystemConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYDOWN", Event_KeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("WM_KEYUP", Event_KeyReleased);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
 
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
     {
@@ -106,9 +105,10 @@ void InputSystem::BeginFrame()
     {
         m_controllers[controllerIndex].Update();
     }
+
     // Check if our hidden mode matches Windows cursor state
-    static bool cursorHidden     = false;
-    bool const  shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
+    static bool cursorHidden    = false;
+    bool const shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
 
     if (shouldHideCursor != cursorHidden)
     {
@@ -120,19 +120,6 @@ void InputSystem::BeginFrame()
         }
         cursorHidden = shouldHideCursor;
     }
-
-    // // desired state of cursor
-    // bool const shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
-    //
-    // // Windows shows cursor when shouldHideCursor is false, hides it when true
-    // int currentCursorState = ShowCursor(shouldHideCursor);
-    //
-    // // If the current state doesn't match the desired state, continue toggling
-    // while ((shouldHideCursor && currentCursorState >= 0) ||
-    //     (!shouldHideCursor && currentCursorState < 0))
-    // {
-    //     currentCursorState = ShowCursor(shouldHideCursor);  // Toggle until it matches the desired state
-    // }
 
     // Save off the previous cursor client position from last frame.
     IntVec2 const previousCursorClientPosition = IntVec2(GetCursorClientPosition());
@@ -239,11 +226,8 @@ Vec2 InputSystem::GetCursorClientDelta() const
 {
     switch (m_cursorState.m_cursorMode)
     {
-    case CursorMode::POINTER:
-        return Vec2::ZERO;
-    case CursorMode::FPS:
-        // DebuggerPrintf("[InputSystem::GetCursorClientDelta]: (%f, %f)\n", static_cast<Vec2>(m_cursorState.m_cursorClientDelta).x, static_cast<Vec2>(m_cursorState.m_cursorClientDelta).y);
-        return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
+    case CursorMode::POINTER: return Vec2::ZERO;
+    case CursorMode::FPS: return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
     }
 
     return Vec2::ZERO;
@@ -267,9 +251,9 @@ Vec2 InputSystem::GetCursorNormalizedPosition() const
     RECT clientRect;
     GetClientRect(GetActiveWindow(), &clientRect);
 
-    Vec2 const  clientPosition = Vec2(m_cursorState.m_cursorClientPosition);
-    float const normalizedX    = clientPosition.x / static_cast<float>(clientRect.right);
-    float const normalizedY    = clientPosition.y / static_cast<float>(clientRect.bottom);
+    Vec2 const clientPosition = Vec2(m_cursorState.m_cursorClientPosition);
+    float const normalizedX   = clientPosition.x / static_cast<float>(clientRect.right);
+    float const normalizedY   = clientPosition.y / static_cast<float>(clientRect.bottom);
 
     Vec2 cursorPosition = Vec2(normalizedX, 1.f - normalizedY);
 
@@ -277,7 +261,7 @@ Vec2 InputSystem::GetCursorNormalizedPosition() const
 }
 
 //----------------------------------------------------------------------------------------------------
-STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
+STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
 {
     if (g_theDevConsole == nullptr)
     {
@@ -294,7 +278,7 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
         return false;
     }
 
-    int const           value   = args.GetValue("WM_KEYDOWN", -1);
+    int const value             = args.GetValue("OnWindowKeyPressed", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyPressed(keyCode);
 
@@ -302,7 +286,7 @@ STATIC bool InputSystem::Event_KeyPressed(EventArgs& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-STATIC bool InputSystem::Event_KeyReleased(EventArgs& args)
+STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
 {
     if (g_theDevConsole == nullptr)
     {
@@ -319,7 +303,7 @@ STATIC bool InputSystem::Event_KeyReleased(EventArgs& args)
         return false;
     }
 
-    int const           value   = args.GetValue("WM_KEYUP", -1);
+    int const value             = args.GetValue("OnWindowKeyReleased", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyReleased(keyCode);
 

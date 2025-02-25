@@ -13,17 +13,27 @@ class NamedStrings;
 
 //----------------------------------------------------------------------------------------------------
 typedef NamedStrings EventArgs;
-typedef bool (*      EventCallbackFunction)(EventArgs& args);
+typedef bool (*EventCallbackFunction)(EventArgs& args);
 
 //----------------------------------------------------------------------------------------------------
 struct EventSubscription
 {
     EventCallbackFunction callbackFunction;
+    int priority = 0;
 };
 
 //----------------------------------------------------------------------------------------------------
 struct EventSystemConfig
 {
+};
+
+//----------------------------------------------------------------------------------------------------
+struct EventSubscriptionComparator
+{
+    bool operator()(EventSubscription const& lhs, EventSubscription const& rhs) const
+    {
+        return lhs.priority > rhs.priority;     // higher priority will be executed first
+    }
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -41,7 +51,7 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr);
+    void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr, int priority = 0);
     void UnsubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr);
     void FireEvent(String const& eventName, EventArgs& args);
     void FireEvent(String const& eventName);
@@ -49,7 +59,7 @@ public:
     Strings GetAllRegisteredEventNames() const;
 
 protected:
-    EventSystemConfig                  m_config;
+    EventSystemConfig m_config;
     std::map<String, SubscriptionList> m_subscriptionsByEventName;
 };
 

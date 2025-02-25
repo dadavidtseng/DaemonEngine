@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 
+#include <algorithm>
+
 #include "Engine/Core/EngineCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -44,11 +46,15 @@ void EventSystem::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
+void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr, int priority)
 {
-    EventSubscription const subscription = {functionPtr};
+    EventSubscription const newSubscription = {functionPtr, priority};
 
-    m_subscriptionsByEventName[eventName].push_back(subscription);
+    SubscriptionList& subscriptions = m_subscriptionsByEventName[eventName];
+
+    subscriptions.push_back(newSubscription);
+
+    std::sort(subscriptions.begin(), subscriptions.end(), EventSubscriptionComparator());
 }
 
 //----------------------------------------------------------------------------------------------------

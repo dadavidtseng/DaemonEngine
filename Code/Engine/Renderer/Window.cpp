@@ -7,7 +7,6 @@
 
 #include <iostream>
 
-#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
@@ -59,8 +58,8 @@ void Window::EndFrame()
 // Handles Windows (Win32) messages/events; i.e. the OS is trying to tell us something happened.
 // This function is called back by Windows whenever we tell it to (by calling DispatchMessage).
 //
-LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
-                                                 UINT const   wmMessageCode,
+LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const windowHandle,
+                                                 UINT const wmMessageCode,
                                                  WPARAM const wParam,
                                                  LPARAM const lParam)
 {
@@ -97,8 +96,8 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             // }
 
             EventArgs args;
-            args.SetValue("WM_KEYDOWN", Stringf("%d", static_cast<unsigned char>(wParam)));
-            FireEvent("WM_KEYDOWN", args);
+            args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("OnWindowKeyPressed", args);
 
             break;
         }
@@ -112,8 +111,8 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             }
 
             EventArgs args;
-            args.SetValue("WM_KEYUP", Stringf("%d", static_cast<unsigned char>(wParam)));
-            FireEvent("WM_KEYUP", args);
+            args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("OnWindowKeyReleased", args);
 
             break;
         }
@@ -126,8 +125,8 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             }
 
             EventArgs args;
-            args.SetValue("WM_CHAR", Stringf("%d", static_cast<unsigned char>(wParam)));
-            FireEvent("WM_CHAR", args);
+            args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("OnWindowCharInput", args);
 
             break;
         }
@@ -232,8 +231,8 @@ void* Window::GetWindowHandle() const
 Vec2 Window::GetNormalizedMouseUV() const
 {
     HWND const windowHandle = static_cast<HWND>(m_windowHandle);
-    POINT      cursorCoords;
-    RECT       clientRect;
+    POINT cursorCoords;
+    RECT clientRect;
 
     GetCursorPos(&cursorCoords);	                // in Window screen coordinates; (0,0) is top-left
     ScreenToClient(windowHandle, &cursorCoords);	// get relative to this window's client area
@@ -257,7 +256,7 @@ void Window::CreateOSWindow()
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     HMODULE const applicationInstanceHandle = ::GetModuleHandle(nullptr);
-    float const   clientAspect              = m_config.m_aspectRatio;
+    float const clientAspect                = m_config.m_aspectRatio;
 
     // Define a window style/class
     WNDCLASSEX windowClassDescription  = {};
@@ -278,7 +277,7 @@ void Window::CreateOSWindow()
     constexpr DWORD windowStyleExFlags = WS_EX_APPWINDOW;
 
     // Get desktop rect, dimensions, aspect
-    RECT       desktopRect;
+    RECT desktopRect;
     HWND const desktopWindowHandle = GetDesktopWindow();
     GetClientRect(desktopWindowHandle, &desktopRect);
     float const desktopWidth  = static_cast<float>(desktopRect.right - desktopRect.left);
@@ -287,8 +286,8 @@ void Window::CreateOSWindow()
 
     // Calculate maximum client size (as some % of desktop size)
     constexpr float maxClientFractionOfDesktop = 0.90f;
-    float           clientWidth                = desktopWidth * maxClientFractionOfDesktop;
-    float           clientHeight               = desktopHeight * maxClientFractionOfDesktop;
+    float clientWidth                          = desktopWidth * maxClientFractionOfDesktop;
+    float clientHeight                         = desktopHeight * maxClientFractionOfDesktop;
 
     if (clientAspect > desktopAspect)
     {
@@ -304,7 +303,7 @@ void Window::CreateOSWindow()
     // Calculate client rect bounds by centering the client area
     float const clientMarginX = 0.5f * (desktopWidth - clientWidth);
     float const clientMarginY = 0.5f * (desktopHeight - clientHeight);
-    RECT        clientRect;
+    RECT clientRect;
     clientRect.left   = static_cast<int>(clientMarginX);
     clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
     clientRect.top    = static_cast<int>(clientMarginY);
