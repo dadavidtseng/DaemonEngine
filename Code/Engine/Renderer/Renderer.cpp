@@ -104,7 +104,7 @@ void Renderer::Startup()
 
     // Create device and swap chain
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-    Window const*        window        = m_config.m_window;
+    Window const* window               = m_config.m_window;
 
     swapChainDesc.BufferDesc.Width  = window->GetClientDimensions().x;
     swapChainDesc.BufferDesc.Height = window->GetClientDimensions().y;
@@ -196,13 +196,7 @@ void Renderer::Startup()
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
     }
 
-    // SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-    // SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-    // m_rasterizerState = m_rasterizerStates[(int)(RasterizerMode::SOLID_CULL_BACK)];
-    // m_deviceContext->RSSetState(m_rasterizerState);
-
     m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-
 
     BindShader(m_currentShader);
 
@@ -283,8 +277,6 @@ void Renderer::Startup()
     }
 
     // Default the sampler state to point clamp
-    // m_samplerState = m_samplerStates[static_cast<int>(SamplerMode::POINT_CLAMP)];
-    // m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
     SetSamplerMode(SamplerMode::POINT_CLAMP);
 
     // Create depth stencil texture and view
@@ -418,7 +410,7 @@ void Renderer::Shutdown()
     //m_loadedFonts[i] = nullptr;
     //}
 
-    //m_loadedFonts.clear();
+    m_loadedFonts.clear();
 
 
     // Release all DirectX objects and check for memory leaks in your Shutdown function.
@@ -494,7 +486,7 @@ void Renderer::BeginCamera(Camera const& camera) const
 {
     // Set viewport
     D3D11_VIEWPORT viewport;
-    Window const*  window = m_config.m_window;
+    Window const* window = m_config.m_window;
 
     viewport.TopLeftX = 0.f;
     viewport.TopLeftY = 0.f;
@@ -557,11 +549,11 @@ void Renderer::BindTexture(Texture const* texture) const
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::DrawTexturedQuad(AABB2 const&   bounds,
+void Renderer::DrawTexturedQuad(AABB2 const& bounds,
                                 Texture const* texture,
-                                Rgba8 const&   tint,
-                                float const    uniformScaleXY,
-                                float const    rotationDegreesAboutZ)
+                                Rgba8 const& tint,
+                                float const uniformScaleXY,
+                                float const rotationDegreesAboutZ)
 {
     VertexList quadVerts;
 
@@ -596,8 +588,8 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
         return existingBitMapFont;
     }
 
-    String const   textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
+    String const textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
+    Texture const* newTexture    = CreateOrGetTextureFromFile(textureFilePath.c_str());
 
     if (!newTexture)
     {
@@ -615,6 +607,30 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
 void Renderer::SetBlendMode(BlendMode const mode)
 {
     m_desiredBlendMode = mode;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetSamplerMode(SamplerMode mode)
+{
+    m_desiredSamplerMode = mode;
+    m_samplerState       = m_samplerStates[static_cast<int>(mode)];
+    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetRasterizerMode(RasterizerMode mode)
+{
+    m_desiredRasterizerMode = mode;
+    m_rasterizerState       = m_rasterizerStates[static_cast<int>(mode)];
+    m_deviceContext->RSSetState(m_rasterizerState);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetDepthMode(DepthMode mode)
+{
+    m_desiredDepthMode  = mode;
+    m_depthStencilState = m_depthStencilStates[static_cast<int>(mode)];
+    m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -673,8 +689,8 @@ BitmapFont* Renderer::GetBitMapFontForFileName(const char* bitmapFontFilePathWit
 //----------------------------------------------------------------------------------------------------
 Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 {
-    IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
-    int     bytesPerTexel = 0;
+    IntVec2 dimensions = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
+    int bytesPerTexel  = 0;
     // This will be filled in for us to indicate how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
     int constexpr numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
 
@@ -689,7 +705,7 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
     GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
 
     Image const fileImage(imageFilePath);
-    Texture*    newTexture = CreateTextureFromImage(fileImage);
+    Texture* newTexture = CreateTextureFromImage(fileImage);
 
     // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
     stbi_image_free(texelData);
@@ -699,9 +715,9 @@ Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
 }
 
 //----------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromData(char const*    name,
+Texture* Renderer::CreateTextureFromData(char const* name,
                                          IntVec2 const& dimensions,
-                                         int const      bytesPerTexel,
+                                         int const bytesPerTexel,
                                          uint8_t const* texelData)
 {
     // Check if the load was successful
@@ -776,7 +792,7 @@ Shader* Renderer::CreateShader(char const* shaderName,
                                char const* shaderSource)
 {
     ShaderConfig const shaderConfig;
-    Shader*            shader = new Shader(shaderConfig);
+    Shader* shader = new Shader(shaderConfig);
 
     std::vector<uint8_t> vertexShaderByteCode;
     std::vector<uint8_t> pixelShaderByteCode;
@@ -872,10 +888,10 @@ Shader* Renderer::CreateShader(char const* shaderName)
 
 //----------------------------------------------------------------------------------------------------
 bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
-                                       char const*                 name,
-                                       char const*                 source,
-                                       char const*                 entryPoint,
-                                       char const*                 target)
+                                       char const* name,
+                                       char const* source,
+                                       char const* entryPoint,
+                                       char const* target)
 {
     // Compile vertex shader
     DWORD shaderFlags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
@@ -968,7 +984,7 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
 //----------------------------------------------------------------------------------------------------
 void Renderer::BindShader(Shader const* shader) const
 {
-    if (!shader)
+    if (shader == nullptr)
     {
         shader = m_defaultShader;
     }
@@ -997,7 +1013,7 @@ void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, VertexBuf
 
     // Map the buffer
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    HRESULT const hr = m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 
     if (!SUCCEEDED(hr))
     {
@@ -1015,7 +1031,7 @@ void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, VertexBuf
 void Renderer::BindVertexBuffer(VertexBuffer const* vbo) const
 {
     // Bind the vertex buffer
-    UINT const     stride = vbo->GetStride();
+    UINT const stride     = vbo->GetStride();
     UINT constexpr offset = 0;
     m_deviceContext->IASetVertexBuffers(0,
                                         1,
@@ -1046,7 +1062,7 @@ void Renderer::CopyCPUToGPU(void const* data, unsigned int const size, ConstantB
 
     // Map the buffer
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    HRESULT const hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 
     if (!SUCCEEDED(hr))
     {
@@ -1074,9 +1090,15 @@ void Renderer::SetStatesIfChanged()
     {
         m_blendState                   = m_blendStates[static_cast<int>(m_desiredBlendMode)];
         float constexpr blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
-        UINT constexpr  sampleMask     = 0xffffffff;
+        UINT constexpr sampleMask      = 0xffffffff;
 
         m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
+    }
+
+    if (m_samplerStates[static_cast<int>(m_desiredSamplerMode)] != m_samplerState)
+    {
+        m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
+        m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
     }
 
     if (m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)] != m_rasterizerState)
@@ -1091,28 +1113,4 @@ void Renderer::SetStatesIfChanged()
 
         m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
     }
-}
-
-//----------------------------------------------------------------------------------------------------
-void Renderer::SetSamplerMode(SamplerMode mode)
-{
-    m_desiredSamplerMode = mode;
-    m_samplerState       = m_samplerStates[static_cast<int>(mode)];
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
-}
-
-//----------------------------------------------------------------------------------------------------
-void Renderer::SetRasterizerMode(RasterizerMode mode)
-{
-    m_desiredRasterizerMode = mode;
-    m_rasterizerState       = m_rasterizerStates[static_cast<int>(mode)];
-    m_deviceContext->RSSetState(m_rasterizerState);
-}
-
-//----------------------------------------------------------------------------------------------------
-void Renderer::SetDepthMode(DepthMode mode)
-{
-    m_desiredDepthMode  = mode;
-    m_depthStencilState = m_depthStencilStates[static_cast<int>(mode)];
-    m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
 }
