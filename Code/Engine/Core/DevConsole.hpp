@@ -75,6 +75,7 @@ public:
     void Execute(String const& consoleCommandText, bool echoCommand = true);
     void AddLine(Rgba8 const& color, String const& text);
     void Render(AABB2 const& bounds, Renderer* rendererOverride = nullptr);
+    void PasteFromClipboard();
 
     DevConsoleMode GetMode() const;
     void SetMode(DevConsoleMode mode);

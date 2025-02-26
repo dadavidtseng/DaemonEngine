@@ -19,21 +19,11 @@ typedef bool (*EventCallbackFunction)(EventArgs& args);
 struct EventSubscription
 {
     EventCallbackFunction callbackFunction;
-    int priority = 0;
 };
 
 //----------------------------------------------------------------------------------------------------
 struct EventSystemConfig
 {
-};
-
-//----------------------------------------------------------------------------------------------------
-struct EventSubscriptionComparator
-{
-    bool operator()(EventSubscription const& lhs, EventSubscription const& rhs) const
-    {
-        return lhs.priority > rhs.priority;     // higher priority will be executed first
-    }
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -44,14 +34,14 @@ class EventSystem
 {
 public:
     explicit EventSystem(EventSystemConfig const& config);
-    ~EventSystem();
+    ~EventSystem() = default;
 
     void Startup();
     void Shutdown();
     void BeginFrame();
     void EndFrame();
 
-    void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr, int priority = 0);
+    void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr);
     void UnsubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction functionPtr);
     void FireEvent(String const& eventName, EventArgs& args);
     void FireEvent(String const& eventName);

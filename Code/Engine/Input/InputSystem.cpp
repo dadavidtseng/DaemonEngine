@@ -71,6 +71,7 @@ unsigned char const KEYCODE_HOME        = VK_HOME;
 unsigned char const KEYCODE_END         = VK_END;
 unsigned char const KEYCODE_TILDE       = VK_OEM_3;
 unsigned char const KEYCODE_SHIFT       = VK_SHIFT;
+unsigned char const KEYCODE_CONTROL        = VK_CONTROL;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_theInput = nullptr;

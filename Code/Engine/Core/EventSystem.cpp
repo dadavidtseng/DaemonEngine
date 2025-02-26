@@ -5,9 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 
-#include <algorithm>
-
-#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/NamedStrings.hpp"
 
 //----------------------------------------------------------------------------------------------------
 EventSystem* g_theEventSystem = nullptr;
@@ -16,12 +14,6 @@ EventSystem* g_theEventSystem = nullptr;
 EventSystem::EventSystem(EventSystemConfig const& config)
     : m_config(config)
 {
-}
-
-//----------------------------------------------------------------------------------------------------
-EventSystem::~EventSystem()
-{
-    Shutdown();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -46,15 +38,13 @@ void EventSystem::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr, int priority)
+void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
-    EventSubscription const newSubscription = {functionPtr, priority};
+    EventSubscription const newSubscription = {functionPtr};
 
     SubscriptionList& subscriptions = m_subscriptionsByEventName[eventName];
 
     subscriptions.push_back(newSubscription);
-
-    std::sort(subscriptions.begin(), subscriptions.end(), EventSubscriptionComparator());
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -94,11 +84,10 @@ void EventSystem::FireEvent(String const& eventName, EventArgs& args)
 
         for (EventSubscription const& subscription : subscriptions)
         {
-            subscription.callbackFunction(args);
-            // if (subscription.callbackFunction(args))
-            // {
-            //     break; // Event consumed; stop notifying further subscribers
-            // }
+             if (subscription.callbackFunction(args))
+             {
+                 break; // Event consumed; stop notifying further subscribers
+             }
         }
     }
 }

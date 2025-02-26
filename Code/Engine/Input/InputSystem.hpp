@@ -66,6 +66,7 @@ extern unsigned char const KEYCODE_HOME;
 extern unsigned char const KEYCODE_END;
 extern unsigned char const KEYCODE_TILDE;
 extern unsigned char const KEYCODE_SHIFT;
+extern unsigned char const KEYCODE_CONTROL;
 
 //----------------------------------------------------------------------------------------------------
 int constexpr NUM_KEYCODES         = 256;

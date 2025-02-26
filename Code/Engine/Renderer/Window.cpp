@@ -81,7 +81,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const windowHandle,
                 return 0;
             }
 
-            g_theEventSystem->FireEvent("WM_CLOSE");
+            g_theEventSystem->FireEvent("OnCloseButtonClicked");
 
             return 0; // "Consumes" this message (tells Windows "okay, we handled it")
         }
