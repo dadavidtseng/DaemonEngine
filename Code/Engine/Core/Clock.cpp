@@ -170,11 +170,11 @@ void Clock::Tick()
 // keeping variables, calls Advance on all child clocks and passes down our delta seconds,
 // and handles pausing after frames for stepping single frames.
 //
-void Clock::Advance(double const deltaTimeSeconds)
+void Clock::Advance(double deltaTimeSeconds)
 {
     if (m_isPaused == true)
     {
-        m_timeScale    = 0.f;
+        deltaTimeSeconds = 0.f;
     }
 
     m_deltaSeconds = deltaTimeSeconds * m_timeScale;
