@@ -610,27 +610,21 @@ void Renderer::SetBlendMode(BlendMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetSamplerMode(SamplerMode mode)
+void Renderer::SetSamplerMode(SamplerMode const mode)
 {
     m_desiredSamplerMode = mode;
-    m_samplerState       = m_samplerStates[static_cast<int>(mode)];
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetRasterizerMode(RasterizerMode mode)
+void Renderer::SetRasterizerMode(RasterizerMode const mode)
 {
     m_desiredRasterizerMode = mode;
-    m_rasterizerState       = m_rasterizerStates[static_cast<int>(mode)];
-    m_deviceContext->RSSetState(m_rasterizerState);
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetDepthMode(DepthMode mode)
+void Renderer::SetDepthMode(DepthMode const mode)
 {
     m_desiredDepthMode  = mode;
-    m_depthStencilState = m_depthStencilStates[static_cast<int>(mode)];
-    m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
 }
 
 //----------------------------------------------------------------------------------------------------
