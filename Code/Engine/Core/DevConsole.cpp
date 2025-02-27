@@ -414,7 +414,6 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 
     if (g_theDevConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
     {
-        DebuggerPrintf("Paste from clipboard\n");
         g_theDevConsole->PasteFromClipboard();
     }
 
