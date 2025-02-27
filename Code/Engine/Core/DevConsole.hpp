@@ -124,4 +124,6 @@ protected:
 
     // Our current index in our history of commands as we are scrolling.
     int m_historyIndex = -1;
+
+    bool m_isCtrlPressed = false;
 };

@@ -13,6 +13,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include "Engine/Renderer/Window.hpp"
+
 //----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_A           = 0x41;
 unsigned char const KEYCODE_B           = 0x42;
@@ -71,7 +73,7 @@ unsigned char const KEYCODE_HOME        = VK_HOME;
 unsigned char const KEYCODE_END         = VK_END;
 unsigned char const KEYCODE_TILDE       = VK_OEM_3;
 unsigned char const KEYCODE_SHIFT       = VK_SHIFT;
-unsigned char const KEYCODE_CONTROL        = VK_CONTROL;
+unsigned char const KEYCODE_CONTROL     = VK_CONTROL;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_theInput = nullptr;
@@ -108,8 +110,8 @@ void InputSystem::BeginFrame()
     }
 
     // Check if our hidden mode matches Windows cursor state
-    static bool cursorHidden    = false;
-    bool const shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
+    static bool cursorHidden     = false;
+    bool const  shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
 
     if (shouldHideCursor != cursorHidden)
     {
@@ -123,7 +125,7 @@ void InputSystem::BeginFrame()
     }
 
     // Save off the previous cursor client position from last frame.
-    IntVec2 const previousCursorClientPosition = IntVec2(GetCursorClientPosition());
+    IntVec2 const previousCursorClientPosition = m_cursorState.m_cursorClientPosition;
 
     // Get the current cursor client position from Windows.
     POINT currentCursorPosition;
@@ -139,9 +141,9 @@ void InputSystem::BeginFrame()
         m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorClientPosition;
 
         // Set the Windows cursor position back to the center of our client region
-        RECT clientRect;
-        GetClientRect(GetActiveWindow(), &clientRect);
-        POINT center = {clientRect.right / 2, clientRect.bottom / 2};
+        int const clientX = Window::s_mainWindow->GetClientDimensions().x;
+        int const clientY = Window::s_mainWindow->GetClientDimensions().y;
+        POINT     center  = {clientX / 2, clientY / 2};
         ClientToScreen(GetActiveWindow(), &center);
         SetCursorPos(center.x, center.y);
 
@@ -252,9 +254,9 @@ Vec2 InputSystem::GetCursorNormalizedPosition() const
     RECT clientRect;
     GetClientRect(GetActiveWindow(), &clientRect);
 
-    Vec2 const clientPosition = Vec2(m_cursorState.m_cursorClientPosition);
-    float const normalizedX   = clientPosition.x / static_cast<float>(clientRect.right);
-    float const normalizedY   = clientPosition.y / static_cast<float>(clientRect.bottom);
+    Vec2 const  clientPosition = Vec2(m_cursorState.m_cursorClientPosition);
+    float const normalizedX    = clientPosition.x / static_cast<float>(clientRect.right);
+    float const normalizedY    = clientPosition.y / static_cast<float>(clientRect.bottom);
 
     Vec2 cursorPosition = Vec2(normalizedX, 1.f - normalizedY);
 
@@ -279,7 +281,7 @@ STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
         return false;
     }
 
-    int const value             = args.GetValue("OnWindowKeyPressed", -1);
+    int const           value   = args.GetValue("OnWindowKeyPressed", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyPressed(keyCode);
 
@@ -304,7 +306,7 @@ STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
         return false;
     }
 
-    int const value             = args.GetValue("OnWindowKeyReleased", -1);
+    int const           value   = args.GetValue("OnWindowKeyReleased", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
     g_theInput->HandleKeyReleased(keyCode);
 

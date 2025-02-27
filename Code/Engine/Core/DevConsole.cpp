@@ -104,7 +104,7 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
     stream >> command; // Read first word and write it into command
 
     std::map<String, String> args;
-    std::string arg;
+    std::string              arg;
 
     while (stream >> arg)
     {
@@ -113,7 +113,7 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
 
         if (pos != std::string::npos)
         {
-            String key         = arg.substr(0, pos);
+            String       key   = arg.substr(0, pos);
             String const value = arg.substr(pos + 1);
             args[key]          = value;
         }
@@ -272,7 +272,7 @@ bool DevConsole::IsOpen() const
 //
 STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 {
-    int const value             = args.GetValue("OnWindowKeyPressed", -1);
+    int const           value   = args.GetValue("OnWindowKeyPressed", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
     if (keyCode == KEYCODE_TILDE)
@@ -407,7 +407,12 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
         }
     }
 
-    if (g_theInput->IsKeyDown(KEYCODE_CONTROL) && keyCode == KEYCODE_V)
+    if (keyCode == KEYCODE_CONTROL)
+    {
+        g_theDevConsole->m_isCtrlPressed = true;
+    }
+
+    if (g_theDevConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
     {
         DebuggerPrintf("Paste from clipboard\n");
         g_theDevConsole->PasteFromClipboard();
@@ -429,7 +434,7 @@ STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
         return false;
     }
 
-    int const value             = args.GetValue("OnWindowCharInput", -1);
+    int const           value   = args.GetValue("OnWindowCharInput", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
 
     if (keyCode >= 32 &&
@@ -498,7 +503,7 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect)
 {
     // Render background box
-    VertexList backgroundBoxVerts;
+    VertexList  backgroundBoxVerts;
     AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
@@ -527,7 +532,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     AABB2 commandTextBounds = bounds;
 
-    VertexList insertionPointVerts;
+    VertexList  insertionPointVerts;
     AABB2 const insertionPointBound = AABB2(commandTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
                                             Vec2(5.f, commandTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
 
