@@ -22,7 +22,7 @@ OBB2::OBB2(Vec2 const& center, Vec2 const& iBasisNormal, Vec2 const& halfDimensi
 void OBB2::GetCornerPoints(Vec2* out_fourCornerWorldPositions) const
 {
     // Calculate the Y-axis basis vector
-    Vec2 jBasisNormal = Vec2(-m_iBasisNormal.y, m_iBasisNormal.x); // 90 degrees rotation
+    Vec2 const jBasisNormal = Vec2(-m_iBasisNormal.y, m_iBasisNormal.x); // 90 degrees rotation
 
     // Calculate the positions of the four corner points
     out_fourCornerWorldPositions[0] = m_center + m_iBasisNormal * m_halfDimensions.x + jBasisNormal * m_halfDimensions.y; // Top-right corner
@@ -33,11 +33,11 @@ void OBB2::GetCornerPoints(Vec2* out_fourCornerWorldPositions) const
 
 //----------------------------------------------------------------------------------------------------
 // Convert world position to local position
-Vec2 const OBB2::GetLocalPosForWorldPos(const Vec2& worldPosition) const
+Vec2 const OBB2::GetLocalPosForWorldPos(Vec2 const& worldPosition) const
 {
-    Vec2  relativePos = worldPosition - m_center; // Calculate relative position
-    float localX      = DotProduct2D(relativePos, m_iBasisNormal); // Project relative position onto the X-axis
-    float localY      = DotProduct2D(relativePos, Vec2(-m_iBasisNormal.y, m_iBasisNormal.x)); // Project relative position onto the Y-axis
+    Vec2 const  relativePos = worldPosition - m_center; // Calculate relative position
+    float const localX      = DotProduct2D(relativePos, m_iBasisNormal); // Project relative position onto the X-axis
+    float const localY      = DotProduct2D(relativePos, Vec2(-m_iBasisNormal.y, m_iBasisNormal.x)); // Project relative position onto the Y-axis
 
     return Vec2(localX, localY); // Return local coordinates
 }
@@ -55,26 +55,26 @@ Vec2 const OBB2::GetWorldPosForLocalPos(const Vec2& localPosition) const
 
 //----------------------------------------------------------------------------------------------------
 // Rotate around the center
-void OBB2::RotateAboutCenter(float rotationDeltaDegrees)
+void OBB2::RotateAboutCenter(float const rotationDeltaDegrees)
 {
     // Calculate the new basis vector
-    float angleRadians = ConvertDegreesToRadians(rotationDeltaDegrees);
-    float cosTheta     = cosf(angleRadians);
-    float sinTheta     = sinf(angleRadians);
+    float const angleRadians = ConvertDegreesToRadians(rotationDeltaDegrees);
+    float const cosTheta     = cosf(angleRadians);
+    float const sinTheta     = sinf(angleRadians);
 
     // Update iBasisNormal
-    float newX     = m_iBasisNormal.x * cosTheta - m_iBasisNormal.y * sinTheta;
-    float newY     = m_iBasisNormal.x * sinTheta + m_iBasisNormal.y * cosTheta;
-    m_iBasisNormal = Vec2(newX, newY).GetNormalized(); // Ensure it is still a unit vector
+    float const newX = m_iBasisNormal.x * cosTheta - m_iBasisNormal.y * sinTheta;
+    float const newY = m_iBasisNormal.x * sinTheta + m_iBasisNormal.y * cosTheta;
+    m_iBasisNormal   = Vec2(newX, newY).GetNormalized(); // Ensure it is still a unit vector
 }
 
 //----------------------------------------------------------------------------------------------------
 // Check if a point is inside the OBB
 bool OBB2::IsPointInside(Vec2 const& point) const
 {
-    Vec2  relativePos = point - m_center; // Calculate relative position
-    float localX      = DotProduct2D(relativePos, m_iBasisNormal); // Project relative position onto the X-axis
-    float localY      = DotProduct2D(relativePos, Vec2(-m_iBasisNormal.y, m_iBasisNormal.x)); // Project relative position onto the Y-axis
+    Vec2  const relativePos = point - m_center; // Calculate relative position
+    float const localX      = DotProduct2D(relativePos, m_iBasisNormal); // Project relative position onto the X-axis
+    float const localY      = DotProduct2D(relativePos, Vec2(-m_iBasisNormal.y, m_iBasisNormal.x)); // Project relative position onto the Y-axis
 
     // Check if local coordinates are within half dimensions
     return fabs(localX) <= m_halfDimensions.x && fabs(localY) <= m_halfDimensions.y;

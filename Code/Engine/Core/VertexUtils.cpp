@@ -5,7 +5,6 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/VertexUtils.hpp"
 
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -15,9 +14,10 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/Triangle2.hpp"
+#include "Engine/Renderer/Window.hpp"
 
 //----------------------------------------------------------------------------------------------------
-void TransformVertexArrayXY3D(int const numVerts,
+void TransformVertexArrayXY3D(int const   numVerts,
                               Vertex_PCU* verts,
                               float const uniformScaleXY,
                               float const rotationDegreesAboutZ,
@@ -32,76 +32,127 @@ void TransformVertexArrayXY3D(int const numVerts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList& verts,
-                       Vec2 const& discCenter,
-                       float const discRadius,
+void AddVertsForDisc2D(VertexList&  verts,
+                       Vec2 const&  discCenter,
+                       float const  discRadius,
                        Rgba8 const& color)
 {
-    constexpr int NUM_SIDES          = 32;
-    constexpr float DEGREES_PER_SIDE = 360.f / static_cast<float>(NUM_SIDES);
+    // 1. Calculate the degree of each triangle in the disc.
+    int constexpr   NUM_SIDES        = 32;
+    float constexpr DEGREES_PER_SIDE = 360.f / static_cast<float>(NUM_SIDES);
 
-    for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
+    for (int sideIndex = 0; sideIndex < NUM_SIDES; ++sideIndex)
     {
-        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideNum);
-        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideNum + 1);
+        // 2. Get the degree of each triangle on the unit circle.
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideIndex);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideIndex + 1);
         float const cosStart     = CosDegrees(startDegrees);
         float const sinStart     = SinDegrees(startDegrees);
         float const cosEnd       = CosDegrees(endDegrees);
         float const sinEnd       = SinDegrees(endDegrees);
 
-        Vec3 centerPos(discCenter.x, discCenter.y, 0.f);
-        Vec3 startOuterPos(discCenter.x + discRadius * cosStart, discCenter.y + discRadius * sinStart, 0.f);
-        Vec3 endOuterPos(discCenter.x + discRadius * cosEnd, discCenter.y + discRadius * sinEnd, 0.f);
+        // 3. Get the positions by ( discCenter ) + ( discRadius ) * ( cos / sin )
+        Vec3 centerPosition(discCenter.x, discCenter.y, 0.f);
+        Vec3 startOuterPosition(discCenter.x + discRadius * cosStart, discCenter.y + discRadius * sinStart, 0.f);
+        Vec3 endOuterPosition(discCenter.x + discRadius * cosEnd, discCenter.y + discRadius * sinEnd, 0.f);
 
-        verts.emplace_back(centerPos, color);
-        verts.emplace_back(startOuterPos, color);
-        verts.emplace_back(endOuterPos, color);
+        // 4. Stores the vertices using counter-clockwise order.
+        verts.emplace_back(centerPosition, color);
+        verts.emplace_back(startOuterPosition, color);
+        verts.emplace_back(endOuterPosition, color);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList& verts,
+void AddVertsForDisc2D(VertexList&  verts,
                        Disc2 const& disc,
                        Rgba8 const& color)
 {
-    AddVertsForDisc2D(verts, disc.m_position, disc.m_radius, color);
+    AddVertsForDisc2D(verts,
+                      disc.m_position,
+                      disc.m_radius,
+                      color);
 }
 
-
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList& verts,
-                              Vec2 const& startPos,
-                              Vec2 const& endPos,
+void AddVertsForLineSegment2D(VertexList&  verts,
+                              Vec2 const&  startPosition,
+                              Vec2 const&  endPosition,
+                              float const  thickness,
+                              bool const   isInfinite,
                               Rgba8 const& color)
 {
-    verts.emplace_back(Vec3(startPos.x, startPos.y, 0.f), color, Vec2::ZERO);
-    verts.emplace_back(Vec3(endPos.x, endPos.y, 0.f), color, Vec2::ZERO);
+    // 1. Calculate lineSegment's forward/normalized direction.
+    Vec2 const forwardDirection    = endPosition - startPosition;
+    Vec2 const normalizedDirection = forwardDirection.GetNormalized();
+
+    // 2. Calculate lineSegment's halfThicknessOffset for next step.
+    Vec2 const perpendicular90DegreesDirection = normalizedDirection.GetRotated90Degrees();
+    Vec2 const halfThicknessOffset             = perpendicular90DegreesDirection * (0.5f * thickness);
+
+    Vec3 startLeft  = Vec3(startPosition.x + halfThicknessOffset.x, startPosition.y + halfThicknessOffset.y, 0.f);
+    Vec3 startRight = Vec3(startPosition.x - halfThicknessOffset.x, startPosition.y - halfThicknessOffset.y, 0.f);
+    Vec3 endLeft    = Vec3(endPosition.x + halfThicknessOffset.x, endPosition.y + halfThicknessOffset.y, 0.f);
+    Vec3 endRight   = Vec3(endPosition.x - halfThicknessOffset.x, endPosition.y - halfThicknessOffset.y, 0.f);
+
+    // 3. If this lineSegment is infinite, extend start and end points.
+    if (isInfinite)
+    {
+        // Calculate the infinite extensionFactor by getting the screen size from s_mainWindow.
+        float const extensionFactor = static_cast<float>(Window::s_mainWindow->GetClientDimensions().x);
+
+        // Calculate the extendAmount.
+        Vec2 const extendAmount = forwardDirection.GetNormalized() * extensionFactor;
+
+        // Apply the extension.
+        startLeft -= Vec3(extendAmount.x, extendAmount.y, 0.f);
+        startRight -= Vec3(extendAmount.x, extendAmount.y, 0.f);
+        endLeft += Vec3(extendAmount.x, extendAmount.y, 0.f);
+        endRight += Vec3(extendAmount.x, extendAmount.y, 0.f);
+    }
+
+    // Stores the vertices using counter-clockwise order in first triangle.
+    verts.emplace_back(startLeft, color);
+    verts.emplace_back(startRight, color);
+    verts.emplace_back(endRight, color);
+
+    // Stores the vertices using counter-clockwise order in second triangle.
+    verts.emplace_back(startLeft, color);
+    verts.emplace_back(endRight, color);
+    verts.emplace_back(endLeft, color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList& verts,
+void AddVertsForLineSegment2D(VertexList&         verts,
                               LineSegment2 const& lineSegment,
-                              Rgba8 const& color)
+                              float const         thickness,
+                              bool const          isInfinite,
+                              Rgba8 const&        color)
 {
-    AddVertsForLineSegment2D(verts, lineSegment.m_start, lineSegment.m_end, color);
+    AddVertsForLineSegment2D(verts,
+                             lineSegment.m_start,
+                             lineSegment.m_end,
+                             thickness,
+                             isInfinite,
+                             color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList& verts,
-                           Vec2 const& ccw0,
-                           Vec2 const& ccw1,
-                           Vec2 const& ccw2,
+void AddVertsForTriangle2D(VertexList&  verts,
+                           Vec2 const&  ccw0,
+                           Vec2 const&  ccw1,
+                           Vec2 const&  ccw2,
                            Rgba8 const& color)
 {
-    verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color, Vec2::ZERO);
-    verts.emplace_back(Vec3(ccw1.x, ccw1.y, 0.f), color, Vec2::ZERO);
-    verts.emplace_back(Vec3(ccw2.x, ccw2.y, 0.f), color, Vec2::ZERO);
+    verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color);
+    verts.emplace_back(Vec3(ccw1.x, ccw1.y, 0.f), color);
+    verts.emplace_back(Vec3(ccw2.x, ccw2.y, 0.f), color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList& verts,
+void AddVertsForTriangle2D(VertexList&      verts,
                            Triangle2 const& triangle,
-                           Rgba8 const& color)
+                           Rgba8 const&     color)
 {
     AddVertsForTriangle2D(verts,
                           triangle.m_positionCounterClockwise[0],
@@ -111,11 +162,11 @@ void AddVertsForTriangle2D(VertexList& verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList& verts,
+void AddVertsForAABB2D(VertexList&  verts,
                        AABB2 const& aabb2Box,
                        Rgba8 const& color,
-                       Vec2 const& uvMins,
-                       Vec2 const& uvMaxs)
+                       Vec2 const&  uvMins,
+                       Vec2 const&  uvMaxs)
 {
     verts.emplace_back(Vec3(aabb2Box.m_mins.x, aabb2Box.m_mins.y, 0.f), color, uvMins);
     verts.emplace_back(Vec3(aabb2Box.m_maxs.x, aabb2Box.m_mins.y, 0.f), color, Vec2(uvMaxs.x, uvMins.y));
@@ -127,8 +178,8 @@ void AddVertsForAABB2D(VertexList& verts,
 }
 
 //-----------------------------------------------------------------------------------------------
-void AddVertsForOBB2D(VertexList& verts,
-                      OBB2 const& obb2Box,
+void AddVertsForOBB2D(VertexList&  verts,
+                      OBB2 const&  obb2Box,
                       Rgba8 const& color)
 {
     Vec2 cornerPoints[4];
@@ -138,165 +189,136 @@ void AddVertsForOBB2D(VertexList& verts,
     AddVertsForTriangle2D(verts, cornerPoints[0], cornerPoints[2], cornerPoints[3], color);
 }
 
-void AddVertsForCapsule2D(VertexList& verts,
-                          Vec2 const& boneStart,
-                          Vec2 const& boneEnd,
-                          float const radius,
+//----------------------------------------------------------------------------------------------------
+void AddVertsForCapsule2D(VertexList&  verts,
+                          Vec2 const&  boneStart,
+                          Vec2 const&  boneEnd,
+                          float const  radius,
                           Rgba8 const& color)
 {
-    Vec2 direction = boneEnd - boneStart;
-    direction.Normalize();
+    // 1. Calculate capsule's forward/normalized direction.
+    Vec2 const forwardDirection    = boneEnd - boneStart;
+    Vec2 const normalizedDirection = forwardDirection.GetNormalized();
 
-    Vec2 const perpendicular = Vec2(-direction.y, direction.x) * radius;
-    Vec2 const bottomLeft    = boneStart - perpendicular;
-    Vec2 const bottomRight   = boneStart + perpendicular;
-    Vec2 const topLeft       = boneEnd - perpendicular;
-    Vec2 const topRight      = boneEnd + perpendicular;
+    // 2. Calculate capsule's corner positions.
+    Vec2 const perpendicular90DegreesDirection = normalizedDirection.GetRotated90Degrees() * radius;
+    Vec3 const bottomLeft                      = Vec3(boneStart.x + perpendicular90DegreesDirection.x, boneStart.y + perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const bottomRight                     = Vec3(boneStart.x - perpendicular90DegreesDirection.x, boneStart.y - perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const topLeft                         = Vec3(boneEnd.x + perpendicular90DegreesDirection.x, boneEnd.y + perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const topRight                        = Vec3(boneEnd.x - perpendicular90DegreesDirection.x, boneEnd.y - perpendicular90DegreesDirection.y, 0.f);
 
-    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2::ZERO);
-    verts.emplace_back(Vec3(bottomRight.x, bottomRight.y, 0.f), color, Vec2(1.f, 0.f));
-    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2::ONE);
+    AddVertsForQuad3D(verts, bottomLeft, bottomRight, topRight, topLeft, color);
 
-    verts.emplace_back(Vec3(topRight.x, topRight.y, 0.f), color, Vec2::ONE);
-    verts.emplace_back(Vec3(topLeft.x, topLeft.y, 0.f), color, Vec2(0.f, 1.f));
-    verts.emplace_back(Vec3(bottomLeft.x, bottomLeft.y, 0.f), color, Vec2::ZERO);
+    // 3. Calculate halfDisc's rotation degrees and center start/end.
+    float const halfDiscRotationDegrees = Atan2Degrees(-perpendicular90DegreesDirection.y, -perpendicular90DegreesDirection.x);
+    Vec2 const& halfDiscCenterStart     = boneStart;
+    Vec2 const& halfDiscCenterEnd       = boneEnd;
 
-    Vec2 const rotatedDirection     = direction.GetRotatedMinus90Degrees();
-    float const rotationAngle       = Atan2Degrees(rotatedDirection.y, rotatedDirection.x);
-    Vec2 const& halfDiscCenterStart = boneStart;
-    Vec2 const& halfDiscCenterEnd   = boneEnd;
-
-    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, radius, color, false, rotationAngle);
-    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, radius, color, true, rotationAngle);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, radius, color, false, halfDiscRotationDegrees);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, radius, color, true, halfDiscRotationDegrees);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList& verts,
+void AddVertsForCapsule2D(VertexList&     verts,
                           Capsule2 const& capsule,
-                          Rgba8 const& color)
+                          Rgba8 const&    color)
 {
     AddVertsForCapsule2D(verts, capsule.m_start, capsule.m_end, capsule.m_radius, color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForHalfDisc2D(VertexList& verts,
-                           Vec2 const& discCenter,
-                           float const discRadius,
+void AddVertsForHalfDisc2D(VertexList&  verts,
+                           Vec2 const&  discCenter,
+                           float const  discRadius,
                            Rgba8 const& color,
-                           bool const isTopHalf,
-                           float const rotationDegrees)
+                           bool const   isTopHalf,
+                           float const  rotationDegrees)
 {
-    constexpr int NUM_SIDES          = 32;
-    constexpr float DEGREES_PER_SIDE = 180.f / static_cast<float>(NUM_SIDES); // ????180?
+    // 1. Calculate the degree of each triangle in the disc.
+    int constexpr NUM_SIDES      = 32;
+    float         degreesPerSide = 180.f / static_cast<float>(NUM_SIDES);
+
+    // 2. If the disc is not topHalf ( 180-360 ), make it bottomHalf of the disc.
+    if (!isTopHalf)
+    {
+        degreesPerSide = 360.f / static_cast<float>(NUM_SIDES);
+    }
 
     for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
     {
-        float startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideNum);
-        float endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideNum + 1);
+        // 3. Get the degree of each triangle on the unit circle.
+        float const startDegrees = degreesPerSide * static_cast<float>(sideNum) + rotationDegrees;
+        float const endDegrees   = degreesPerSide * static_cast<float>(sideNum + 1) + rotationDegrees;
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
 
-        if (!isTopHalf)
-        {
-            startDegrees += 180.f;
-            endDegrees += 180.f;
-        }
+        // 4. Get the positions by ( discCenter ) + ( discRadius ) * ( cos / sin )
+        Vec3 centerPosition(discCenter.x, discCenter.y, 0.f);
+        Vec3 startOuterPosition(discCenter.x + discRadius * cosStart, discCenter.y + discRadius * sinStart, 0.f);
+        Vec3 endOuterPosition(discCenter.x + discRadius * cosEnd, discCenter.y + discRadius * sinEnd, 0.f);
 
-        startDegrees += rotationDegrees;
-        endDegrees += rotationDegrees;
-
-        float cosStart = CosDegrees(startDegrees);
-        float sinStart = SinDegrees(startDegrees);
-        float cosEnd   = CosDegrees(endDegrees);
-        float sinEnd   = SinDegrees(endDegrees);
-
-        Vec3 centerPos(discCenter.x, discCenter.y, 0.f);
-        Vec3 startOuterPos(discCenter.x + discRadius * cosStart, discCenter.y + discRadius * sinStart, 0.f);
-        Vec3 endOuterPos(discCenter.x + discRadius * cosEnd, discCenter.y + discRadius * sinEnd, 0.f);
-
-        verts.emplace_back(centerPos, color);
-        verts.emplace_back(startOuterPos, color);
-        verts.emplace_back(endOuterPos, color);
+        // 5. Stores the vertices using counter-clockwise order.
+        verts.emplace_back(centerPosition, color);
+        verts.emplace_back(startOuterPosition, color);
+        verts.emplace_back(endOuterPosition, color);
     }
 }
 
-void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPos, Vec2 const& tipPos, float arrowSize, float thickness, Rgba8 const& color)
+//----------------------------------------------------------------------------------------------------
+void AddVertsForArrow2D(VertexList&  verts,
+                        Vec2 const&  tailPosition,
+                        Vec2 const&  tipPosition,
+                        float const  arrowSize,
+                        float const  thickness,
+                        Rgba8 const& color)
 {
-    Vec2 const direction           = tipPos - tailPos;
-    Vec2 const normalizedDirection = -direction.GetNormalized();
+    // 1. Calculate arrow's forward/normalized direction.
+    Vec2 const forwardDirection    = tipPosition - tailPosition;
+    Vec2 const normalizedDirection = forwardDirection.GetNormalized();
 
-    Vec2 const arrowDirectionLeft  = normalizedDirection.GetRotatedDegrees(45.f);
-    Vec2 const arrowDirectionRight = normalizedDirection.GetRotatedDegrees(-45.f);
+    // 2. Calculate arrow's left and right direction.
+    Vec2 const arrowLeftDirection  = normalizedDirection.GetRotatedDegrees(-45.f);
+    Vec2 const arrowRightDirection = normalizedDirection.GetRotatedDegrees(45.f);
 
-    Vec2 const leftArrow  = tipPos + arrowDirectionLeft * arrowSize;
-    Vec2 const rightArrow = tipPos + arrowDirectionRight * arrowSize;
+    // 3. Get arrow's left and right position by subtract ( direction ) * ( arrowSize). 
+    Vec2 const leftArrowPosition  = tipPosition - arrowLeftDirection * arrowSize;
+    Vec2 const rightArrowPosition = tipPosition - arrowRightDirection * arrowSize;
 
-    Vec2 const mainPerpendicular = normalizedDirection.GetRotated90Degrees() * (thickness * 0.5f);
+    // 4. Adjust the tipPosition to touch the endpoint.
+    Vec2 const tipAdjustment = normalizedDirection * thickness * 0.35f;
 
-    Vec3 tailLeft  = Vec3((tailPos + mainPerpendicular).x, (tailPos + mainPerpendicular).y, 0.0f);
-    Vec3 tailRight = Vec3((tailPos - mainPerpendicular).x, (tailPos - mainPerpendicular).y, 0.0f);
-    Vec3 tipLeft   = Vec3((tipPos + mainPerpendicular).x, (tipPos + mainPerpendicular).y, 0.0f);
-    Vec3 tipRight  = Vec3((tipPos - mainPerpendicular).x, (tipPos - mainPerpendicular).y, 0.0f);
-
-    verts.emplace_back(tailLeft, color);
-    verts.emplace_back(tipLeft, color);
-    verts.emplace_back(tipRight, color);
-
-    verts.emplace_back(tailLeft, color);
-    verts.emplace_back(tipRight, color);
-    verts.emplace_back(tailRight, color);
-
-    // 計算箭頭左側的垂直向量
-    Vec2 const leftPerpendicular = arrowDirectionLeft.GetRotated90Degrees() * (thickness * 0.5f);
-
-    // 箭頭左側的四個頂點
-    Vec3 leftTipLeft  = Vec3((tipPos + leftPerpendicular).x, (tipPos + leftPerpendicular).y, 0.0f);
-    Vec3 leftTipRight = Vec3((tipPos - leftPerpendicular).x, (tipPos - leftPerpendicular).y, 0.0f);
-    Vec3 leftEndLeft  = Vec3((leftArrow + leftPerpendicular).x, (leftArrow + leftPerpendicular).y, 0.0f);
-    Vec3 leftEndRight = Vec3((leftArrow - leftPerpendicular).x, (leftArrow - leftPerpendicular).y, 0.0f);
-
-    // 增加箭頭左側的頂點
-    verts.emplace_back(leftTipLeft, color);
-    verts.emplace_back(leftEndLeft, color);
-    verts.emplace_back(leftEndRight, color);
-
-    verts.emplace_back(leftTipLeft, color);
-    verts.emplace_back(leftEndRight, color);
-    verts.emplace_back(leftTipRight, color);
-
-    // 計算箭頭右側的垂直向量
-    Vec2 const rightPerpendicular = arrowDirectionRight.GetRotated90Degrees() * (thickness * 0.5f);
-
-    // 箭頭右側的四個頂點
-    Vec3 rightTipLeft  = Vec3((tipPos + rightPerpendicular).x, (tipPos + rightPerpendicular).y, 0.0f);
-    Vec3 rightTipRight = Vec3((tipPos - rightPerpendicular).x, (tipPos - rightPerpendicular).y, 0.0f);
-    Vec3 rightEndLeft  = Vec3((rightArrow + rightPerpendicular).x, (rightArrow + rightPerpendicular).y, 0.0f);
-    Vec3 rightEndRight = Vec3((rightArrow - rightPerpendicular).x, (rightArrow - rightPerpendicular).y, 0.0f);
-
-    // 增加箭頭右側的頂點
-    verts.emplace_back(rightTipLeft, color);
-    verts.emplace_back(rightEndLeft, color);
-    verts.emplace_back(rightEndRight, color);
-
-    verts.emplace_back(rightTipLeft, color);
-    verts.emplace_back(rightEndRight, color);
-    verts.emplace_back(rightTipRight, color);
+    AddVertsForLineSegment2D(verts, tailPosition, tipPosition + tipAdjustment, thickness, false, color);
+    AddVertsForLineSegment2D(verts, leftArrowPosition, tipPosition, thickness, false, color);
+    AddVertsForLineSegment2D(verts, rightArrowPosition, tipPosition, thickness, false, color);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForQuad3D(std::vector<Vertex_PCU>& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color, AABB2 const& uv)
+void AddVertsForQuad3D(VertexList&  verts,
+                       Vec3 const&  bottomLeft,
+                       Vec3 const&  bottomRight,
+                       Vec3 const&  topRight,
+                       Vec3 const&  topLeft,
+                       Rgba8 const& color,
+                       AABB2 const& uv)
 {
     // Starting at BL, add triangle A with vertexes BL, BR, TR.
-    verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
-    verts.push_back(Vertex_PCU(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y)));
-    verts.push_back(Vertex_PCU(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y)));
+    verts.emplace_back(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y));
+    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y));
+    verts.emplace_back(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y));
 
     // Starting again at BL, add triangle B with vertexes BL, TR, TL.
-    verts.push_back(Vertex_PCU(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y)));
-    verts.push_back(Vertex_PCU(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y)));
-    verts.push_back(Vertex_PCU(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y)));
+    verts.emplace_back(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y));
+    verts.emplace_back(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y));
+    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y));
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, AABB3 const& bounds, Rgba8 const& color, AABB2 const& UVs)
+void AddVertsForAABB3D(VertexList&  verts,
+                       AABB3 const& bounds,
+                       Rgba8 const& color,
+                       AABB2 const& UVs)
 {
     Vec3 const min = bounds.m_mins;
     Vec3 const max = bounds.m_maxs;
@@ -325,15 +347,20 @@ void AddVertsForAABB3D(std::vector<Vertex_PCU>& verts, AABB3 const& bounds, Rgba
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForSphere3D(std::vector<Vertex_PCU>& verts, float const radius, Rgba8 const& color, AABB2 const& UVs, int const numSlices, int const numStacks)
+void AddVertsForSphere3D(VertexList&  verts,
+                         float const  radius,
+                         Rgba8 const& color,
+                         AABB2 const& UVs,
+                         int const    numSlices,
+                         int const    numStacks)
 {
     float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
     float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
 
     for (int stack = 0; stack < numStacks; ++stack)
     {
-        float const phi1 = (1.0f - (float)stack / (float)numStacks) * PI;
-        float const phi2 = (1.0f - ((float)stack + 1.f) / (float)numStacks) * PI;
+        float const phi1 = (1-(float)stack / (float)numStacks) * PI;
+        float const phi2 = (1-((float)stack + 1.f) / (float)numStacks) * PI;
 
         float const v1 = (float)stack / (float)numStacks;
         float const v2 = ((float)stack + 1.f) / (float)numStacks;
