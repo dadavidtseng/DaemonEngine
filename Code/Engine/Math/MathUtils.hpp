@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Mat44.hpp"
 #include "Vec4.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -21,16 +22,25 @@ struct Vec3;
 constexpr float PI      = 3.14159265358979323846f;
 constexpr float EPSILON = 1e-5f;	// Define a small tolerance value
 
+//----------------------------------------------------------------------------------------------------
+enum class eBillboardType
+{
+    NONE = -1,
+    WORLD_UP_FACING,
+    WORLD_UP_OPPOSING,
+    FULL_FACING,
+    FULL_OPPOSING,
+    COUNT
+};
+
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
 template <typename T>
 T GetClamped(T const value, T const minValue, T const maxValue)
 {
-    if (value > maxValue)
-        return maxValue;
+    if (value > maxValue) return maxValue;
 
-    if (value < minValue)
-        return minValue;
+    if (value < minValue) return minValue;
 
     return value;
 }
@@ -130,3 +140,5 @@ void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const&
 
 float         NormalizeByte(unsigned char byte);
 unsigned char DenormalizeByte(float zeroToOne);
+
+Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 billboardScale = Vec2::ONE);

@@ -8,6 +8,7 @@
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
 
 struct AABB3;
@@ -40,3 +41,9 @@ void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPosition, Vec2 const&
 void AddVertsForQuad3D(VertexList& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
 void AddVertsForAABB3D(VertexList& verts, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3D(VertexList& verts, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
+
+void  TransformVertexArray3D(VertexList& verts, Mat44 const& transform);
+AABB2 GetVertexBounds2D(VertexList& verts);
+void  AddVertsForCylinder2D(VertexList& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
+void  AddVertsForCone2D(VertexList& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
+
