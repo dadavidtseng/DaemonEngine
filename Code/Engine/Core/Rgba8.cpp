@@ -10,6 +10,7 @@
 
 //----------------------------------------------------------------------------------------------------
 Rgba8 Rgba8::WHITE             = Rgba8(255, 255, 255);
+Rgba8 Rgba8::TRANSLUCENT_WHITE = Rgba8(255, 255, 255, 30);
 Rgba8 Rgba8::BLACK             = Rgba8(0, 0, 0);
 Rgba8 Rgba8::TRANSLUCENT_BLACK = Rgba8(0, 0, 0, 200);
 Rgba8 Rgba8::DARK_GREY         = Rgba8(100, 100, 100);
@@ -20,6 +21,8 @@ Rgba8 Rgba8::MAGENTA           = Rgba8(255, 0, 255);
 Rgba8 Rgba8::CYAN              = Rgba8(0, 255, 255);
 Rgba8 Rgba8::YELLOW            = Rgba8(255, 255, 0);
 Rgba8 Rgba8::BLUE              = Rgba8(0, 0, 255);
+Rgba8 Rgba8::LIGHT_BLUE        = Rgba8(100, 150, 255);
+Rgba8 Rgba8::ORANGE            = Rgba8(255, 127, 0);
 
 //----------------------------------------------------------------------------------------------------
 Rgba8::Rgba8
