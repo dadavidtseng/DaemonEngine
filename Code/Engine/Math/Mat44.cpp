@@ -664,13 +664,13 @@ void Mat44::Orthonormalize_IFwd_JLeft_KUp()
     i = i.GetNormalized();
 
     // Make j orthogonal to i
-    j -= DotProduct3D(j, i) * i;
-    j = j.GetNormalized();
+    k -= DotProduct3D(k, i) * i;
+    k = k.GetNormalized();
 
     // Make k orthogonal to both i and j
-    k -= DotProduct3D(k, i) * i;
-    k -= DotProduct3D(k, j) * j;
-    k = k.GetNormalized();
+    j -= DotProduct3D(j, i) * i;
+    j -= DotProduct3D(j, k) * k;
+    j = j.GetNormalized();
 
     // Update the matrix with the orthonormalized vectors
     m_values[Ix] = i.x;
