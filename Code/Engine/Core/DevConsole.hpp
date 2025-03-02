@@ -50,7 +50,7 @@ struct DevConsoleConfig
     Renderer* m_defaultRenderer = nullptr;
     Camera* m_defaultCamera     = nullptr;
     String m_defaultFontName    = "SquirrelFixedFont";
-    float m_defaultFontAspect   = 1.f;
+    float m_defaultFontAspect   = 2.f;
     float m_maxLinesDisplay     = 29.5f;
     int m_maxCommandHistory     = 128;
     bool m_startOpen            = false;

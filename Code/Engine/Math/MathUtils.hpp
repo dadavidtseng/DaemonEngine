@@ -19,8 +19,8 @@ struct Vec2;
 struct Vec3;
 
 //----------------------------------------------------------------------------------------------------
-constexpr float PI      = 3.14159265358979323846f;
-constexpr float EPSILON = 1e-5f;	// Define a small tolerance value
+float constexpr PI      = 3.14159265358979323846f;
+float constexpr EPSILON = 1e-5f;	// Define a small tolerance value
 
 //----------------------------------------------------------------------------------------------------
 enum class eBillboardType

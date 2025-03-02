@@ -9,6 +9,13 @@
 #include "Engine/Math/AABB2.hpp"
 
 //----------------------------------------------------------------------------------------------------
+BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords)
+    : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
+      , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
 Texture const& BitmapFont::GetTexture() const
 {
     return m_fontGlyphsSpriteSheet.GetTexture();
@@ -43,19 +50,19 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
                                         AABB2 const&      box,
                                         float             cellHeight,
                                         Rgba8 const&      tint,
-                                        float             cellAspectScale,
+                                        float        cellAspectScale,
                                         Vec2 const&       alignment,
                                         TextBoxMode const mode,
                                         int const         maxGlyphsToDraw) const
 {
-    // 將文字以換行符 '\n' 分割成多行
-    StringList lines = SplitStringOnDelimiter(text, '\n');
+    // 1. Split text string on delimiter '\n' and store them in StingList.
+    StringList const lines = SplitStringOnDelimiter(text, '\n');
 
-    // 計算文字區塊的最大寬度和總高度
-    float maxLineWidth = 0.0f;
-    float textHeight   = cellHeight * static_cast<float>(lines.size());
+    // 2. Calculate the totalTextHeight and initialize the maxLineWidth.
+    float const totalTextHeight = cellHeight * static_cast<float>(lines.size());
+    float       maxLineWidth    = 0.f;
 
-    // 計算每行的最大寬度
+    // 3. Update the maxLineWidth by for looping all lines.
     for (String const& line : lines)
     {
         float lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
@@ -63,12 +70,12 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
     }
 
     // 如果是 SHRINK_TO_FIT 模式，則計算縮放因子以使文字適應邊界框
-    float scaleFactor = 1.0f;
+    float scaleFactor = 1.f;
     if (mode == SHRINK_TO_FIT)
     {
-        float horizontalScale = box.GetDimensions().x / maxLineWidth;
-        float verticalScale   = box.GetDimensions().y / textHeight;
-        scaleFactor           = std::min(horizontalScale, verticalScale); // 選擇較小的比例
+        float const horizontalScale = box.GetDimensions().x / maxLineWidth;
+        float const verticalScale   = box.GetDimensions().y / totalTextHeight;
+        scaleFactor                 = std::min(horizontalScale, verticalScale); // 選擇較小的比例
     }
 
     // 根據縮放比例調整字元的高度和寬高比例
@@ -76,12 +83,12 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
     // cellAspectScale *= scaleFactor; // If you want to apply scaling here as well, uncomment this line
 
     // 計算最終文字區塊的寬度和高度
-    float finalTextWidth  = maxLineWidth * scaleFactor;
-    float finalTextHeight = textHeight * scaleFactor;
+    float const finalTextWidth  = maxLineWidth * scaleFactor;
+    float const finalTextHeight = totalTextHeight * scaleFactor;
 
     // 根據對齊方式計算文字區塊的初始位置
-    float offsetX = (box.GetDimensions().x - finalTextWidth) * alignment.x;
-    float offsetY = (box.GetDimensions().y - finalTextHeight) * alignment.y;
+    float const offsetX = (box.GetDimensions().x - finalTextWidth) * alignment.x;
+    float const offsetY = (box.GetDimensions().y - finalTextHeight) * alignment.y;
 
     // 文字的起始位置
     Vec2 startPos = box.m_mins + Vec2(offsetX + alignment.x, offsetY + cellHeight * ((float)lines.size() - 1.f));
@@ -97,11 +104,11 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
             continue;
 
         // 計算當前行的寬度
-        float lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
+        float const lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
 
         // 根據水平對齊方式計算該行的起始 X 位置
-        float lineOffsetX = (box.GetDimensions().x - lineWidth) * alignment.x;
-        currentPos.x      = box.m_mins.x + lineOffsetX;
+        float const lineOffsetX = (box.GetDimensions().x - lineWidth) * alignment.x;
+        currentPos.x            = box.m_mins.x + lineOffsetX;
 
         // 將當前行的每個字元添加到頂點數組中
         for (char const& c : line)
@@ -129,6 +136,7 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
                                                    float         cellHeight,
                                                    String const& text,
@@ -140,7 +148,9 @@ void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float const cellAspectScale) const
+float BitmapFont::GetTextWidth(float const   cellHeight,
+                               String const& text,
+                               float const   cellAspectScale) const
 {
     float totalWidth = 0.f;
 
@@ -148,17 +158,11 @@ float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float
     {
         int const   glyphIndex  = static_cast<unsigned char>(c);
         float const glyphAspect = GetGlyphAspect(glyphIndex);
-        totalWidth += (cellHeight * glyphAspect * cellAspectScale);
+
+        totalWidth += cellHeight * glyphAspect * cellAspectScale;
     }
 
     return totalWidth;
-}
-
-//----------------------------------------------------------------------------------------------------
-BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords)
-    : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
-      , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
-{
 }
 
 //----------------------------------------------------------------------------------------------------
