@@ -703,3 +703,10 @@ unsigned char DenormalizeByte(float const zeroToOne)
 }
 
 //-End-of-Byte-Denormalization------------------------------------------------------------------------
+
+Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 billboardScale)
+{
+    return {};
+}
+
+

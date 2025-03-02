@@ -100,7 +100,7 @@ void EventSystem::FireEvent(String const& eventName)
 }
 
 //----------------------------------------------------------------------------------------------------
-Strings EventSystem::GetAllRegisteredEventNames() const
+StringList EventSystem::GetAllRegisteredEventNames() const
 {
     std::vector<String> eventNames;
     eventNames.reserve(m_subscriptionsByEventName.size());

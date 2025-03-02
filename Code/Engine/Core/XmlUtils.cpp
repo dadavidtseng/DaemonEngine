@@ -139,13 +139,13 @@ String ParseXmlAttribute(XmlElement const& element, char const* attributeName, S
 }
 
 //----------------------------------------------------------------------------------------------------
-Strings ParseXmlAttribute(XmlElement const& element, char const* attributeName, Strings const& defaultValues)
+StringList ParseXmlAttribute(XmlElement const& element, char const* attributeName, StringList const& defaultValues)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
     if (attributeValue)
     {
-        Strings result = SplitStringOnDelimiter(attributeValue, ',');
+        StringList result = SplitStringOnDelimiter(attributeValue, ',');
 
         return result;
     }

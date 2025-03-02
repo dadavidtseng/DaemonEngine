@@ -120,7 +120,7 @@ protected:
     Timer* m_insertionPointBlinkTimer = nullptr;
 
     // History of all commands executed.
-    Strings m_commandHistory;
+    StringList m_commandHistory;
 
     // Our current index in our history of commands as we are scrolling.
     int m_historyIndex = -1;
