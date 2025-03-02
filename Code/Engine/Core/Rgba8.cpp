@@ -40,7 +40,7 @@ Rgba8::Rgba8
 void Rgba8::SetFromText(char const* text)
 {
     // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
-    Strings const parts = SplitStringOnDelimiter(text, ',');
+    StringList const parts = SplitStringOnDelimiter(text, ',');
 
     // Input must contain either 3 or 4 parts; otherwise, reset to default values
     if (parts.size() < 3 ||

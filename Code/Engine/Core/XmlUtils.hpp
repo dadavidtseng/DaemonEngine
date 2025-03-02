@@ -25,7 +25,7 @@ Rgba8   ParseXmlAttribute(XmlElement const& element, char const* attributeName, 
 Vec2    ParseXmlAttribute(XmlElement const& element, char const* attributeName, Vec2 const& defaultValue);
 IntVec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, IntVec2 const& defaultValue);
 String  ParseXmlAttribute(XmlElement const& element, char const* attributeName, std::string const& defaultValue);
-Strings ParseXmlAttribute(XmlElement const& element, char const* attributeName, Strings const& defaultValues);
+StringList ParseXmlAttribute(XmlElement const& element, char const* attributeName, StringList const& defaultValues);
 // a custom special-case function for getting an attribute as a std::string,
 // even if you provide the “default” value as traditional / hardcoded C-style char const* text (as this will be important later)
 String ParseXmlAttribute(XmlElement const& element, char const* attributeName, char const* defaultValue);

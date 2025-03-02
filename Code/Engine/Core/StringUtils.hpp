@@ -9,9 +9,9 @@
 
 //----------------------------------------------------------------------------------------------------
 typedef std::string         String;
-typedef std::vector<String> Strings;
+typedef std::vector<String> StringList;
 
 //----------------------------------------------------------------------------------------------------
-String const  Stringf(char const* format, ...);
-String const  Stringf(int maxLength, char const* format, ...);
-Strings const SplitStringOnDelimiter(String const& originalString, char delimiterToSplitOn);
+String const     Stringf(char const* format, ...);
+String const     Stringf(int maxLength, char const* format, ...);
+StringList const SplitStringOnDelimiter(String const& originalString, char delimiterToSplitOn);

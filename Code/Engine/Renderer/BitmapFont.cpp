@@ -15,7 +15,7 @@ Texture const& BitmapFont::GetTexture() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForText2D(VertexList&   vertexArray,
+void BitmapFont::AddVertsForText2D(VertexList&   verts,
                                    Vec2 const&   textMins,
                                    float const   cellHeight,
                                    String const& text,
@@ -31,14 +31,14 @@ void BitmapFont::AddVertsForText2D(VertexList&   vertexArray,
         float const glyphAspect = GetGlyphAspect(glyphIndex);
         Vec2 const  glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);
 
-        AddVertsForAABB2D(vertexArray, AABB2(currentPosition, currentPosition + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
+        AddVertsForAABB2D(verts, AABB2(currentPosition, currentPosition + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
 
         currentPosition.x += glyphSize.x;
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
+void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
                                         String const&     text,
                                         AABB2 const&      box,
                                         float             cellHeight,
@@ -49,17 +49,17 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
                                         int const         maxGlyphsToDraw) const
 {
     // 將文字以換行符 '\n' 分割成多行
-    Strings lines = SplitStringOnDelimiter(text, '\n');
+    StringList lines = SplitStringOnDelimiter(text, '\n');
 
     // 計算文字區塊的最大寬度和總高度
     float maxLineWidth = 0.0f;
-    float textHeight = cellHeight * static_cast<float>(lines.size());
+    float textHeight   = cellHeight * static_cast<float>(lines.size());
 
     // 計算每行的最大寬度
     for (String const& line : lines)
     {
         float lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
-        maxLineWidth = std::max(maxLineWidth, lineWidth);  // 更新最大行寬
+        maxLineWidth    = std::max(maxLineWidth, lineWidth);  // 更新最大行寬
     }
 
     // 如果是 SHRINK_TO_FIT 模式，則計算縮放因子以使文字適應邊界框
@@ -82,9 +82,9 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
     // 根據對齊方式計算文字區塊的初始位置
     float offsetX = (box.GetDimensions().x - finalTextWidth) * alignment.x;
     float offsetY = (box.GetDimensions().y - finalTextHeight) * alignment.y;
-    
+
     // 文字的起始位置
-    Vec2 startPos = box.m_mins + Vec2(offsetX+alignment.x, offsetY + cellHeight * ((float) lines.size() - 1.f));
+    Vec2 startPos = box.m_mins + Vec2(offsetX + alignment.x, offsetY + cellHeight * ((float)lines.size() - 1.f));
 
     // 設置當前文字位置為起始位置
     Vec2 currentPos = startPos;
@@ -101,7 +101,7 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
 
         // 根據水平對齊方式計算該行的起始 X 位置
         float lineOffsetX = (box.GetDimensions().x - lineWidth) * alignment.x;
-        currentPos.x = box.m_mins.x + lineOffsetX;
+        currentPos.x      = box.m_mins.x + lineOffsetX;
 
         // 將當前行的每個字元添加到頂點數組中
         for (char const& c : line)
@@ -116,7 +116,7 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
             Vec2  glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);  // 計算字形的寬度和高度
 
             // 將字形的頂點數據添加到 vertexArray
-            AddVertsForAABB2D(vertexArray, AABB2(currentPos, currentPos + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
+            AddVertsForAABB2D(verts, AABB2(currentPos, currentPos + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
 
             // 更新當前字形的 x 位置，準備渲染下一個字形
             currentPos.x += glyphSize.x;
@@ -129,9 +129,15 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&       vertexArray,
     }
 }
 
-
-
-
+void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
+                                                   float         cellHeight,
+                                                   String const& text,
+                                                   Rgba8 const&  tine,
+                                                   float         cellAspect,
+                                                   Vec2 const&   alignment,
+                                                   int           maxGlyphsToDraw)
+{
+}
 
 //----------------------------------------------------------------------------------------------------
 float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float const cellAspectScale) const
@@ -151,7 +157,7 @@ float BitmapFont::GetTextWidth(float const cellHeight, String const& text, float
 //----------------------------------------------------------------------------------------------------
 BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords)
     : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
-    , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
+      , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
 {
 }
 

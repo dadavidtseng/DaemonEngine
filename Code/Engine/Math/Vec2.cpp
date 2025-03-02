@@ -19,7 +19,7 @@ STATIC Vec2 Vec2::ONE  = Vec2(1, 1);
 //----------------------------------------------------------------------------------------------------
 Vec2::Vec2(float const initialX, float const initialY)
     : x(initialX)
-    , y(initialY)
+      , y(initialY)
 {
 }
 
@@ -202,6 +202,7 @@ void Vec2::RotateMinus90Degrees()
     x = y;
     y = -oldX;
 }
+
 //----------------------------------------------------------------------------------------------------
 void Vec2::RotateRadians(float const deltaRadians)
 {
@@ -258,8 +259,7 @@ float Vec2::NormalizeAndGetPreviousLength()
 {
     float const length = GetLength();
 
-    if (length == 0.f)
-        return 0.f;
+    if (length == 0.f) return 0.f;
 
     x *= 1.f / length;
     y *= 1.f / length;
@@ -279,7 +279,7 @@ void Vec2::Reflect(Vec2 const& normalOfSurfaceToReflectOffOf)
 void Vec2::SetFromText(char const* text)
 {
     // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
-    Strings const parts = SplitStringOnDelimiter(text, ',');
+    StringList const parts = SplitStringOnDelimiter(text, ',');
 
     // Input must contain exactly two parts; otherwise, reset to default values
     if (parts.size() != 2)
@@ -303,31 +303,29 @@ Vec2 Vec2::operator+(Vec2 const& vecToAdd) const
 //----------------------------------------------------------------------------------------------------
 Vec2 Vec2::operator-(Vec2 const& vecToSubtract) const
 {
-    return Vec2(x - vecToSubtract.x, y - vecToSubtract.y);
+    return
+        Vec2(x - vecToSubtract.x, y - vecToSubtract.y);
 }
 
 //----------------------------------------------------------------------------------------------------
 Vec2 Vec2::operator-() const
 {
-    return Vec2(-x, -y);
+    return
+        Vec2(-x, -y);
 }
 
 //----------------------------------------------------------------------------------------------------
 Vec2 Vec2::operator*(float const uniformScale) const
 {
-    return Vec2(x * uniformScale, y * uniformScale);
-}
-
-//----------------------------------------------------------------------------------------------------
-Vec2 Vec2::operator*(Vec2 const& vecToMultiply) const
-{
-    return Vec2(x * vecToMultiply.x, y * vecToMultiply.y);
+    return
+        Vec2(x * uniformScale, y * uniformScale);
 }
 
 //----------------------------------------------------------------------------------------------------
 Vec2 Vec2::operator/(float const inverseScale) const
 {
-    return Vec2(x / inverseScale, y / inverseScale);
+    return
+        Vec2(x / inverseScale, y / inverseScale);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -375,7 +373,8 @@ Vec2& Vec2::operator=(Vec2 const& copyFrom)
 Vec2 operator*(float const uniformScale,
                Vec2 const& vecToScale)
 {
-    return Vec2(vecToScale.x * uniformScale, vecToScale.y * uniformScale);
+    return
+        Vec2(vecToScale.x * uniformScale, vecToScale.y * uniformScale);
 }
 
 //----------------------------------------------------------------------------------------------------

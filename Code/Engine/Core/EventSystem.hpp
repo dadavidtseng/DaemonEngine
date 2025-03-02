@@ -46,7 +46,7 @@ public:
     void FireEvent(String const& eventName, EventArgs& args);
     void FireEvent(String const& eventName);
 
-    Strings GetAllRegisteredEventNames() const;
+    StringList GetAllRegisteredEventNames() const;
 
 protected:
     EventSystemConfig m_config;

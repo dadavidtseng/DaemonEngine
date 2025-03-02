@@ -64,7 +64,6 @@ struct Vec2
     Vec2 operator-(Vec2 const& vecToSubtract) const;    // vec2 - vec2
     Vec2 operator-() const;                             // -vec2, i.e. "unary negation"
     Vec2 operator*(float uniformScale) const;           // vec2 * float
-    Vec2 operator*(Vec2 const& vecToMultiply) const;    // vec2 * vec2
     Vec2 operator/(float inverseScale) const;           // vec2 / float
 
     // Operators (self-mutating / non-const)

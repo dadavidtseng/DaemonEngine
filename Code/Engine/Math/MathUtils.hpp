@@ -137,8 +137,12 @@ void TransformPositionXY3D(Vec3& posToTransform, float scaleXY, float zRotationD
 void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translationXY);
 
 //-End-of-Transform-Utilities-------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+//-Start-of-Byte-Denormalization----------------------------------------------------------------------
 
 float         NormalizeByte(unsigned char byte);
 unsigned char DenormalizeByte(float zeroToOne);
+
+//-End-of-Byte-Denormalization------------------------------------------------------------------------
 
 Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 billboardScale = Vec2::ONE);

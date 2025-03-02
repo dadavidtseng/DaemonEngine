@@ -16,7 +16,7 @@ String const Stringf(char const* format, ...)
     char    textLiteral[STRINGF_STACK_LOCAL_TEMP_LENGTH];
     va_list variableArgumentList;
     va_start(variableArgumentList, format);
-    (void) vsnprintf_s(textLiteral, STRINGF_STACK_LOCAL_TEMP_LENGTH, _TRUNCATE, format, variableArgumentList);
+    (void)vsnprintf_s(textLiteral, STRINGF_STACK_LOCAL_TEMP_LENGTH, _TRUNCATE, format, variableArgumentList);
     va_end(variableArgumentList);
     textLiteral[STRINGF_STACK_LOCAL_TEMP_LENGTH - 1] = '\0'; // In case vsnprintf overran (doesn't auto-terminate)
 
@@ -28,30 +28,28 @@ String const Stringf(int const maxLength, char const* format, ...)
 {
     char  textLiteralSmall[STRINGF_STACK_LOCAL_TEMP_LENGTH];
     char* textLiteral = textLiteralSmall;
-    if (maxLength > STRINGF_STACK_LOCAL_TEMP_LENGTH)
-        textLiteral = new char[maxLength];
+    if (maxLength > STRINGF_STACK_LOCAL_TEMP_LENGTH) textLiteral = new char[maxLength];
 
     va_list variableArgumentList;
     va_start(variableArgumentList, format);
-    (void) vsnprintf_s(textLiteral, maxLength, _TRUNCATE, format, variableArgumentList);
+    (void)vsnprintf_s(textLiteral, maxLength, _TRUNCATE, format, variableArgumentList);
     va_end(variableArgumentList);
 
     textLiteral[maxLength - 1] = '\0'; // In case vsnprintf overran (doesn't auto-terminate)
 
     String returnValue(textLiteral);
 
-    if (maxLength > STRINGF_STACK_LOCAL_TEMP_LENGTH)
-        delete[] textLiteral;
+    if (maxLength > STRINGF_STACK_LOCAL_TEMP_LENGTH) delete[] textLiteral;
 
     return returnValue;
 }
 
 //----------------------------------------------------------------------------------------------------
-Strings const SplitStringOnDelimiter(String const& originalString, char const delimiterToSplitOn)
+StringList const SplitStringOnDelimiter(String const& originalString, char const delimiterToSplitOn)
 {
-    Strings result;
-    size_t  start = 0;
-    size_t  end   = originalString.find(delimiterToSplitOn);
+    StringList result;
+    size_t     start = 0;
+    size_t     end   = originalString.find(delimiterToSplitOn);
 
     if (originalString.empty())
     {

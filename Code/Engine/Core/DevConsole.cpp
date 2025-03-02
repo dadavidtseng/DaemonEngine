@@ -124,7 +124,7 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
     {
         AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
 
-        Strings registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+        StringList registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
 
         bool isCommandValid = std::find(registeredEventNames.begin(), registeredEventNames.end(), command) != registeredEventNames.end();
 
@@ -488,7 +488,7 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 {
     UNUSED(args)
 
-    Strings const registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+    StringList const registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
 
     for (int i = 0; i < static_cast<int>(registeredEventNames.size()); i++)
     {
@@ -506,7 +506,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
     AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
-    g_theRenderer->SetBlendMode(BlendMode::ALPHA);
+    renderer.SetBlendMode(BlendMode::ALPHA);
 
     renderer.BindTexture(nullptr);
     renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());

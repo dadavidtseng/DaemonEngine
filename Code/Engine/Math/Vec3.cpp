@@ -11,8 +11,11 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-STATIC Vec3 Vec3::ZERO = Vec3(0, 0, 0);
-STATIC Vec3 Vec3::ONE  = Vec3(1, 1, 1);
+STATIC Vec3 Vec3::ZERO    = Vec3(0, 0, 0);
+STATIC Vec3 Vec3::ONE     = Vec3(1, 1, 1);
+STATIC Vec3 Vec3::X_BASIS = Vec3(1, 0, 0);
+STATIC Vec3 Vec3::Y_BASIS = Vec3(0, 1, 0);
+STATIC Vec3 Vec3::Z_BASIS = Vec3(0, 0, 1);
 
 //----------------------------------------------------------------------------------------------------
 Vec3::Vec3(float const initialX, float const initialY, float const initialZ)
@@ -114,6 +117,27 @@ Vec3 const Vec3::GetNormalized() const
 }
 
 //----------------------------------------------------------------------------------------------------
+void Vec3::GetOrthonormalBasis(Vec3 const& iBasis, Vec3* jBasis, Vec3* kBasis) const
+{
+    // If the iBasis is not collinear with the zBasis.
+    if (abs(iBasis.z) < 1.f)
+    {
+        *jBasis = CrossProduct3D(Z_BASIS, iBasis);
+        *jBasis = jBasis->GetNormalized();
+
+        *kBasis = CrossProduct3D(iBasis, *jBasis);
+        *kBasis = kBasis->GetNormalized();
+    }
+    else
+    {
+        *kBasis = CrossProduct3D(iBasis, Y_BASIS);
+        *kBasis = kBasis->GetNormalized();
+
+        *jBasis = CrossProduct3D(*kBasis, iBasis);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 bool Vec3::operator==(Vec3 const& compare) const
 {
     return
@@ -141,6 +165,13 @@ Vec3 const Vec3::operator-(Vec3 const& vecToSubtract) const
 {
     return
         Vec3(x - vecToSubtract.x, y - vecToSubtract.y, z - vecToSubtract.z);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 Vec3::operator-() const
+{
+    return
+        Vec3(-x, -y, -z);
 }
 
 //----------------------------------------------------------------------------------------------------
