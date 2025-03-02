@@ -295,6 +295,21 @@ void Vec2::SetFromText(char const* text)
 }
 
 //----------------------------------------------------------------------------------------------------
+bool Vec2::operator==(Vec2 const& compare) const
+{
+    return
+        std::fabs(x - compare.x) < EPSILON &&
+        std::fabs(y - compare.y) < EPSILON;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Vec2::operator!=(Vec2 const& compare) const
+{
+    return
+        !(*this == compare);
+}
+
+//----------------------------------------------------------------------------------------------------
 Vec2 Vec2::operator+(Vec2 const& vecToAdd) const
 {
     return Vec2(x + vecToAdd.x, y + vecToAdd.y);
@@ -375,19 +390,4 @@ Vec2 operator*(float const uniformScale,
 {
     return
         Vec2(vecToScale.x * uniformScale, vecToScale.y * uniformScale);
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Vec2::operator==(Vec2 const& compare) const
-{
-    return
-        std::fabs(x - compare.x) < EPSILON &&
-        std::fabs(y - compare.y) < EPSILON;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Vec2::operator!=(Vec2 const& compare) const
-{
-    return
-        !(*this == compare);
 }

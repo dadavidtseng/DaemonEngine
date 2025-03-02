@@ -485,8 +485,8 @@ void AddVertsForCylinder3D(VertexList&  verts,
         Vec3 topLeftPosition(endPosition + radius * (cosStart * jBasis + sinStart * kBasis));
         Vec3 topRightPosition(endPosition + radius * (cosEnd * jBasis + sinEnd * kBasis));
         Vec3 bottomCenterPosition(startPosition);
-        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * jBasis*-1.f + -sinStart * kBasis*-1.f));
-        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * jBasis*-1.f + -sinEnd * kBasis*-1.f));
+        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
+        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
 
         // 6. Stores the vertices using counter-clockwise order.
         verts.emplace_back(topCenterPosition, color);
@@ -502,6 +502,62 @@ void AddVertsForCylinder3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCone3D(VertexList& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color, AABB2 const& UVs, int numSlices)
+void AddVertsForCone3D(VertexList&  verts,
+                       Vec3 const&  startPosition,
+                       Vec3 const&  endPosition,
+                       float const  radius,
+                       Rgba8 const& color,
+                       AABB2 const& UVs,
+                       int const    numSlices)
 {
+    // 1. Calculate cone's forward/normalized direction.
+    Vec3 const forwardDirection = endPosition - startPosition;
+    Vec3 const iBasis           = forwardDirection.GetNormalized();
+
+    // 2. Get jBasis and kBasis based on normalDirection.
+    Vec3 jBasis, kBasis;
+    iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+
+    // 3. Calculate the degree of each triangle in the bottom disc of the cone.
+    float const DEGREES_PER_SIDE = 360.f / static_cast<float>(numSlices);
+
+    for (int sideIndex = 0; sideIndex < numSlices; ++sideIndex)
+    {
+        // 4. Get the degree of each triangle on the unit circle.
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideIndex);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideIndex + 1);
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
+
+        // 5. Get the positions by ( discCenter ) + ( radius ) * ( cos * jBasis + sin * kBasis )
+        Vec3 topCenterPosition(endPosition);
+        Vec3 topLeftPosition(endPosition);
+        Vec3 topRightPosition(endPosition);
+        Vec3 bottomCenterPosition(startPosition);
+        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
+        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
+
+        // 6. Stores the vertices using counter-clockwise order.
+        verts.emplace_back(topCenterPosition, color);
+        verts.emplace_back(topLeftPosition, color);
+        verts.emplace_back(topRightPosition, color);
+        verts.emplace_back(bottomCenterPosition, color);
+        verts.emplace_back(bottomRightPosition, color);
+        verts.emplace_back(bottomLeftPosition, color);
+
+        // 7. Add verts for cone's side.
+        AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, UVs);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForArrow3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float const coneCylinderHeightRatio, float const cylinderRadius, float const coneRadius, Rgba8 const& color, AABB2 const& UVs, int numCylinderSlices, int numConeSlices)
+{
+    Vec3 const forwardDirection = endPosition - startPosition;
+    Vec3 const midPosition      = startPosition + forwardDirection * coneCylinderHeightRatio;
+
+    AddVertsForCylinder3D(verts, startPosition, midPosition, cylinderRadius, color, UVs, numCylinderSlices);
+    AddVertsForCone3D(verts, midPosition, endPosition, coneRadius, color, UVs, numConeSlices);
 }

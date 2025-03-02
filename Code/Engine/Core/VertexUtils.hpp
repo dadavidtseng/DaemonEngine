@@ -45,5 +45,6 @@ void AddVertsForSphere3D(VertexList& verts, float radius, Rgba8 const& color = R
 
 void  TransformVertexArray3D(const VertexList& verts, Mat44 const& transform);
 AABB2 GetVertexBounds2D(VertexList const& verts);
-void  AddVertsForCylinder3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
-void  AddVertsForCone3D(VertexList& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 8);
+void  AddVertsForCylinder3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
+void  AddVertsForCone3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
+void  AddVertsForArrow3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float coneCylinderHeightRatio, float cylinderRadius, float coneRadius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numCylinderSlices = 32, int numConeSlices = 32);
