@@ -23,11 +23,11 @@ Texture const& BitmapFont::GetTexture() const
 
 //----------------------------------------------------------------------------------------------------
 void BitmapFont::AddVertsForText2D(VertexList&   verts,
+                                   String const& text,
                                    Vec2 const&   textMins,
                                    float const   cellHeight,
-                                   String const& text,
                                    Rgba8 const&  tint,
-                                   float const   cellAspectScale) const
+                                   float const   cellAspectRatio) const
 {
     Vec2 currentPosition = textMins; // Create a local copy to modify
 
@@ -36,7 +36,7 @@ void BitmapFont::AddVertsForText2D(VertexList&   verts,
         int const   glyphIndex  = static_cast<unsigned char>(c);
         AABB2       uvs         = m_fontGlyphsSpriteSheet.GetSpriteUVs(glyphIndex);
         float const glyphAspect = GetGlyphAspect(glyphIndex);
-        Vec2 const  glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);
+        Vec2 const  glyphSize(cellHeight * glyphAspect * cellAspectRatio, cellHeight);
 
         AddVertsForAABB2D(verts, AABB2(currentPosition, currentPosition + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
 
@@ -45,112 +45,128 @@ void BitmapFont::AddVertsForText2D(VertexList&   verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForTextInBox2D(VertexList&       verts,
-                                        String const&     text,
-                                        AABB2 const&      box,
-                                        float             cellHeight,
-                                        Rgba8 const&      tint,
-                                        float        cellAspectScale,
-                                        Vec2 const&       alignment,
-                                        TextBoxMode const mode,
-                                        int const         maxGlyphsToDraw) const
+void BitmapFont::AddVertsForTextInBox2D(VertexList&        verts,
+                                        String const&      text,
+                                        AABB2 const&       box,
+                                        float              cellHeight,
+                                        Rgba8 const&       tint,
+                                        float const        cellAspectRatio,
+                                        Vec2 const&        alignment,
+                                        eTextBoxMode const mode,
+                                        int const          maxGlyphsToDraw) const
 {
     // 1. Split text string on delimiter '\n' and store them in StingList.
     StringList const lines = SplitStringOnDelimiter(text, '\n');
 
-    // 2. Calculate the totalTextHeight and initialize the maxLineWidth.
-    float const totalTextHeight = cellHeight * static_cast<float>(lines.size());
+    // 2. Initialize the maxLineWidth, and calculate the totalLineHeight.
     float       maxLineWidth    = 0.f;
+    float const totalLineHeight = cellHeight * static_cast<float>(lines.size());
 
-    // 3. Update the maxLineWidth by for looping all lines.
+    // 3. Update the maxLineWidth by for-looping all lines.
     for (String const& line : lines)
     {
-        float lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
-        maxLineWidth    = std::max(maxLineWidth, lineWidth);  // 更新最大行寬
+        float lineWidth = GetTextWidth(cellHeight, line, cellAspectRatio);
+        maxLineWidth    = std::max(maxLineWidth, lineWidth);
     }
 
-    // 如果是 SHRINK_TO_FIT 模式，則計算縮放因子以使文字適應邊界框
+    // 4. If eTextBoxMode is set to SHRINK_TO_FIT,
     float scaleFactor = 1.f;
+
     if (mode == SHRINK_TO_FIT)
     {
+        // Get the horizontalScale and verticalScale, and set scaleFactor to whichever is smaller.
         float const horizontalScale = box.GetDimensions().x / maxLineWidth;
-        float const verticalScale   = box.GetDimensions().y / totalTextHeight;
-        scaleFactor                 = std::min(horizontalScale, verticalScale); // 選擇較小的比例
+        float const verticalScale   = box.GetDimensions().y / totalLineHeight;
+        scaleFactor                 = std::min(horizontalScale, verticalScale);
     }
 
-    // 根據縮放比例調整字元的高度和寬高比例
+    // 5. Apply the scaleFactor to cellHeight, maxLineWidth, and totalLineHeight.
     cellHeight *= scaleFactor;
-    // cellAspectScale *= scaleFactor; // If you want to apply scaling here as well, uncomment this line
-
-    // 計算最終文字區塊的寬度和高度
     float const finalTextWidth  = maxLineWidth * scaleFactor;
-    float const finalTextHeight = totalTextHeight * scaleFactor;
+    float const finalTextHeight = totalLineHeight * scaleFactor;
 
-    // 根據對齊方式計算文字區塊的初始位置
-    float const offsetX = (box.GetDimensions().x - finalTextWidth) * alignment.x;
-    float const offsetY = (box.GetDimensions().y - finalTextHeight) * alignment.y;
+    // 6. Calculate the adjustmentX and adjustmentY based on alignment.
+    float const adjustmentX = (box.GetDimensions().x - finalTextWidth) * alignment.x;
+    float const adjustmentY = (box.GetDimensions().y - finalTextHeight) * alignment.y;
 
-    // 文字的起始位置
-    Vec2 startPos = box.m_mins + Vec2(offsetX + alignment.x, offsetY + cellHeight * ((float)lines.size() - 1.f));
+    // 7. Calculate the startPosition of all the lines ( StringList ), which is bottomLeft ( box.m_mins ) plus adjustment.
+    Vec2 const startPosition = box.m_mins + Vec2(adjustmentX, adjustmentY + cellHeight * (static_cast<float>(lines.size()) - 1.f));
 
-    // 設置當前文字位置為起始位置
-    Vec2 currentPos = startPos;
-    int  glyphCount = 0;
+    // 8. Initialize the currentPosition of all the lines ( StringList ) and glyphCount.
+    Vec2 currentPosition = startPosition;
+    int  glyphCount      = 0;
 
-    // 遍歷每行文字並將頂點加入 vertexArray
+    // 9. Stores vertices into VertList.
     for (String const& line : lines)
     {
-        if (line.empty())  // 忽略空行
-            continue;
-
-        // 計算當前行的寬度
-        float const lineWidth = GetTextWidth(cellHeight, line, cellAspectScale);
-
-        // 根據水平對齊方式計算該行的起始 X 位置
-        float const lineOffsetX = (box.GetDimensions().x - lineWidth) * alignment.x;
-        currentPos.x            = box.m_mins.x + lineOffsetX;
-
-        // 將當前行的每個字元添加到頂點數組中
-        for (char const& c : line)
+        // 10. Skip the line if empty.
+        if (line.empty())
         {
-            if (glyphCount >= maxGlyphsToDraw)  // 如果超過最大顯示字元數，則停止渲染
-                break;
-
-            // 根據字元獲取字形的 UV 坐標
-            int   glyphIndex  = static_cast<unsigned char>(c);
-            AABB2 uvs         = m_fontGlyphsSpriteSheet.GetSpriteUVs(glyphIndex);
-            float glyphAspect = GetGlyphAspect(glyphIndex);  // 獲取字形的寬高比例
-            Vec2  glyphSize(cellHeight * glyphAspect * cellAspectScale, cellHeight);  // 計算字形的寬度和高度
-
-            // 將字形的頂點數據添加到 vertexArray
-            AddVertsForAABB2D(verts, AABB2(currentPos, currentPos + glyphSize), tint, uvs.m_mins, uvs.m_maxs);
-
-            // 更新當前字形的 x 位置，準備渲染下一個字形
-            currentPos.x += glyphSize.x;
-
-            glyphCount++;  // 增加已渲染字形的計數
+            continue;
         }
 
-        // 移動到下一行，y坐標減少
-        currentPos.y -= cellHeight;
+        // 11. Adjust the currentPosition similarly to how the totalLines box is adjusted above.
+        float const lineWidth       = GetTextWidth(cellHeight, line, cellAspectRatio);
+        float const lineAdjustmentX = (box.GetDimensions().x - lineWidth) * alignment.x;
+        currentPosition.x           = box.m_mins.x + lineAdjustmentX;
+
+        // 12. Stores each char into VertList.
+        for (char const& c : line)
+        {
+            // 13. If glyphCount is larger than maxGlyphsToDraw, stop rendering this line.
+            if (glyphCount >= maxGlyphsToDraw)
+            {
+                break;
+            }
+
+            // 14. Calculate the glyphSize by getting its glyphAspect and UVs. ( Aspect ratio = Width / Height )
+            int const   glyphIndex  = static_cast<unsigned char>(c);
+            AABB2       UVs         = m_fontGlyphsSpriteSheet.GetSpriteUVs(glyphIndex);
+            float const glyphAspect = GetGlyphAspect(glyphIndex);
+            Vec2        glyphSize(cellHeight * glyphAspect * cellAspectRatio, cellHeight);
+
+            // 15. Calculate the char's AABB2 box based on the currentPosition and glyphSize, then add vertices using AddVertsForAABB2D.
+            AddVertsForAABB2D(verts, AABB2(currentPosition, currentPosition + glyphSize), tint, UVs.m_mins, UVs.m_maxs);
+
+            // 16. Update the char's currentPosition.x and move rightward to next char, then update the glyphCount.
+            currentPosition.x += glyphSize.x;
+            glyphCount++;
+        }
+
+        // 17. Update the char's currentPosition.y and move downward to next line.
+        currentPosition.y -= cellHeight;
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
-                                                   float         cellHeight,
                                                    String const& text,
-                                                   Rgba8 const&  tine,
-                                                   float         cellAspect,
+                                                   float         cellHeight,
+                                                   Rgba8 const&  tint,
+                                                   float         cellAspectRatio,
                                                    Vec2 const&   alignment,
                                                    int           maxGlyphsToDraw)
 {
+    float const textWidth = GetTextWidth(cellHeight, text, cellAspectRatio);
+
+    AABB2 const box = AABB2(Vec2::ZERO, Vec2(textWidth, cellHeight));
+
+    AddVertsForTextInBox2D(verts, text, box, cellHeight, tint, cellAspectRatio, alignment, OVERRUN, maxGlyphsToDraw);
+
+    Mat44 transform(Vec3::Y_BASIS, Vec3::Z_BASIS, Vec3::X_BASIS, Vec3(0.f, -textWidth * 0.5f, -cellHeight * 0.5f));
+
+
+	//transform.AppendXRotation(90.f);
+	//transform.AppendYRotation(90.f);
+    //transform.SetTranslation3D(Vec3(0.f,-textWidth * 0.5f, -cellHeight * 0.5f));
+
+    TransformVertexArray3D(verts, transform);
 }
 
 //----------------------------------------------------------------------------------------------------
 float BitmapFont::GetTextWidth(float const   cellHeight,
                                String const& text,
-                               float const   cellAspectScale) const
+                               float const   cellAspectRatio) const
 {
     float totalWidth = 0.f;
 
@@ -159,7 +175,7 @@ float BitmapFont::GetTextWidth(float const   cellHeight,
         int const   glyphIndex  = static_cast<unsigned char>(c);
         float const glyphAspect = GetGlyphAspect(glyphIndex);
 
-        totalWidth += cellHeight * glyphAspect * cellAspectScale;
+        totalWidth += cellHeight * glyphAspect * cellAspectRatio;
     }
 
     return totalWidth;

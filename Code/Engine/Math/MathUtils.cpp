@@ -551,8 +551,7 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition,
     const float distSquared       = GetDistanceSquared2D(referencePosition, discCenter);
     const float discRadiusSquared = discRadius * discRadius;
 
-    if (distSquared <= discRadiusSquared)
-        return referencePosition;
+    if (distSquared <= discRadiusSquared) return referencePosition;
 
     Vec2 discCenterToReferencePos = referencePosition - discCenter;
 
@@ -693,20 +692,66 @@ float NormalizeByte(unsigned char const byte)
 //----------------------------------------------------------------------------------------------------
 unsigned char DenormalizeByte(float const zeroToOne)
 {
-    if (zeroToOne <= 0.0f)
-        return 0;
+    if (zeroToOne <= 0.0f) return 0;
 
-    if (zeroToOne >= 1.0f)
-        return 255;
+    if (zeroToOne >= 1.0f) return 255;
 
     return static_cast<unsigned char>(zeroToOne * 256.0f);
 }
 
 //-End-of-Byte-Denormalization------------------------------------------------------------------------
 
-Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 billboardScale)
+Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 const& billboardScale)
 {
-    return {};
+    Mat44 billboardMatrix;
+    Vec3  iBasis, jBasis, kBasis;
+
+    switch (billboardType)
+    {
+    case eBillboardType::FULL_FACING:
+        {
+            Vec3 const forwardDirection = targetMatrix.GetTranslation3D() - billboardPosition;
+            iBasis                      = forwardDirection.GetNormalized();
+
+            iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+
+            break;
+        }
+    case eBillboardType::FULL_OPPOSING:
+        {
+            iBasis = -targetMatrix.GetIBasis3D();
+            jBasis = -targetMatrix.GetJBasis3D();
+            kBasis = targetMatrix.GetKBasis3D();
+
+            break;
+        }
+    case eBillboardType::WORLD_UP_FACING:
+        {
+            Vec3 forwardDirection = billboardPosition - targetMatrix.GetTranslation3D();
+            forwardDirection.z    = 0.f;
+
+            iBasis = forwardDirection.GetNormalized();
+            kBasis = Vec3::Z_BASIS;
+            jBasis = CrossProduct3D(Vec3::Z_BASIS, iBasis);
+
+            break;
+        }
+
+    case eBillboardType::WORLD_UP_OPPOSING:
+        {
+            Vec3 forwardDirection = -targetMatrix.GetIBasis3D();
+            forwardDirection.z    = 0.f;
+
+            iBasis = forwardDirection.GetNormalized();
+            kBasis = Vec3::Z_BASIS;
+            jBasis = CrossProduct3D(Vec3::Z_BASIS, iBasis);
+
+            break;
+        }
+    }
+
+    billboardMatrix.SetIJK3D(iBasis, jBasis * billboardScale.x, kBasis * billboardScale.y);
+    billboardMatrix.SetTranslation3D(billboardPosition);
+
+    return billboardMatrix;
 }
-
-

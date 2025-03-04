@@ -39,7 +39,7 @@ STATIC Rgba8 const DevConsole::INPUT_INSERTION_POINT = Rgba8(255, 255, 255, 200)
 DevConsole::DevConsole(DevConsoleConfig const& config)
     : m_config(config)
 {
-    AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!!!!!!!!!!!!!");
+    AddLine(INFO_MINOR, "Welcome to DevConsole v0.1.0!!!!!!!!!!!!!\naa");
 
     AddLine(INFO_MAJOR, "Controls");
     AddLine(INFO_MINOR, "(Mouse) Aim");
@@ -563,7 +563,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
             lineHeight,
             reversedLine.m_color,
             fontAspect,
-            Vec2::ZERO
+            Vec2::ONE
         );
     }
 

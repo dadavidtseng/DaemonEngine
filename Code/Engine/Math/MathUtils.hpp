@@ -26,10 +26,10 @@ float constexpr EPSILON = 1e-5f;	// Define a small tolerance value
 enum class eBillboardType
 {
     NONE = -1,
-    WORLD_UP_FACING,
-    WORLD_UP_OPPOSING,
     FULL_FACING,
     FULL_OPPOSING,
+    WORLD_UP_FACING,
+    WORLD_UP_OPPOSING,
     COUNT
 };
 
@@ -145,4 +145,4 @@ unsigned char DenormalizeByte(float zeroToOne);
 
 //-End-of-Byte-Denormalization------------------------------------------------------------------------
 
-Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 billboardScale = Vec2::ONE);
+Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 const& billboardScale = Vec2::ONE);

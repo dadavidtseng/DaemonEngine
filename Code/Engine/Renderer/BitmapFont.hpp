@@ -9,10 +9,11 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
 class Texture;
 
-enum TextBoxMode
+//----------------------------------------------------------------------------------------------------
+enum eTextBoxMode
 {
     SHRINK_TO_FIT,
     OVERRUN
@@ -21,23 +22,23 @@ enum TextBoxMode
 //----------------------------------------------------------------------------------------------------
 class BitmapFont
 {
-    friend class Renderer; // Only the Renderer can create new BitmapFont objects!
+    friend class Renderer;  // Only the Renderer can create new BitmapFont objects!
 
 public:
     Texture const& GetTexture() const;
-    void           AddVertsForText2D(VertexList& verts, Vec2 const& textMins, float cellHeight, String const& text, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f) const;
-    void           AddVertsForTextInBox2D(VertexList& verts, String const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspectScale = 1.f, Vec2 const& alignment = Vec2(0.f, 0.f), TextBoxMode mode = SHRINK_TO_FIT, int maxGlyphsToDraw = INT_MAX) const;
-    void           AddVertsForText3DAtOriginXForward(VertexList& verts, float cellHeight, String const& text, Rgba8 const& tine = Rgba8::WHITE, float cellAspect = 1.f, Vec2 const& alignment = Vec2(0.5f, 0.5f), int maxGlyphsToDraw = 999999999);
+    void           AddVertsForText2D(VertexList& verts, String const& text, Vec2 const& textMins, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspectRatio = 1.f) const;
+    void           AddVertsForTextInBox2D(VertexList& verts, String const& text, AABB2 const& box, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspectRatio = 1.f, Vec2 const& alignment = Vec2::ZERO, eTextBoxMode mode = SHRINK_TO_FIT, int maxGlyphsToDraw = INT_MAX) const;
+    void           AddVertsForText3DAtOriginXForward(VertexList& verts, String const& text, float cellHeight, Rgba8 const& tint = Rgba8::WHITE, float cellAspect = 1.f, Vec2 const& alignment = Vec2(0.5f, 0.5f), int maxGlyphsToDraw = INT_MAX);
 
-    float GetTextWidth(float cellHeight, String const& text, float cellAspectScale = 1.f) const;
+    float GetTextWidth(float cellHeight, String const& text, float cellAspectRatio = 1.f) const;
 
 private:
     BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords);
 
 protected:
-    float GetGlyphAspect(int glyphUnicode) const; // For now this will always return m_fontDefaultAspect
+    float GetGlyphAspect(int glyphUnicode) const;   // For now this will always return m_fontDefaultAspect
 
     String      m_fontFilePathNameWithNoExtension;
     SpriteSheet m_fontGlyphsSpriteSheet;
-    float       m_fontDefaultAspect = 1.f; // For basic (tier 1) fonts, set this to the aspect of the sprite sheet texture
+    float       m_fontDefaultAspect = 1.f;  // For basic (tier 1) fonts, set this to the aspect of the sprite sheet texture
 };
