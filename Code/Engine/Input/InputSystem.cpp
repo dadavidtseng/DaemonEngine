@@ -16,6 +16,16 @@
 #include "Engine/Renderer/Window.hpp"
 
 //----------------------------------------------------------------------------------------------------
+unsigned char const NUMCODE_0           = 0x30;
+unsigned char const NUMCODE_1           = 0x31;
+unsigned char const NUMCODE_2           = 0x32;
+unsigned char const NUMCODE_3           = 0x33;
+unsigned char const NUMCODE_4           = 0x34;
+unsigned char const NUMCODE_5           = 0x35;
+unsigned char const NUMCODE_6           = 0x36;
+unsigned char const NUMCODE_7           = 0x37;
+unsigned char const NUMCODE_8           = 0x38;
+unsigned char const NUMCODE_9           = 0x39;
 unsigned char const KEYCODE_A           = 0x41;
 unsigned char const KEYCODE_B           = 0x42;
 unsigned char const KEYCODE_C           = 0x43;

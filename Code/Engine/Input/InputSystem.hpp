@@ -9,6 +9,16 @@
 #include "Engine/Input/XboxController.hpp"
 
 //-----------------------------------------------------------------------------------------------
+extern unsigned char const NUMCODE_0;
+extern unsigned char const NUMCODE_1;
+extern unsigned char const NUMCODE_2;
+extern unsigned char const NUMCODE_3;
+extern unsigned char const NUMCODE_4;
+extern unsigned char const NUMCODE_5;
+extern unsigned char const NUMCODE_6;
+extern unsigned char const NUMCODE_7;
+extern unsigned char const NUMCODE_8;
+extern unsigned char const NUMCODE_9;
 extern unsigned char const KEYCODE_A;
 extern unsigned char const KEYCODE_B;
 extern unsigned char const KEYCODE_C;
@@ -98,15 +108,15 @@ class InputSystem
 public:
     explicit InputSystem(InputSystemConfig const& config);
     ~InputSystem() = default;
-    void Startup();
-    void Shutdown();
-    void BeginFrame();
-    void EndFrame();
-    bool WasKeyJustPressed(unsigned char keyCode) const;
-    bool WasKeyJustReleased(unsigned char keyCode) const;
-    bool IsKeyDown(unsigned char keyCode) const;
-    void HandleKeyPressed(unsigned char keyCode);
-    void HandleKeyReleased(unsigned char keyCode);
+    void                  Startup();
+    void                  Shutdown();
+    void                  BeginFrame();
+    void                  EndFrame();
+    bool                  WasKeyJustPressed(unsigned char keyCode) const;
+    bool                  WasKeyJustReleased(unsigned char keyCode) const;
+    bool                  IsKeyDown(unsigned char keyCode) const;
+    void                  HandleKeyPressed(unsigned char keyCode);
+    void                  HandleKeyReleased(unsigned char keyCode);
     XboxController const& GetController(int controllerID);
 
     void SetCursorMode(CursorMode mode);
@@ -120,7 +130,7 @@ public:
 protected:
     KeyButtonState m_keyStates[NUM_KEYCODES];
     XboxController m_controllers[NUM_XBOX_CONTROLLERS];
-    CursorState m_cursorState;
+    CursorState    m_cursorState;
 
 private:
     InputSystemConfig m_inputConfig;
