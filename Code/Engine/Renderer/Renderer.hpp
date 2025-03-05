@@ -99,6 +99,7 @@ public:
     void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
 
     void BindTexture(Texture const* texture) const;
+    void BindShader(Shader const* shader) const;
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
 
     Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
@@ -121,7 +122,6 @@ private:
     Shader* CreateShader(char const* shaderName, char const* shaderSource);
     Shader* CreateShader(char const* shaderName);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-    void    BindShader(Shader const* shader) const;
     void    DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount) const;
 
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;

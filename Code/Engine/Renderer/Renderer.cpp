@@ -549,6 +549,19 @@ void Renderer::BindTexture(Texture const* texture) const
 }
 
 //----------------------------------------------------------------------------------------------------
+void Renderer::BindShader(Shader const* shader) const
+{
+    if (shader == nullptr)
+    {
+        shader = m_defaultShader;
+    }
+
+    m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(shader->m_inputLayout);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Renderer::DrawTexturedQuad(AABB2 const& bounds,
                                 Texture const* texture,
                                 Rgba8 const& tint,
@@ -973,19 +986,6 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
     // {
     //     errorBlob->Release();
     // }
-}
-
-//----------------------------------------------------------------------------------------------------
-void Renderer::BindShader(Shader const* shader) const
-{
-    if (shader == nullptr)
-    {
-        shader = m_defaultShader;
-    }
-
-    m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(shader->m_inputLayout);
 }
 
 //----------------------------------------------------------------------------------------------------

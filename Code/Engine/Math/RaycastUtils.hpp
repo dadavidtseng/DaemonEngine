@@ -32,3 +32,5 @@ struct RaycastResult2D
 };
 
 RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist, Vec2 const& discCenter, float discRadius);
+RaycastResult2D RaycastVsLineSegment2D();
+RaycastResult2D RaycastVsAABB2D();
