@@ -380,6 +380,7 @@ void AddVertsForAABB3D(VertexList&  verts,
 
 //----------------------------------------------------------------------------------------------------
 void AddVertsForSphere3D(VertexList&  verts,
+                         Vec3 const&  center,
                          float const  radius,
                          Rgba8 const& color,
                          AABB2 const& UVs,
@@ -413,7 +414,7 @@ void AddVertsForSphere3D(VertexList&  verts,
             AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
                          Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
 
-            AddVertsForQuad3D(verts, bottomLeft, bottomRight, topLeft, topRight, color, quadUV);
+            AddVertsForQuad3D(verts, center + bottomLeft, center + bottomRight, center + topLeft, center + topRight, color, quadUV);
         }
     }
 }

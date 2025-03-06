@@ -41,7 +41,7 @@ void AddVertsForHalfDisc2D(VertexList& verts, Vec2 const& discCenter, float disc
 void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPosition, Vec2 const& tipPosition, float arrowSize, float thickness, Rgba8 const& color);
 void AddVertsForQuad3D(VertexList& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
 void AddVertsForAABB3D(VertexList& verts, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
-void AddVertsForSphere3D(VertexList& verts, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
+void AddVertsForSphere3D(VertexList& verts, Vec3 const& center, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
 
 void  TransformVertexArray3D(VertexList& verts, Mat44 const& transform);
 AABB2 GetVertexBounds2D(VertexList const& verts);
