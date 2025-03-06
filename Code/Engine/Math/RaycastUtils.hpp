@@ -6,6 +6,8 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 
+struct AABB2;
+
 //----------------------------------------------------------------------------------------------------
 struct Ray2
 {
@@ -26,11 +28,11 @@ struct RaycastResult2D
     Vec2  m_impactNormal;
 
     // Original raycast information (optional)
-    Vec2  m_rayFwdNormal;
+    Vec2  m_rayForwardNormal;
     Vec2  m_rayStartPos;
     float m_rayMaxLength = 1.f;
 };
 
-RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& fwdNormal, float maxDist, Vec2 const& discCenter, float discRadius);
-RaycastResult2D RaycastVsLineSegment2D();
-RaycastResult2D RaycastVsAABB2D();
+RaycastResult2D RaycastVsDisc2D(Vec2 const& startPos, Vec2 const& forwardNormal, float maxDist, Vec2 const& discCenter, float discRadius);
+RaycastResult2D RayCastVsLineSegment2D(Vec2 const& startPos, Vec2 const& forwardNormal, float maxDist, Vec2 const& lineStartPos, Vec2 const& lineEndPos);
+RaycastResult2D RayCastVsAABB2D(Vec2 const& startPos, Vec2 const& forwardNormal, float maxDist, AABB2 const& aabb2);
