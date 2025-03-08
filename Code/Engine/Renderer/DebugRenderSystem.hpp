@@ -69,5 +69,5 @@ void DebugAddMessage(String const& text, float duration, Rgba8 const& startColor
 //----------------------------------------------------------------------------------------------------
 // Console commands
 //
-bool Command_DebugRenderClear(EventArgs& args);
-bool Command_DebugRenderToggle(EventArgs& args);
+bool OnDebugRenderClear(EventArgs& args);
+bool OnDebugRenderToggle(EventArgs& args);
