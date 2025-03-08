@@ -141,11 +141,11 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&        verts,
 //----------------------------------------------------------------------------------------------------
 void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
                                                    String const& text,
-                                                   float         cellHeight,
+                                                   float const   cellHeight,
                                                    Rgba8 const&  tint,
-                                                   float         cellAspectRatio,
+                                                   float const   cellAspectRatio,
                                                    Vec2 const&   alignment,
-                                                   int           maxGlyphsToDraw)
+                                                   int const     maxGlyphsToDraw)
 {
     float const textWidth = GetTextWidth(cellHeight, text, cellAspectRatio);
 
@@ -153,12 +153,9 @@ void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
 
     AddVertsForTextInBox2D(verts, text, box, cellHeight, tint, cellAspectRatio, alignment, OVERRUN, maxGlyphsToDraw);
 
-    Mat44 transform(Vec3::Y_BASIS, Vec3::Z_BASIS, Vec3::X_BASIS, Vec3(0.f, -textWidth * 0.5f, -cellHeight * 0.5f));
+    Mat44 transform;
 
-
-	//transform.AppendXRotation(90.f);
-	//transform.AppendYRotation(90.f);
-    //transform.SetTranslation3D(Vec3(0.f,-textWidth * 0.5f, -cellHeight * 0.5f));
+    transform.SetIJKT3D(Vec3::Y_BASIS, Vec3::Z_BASIS, Vec3::X_BASIS, Vec3(0.f, -textWidth * (1.f - alignment.x), -cellHeight * (1.f - alignment.y)));
 
     TransformVertexArray3D(verts, transform);
 }

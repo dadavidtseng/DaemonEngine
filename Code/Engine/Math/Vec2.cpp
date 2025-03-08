@@ -13,8 +13,9 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-STATIC Vec2 Vec2::ZERO = Vec2(0, 0);
-STATIC Vec2 Vec2::ONE  = Vec2(1, 1);
+STATIC Vec2 Vec2::ZERO = Vec2(0.f, 0.f);
+STATIC Vec2 Vec2::HALF = Vec2(0.5f, 0.5f);
+STATIC Vec2 Vec2::ONE  = Vec2(1.f, 1.f);
 
 //----------------------------------------------------------------------------------------------------
 Vec2::Vec2(float const initialX, float const initialY)

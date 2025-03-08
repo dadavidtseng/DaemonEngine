@@ -14,6 +14,7 @@ struct Vec2
     float       x = 0.f;
     float       y = 0.f;
     static Vec2 ZERO;
+    static Vec2 HALF;
     static Vec2 ONE;
 
     // Construction / Destruction

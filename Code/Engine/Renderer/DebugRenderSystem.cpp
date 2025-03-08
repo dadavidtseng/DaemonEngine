@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 
+#include <algorithm>
 #include <mutex>
 
 #include "Engine/Core/Clock.hpp"
@@ -18,7 +19,7 @@
 //----------------------------------------------------------------------------------------------------
 static DebugRenderConfig m_debugRenderConfig;
 static BitmapFont*       m_debugRenderBitmapFont = nullptr;
-static bool              m_debugRenderIsVisible  = true;
+static bool              m_debugRenderIsVisible  = false;
 std::mutex               m_mutex;
 
 //----------------------------------------------------------------------------------------------------
@@ -139,6 +140,20 @@ void DebugRenderBeginFrame()
         }
         ++it;       // Advance the iterator only if the element was not removed
     }
+
+    // for (int i = 0; i < (int)m_debugRenderObjectList.size(); i++)
+    // {
+    //     if (m_debugRenderObjectList[i])
+    //     {
+    //         m_debugRenderObjectList[i]->m_elapsedTime += deltaSeconds;
+    //         if (m_debugRenderObjectList[i]->m_elapsedTime >= m_debugRenderObjectList[i]->m_maxElapsedTime && m_debugRenderObjectList[i]->m_maxElapsedTime > -1.f)
+    //         {
+    //             delete m_debugRenderObjectList[i];
+    //             m_debugRenderObjectList.erase(m_debugRenderObjectList.begin() + i);
+    //             // i--;
+    //         }
+    //     }
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -199,6 +214,7 @@ void DebugRenderWorld(Camera const& camera)
             continue;
         }
 
+        // Render WORLD_POINT
         if (object->m_type == DebugRenderObjectType::WORLD_POINT)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
@@ -210,17 +226,30 @@ void DebugRenderWorld(Camera const& camera)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
             if (object->m_mode == DebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
 
+        // Render WORLD_LINE
         if (object->m_type == DebugRenderObjectType::WORLD_LINE)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
@@ -231,21 +260,35 @@ void DebugRenderWorld(Camera const& camera)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
             if (object->m_mode == DebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
 
+        // Render WORLD_WIRE_CYLINDER
         if (object->m_type == DebugRenderObjectType::WORLD_WIRE_CYLINDER)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+
             if (object->m_isWireFrame)
             {
                 m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
@@ -254,20 +297,35 @@ void DebugRenderWorld(Camera const& camera)
             {
                 m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
             }
+
             if (object->m_mode == DebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
             if (object->m_mode == DebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
-            m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
 
+        // Render WORLD_WIRE_SPHERE
         if (object->m_type == DebugRenderObjectType::WORLD_WIRE_SPHERE)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
@@ -286,16 +344,30 @@ void DebugRenderWorld(Camera const& camera)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
-            else if (object->m_mode == DebugRenderMode::USE_DEPTH)
+
+            if (object->m_mode == DebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
 
+        // Render WORLD_ARROW
         if (object->m_type == DebugRenderObjectType::WORLD_ARROW)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
@@ -316,8 +388,21 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
+
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
 
+        // Render WORLD_TEXT
         if (object->m_type == DebugRenderObjectType::WORLD_TEXT)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
@@ -325,7 +410,7 @@ void DebugRenderWorld(Camera const& camera)
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
             {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
@@ -333,13 +418,26 @@ void DebugRenderWorld(Camera const& camera)
 
             if (object->m_mode == DebugRenderMode::USE_DEPTH)
             {
+                m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
+
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
         }
 
+        // Render WORLD_BILLBOARD_TEXT
         if (object->m_type == DebugRenderObjectType::WORLD_BILLBOARD_TEXT)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
@@ -360,142 +458,21 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
+
+            if (object->m_mode == DebugRenderMode::X_RAY)
+            {
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
+                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
+                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+            }
         }
     }
 
-    for (DebugRenderObject* object : m_debugRenderObjectList)
-    {
-        if (object == nullptr)
-        {
-            continue;
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_POINT)
-        {
-            m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindTexture(nullptr);
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_LINE)
-        {
-            m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindTexture(nullptr);
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_WIRE_CYLINDER)
-        {
-            m_debugRenderConfig.m_renderer->BindTexture(nullptr);
-            if (object->m_isWireFrame)
-            {
-                m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
-            }
-            else
-            {
-                m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-            }
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_WIRE_SPHERE)
-        {
-            m_debugRenderConfig.m_renderer->BindTexture(nullptr);
-            if (object->m_isWireFrame)
-            {
-                m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::WIREFRAME_CULL_BACK);
-            }
-            else
-            {
-                m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-            }
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_ARROW)
-        {
-            m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindTexture(nullptr);
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_TEXT)
-        {
-            m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-            m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-        else if (object->m_type == DebugRenderObjectType::WORLD_BILLBOARD_TEXT)
-        {
-            m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
-            m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            if (object->m_mode == DebugRenderMode::X_RAY)
-            {
-                m_debugRenderConfig.m_renderer->SetModelConstants(GetBillboardMatrix(eBillboardType::FULL_OPPOSING, camera.GetCameraToWorldTransform(), object->m_startPosition), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::DISABLED);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                m_debugRenderConfig.m_renderer->SetModelConstants(GetBillboardMatrix(eBillboardType::FULL_OPPOSING, camera.GetCameraToWorldTransform(), object->m_startPosition), DebugRenderGetDebugObjectCurrentColor(object));
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::OPAQUE);
-                m_debugRenderConfig.m_renderer->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-            }
-        }
-    }
     m_debugRenderConfig.m_renderer->EndCamera(camera);
 
     //-End-of-Debug-Render-Camera---------------------------------------------------------------------
@@ -520,7 +497,7 @@ void DebugRenderScreen(Camera const& camera)
 
     m_debugRenderConfig.m_renderer->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 
-    float lineHeight = (camera.GetOrthographicTopRight().y - camera.GetOrthographicBottomLeft().y) / 4.f;
+    float lineHeight = (camera.GetOrthographicTopRight().y - camera.GetOrthographicBottomLeft().y) / 40.f;
     float curHeight  = camera.GetOrthographicTopRight().y - lineHeight;
 
     for (DebugRenderObject* object : m_debugRenderObjectList)
@@ -532,7 +509,7 @@ void DebugRenderScreen(Camera const& camera)
 
         if (object->m_type == DebugRenderObjectType::SCREEN_TEXT)
         {
-            // verts.clear();
+            object->m_vertices.clear();
             m_debugRenderBitmapFont->AddVertsForTextInBox2D(object->m_vertices, object->m_text,
                                                             AABB2(Vec2(object->m_startPosition.x, object->m_startPosition.y), Vec2(object->m_startPosition.x, object->m_startPosition.y) + Vec2((float)object->m_text.size() * object->m_textHeight, object->m_textHeight)),
                                                             object->m_textHeight, DebugRenderGetDebugObjectCurrentColor(object), 1.f, object->m_alignment, OVERRUN);
@@ -541,19 +518,31 @@ void DebugRenderScreen(Camera const& camera)
             m_debugRenderConfig.m_renderer->SetModelConstants();
             m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
         }
+    }
 
-        if (object->m_type == DebugRenderObjectType::SCREEN_MESSAGE)
+    std::vector<DebugRenderObject*> sortedMessages = m_debugRenderObjectList;
+
+    // 依照 maxElapsedTime 排序，讓 maxElapsedTime == 0.f 的訊息優先
+    std::sort(sortedMessages.begin(), sortedMessages.end(), [](DebugRenderObject* a, DebugRenderObject* b)
+    {
+        return a->m_maxElapsedTime < b->m_maxElapsedTime;
+    });
+
+    for (DebugRenderObject* object : sortedMessages)
+    {
+        if (object == nullptr || object->m_type != DebugRenderObjectType::SCREEN_MESSAGE)
         {
-            if (object->m_maxElapsedTime == -1.f)
-            {
-                m_debugRenderBitmapFont->AddVertsForText2D(object->m_vertices, object->m_text, Vec2(0.f, curHeight), lineHeight, DebugRenderGetDebugObjectCurrentColor(object), 1.f);
-                m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
-                m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-                m_debugRenderConfig.m_renderer->SetModelConstants();
-                m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
-                curHeight -= lineHeight;
-            }
+            continue;
         }
+
+        object->m_vertices.clear();
+        m_debugRenderBitmapFont->AddVertsForText2D(object->m_vertices, object->m_text, Vec2(0.f, curHeight),
+                                                   lineHeight, DebugRenderGetDebugObjectCurrentColor(object), 1.f);
+        m_debugRenderConfig.m_renderer->SetBlendMode(BlendMode::ALPHA);
+        m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
+        m_debugRenderConfig.m_renderer->SetModelConstants();
+        m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
+        curHeight -= lineHeight;
     }
 
 
@@ -807,9 +796,9 @@ void DebugAddWorldBasis(Mat44 const&          transform,
     object->m_maxElapsedTime = duration;
     object->m_mode           = mode;
 
-    AddVertsForArrow3D(object->m_vertices, origin, iBasis * 3.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
-    AddVertsForArrow3D(object->m_vertices, origin, jBasis * 3.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
-    AddVertsForArrow3D(object->m_vertices, origin, kBasis * 3.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
+    AddVertsForArrow3D(object->m_vertices, origin, origin + iBasis, 0.5f, 0.15f, 0.3f, Rgba8::RED);
+    AddVertsForArrow3D(object->m_vertices, origin, origin + jBasis, 0.5f, 0.15f, 0.3f, Rgba8::GREEN);
+    AddVertsForArrow3D(object->m_vertices, origin, origin + kBasis, 0.5f, 0.15f, 0.3f, Rgba8::BLUE);
 
     m_mutex.lock();
     DebugRenderAddObjectToList(object);
