@@ -72,6 +72,11 @@ Vec2 Triangle2::GetCenter() const
 // Get the nearest point on the triangle to a reference position
 Vec2 Triangle2::GetNearestPoint(Vec2 const& referencePosition) const
 {
+    if (IsPointInside(referencePosition))
+    {
+        return  referencePosition;
+    }
+    
     // Start by finding the closest point on each edge of the triangle
     Vec2  nearestPoint       = m_positionCounterClockwise[0];
     float minDistanceSquared = (referencePosition - nearestPoint).GetLengthSquared();
