@@ -363,6 +363,25 @@ bool DoSpheresOverlap(Vec3 const& centerA,
 }
 
 //----------------------------------------------------------------------------------------------------
+bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB)
+{
+    float aMinX = boxA.m_mins.x;
+    float aMaxX = boxA.m_maxs.x;
+    float aMinY = boxA.m_mins.y;
+    float aMaxY = boxA.m_maxs.y;
+    float bMinX = boxB.m_mins.x;
+    float bMaxX = boxB.m_maxs.x;
+    float bMinY = boxB.m_mins.y;
+    float bMaxY = boxB.m_maxs.y;
+
+    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY)
+    {
+        return true;
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------------------------
 bool PushDiscOutOfPoint2D(Vec2&       mobileDiscCenter,
                           const float discRadius,
                           Vec2 const& fixedPoint)
