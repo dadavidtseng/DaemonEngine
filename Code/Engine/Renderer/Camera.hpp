@@ -57,8 +57,8 @@ public:
 private:
     Mode m_mode = eMode_Orthographic;
 
-    Vec3        m_position = Vec3::ZERO;
-    EulerAngles m_orientation;
+    Vec3        m_position    = Vec3::ZERO;
+    EulerAngles m_orientation = EulerAngles::ZERO;
 
     Vec2  m_orthographicBottomLeft = Vec2::ZERO;
     Vec2  m_orthographicTopRight   = Vec2::ZERO;

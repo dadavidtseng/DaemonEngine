@@ -19,7 +19,7 @@
 //----------------------------------------------------------------------------------------------------
 static DebugRenderConfig m_debugRenderConfig;
 static BitmapFont*       m_debugRenderBitmapFont = nullptr;
-static bool              m_debugRenderIsVisible  = false;
+static bool              m_debugRenderIsVisible  = true;
 std::mutex               m_mutex;
 
 //----------------------------------------------------------------------------------------------------

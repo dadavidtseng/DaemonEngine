@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
@@ -16,7 +15,6 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
