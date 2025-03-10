@@ -4,9 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "AABB3.hpp"
 #include "Mat44.hpp"
 #include "Vec4.hpp"
 
+struct FloatRange;
 //----------------------------------------------------------------------------------------------------
 struct AABB2;
 struct Capsule2;
@@ -96,6 +98,11 @@ Vec2  GetProjectedOnto2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjec
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
 bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
 bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB);
+bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second);
+bool DoZCylindersOverlap3D(Vec2 cylinder1CenterXY, float cylinder1Radius, FloatRange cylinder1MinMaxZ, Vec2 cylinder2CenterXY, float cylinder2Radius, FloatRange cylinder2MinMaxZ);
+bool DoSphereAndAABB3Overlap3D(Vec3 sphereCenter, float sphereRadius, AABB3 box);
+bool DoZCylinderAndAABB3Overlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, AABB3 box);
+bool DoZCylinderAndSphereOverlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, Vec3 sphereCenter, float sphereRadius);
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
