@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// AABB3.hpp
+// Cylinder.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -7,18 +7,16 @@
 #include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
-struct AABB3
+struct Cylinder3
 {
-    Vec3 m_mins;
-    Vec3 m_maxs;
-    static AABB3 ZERO_TO_ONE;
-    static AABB3 NEG_HALF_TO_HALF;
+    Vec3  m_startPosition = Vec3::ZERO;
+    Vec3  m_endPosition   = Vec3::ZERO;
+    float m_radius        = 0.f;
 
-    AABB3()                      = default;
-    ~AABB3()                     = default;
-    AABB3(AABB3 const& copyFrom) = default;
-    explicit AABB3(float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-    explicit AABB3(Vec3 const& mins, Vec3 const& maxs);
+    Cylinder3()                         = default;
+    ~Cylinder3()                        = default;
+    Cylinder3(Cylinder3 const& copyFrom) = default;
+    explicit Cylinder3(Vec3 const& startPosition, Vec3 const& endPosition, float radius);
 
     bool       IsPointInside(Vec3 const& referencePoint) const;
     Vec3       GetNearestPoint(Vec3 const& referencePoint) const;

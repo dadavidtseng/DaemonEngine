@@ -24,3 +24,14 @@ AABB3::AABB3(Vec3 const& mins, Vec3 const& maxs)
       m_maxs(maxs)
 {
 }
+
+
+bool AABB3::IsPointInside(Vec3 const& referencePoint) const
+{
+    return false;
+}
+
+Vec3 AABB3::GetNearestPoint(Vec3 const& referencePoint) const
+{
+    return referencePoint;
+}

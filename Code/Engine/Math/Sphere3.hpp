@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// AABB3.hpp
+// Sphere3.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -7,18 +7,16 @@
 #include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
-struct AABB3
+struct Sphere3
 {
-    Vec3 m_mins;
-    Vec3 m_maxs;
-    static AABB3 ZERO_TO_ONE;
-    static AABB3 NEG_HALF_TO_HALF;
+    Vec3  m_centerPosition = Vec3::ZERO;
+    float m_radius         = 0.f;
 
-    AABB3()                      = default;
-    ~AABB3()                     = default;
-    AABB3(AABB3 const& copyFrom) = default;
-    explicit AABB3(float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-    explicit AABB3(Vec3 const& mins, Vec3 const& maxs);
+    Sphere3()                        = default;
+    ~Sphere3()                       = default;
+    Sphere3(Sphere3 const& copyFrom) = default;
+
+    explicit Sphere3(Vec3 const& centerPosition, float radius);
 
     bool       IsPointInside(Vec3 const& referencePoint) const;
     Vec3       GetNearestPoint(Vec3 const& referencePoint) const;
