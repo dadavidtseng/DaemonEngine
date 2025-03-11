@@ -5,6 +5,12 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/AABB3.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
+
+//----------------------------------------------------------------------------------------------------
+STATIC AABB3 AABB3::ZERO_TO_ONE      = AABB3(Vec3(0.f, 0.f,0.f), Vec3(1.f, 1.f,1.f));
+STATIC AABB3 AABB3::NEG_HALF_TO_HALF = AABB3(Vec3(-0.5f, -0.5f,-0.5f), Vec3(0.5f, 0.5f,0.5f));
+
 //----------------------------------------------------------------------------------------------------
 AABB3::AABB3(float const minX, float const minY, float const minZ, float const maxX, float const maxY, float const maxZ)
     : m_mins(Vec3(minX, minY, minZ)),
