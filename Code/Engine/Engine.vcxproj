@@ -193,6 +193,7 @@
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\AABB3.cpp" />
     <ClCompile Include="Math\Capsule2.cpp" />
+    <ClCompile Include="Math\Cylinder3.cpp" />
     <ClCompile Include="Math\Disc2.cpp" />
     <ClCompile Include="Math\EulerAngles.cpp" />
     <ClCompile Include="Math\FloatRange.cpp" />
@@ -204,6 +205,7 @@
     <ClCompile Include="Math\OBB2.cpp" />
     <ClCompile Include="Math\RandomNumberGenerator.cpp" />
     <ClCompile Include="Math\RaycastUtils.cpp" />
+    <ClCompile Include="Math\Sphere3.cpp" />
     <ClCompile Include="Math\Triangle2.cpp" />
     <ClCompile Include="Math\Vec2.cpp" />
     <ClCompile Include="Math\Vec3.cpp" />
@@ -257,6 +259,7 @@
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\AABB3.hpp" />
     <ClInclude Include="Math\Capsule2.hpp" />
+    <ClInclude Include="Math\Cylinder3.hpp" />
     <ClInclude Include="Math\Disc2.hpp" />
     <ClInclude Include="Math\EulerAngles.hpp" />
     <ClInclude Include="Math\FloatRange.hpp" />
@@ -268,6 +271,7 @@
     <ClInclude Include="Math\OBB2.hpp" />
     <ClInclude Include="Math\RandomNumberGenerator.hpp" />
     <ClInclude Include="Math\RaycastUtils.hpp" />
+    <ClInclude Include="Math\Sphere3.hpp" />
     <ClInclude Include="Math\Triangle2.hpp" />
     <ClInclude Include="Math\Vec2.hpp" />
     <ClInclude Include="Math\Vec3.hpp" />

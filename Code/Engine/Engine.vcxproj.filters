@@ -190,6 +190,12 @@
     <ClCompile Include="Renderer\DebugRenderSystem.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Cylinder3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Sphere3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -380,6 +386,12 @@
     </ClInclude>
     <ClInclude Include="Renderer\DebugRenderSystem.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Cylinder3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Sphere3.hpp">
+      <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
