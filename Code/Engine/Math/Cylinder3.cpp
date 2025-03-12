@@ -23,20 +23,21 @@ bool Cylinder3::IsPointInside(Vec3 const& referencePoint) const
 
 Vec3 Cylinder3::GetNearestPoint(Vec3 const& referencePoint) const
 {
-    Vec3 nearestPoint;
 
-    Vec3  cylinderCenterPosition   = (m_startPosition + m_endPosition) * 0.5f;
-    Vec2  cylinderCenterPositionXY = Vec2(cylinderCenterPosition.x, cylinderCenterPosition.y);
-    Disc2 disc                     = Disc2(cylinderCenterPositionXY, m_radius);
-    Vec2  referencePointXY         = Vec2(referencePoint.x, referencePoint.y);
+
+    Vec3 const  cylinderCenterPosition   = (m_startPosition + m_endPosition) * 0.5f;
+    Vec2  const cylinderCenterPositionXY = Vec2(cylinderCenterPosition.x, cylinderCenterPosition.y);
+    Disc2 const disc                     = Disc2(cylinderCenterPositionXY, m_radius);
+    Vec2  const referencePointXY         = Vec2(referencePoint.x, referencePoint.y);
 
     if (disc.IsPointInside(referencePointXY) && referencePoint.z < m_endPosition.z && referencePoint.z > m_startPosition.z)
     {
         return referencePoint;
     }
 
-    nearestPoint.x = disc.GetNearestPoint(referencePointXY).x;
-    nearestPoint.y = disc.GetNearestPoint(referencePointXY).y;
+    Vec2 const nearestPointOnDisc =disc.GetNearestPoint(referencePointXY);
+    Vec3 nearestPoint = Vec3(nearestPointOnDisc.x, nearestPointOnDisc.y, 0.f);
+
     nearestPoint.z = GetClamped(referencePoint.z, m_startPosition.z, m_endPosition.z);
 
 

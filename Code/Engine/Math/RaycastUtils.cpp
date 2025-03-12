@@ -43,7 +43,7 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition,
         return result;
     }
 
-    const float SCi = GetProjectedLength2D(SC, rayForwardNormal);
+    float const SCi = GetProjectedLength2D(SC, rayForwardNormal);
 
     // Check if the ray is too far away to intersect
     if (SCi < -discRadius ||
@@ -52,7 +52,7 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition,
         return result;
     }
 
-    const float adjust  = sqrtf(discRadius * discRadius - SCj * SCj);
+    float const adjust  = sqrtf(discRadius * discRadius - SCj * SCj);
     result.m_impactDist = SCi - adjust;
 
     // Ensure the impact distance is within the ray's maximum distance
@@ -72,7 +72,7 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition,
 //----------------------------------------------------------------------------------------------------
 RaycastResult2D RayCastVsLineSegment2D(Vec2 const& rayStartPosition,
                                        Vec2 const& rayForwardNormal,
-                                       float       maxDist,
+                                       float const maxDist,
                                        Vec2 const& lineStartPos,
                                        Vec2 const& lineEndPos)
 {
@@ -82,22 +82,22 @@ RaycastResult2D RayCastVsLineSegment2D(Vec2 const& rayStartPosition,
     result.m_rayMaxLength     = maxDist;
     result.m_didImpact        = false; // Initialize as no impact
 
-    Vec2  leftNormal = Vec2(rayForwardNormal.y, -rayForwardNormal.x);
-    Vec2  SS         = lineStartPos - rayStartPosition;
-    Vec2  SE         = lineEndPos - rayStartPosition;
-    float SSOnLeft   = DotProduct2D(SS, leftNormal);
-    float SEOnLeft   = DotProduct2D(SE, leftNormal);
+    Vec2 const  leftNormal = Vec2(rayForwardNormal.y, -rayForwardNormal.x);
+    Vec2 const  SS         = lineStartPos - rayStartPosition;
+    Vec2 const  SE         = lineEndPos - rayStartPosition;
+    float const SSOnLeft   = DotProduct2D(SS, leftNormal);
+    float const SEOnLeft   = DotProduct2D(SE, leftNormal);
 
     if ((SSOnLeft >= 0.f && SEOnLeft >= 0.f) || (SSOnLeft <= 0.f && SEOnLeft <= 0.f))
     {
         return result;
     }
 
-    float t              = SSOnLeft / (SSOnLeft - SEOnLeft);
-    Vec2  lineSegForward = lineEndPos - lineStartPos;
-    Vec2  impactPos      = lineStartPos + t * lineSegForward;
-    Vec2  SI             = impactPos - rayStartPosition;
-    float impactLength   = DotProduct2D(SI, rayForwardNormal);
+    float const t              = SSOnLeft / (SSOnLeft - SEOnLeft);
+    Vec2        lineSegForward = lineEndPos - lineStartPos;
+    Vec2 const  impactPos      = lineStartPos + t * lineSegForward;
+    Vec2 const  SI             = impactPos - rayStartPosition;
+    float const impactLength   = DotProduct2D(SI, rayForwardNormal);
     if (impactLength <= 0.f || impactLength >= maxDist)
     {
         return result;
@@ -138,7 +138,8 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         result.m_didImpact = false;
         return result;
     }
-    else if (aabb2.IsPointInside(rayStartPosition))
+
+    if (aabb2.IsPointInside(rayStartPosition))
     {
         // ray from inside AABB2
         result.m_didImpact        = true;
@@ -150,7 +151,8 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         result.m_rayStartPos      = rayStartPosition;
         return result;
     }
-    else if (rayForwardNormal.x == 0)
+
+    if (rayForwardNormal.x == 0)
     {
         if (rayStartPosition.x <= aabb2.m_mins.x || rayStartPosition.x >= aabb2.m_maxs.x)
         {
@@ -173,7 +175,8 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
             result.m_rayStartPos      = rayStartPosition;
             return result;
         }
-        else if (minYHitT >= maxYHitT && maxYHitT >= 0.f)
+
+        if (minYHitT >= maxYHitT && maxYHitT >= 0.f)
         {
             // hit top
             result.m_didImpact        = true;
@@ -185,14 +188,13 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
             result.m_rayStartPos      = rayStartPosition;
             return result;
         }
-        else
-        {
-            // not hit
-            result.m_didImpact = false;
-            return result;
-        }
+
+        // not hit
+        result.m_didImpact = false;
+        return result;
     }
-    else if (rayForwardNormal.y == 0)
+
+    if (rayForwardNormal.y == 0)
     {
         if (rayStartPosition.y <= aabb2.m_mins.y || rayStartPosition.y >= aabb2.m_maxs.y)
         {
@@ -215,7 +217,8 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
             result.m_rayStartPos      = rayStartPosition;
             return result;
         }
-        else if (maxXHitT <= minXHitT && maxXHitT >= 0.f)
+
+        if (maxXHitT <= minXHitT && maxXHitT >= 0.f)
         {
             // hit right
             result.m_didImpact        = true;
@@ -227,130 +230,133 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
             result.m_rayStartPos      = rayStartPosition;
             return result;
         }
-        else
+
+        // not hit
+        result.m_didImpact = false;
+        return result;
+    }
+
+    float oneOverRangeX = 1.f / (endPos.x - rayStartPosition.x);
+    float minXHitT      = (aabb2.m_mins.x - rayStartPosition.x) * oneOverRangeX;
+    float maxXHitT      = (aabb2.m_maxs.x - rayStartPosition.x) * oneOverRangeX;
+    float firstXHitT, secondXHitT;
+    if (minXHitT < maxXHitT)
+    {
+        firstXHitT  = minXHitT;
+        secondXHitT = maxXHitT;
+    }
+    else
+    {
+        firstXHitT  = maxXHitT;
+        secondXHitT = minXHitT;
+    }
+
+    float oneOverRangeY = 1.f / (endPos.y - rayStartPosition.y);
+    float minYHitT      = (aabb2.m_mins.y - rayStartPosition.y) * oneOverRangeY;
+    float maxYHitT      = (aabb2.m_maxs.y - rayStartPosition.y) * oneOverRangeY;
+    float firstYHitT, secondYHitT;
+    if (minYHitT < maxYHitT)
+    {
+        firstYHitT  = minYHitT;
+        secondYHitT = maxYHitT;
+    }
+    else
+    {
+        firstYHitT  = maxYHitT;
+        secondYHitT = minYHitT;
+    }
+
+    if (firstXHitT < firstYHitT)
+    {
+        if (firstYHitT >= secondXHitT)
         {
             // not hit
             result.m_didImpact = false;
             return result;
         }
+
+        if (firstYHitT <= 0.f || firstYHitT >= 1.f)
+        {
+            // out of range
+            result.m_didImpact = false;
+            return result;
+        }
+
+        // hit
+        if (firstYHitT == minYHitT)
+        {
+            // hit bottom
+            result.m_didImpact        = true;
+            result.m_impactDist       = maxDist * firstYHitT;
+            result.m_impactNormal     = Vec2(0.f, -1.f);
+            result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
+            result.m_rayForwardNormal = rayForwardNormal;
+            result.m_rayMaxLength     = maxDist;
+            result.m_rayStartPos      = rayStartPosition;
+            return result;
+        }
+
+        // hit top
+        result.m_didImpact        = true;
+        result.m_impactDist       = maxDist * firstYHitT;
+        result.m_impactNormal     = Vec2(0.f, 1.f);
+        result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
+        result.m_rayForwardNormal = rayForwardNormal;
+        result.m_rayMaxLength     = maxDist;
+        result.m_rayStartPos      = rayStartPosition;
+        return result;
     }
-    else
+
+    /*firstYHitT <= firstXHitT*/
+    if (firstXHitT >= secondYHitT)
     {
-        float oneOverRangeX = 1.f / (endPos.x - rayStartPosition.x);
-        float minXHitT      = (aabb2.m_mins.x - rayStartPosition.x) * oneOverRangeX;
-        float maxXHitT      = (aabb2.m_maxs.x - rayStartPosition.x) * oneOverRangeX;
-        float firstXHitT, secondXHitT;
-        if (minXHitT < maxXHitT)
-        {
-            firstXHitT  = minXHitT;
-            secondXHitT = maxXHitT;
-        }
-        else
-        {
-            firstXHitT  = maxXHitT;
-            secondXHitT = minXHitT;
-        }
-
-        float oneOverRangeY = 1.f / (endPos.y - rayStartPosition.y);
-        float minYHitT      = (aabb2.m_mins.y - rayStartPosition.y) * oneOverRangeY;
-        float maxYHitT      = (aabb2.m_maxs.y - rayStartPosition.y) * oneOverRangeY;
-        float firstYHitT, secondYHitT;
-        if (minYHitT < maxYHitT)
-        {
-            firstYHitT  = minYHitT;
-            secondYHitT = maxYHitT;
-        }
-        else
-        {
-            firstYHitT  = maxYHitT;
-            secondYHitT = minYHitT;
-        }
-
-        if (firstXHitT < firstYHitT)
-        {
-            if (firstYHitT >= secondXHitT)
-            {
-                // not hit
-                result.m_didImpact = false;
-                return result;
-            }
-            else
-            {
-                if (firstYHitT <= 0.f || firstYHitT >= 1.f)
-                {
-                    // out of range
-                    result.m_didImpact = false;
-                    return result;
-                }
-                // hit
-                else if (firstYHitT == minYHitT)
-                {
-                    // hit bottom
-                    result.m_didImpact        = true;
-                    result.m_impactDist       = maxDist * firstYHitT;
-                    result.m_impactNormal     = Vec2(0.f, -1.f);
-                    result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
-                    result.m_rayForwardNormal = rayForwardNormal;
-                    result.m_rayMaxLength     = maxDist;
-                    result.m_rayStartPos      = rayStartPosition;
-                    return result;
-                }
-                else
-                {
-                    // hit top
-                    result.m_didImpact        = true;
-                    result.m_impactDist       = maxDist * firstYHitT;
-                    result.m_impactNormal     = Vec2(0.f, 1.f);
-                    result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
-                    result.m_rayForwardNormal = rayForwardNormal;
-                    result.m_rayMaxLength     = maxDist;
-                    result.m_rayStartPos      = rayStartPosition;
-                    return result;
-                }
-            }
-        }
-        else/*firstYHitT <= firstXHitT*/
-        {
-            if (firstXHitT >= secondYHitT)
-            {
-                // not hit
-                result.m_didImpact = false;
-                return result;
-            }
-            else
-            {
-                if (firstXHitT <= 0.f || firstXHitT >= 1.f)
-                {
-                    // out of range
-                    result.m_didImpact = false;
-                    return result;
-                }
-                // hit
-                if (firstXHitT == minXHitT)
-                {
-                    // hit left
-                    result.m_didImpact        = true;
-                    result.m_impactDist       = maxDist * firstXHitT;
-                    result.m_impactNormal     = Vec2(-1.f, 0.f);
-                    result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
-                    result.m_rayForwardNormal = rayForwardNormal;
-                    result.m_rayMaxLength     = maxDist;
-                    result.m_rayStartPos      = rayStartPosition;
-                    return result;
-                }
-                else
-                {
-                    // hit right
-                    result.m_didImpact        = true;
-                    result.m_impactDist       = maxDist * firstXHitT;
-                    result.m_impactNormal     = Vec2(1.f, 0.f);
-                    result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
-                    result.m_rayForwardNormal = rayForwardNormal;
-                    result.m_rayMaxLength     = maxDist;
-                    result.m_rayStartPos      = rayStartPosition;
-                    return result;
-                }
-            }
-        }
+        // not hit
+        result.m_didImpact = false;
+        return result;
     }
+
+    if (firstXHitT <= 0.f || firstXHitT >= 1.f)
+    {
+        // out of range
+        result.m_didImpact = false;
+        return result;
+    }
+    // hit
+    if (firstXHitT == minXHitT)
+    {
+        // hit left
+        result.m_didImpact        = true;
+        result.m_impactDist       = maxDist * firstXHitT;
+        result.m_impactNormal     = Vec2(-1.f, 0.f);
+        result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
+        result.m_rayForwardNormal = rayForwardNormal;
+        result.m_rayMaxLength     = maxDist;
+        result.m_rayStartPos      = rayStartPosition;
+        return result;
+    }
+
+    // hit right
+    result.m_didImpact        = true;
+    result.m_impactDist       = maxDist * firstXHitT;
+    result.m_impactNormal     = Vec2(1.f, 0.f);
+    result.m_impactPos        = rayStartPosition + rayForwardNormal * result.m_impactDist;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxDist;
+    result.m_rayStartPos      = rayStartPosition;
+    return result;
+}
+
+RaycastResult3D RaycastVsAABB3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float rayLength, AABB3 box)
+{
+    return {};
+}
+
+RaycastResult3D RaycastVsSphere3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float rayLength, Vec3 sphereCenter, float sphereRadius)
+{
+    return {};
+}
+
+RaycastResult3D RaycastVsCylinderZ3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float rayLength, Vec3 const& centerXY, FloatRange const& minMaxZ, float radiusXY)
+{
+    return {};
 }
