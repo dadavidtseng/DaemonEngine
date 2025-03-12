@@ -9,6 +9,8 @@
 
 #include "Engine/Math/Capsule2.hpp"
 // #include "LineSegment2.hpp"
+#include "Cylinder3.hpp"
+#include "FloatRange.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Disc2.hpp"
@@ -105,7 +107,8 @@ float SinDegrees(float const degrees)
 }
 
 //----------------------------------------------------------------------------------------------------
-float Atan2Degrees(float const y, float const x)
+float Atan2Degrees(float const y,
+                   float const x)
 {
     return ConvertRadiansToDegrees(atan2(y, x));
 }
@@ -381,6 +384,31 @@ bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB)
     return false;
 }
 
+bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second)
+{
+    return false;
+}
+
+bool DoZCylindersOverlap3D(Vec2 cylinder1CenterXY, float cylinder1Radius, FloatRange cylinder1MinMaxZ, Vec2 cylinder2CenterXY, float cylinder2Radius, FloatRange cylinder2MinMaxZ)
+{
+    return false;
+}
+
+bool DoSphereAndAABB3Overlap3D(Vec3 sphereCenter, float sphereRadius, AABB3 box)
+{
+    return false;
+}
+
+bool DoZCylinderAndAABB3Overlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, AABB3 box)
+{
+    return false;
+}
+
+bool DoZCylinderAndSphereOverlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, Vec3 sphereCenter, float sphereRadius)
+{
+    return false;
+}
+
 //----------------------------------------------------------------------------------------------------
 bool PushDiscOutOfPoint2D(Vec2&       mobileDiscCenter,
                           const float discRadius,
@@ -632,6 +660,23 @@ Vec2 GetNearestPointOnTriangle2D(Vec2 const&      referencePos,
                                  Triangle2 const& triangle)
 {
     return triangle.GetNearestPoint(referencePos);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& aabb3)
+{
+    return aabb3.GetNearestPoint(referencePosition);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 GetNearestPointOnSphere3D(Vec3 const& referencePosition, Sphere3 const& sphere)
+{
+    return sphere.GetNearestPoint(referencePosition);
+}
+
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Cylinder3 const& cylinder3)
+{
+    return cylinder3.GetNearestPoint(referencePosition);
 }
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------

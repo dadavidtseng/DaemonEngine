@@ -29,7 +29,7 @@ struct AABB2
     bool IsPointInside(Vec2 const& point) const;
     Vec2 GetCenter() const;
     Vec2 GetDimensions() const;
-    Vec2 GetNearestPoint(Vec2 const& referencePosition) const;
+    Vec2 GetNearestPoint(Vec2 const& referencePoint) const;
     Vec2 GetPointAtUV(Vec2 const& uv) const;        // uv=(0,0) is at mins; uv=(1,1) is at maxs
     Vec2 GetUVForPoint(Vec2 const& pointPos) const; // uv=(.5,.5) is at center; u or v outside [0,1] extrapolated
 

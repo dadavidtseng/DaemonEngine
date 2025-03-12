@@ -18,5 +18,14 @@ bool Sphere3::IsPointInside(Vec3 const& referencePoint) const
 
 Vec3 Sphere3::GetNearestPoint(Vec3 const& referencePoint) const
 {
-    return referencePoint;
+    // Get the nearest point
+    Vec3 const  centerToPointPosition =  referencePoint-m_centerPosition;
+    float const distance               = centerToPointPosition.GetLength();
+
+    if (distance <= m_radius)
+    {
+        return referencePoint; // If the point is inside the circle, return the point
+    }
+
+    return m_centerPosition + centerToPointPosition.GetNormalized() * m_radius; // Return the nearest point on the circle
 }

@@ -6,8 +6,10 @@
 #pragma once
 #include "AABB3.hpp"
 #include "Mat44.hpp"
+#include "Sphere3.hpp"
 #include "Vec4.hpp"
 
+struct Cylinder3;
 struct FloatRange;
 //----------------------------------------------------------------------------------------------------
 struct AABB2;
@@ -134,6 +136,9 @@ Vec2 GetNearestPointOnInfiniteLine2D(Vec2 const& referencePos, LineSegment2 cons
 Vec2 GetNearestPointOnLineSegment2D(Vec2 const& referencePos, LineSegment2 const& lineSegment);
 Vec2 GetNearestPointOnCapsule2D(Vec2 const& referencePos, Capsule2 const& capsule);
 Vec2 GetNearestPointOnTriangle2D(Vec2 const& referencePos, Triangle2 const& triangle);
+Vec3 GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& aabb3);
+Vec3 GetNearestPointOnSphere3D(Vec3 const& referencePosition, Sphere3 const& sphere3);
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Cylinder3 const& cylinder3);
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------

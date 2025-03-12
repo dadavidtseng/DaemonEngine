@@ -63,10 +63,10 @@ Vec2 AABB2::GetDimensions() const
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 AABB2::GetNearestPoint(Vec2 const& referencePosition) const
+Vec2 AABB2::GetNearestPoint(Vec2 const& referencePoint) const
 {
-    float const clampX = GetClamped(referencePosition.x, m_mins.x, m_maxs.x);
-    float const clampY = GetClamped(referencePosition.y, m_mins.y, m_maxs.y);
+    float const clampX = GetClamped(referencePoint.x, m_mins.x, m_maxs.x);
+    float const clampY = GetClamped(referencePoint.y, m_mins.y, m_maxs.y);
 
     return Vec2(clampX, clampY);
 }
@@ -117,20 +117,15 @@ void AABB2::SetDimensions(Vec2 const& newDimensions)
 //----------------------------------------------------------------------------------------------------
 void AABB2::StretchToIncludePoint(Vec2 const& targetPointPos)
 {
-    if (IsPointInside(targetPointPos))
-        return;
+    if (IsPointInside(targetPointPos)) return;
 
-    if (targetPointPos.x < m_mins.x)
-        m_mins.x = targetPointPos.x;
+    if (targetPointPos.x < m_mins.x) m_mins.x = targetPointPos.x;
 
-    if (targetPointPos.x > m_maxs.x)
-        m_maxs.x = targetPointPos.x;
+    if (targetPointPos.x > m_maxs.x) m_maxs.x = targetPointPos.x;
 
-    if (targetPointPos.y < m_mins.y)
-        m_mins.y = targetPointPos.y;
+    if (targetPointPos.y < m_mins.y) m_mins.y = targetPointPos.y;
 
-    if (targetPointPos.y > m_maxs.y)
-        m_maxs.y = targetPointPos.y;
+    if (targetPointPos.y > m_maxs.y) m_maxs.y = targetPointPos.y;
 }
 
 //----------------------------------------------------------------------------------------------------
