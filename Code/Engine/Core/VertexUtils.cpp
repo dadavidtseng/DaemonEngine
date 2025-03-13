@@ -392,19 +392,19 @@ void AddVertsForSphere3D(VertexList&  verts,
 
     for (int stack = 0; stack < numStacks; ++stack)
     {
-        float const phi1 = (1 - (float)stack / (float)numStacks) * PI;
-        float const phi2 = (1 - ((float)stack + 1.f) / (float)numStacks) * PI;
+        float const phi1 = (1.f - static_cast<float>(stack) / static_cast<float>(numStacks)) * PI;
+        float const phi2 = (1.f - (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks)) * PI;
 
-        float const v1 = (float)stack / (float)numStacks;
-        float const v2 = ((float)stack + 1.f) / (float)numStacks;
+        float const v1 = static_cast<float>(stack) / static_cast<float>(numStacks);
+        float const v2 = (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks);
 
         for (int slice = 0; slice < numSlices; ++slice)
         {
-            float theta1 = ((float)slice / (float)numSlices) * 2.0f * PI;
-            float theta2 = (((float)slice + 1.f) / (float)numSlices) * 2.0f * PI;
+            float const theta1 = static_cast<float>(slice) / static_cast<float>(numSlices) * 2.f * PI;
+            float const theta2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices) * 2.f * PI;
 
-            float u1 = (float)slice / (float)numSlices;
-            float u2 = ((float)slice + 1.f) / (float)numSlices;
+            float const u1 = static_cast<float>(slice) / static_cast<float>(numSlices);
+            float const u2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices);
 
             Vec3 bottomLeft  = Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
             Vec3 bottomRight = Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
@@ -417,6 +417,16 @@ void AddVertsForSphere3D(VertexList&  verts,
             AddVertsForQuad3D(verts, center + bottomLeft, center + bottomRight, center + topLeft, center + topRight, color, quadUV);
         }
     }
+}
+
+void AddVertsForWireframeSphere3D(VertexList&  verts,
+                                  Vec3 const&  center,
+                                  float const  radius,
+                                  Rgba8 const& color,
+                                  AABB2 const& UVs,
+                                  int const    numSlices,
+                                  int const    numStacks)
+{
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -490,18 +500,18 @@ void AddVertsForCylinder3D(VertexList&  verts,
         Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
 
         // 6. Stores the vertices using counter-clockwise order with correct UVs.
-        verts.emplace_back(topCenterPosition, color, Vec2::HALF );
-        verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f)+Vec2::HALF);
-        verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f)+Vec2::HALF);
+        verts.emplace_back(topCenterPosition, color, Vec2::HALF);
+        verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF);
+        verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF);
         verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
-        verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f)+Vec2::HALF);
-        verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f)+Vec2::HALF);
+        verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF);
+        verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF);
 
         // 7. Add verts for cylinder's side with correct UVs.
-        float const uStart = Interpolate(UVs.m_mins.x,UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices) );
-        float const uEnd = Interpolate( UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
+        float const uStart = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices));
+        float const uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
 
-        AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2( Vec2(uStart, 0.f ), Vec2( uEnd,1.f)));
+        AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2(Vec2(uStart, 0.f), Vec2(uEnd, 1.f)));
     }
 }
 
