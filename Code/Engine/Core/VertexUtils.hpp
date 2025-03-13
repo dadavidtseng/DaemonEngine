@@ -20,9 +20,11 @@ struct OBB2;
 struct Triangle2;
 struct Vec3;
 struct Vertex_PCU;
+struct Vertex_PCUTBN;
 
 //----------------------------------------------------------------------------------------------------
-typedef std::vector<Vertex_PCU> VertexList;
+typedef std::vector<Vertex_PCU>    VertexList;
+typedef std::vector<Vertex_PCUTBN> VertexList_PCUTBN;
 
 //----------------------------------------------------------------------------------------------------
 void TransformVertexArrayXY3D(int numVerts, Vertex_PCU* verts, float uniformScaleXY, float rotationDegreesAboutZ, const Vec2& translationXY);

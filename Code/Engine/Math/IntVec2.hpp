@@ -14,6 +14,7 @@ struct IntVec2
     int            y = 0;
     static IntVec2 ZERO;
     static IntVec2 ONE;
+    static IntVec2 NEGATIVE_ONE;
 
     // Construction/Destruction
     IntVec2()                        = default;		// default constructor (do nothing)
