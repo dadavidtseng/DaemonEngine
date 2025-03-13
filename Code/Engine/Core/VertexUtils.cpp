@@ -489,16 +489,19 @@ void AddVertsForCylinder3D(VertexList&  verts,
         Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
         Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
 
-        // 6. Stores the vertices using counter-clockwise order.
-        verts.emplace_back(topCenterPosition, color);
-        verts.emplace_back(topLeftPosition, color);
-        verts.emplace_back(topRightPosition, color);
-        verts.emplace_back(bottomCenterPosition, color);
-        verts.emplace_back(bottomRightPosition, color);
-        verts.emplace_back(bottomLeftPosition, color);
+        // 6. Stores the vertices using counter-clockwise order with correct UVs.
+        verts.emplace_back(topCenterPosition, color, Vec2::HALF );
+        verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f)+Vec2::HALF);
+        verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f)+Vec2::HALF);
+        verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
+        verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f)+Vec2::HALF);
+        verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f)+Vec2::HALF);
 
-        // 7. Add verts for cylinder's side.
-        AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, UVs);
+        // 7. Add verts for cylinder's side with correct UVs.
+        float const uStart = Interpolate(UVs.m_mins.x,UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices) );
+        float const uEnd = Interpolate( UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
+
+        AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2( Vec2(uStart, 0.f ), Vec2( uEnd,1.f)));
     }
 }
 
