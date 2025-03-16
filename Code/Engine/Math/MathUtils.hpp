@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include <cstdint>
+
 #include "AABB3.hpp"
 #include "Mat44.hpp"
 #include "Sphere3.hpp"
@@ -27,7 +29,7 @@ float constexpr PI      = 3.14159265358979323846f;
 float constexpr EPSILON = 1e-5f;	// Define a small tolerance value
 
 //----------------------------------------------------------------------------------------------------
-enum class eBillboardType
+enum class eBillboardType : int8_t
 {
     NONE = -1,
     FULL_FACING,
@@ -115,7 +117,6 @@ bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& 
 //-Start-of-Is-Point-Inside-Utilities-----------------------------------------------------------------
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
-bool IsPointInsideDisc2D(Vec2 const& point, Disc2 const& disc);
 bool IsPointInsideAABB2D(Vec2 const& point, AABB2 const& box);
 bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& box);
 bool IsPointInsideCapsule(Vec2 const& point, Capsule2 const& capsule);

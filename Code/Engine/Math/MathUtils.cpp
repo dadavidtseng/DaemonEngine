@@ -233,78 +233,83 @@ Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b)
 float GetDistance2D(Vec2 const& positionA,
                     Vec2 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
 
-    return sqrtf(deltaX * deltaX + deltaY * deltaY);
+    return
+        sqrtf(BxToAx * BxToAx + ByToAy * ByToAy);
 }
 
 //----------------------------------------------------------------------------------------------------
 float GetDistanceSquared2D(Vec2 const& positionA,
                            Vec2 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
 
     return
-        deltaX * deltaX +
-        deltaY * deltaY;
+        BxToAx * BxToAx +
+        ByToAy * ByToAy;
 }
 
 //----------------------------------------------------------------------------------------------------
 float GetDistance3D(Vec3 const& positionA,
                     Vec3 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
-    const float deltaZ = positionA.z - positionB.z;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
+    float const BzToAz = positionA.z - positionB.z;
 
     return
-        sqrtf(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        sqrtf(BxToAx * BxToAx + ByToAy * ByToAy + BzToAz * BzToAz);
 }
 
 //----------------------------------------------------------------------------------------------------
 float GetDistanceSquared3D(Vec3 const& positionA,
                            Vec3 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
-    const float deltaZ = positionA.z - positionB.z;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
+    float const BzToAz = positionA.z - positionB.z;
 
     return
-        deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+        BxToAx * BxToAx +
+        ByToAy * ByToAy +
+        BzToAz * BzToAz;
 }
 
 //----------------------------------------------------------------------------------------------------
 float GetDistanceXY3D(Vec3 const& positionA,
                       Vec3 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
 
-    return sqrtf(deltaX * deltaX + deltaY * deltaY);
+    return
+        sqrtf(BxToAx * BxToAx + ByToAy * ByToAy);
 }
 
 //----------------------------------------------------------------------------------------------------
 float GetDistanceXYSquared3D(Vec3 const& positionA,
                              Vec3 const& positionB)
 {
-    const float deltaX = positionA.x - positionB.x;
-    const float deltaY = positionA.y - positionB.y;
+    float const BxToAx = positionA.x - positionB.x;
+    float const ByToAy = positionA.y - positionB.y;
 
     return
-        deltaX * deltaX +
-        deltaY * deltaY;
+        BxToAx * BxToAx +
+        ByToAy * ByToAy;
 }
 
 //----------------------------------------------------------------------------------------------------
 int GetTaxicabDistance2D(IntVec2 const& pointA,
                          IntVec2 const& pointB)
 {
-    const int deltaX = abs(pointA.x - pointB.x);
-    const int deltaY = abs(pointA.y - pointB.y);
+    int const deltaX = abs(pointA.x - pointB.x);
+    int const deltaY = abs(pointA.y - pointB.y);
 
-    return deltaX + deltaY;
+    return
+        deltaX + deltaY;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -492,30 +497,45 @@ bool PushDiscOutOfAABB2D(Vec2&        mobileDiscCenter,
 //----------------------------------------------------------------------------------------------------
 bool IsPointInsideDisc2D(Vec2 const& point,
                          Vec2 const& discCenter,
-                         const float discRadius)
+                         float const discRadius)
 {
-    const float distSquared       = GetDistanceSquared2D(point, discCenter);
-    const float discRadiusSquared = discRadius * discRadius;
+    float const distanceSquared = GetDistanceSquared2D(point, discCenter);
+    float const radiusSquared   = discRadius * discRadius;
 
-    return distSquared <= discRadiusSquared;
+    return distanceSquared <= radiusSquared;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideDisc2D(Vec2 const& point, Disc2 const& disc)
+bool IsPointInsideAABB2D(Vec2 const& point,
+                         Vec2 const& aabb2Mins,
+                         Vec2 const& aabb2Maxs)
 {
-    return disc.IsPointInside(point);
+    return
+        point.x >= aabb2Mins.x &&
+        point.x <= aabb2Maxs.x &&
+        point.y >= aabb2Mins.y &&
+        point.y <= aabb2Maxs.y;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideAABB2D(Vec2 const& point, AABB2 const& box)
+bool IsPointInsideOBB2D(Vec2 const& point,
+                        Vec2 const& obb2Center,
+                        Vec2 const& obb2IBasisNormal,
+                        Vec2 const& obb2HalfDimensions)
 {
-    return box.IsPointInside(point);
-}
+    Vec2 const  centerToWorldPosition = point - obb2Center;
+    float const localX                = DotProduct2D(centerToWorldPosition, obb2IBasisNormal);
+    float const localY                = DotProduct2D(centerToWorldPosition, Vec2(-obb2IBasisNormal.y, obb2IBasisNormal.x));
 
-//----------------------------------------------------------------------------------------------------
-bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& box)
-{
-    return box.IsPointInside(point);
+    Vec2 const localPoint = Vec2(localX, localY);
+    Vec2 const obbMins    = -obb2HalfDimensions;
+    Vec2 const obbMaxs    = obb2HalfDimensions;
+
+    return
+        localPoint.x >= obbMins.x &&
+        localPoint.x <= obbMaxs.x &&
+        localPoint.y >= obbMins.y &&
+        localPoint.y <= obbMaxs.y;
 }
 
 //----------------------------------------------------------------------------------------------------

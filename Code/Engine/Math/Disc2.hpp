@@ -10,24 +10,22 @@
 //----------------------------------------------------------------------------------------------------
 struct Disc2
 {
-    Vec2  m_position = Vec2::ZERO; // Center position
-    float m_radius   = 0.f;   // Radius
+    Vec2  m_position = Vec2::ZERO;
+    float m_radius   = 0.f;
 
-    // Construction/Destruction
-    Disc2()                      = default;                 // Default constructor
-    ~Disc2()                     = default;                 // Destructor
-    Disc2(Disc2 const& copyFrom) = default;					// Copy constructor
-    explicit Disc2(const Vec2& position, float radius);		// Explicit constructor
+    // Construction / Destruction
+    Disc2()                      = default;
+    ~Disc2()                     = default;
+    Disc2(Disc2 const& copyFrom) = default;
+    explicit Disc2(Vec2 const& position, float radius);
 
     // Accessors (const methods)
-    bool  IsPointInside(Vec2 const& point) const; // Check if a point is inside the circle
+    bool  IsPointInside(Vec2 const& point) const;
+    Vec2  GetNearestPoint(Vec2 const& point) const;
+    Vec2  GetPosition() const;
     float GetRadius() const;
-    Vec2  GetCenter() const;
-    Vec2  GetNearestPoint(Vec2 const& referencePosition) const; // Get the nearest point
 
     // Mutators (non-const methods)
-    void Translate(Vec2 const& translationToApply);
-    void SetCenter(Vec2 const& newCenter);
+    void SetPosition(Vec2 const& newCenter);
     void SetRadius(float newRadius);
-    void StretchToIncludePoint(Vec2 const& targetPointPos);
 };

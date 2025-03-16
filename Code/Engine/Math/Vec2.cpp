@@ -260,7 +260,10 @@ float Vec2::NormalizeAndGetPreviousLength()
 {
     float const length = GetLength();
 
-    if (length == 0.f) return 0.f;
+    if (length == 0.f)
+    {
+        return 0.f;
+    }
 
     x *= 1.f / length;
     y *= 1.f / length;

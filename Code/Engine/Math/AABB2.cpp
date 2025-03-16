@@ -14,23 +14,34 @@ STATIC AABB2 AABB2::ZERO_TO_ONE      = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
 STATIC AABB2 AABB2::NEG_HALF_TO_HALF = AABB2(Vec2(-0.5f, -0.5f), Vec2(0.5f, 0.5f));
 
 //----------------------------------------------------------------------------------------------------
-AABB2::AABB2(float const minX, float const minY, float const maxX, float const maxY)
+AABB2::AABB2(int const minX, int const minY,
+             int const maxX, int const maxY)
     : m_mins(minX, minY),
       m_maxs(maxX, maxY)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-AABB2::AABB2(Vec2 const& mins, Vec2 const& maxs)
-    : m_mins(mins),
-      m_maxs(maxs)
+AABB2::AABB2(float const minX, float const minY,
+             float const maxX, float const maxY)
+    : m_mins(minX, minY),
+      m_maxs(maxX, maxY)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-AABB2::AABB2(IntVec2 const& mins, IntVec2 const& maxs)
-    : m_mins(Vec2(static_cast<float>(mins.x), static_cast<float>(mins.y))),
-      m_maxs(Vec2(static_cast<float>(maxs.x), static_cast<float>(maxs.y)))
+AABB2::AABB2(IntVec2 const& mins,
+             IntVec2 const& maxs)
+    : m_mins(Vec2(mins.x, mins.y)),
+      m_maxs(Vec2(maxs.x, maxs.y))
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+AABB2::AABB2(Vec2 const& mins,
+             Vec2 const& maxs)
+    : m_mins(mins),
+      m_maxs(maxs)
 {
 }
 
@@ -45,12 +56,28 @@ bool AABB2::IsPointInside(Vec2 const& point) const
 }
 
 //----------------------------------------------------------------------------------------------------
+Vec2 AABB2::GetNearestPoint(Vec2 const& point) const
+{
+    if (IsPointInside(point) == true)
+    {
+        return point;
+    }
+
+    float const clampedX = GetClamped(point.x, m_mins.x, m_maxs.x);
+    float const clampedY = GetClamped(point.y, m_mins.y, m_maxs.y);
+
+    return
+        Vec2(clampedX, clampedY);
+}
+
+//----------------------------------------------------------------------------------------------------
 Vec2 AABB2::GetCenter() const
 {
-    float const x = (m_maxs.x + m_mins.x) / 2;
-    float const y = (m_maxs.y + m_mins.y) / 2;
+    float const centerX = (m_maxs.x + m_mins.x) / 2.f;
+    float const centerY = (m_maxs.y + m_mins.y) / 2.f;
 
-    return Vec2(x, y);
+    return
+        Vec2(centerX, centerY);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -59,16 +86,8 @@ Vec2 AABB2::GetDimensions() const
     float const x = m_maxs.x - m_mins.x;
     float const y = m_maxs.y - m_mins.y;
 
-    return Vec2(x, y);
-}
-
-//----------------------------------------------------------------------------------------------------
-Vec2 AABB2::GetNearestPoint(Vec2 const& referencePoint) const
-{
-    float const clampX = GetClamped(referencePoint.x, m_mins.x, m_maxs.x);
-    float const clampY = GetClamped(referencePoint.y, m_mins.y, m_maxs.y);
-
-    return Vec2(clampX, clampY);
+    return
+        Vec2(x, y);
 }
 
 //----------------------------------------------------------------------------------------------------
