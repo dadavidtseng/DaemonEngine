@@ -302,8 +302,8 @@ void Vec2::SetFromText(char const* text)
 bool Vec2::operator==(Vec2 const& compare) const
 {
     return
-        std::fabs(x - compare.x) < EPSILON &&
-        std::fabs(y - compare.y) < EPSILON;
+        std::fabs(x - compare.x) < FLOAT_MIN &&
+        std::fabs(y - compare.y) < FLOAT_MIN;
 }
 
 //----------------------------------------------------------------------------------------------------

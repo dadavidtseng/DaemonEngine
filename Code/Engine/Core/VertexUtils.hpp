@@ -36,8 +36,9 @@ void AddVertsForLineSegment2D(VertexList& verts, LineSegment2 const& lineSegment
 void AddVertsForTriangle2D(VertexList& verts, Vec2 const& ccw0, Vec2 const& ccw1, Vec2 const& ccw2, Rgba8 const& color);
 void AddVertsForTriangle2D(VertexList& verts, Triangle2 const& triangle, Rgba8 const& color);
 void AddVertsForAABB2D(VertexList& verts, AABB2 const& aabb2Box, Rgba8 const& color, Vec2 const& uvMins = Vec2::ZERO, Vec2 const& uvMaxs = Vec2::ONE);
-void AddVertsForOBB2D(VertexList& verts, OBB2 const& obb2Box, Rgba8 const& color);
-void AddVertsForCapsule2D(VertexList& verts, Vec2 const& boneStart, Vec2 const& boneEnd, float radius, Rgba8 const& color);
+void AddVertsForAABB2D(VertexList& verts, Vec2 const& aabbMins, Vec2 const& aabbMaxs, Rgba8 const& color, Vec2 const& uvMins = Vec2::ZERO, Vec2 const& uvMaxs = Vec2::ONE);
+void AddVertsForOBB2D(VertexList& verts, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions, Rgba8 const& color);
+void AddVertsForCapsule2D(VertexList& verts, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius, Rgba8 const& color);
 void AddVertsForCapsule2D(VertexList& verts, Capsule2 const& capsule, Rgba8 const& color);
 void AddVertsForHalfDisc2D(VertexList& verts, Vec2 const& discCenter, float discRadius, Rgba8 const& color, bool isTopHalf, float rotationDegrees);
 void AddVertsForArrow2D(VertexList& verts, Vec2 const& tailPosition, Vec2 const& tipPosition, float arrowSize, float thickness, Rgba8 const& color);

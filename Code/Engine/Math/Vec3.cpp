@@ -141,9 +141,9 @@ void Vec3::GetOrthonormalBasis(Vec3 const& iBasis, Vec3* jBasis, Vec3* kBasis) c
 bool Vec3::operator==(Vec3 const& compare) const
 {
     return
-        std::fabs(x - compare.x) < EPSILON &&
-        std::fabs(y - compare.y) < EPSILON &&
-        std::fabs(z - compare.z) < EPSILON;
+        std::fabs(x - compare.x) < FLOAT_MIN &&
+        std::fabs(y - compare.y) < FLOAT_MIN &&
+        std::fabs(z - compare.z) < FLOAT_MIN;
 }
 
 //----------------------------------------------------------------------------------------------------

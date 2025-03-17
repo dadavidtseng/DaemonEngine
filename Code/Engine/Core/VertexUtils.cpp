@@ -162,8 +162,8 @@ void AddVertsForLineSegment2D(VertexList&         verts,
                               Rgba8 const&        color)
 {
     AddVertsForLineSegment2D(verts,
-                             lineSegment.m_start,
-                             lineSegment.m_end,
+                             lineSegment.m_startPosition,
+                             lineSegment.m_endPosition,
                              thickness,
                              isInfinite,
                              color);
@@ -209,13 +209,38 @@ void AddVertsForAABB2D(VertexList&  verts,
     verts.emplace_back(Vec3(aabb2Box.m_mins.x, aabb2Box.m_maxs.y, 0.f), color, Vec2(uvMins.x, uvMaxs.y));
 }
 
+//----------------------------------------------------------------------------------------------------
+void AddVertsForAABB2D(VertexList&  verts,
+                       Vec2 const&  aabbMins,
+                       Vec2 const&  aabbMaxs,
+                       Rgba8 const& color,
+                       Vec2 const&  uvMins,
+                       Vec2 const&  uvMaxs)
+{
+    verts.emplace_back(Vec3(aabbMins.x, aabbMins.y, 0.f), color, uvMins);
+    verts.emplace_back(Vec3(aabbMaxs.x, aabbMins.y, 0.f), color, Vec2(uvMaxs.x, uvMins.y));
+    verts.emplace_back(Vec3(aabbMaxs.x, aabbMaxs.y, 0.f), color, uvMaxs);
+
+    verts.emplace_back(Vec3(aabbMins.x, aabbMins.y, 0.f), color, uvMins);
+    verts.emplace_back(Vec3(aabbMaxs.x, aabbMaxs.y, 0.f), color, uvMaxs);
+    verts.emplace_back(Vec3(aabbMins.x, aabbMaxs.y, 0.f), color, Vec2(uvMins.x, uvMaxs.y));
+}
+
 //-----------------------------------------------------------------------------------------------
 void AddVertsForOBB2D(VertexList&  verts,
-                      OBB2 const&  obb2Box,
+                      Vec2 const&  obb2Center,
+                      Vec2 const&  obb2IBasisNormal,
+                      Vec2 const&  obb2HalfDimensions,
                       Rgba8 const& color)
 {
     Vec2 cornerPoints[4];
-    obb2Box.GetCornerPoints(cornerPoints);
+
+    Vec2 const jBasisNormal = Vec2(-obb2IBasisNormal.y, obb2IBasisNormal.x);
+
+    cornerPoints[0] = obb2Center - obb2IBasisNormal * obb2HalfDimensions.x - jBasisNormal * obb2HalfDimensions.y; // BottomLeft ( Mins )
+    cornerPoints[1] = obb2Center + obb2IBasisNormal * obb2HalfDimensions.x - jBasisNormal * obb2HalfDimensions.y; // BottomRight
+    cornerPoints[2] = obb2Center + obb2IBasisNormal * obb2HalfDimensions.x + jBasisNormal * obb2HalfDimensions.y; // TopRight ( Maxs )
+    cornerPoints[3] = obb2Center - obb2IBasisNormal * obb2HalfDimensions.x + jBasisNormal * obb2HalfDimensions.y; // TopLeft
 
     AddVertsForTriangle2D(verts, cornerPoints[0], cornerPoints[1], cornerPoints[2], color);
     AddVertsForTriangle2D(verts, cornerPoints[0], cornerPoints[2], cornerPoints[3], color);
@@ -223,31 +248,31 @@ void AddVertsForOBB2D(VertexList&  verts,
 
 //----------------------------------------------------------------------------------------------------
 void AddVertsForCapsule2D(VertexList&  verts,
-                          Vec2 const&  boneStart,
-                          Vec2 const&  boneEnd,
-                          float const  radius,
+                          Vec2 const&  capsuleStartPosition,
+                          Vec2 const&  capsuleEndPosition,
+                          float const  capsuleRadius,
                           Rgba8 const& color)
 {
     // 1. Calculate capsule's forward/normalized direction.
-    Vec2 const forwardDirection    = boneEnd - boneStart;
+    Vec2 const forwardDirection    = capsuleEndPosition - capsuleStartPosition;
     Vec2 const normalizedDirection = forwardDirection.GetNormalized();
 
     // 2. Calculate capsule's corner positions.
-    Vec2 const perpendicular90DegreesDirection = normalizedDirection.GetRotated90Degrees() * radius;
-    Vec3 const bottomLeft                      = Vec3(boneStart.x + perpendicular90DegreesDirection.x, boneStart.y + perpendicular90DegreesDirection.y, 0.f);
-    Vec3 const bottomRight                     = Vec3(boneStart.x - perpendicular90DegreesDirection.x, boneStart.y - perpendicular90DegreesDirection.y, 0.f);
-    Vec3 const topLeft                         = Vec3(boneEnd.x + perpendicular90DegreesDirection.x, boneEnd.y + perpendicular90DegreesDirection.y, 0.f);
-    Vec3 const topRight                        = Vec3(boneEnd.x - perpendicular90DegreesDirection.x, boneEnd.y - perpendicular90DegreesDirection.y, 0.f);
+    Vec2 const perpendicular90DegreesDirection = normalizedDirection.GetRotated90Degrees() * capsuleRadius;
+    Vec3 const bottomLeft                      = Vec3(capsuleStartPosition.x + perpendicular90DegreesDirection.x, capsuleStartPosition.y + perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const bottomRight                     = Vec3(capsuleStartPosition.x - perpendicular90DegreesDirection.x, capsuleStartPosition.y - perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const topLeft                         = Vec3(capsuleEndPosition.x + perpendicular90DegreesDirection.x, capsuleEndPosition.y + perpendicular90DegreesDirection.y, 0.f);
+    Vec3 const topRight                        = Vec3(capsuleEndPosition.x - perpendicular90DegreesDirection.x, capsuleEndPosition.y - perpendicular90DegreesDirection.y, 0.f);
 
     AddVertsForQuad3D(verts, bottomLeft, bottomRight, topLeft, topRight, color);
 
     // 3. Calculate halfDisc's rotation degrees and center start/end.
     float const halfDiscRotationDegrees = Atan2Degrees(-perpendicular90DegreesDirection.y, -perpendicular90DegreesDirection.x);
-    Vec2 const& halfDiscCenterStart     = boneStart;
-    Vec2 const& halfDiscCenterEnd       = boneEnd;
+    Vec2 const& halfDiscCenterStart     = capsuleStartPosition;
+    Vec2 const& halfDiscCenterEnd       = capsuleEndPosition;
 
-    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, radius, color, false, halfDiscRotationDegrees);
-    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, radius, color, true, halfDiscRotationDegrees);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, capsuleRadius, color, false, halfDiscRotationDegrees);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, capsuleRadius, color, true, halfDiscRotationDegrees);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -255,7 +280,7 @@ void AddVertsForCapsule2D(VertexList&     verts,
                           Capsule2 const& capsule,
                           Rgba8 const&    color)
 {
-    AddVertsForCapsule2D(verts, capsule.m_start, capsule.m_end, capsule.m_radius, color);
+    AddVertsForCapsule2D(verts, capsule.m_startPosition, capsule.m_endPosition, capsule.m_radius, color);
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -10,6 +10,7 @@
 
 #include "Disc2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------

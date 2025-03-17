@@ -6,27 +6,27 @@
 #pragma once
 #include <cstdint>
 
-#include "AABB3.hpp"
-#include "Mat44.hpp"
-#include "Sphere3.hpp"
-#include "Vec4.hpp"
+#include "Engine/Math/Vec2.hpp"
 
+//-Forward-Declaration--------------------------------------------------------------------------------
 struct Cylinder3;
 struct FloatRange;
-//----------------------------------------------------------------------------------------------------
 struct AABB2;
-struct Capsule2;
+struct AABB3;
 struct Disc2;
 struct IntVec2;
 struct LineSegment2;
 struct OBB2;
-struct Triangle2;
 struct Vec2;
 struct Vec3;
+struct Sphere3;
+struct Vec4;
+struct Mat44;
 
 //----------------------------------------------------------------------------------------------------
-float constexpr PI      = 3.14159265358979323846f;
-float constexpr EPSILON = 1e-5f;	// Define a small tolerance value
+float constexpr PI        = 3.14159265358979323846f;
+float constexpr FLOAT_MIN = 1.175494351e-38F;
+float constexpr FLOAT_MAX = 3.402823466e+38F;
 
 //----------------------------------------------------------------------------------------------------
 enum class eBillboardType : int8_t
@@ -117,10 +117,10 @@ bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& 
 //-Start-of-Is-Point-Inside-Utilities-----------------------------------------------------------------
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
-bool IsPointInsideAABB2D(Vec2 const& point, AABB2 const& box);
-bool IsPointInsideOBB2D(Vec2 const& point, OBB2 const& box);
-bool IsPointInsideCapsule(Vec2 const& point, Capsule2 const& capsule);
-bool IsPointInsideTriangle(Vec2 const& point, Triangle2 const& triangle);
+bool IsPointInsideAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
+bool IsPointInsideOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
+bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
+bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
 bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees,
                                    float       sectorRadius);
@@ -129,17 +129,16 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 //----------------------------------------------------------------------------------------------------
 //-Start-of-Get-Nearest-Point-Utilities---------------------------------------------------------------
 
-Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition, Vec2 const& discCenter, float discRadius);
-Vec2 GetNearestPointOnDisc2D(const Vec2& referencePosition, const Disc2& disc);
-Vec2 GetNearestPointOnAABB2D(Vec2 const& referencePos, AABB2 const& aabbBox);
-Vec2 GetNearestPointOnOBB2D(Vec2 const& referencePos, OBB2 const& obbBox);
-Vec2 GetNearestPointOnInfiniteLine2D(Vec2 const& referencePos, LineSegment2 const& infiniteLine);
-Vec2 GetNearestPointOnLineSegment2D(Vec2 const& referencePos, LineSegment2 const& lineSegment);
-Vec2 GetNearestPointOnCapsule2D(Vec2 const& referencePos, Capsule2 const& capsule);
-Vec2 GetNearestPointOnTriangle2D(Vec2 const& referencePos, Triangle2 const& triangle);
-Vec3 GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& aabb3);
-Vec3 GetNearestPointOnSphere3D(Vec3 const& referencePosition, Sphere3 const& sphere3);
-Vec3 GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Cylinder3 const& cylinder3);
+Vec2 GetNearestPointOnDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
+Vec2 GetNearestPointOnDisc2D(Vec2 const& point, Disc2 const& disc);
+Vec2 GetNearestPointOnAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
+Vec2 GetNearestPointOnOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
+Vec2 GetNearestPointOnLineSegment2D(Vec2 const& point, Vec2 const& lineStartPosition, Vec2 const& lineEndPosition, bool isLineInfinite);
+Vec2 GetNearestPointOnCapsule2D(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
+Vec2 GetNearestPointOnTriangle2D(Vec2 const& point, Vec2 const triangle2Points[3]);
+Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3);
+Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Sphere3 const& sphere3);
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3);
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------

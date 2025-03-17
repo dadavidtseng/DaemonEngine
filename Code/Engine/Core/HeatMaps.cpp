@@ -78,7 +78,7 @@ FloatRange TileHeatMap::GetRangeOfValuesExcludingSpecial(float const specialValu
     {
         float const value = m_values[i];
 
-        if (std::fabs(value - specialValueToIgnore) > EPSILON)
+        if (std::fabs(value - specialValueToIgnore) > FLOAT_MIN)
             rangeOfNonSpecialValues.ExpandToInclude(m_values[i]);
     }
 
@@ -159,7 +159,7 @@ void TileHeatMap::AddVertsForDebugDraw(VertexList&  verts,
             float const      fractionWithinRange = GetFractionWithinRange(value, valueRange.m_min, valueRange.m_max);
             Rgba8            color               = Interpolate(lowColor, highColor, fractionWithinRange);
 
-            if (std::fabs(value - specialValue) < EPSILON)
+            if (std::fabs(value - specialValue) < FLOAT_MIN)
             {
                 color = specialColor;
             }

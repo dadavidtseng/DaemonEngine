@@ -13,12 +13,16 @@
 #include "FloatRange.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/Sphere3.hpp"
 
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
@@ -539,15 +543,59 @@ bool IsPointInsideOBB2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideCapsule(Vec2 const& point, Capsule2 const& capsule)
+bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float const capsuleRadius)
 {
-    return capsule.IsPointInside(point);
+    // Calculate the capsule's direction vector
+    Vec2 const startToEnd = capsuleEndPosition - capsuleStartPosition;
+
+    if (startToEnd == Vec2::ZERO)
+    {
+        float const distanceSquared = GetDistanceSquared2D(point, capsuleStartPosition);
+        float const radiusSquared   = capsuleRadius * capsuleRadius;
+
+        return distanceSquared <= radiusSquared;
+    }
+
+    float const capsuleLength    = startToEnd.GetLength();
+    Vec2 const  startToEndNormal = startToEnd.GetNormalized();
+
+    // Calculate the projection of the point onto the capsule's direction
+    float const projectionLength        = GetProjectedLength2D(point - capsuleStartPosition, startToEndNormal);
+    float const clampedProjectionLength = GetClamped(projectionLength, 0.f, capsuleLength);
+
+    // Find the nearest point on the capsule segment
+    Vec2 const nearestPointOnSegment = capsuleStartPosition + startToEndNormal * clampedProjectionLength;
+
+    // Calculate the distance from the point to the nearest point on the segment
+    float const distanceToSegment = (point - nearestPointOnSegment).GetLength();
+
+    // Check if the point is within the radius of the capsule
+    return
+        distanceToSegment <= capsuleRadius ||
+        (point - capsuleStartPosition).GetLengthSquared() <= capsuleRadius * capsuleRadius ||
+        (point - capsuleEndPosition).GetLengthSquared() <= capsuleRadius * capsuleRadius;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideTriangle(Vec2 const& point, Triangle2 const& triangle)
+bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3)
 {
-    return triangle.IsPointInside(point);
+    // Implement the barycentric method to check if the point is inside the triangle
+    Vec2 const v0 = ccw2 - ccw1;
+    Vec2 const v1 = ccw3 - ccw1;
+    Vec2 const v2 = point - ccw1;
+
+    float const dot00 = DotProduct2D(v0, v0);
+    float const dot01 = DotProduct2D(v0, v1);
+    float const dot02 = DotProduct2D(v0, v2);
+    float const dot11 = DotProduct2D(v1, v1);
+    float const dot12 = DotProduct2D(v1, v2);
+
+    // Barycentric coordinates
+    float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+    float u        = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    float v        = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -611,92 +659,200 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point,
 //-Start-of-Get-Nearest-Point-Utilities---------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePosition,
+Vec2 GetNearestPointOnDisc2D(Vec2 const& point,
                              Vec2 const& discCenter,
                              float const discRadius)
 {
-    const float distSquared       = GetDistanceSquared2D(referencePosition, discCenter);
-    const float discRadiusSquared = discRadius * discRadius;
+    // 1. If the point is inside the disc, return the point itself.
+    if (IsPointInsideDisc2D(point, discCenter, discRadius) == true)
+    {
+        return point;
+    }
 
-    if (distSquared <= discRadiusSquared) return referencePosition;
+    // 2. Calculate the nearest point on the disc.
+    Vec2 const centerToPoint       = point - discCenter;
+    Vec2 const centerToPointNormal = centerToPoint.GetNormalized();
 
-    Vec2 discCenterToReferencePos = referencePosition - discCenter;
-
-    discCenterToReferencePos.SetLength(discRadius);
-
-    return discCenter + discCenterToReferencePos;
+    return discCenter + centerToPointNormal * discRadius;
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnDisc2D(Vec2 const&  referencePosition,
+Vec2 GetNearestPointOnDisc2D(Vec2 const&  point,
                              Disc2 const& disc)
 {
-    return disc.GetNearestPoint(referencePosition);
+    return disc.GetNearestPoint(point);
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnAABB2D(Vec2 const&  referencePos,
-                             AABB2 const& aabbBox)
+Vec2 GetNearestPointOnAABB2D(Vec2 const& point,
+                             Vec2 const& aabb2Mins,
+                             Vec2 const& aabb2Maxs)
 {
-    return aabbBox.GetNearestPoint(referencePos);
+    if (IsPointInsideAABB2D(point, aabb2Mins, aabb2Maxs) == true)
+    {
+        return point;
+    }
+
+    float const clampedX = GetClamped(point.x, aabb2Mins.x, aabb2Maxs.x);
+    float const clampedY = GetClamped(point.y, aabb2Mins.y, aabb2Maxs.y);
+
+    return
+        Vec2(clampedX, clampedY);
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnOBB2D(Vec2 const& referencePos,
-                            OBB2 const& obbBox)
+Vec2 GetNearestPointOnOBB2D(Vec2 const& point,
+                            Vec2 const& obb2Center,
+                            Vec2 const& obb2IBasisNormal,
+                            Vec2 const& obb2HalfDimensions)
 {
-    return obbBox.GetNearestPoint(referencePos);
+    if (IsPointInsideOBB2D(point, obb2Center, obb2IBasisNormal, obb2HalfDimensions) == true)
+    {
+        return point;
+    }
+
+    Vec2 const centerToWorldPosition = point - obb2Center;
+    float      localPointX           = DotProduct2D(centerToWorldPosition, obb2IBasisNormal);
+    float      localPointY           = DotProduct2D(centerToWorldPosition, Vec2(-obb2IBasisNormal.y, obb2IBasisNormal.x));
+
+    // Vec2 localPoint = GetLocalPosFromWorldPos(point);
+
+    localPointX = GetClamped(localPointX, -obb2HalfDimensions.x, obb2HalfDimensions.x);
+    localPointY = GetClamped(localPointY, -obb2HalfDimensions.y, obb2HalfDimensions.y);
+
+    Vec2 worldPosition = obb2Center;
+    worldPosition += obb2IBasisNormal * localPointX;
+    worldPosition += Vec2(-obb2IBasisNormal.y, obb2IBasisNormal.x) * localPointY;
+
+    return worldPosition;
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnInfiniteLine2D(Vec2 const&         referencePos,
-                                     LineSegment2 const& infiniteLine)
+Vec2 GetNearestPointOnLineSegment2D(Vec2 const&         point,
+                                    Vec2 const& lineStartPosition,
+                                    Vec2 const& lineEndPosition,
+                                    bool const isLineInfinite)
 {
-    UNUSED(referencePos)
-    UNUSED(infiniteLine)
+    Vec2 const  startToEnd           = lineEndPosition - lineStartPosition;
+    float const startToEndLengthSquared = startToEnd.GetLengthSquared();
 
-    return {};
+
+    if (startToEndLengthSquared == 0.f)
+    {
+        return lineStartPosition; // Return the start point as the nearest point
+    }
+
+    // Project the reference position onto the infinite line defined by m_start and m_end
+    float const t = DotProduct2D((point - lineStartPosition), startToEnd) / startToEndLengthSquared;
+
+    if (isLineInfinite)
+    {
+        // Return the nearest point on the infinite line
+        return lineStartPosition + t * startToEnd;
+    }
+
+    // Clamp t to the range [0, 1] for the finite line segment
+    float const clampedT = GetClampedZeroToOne(t);
+    return lineStartPosition + clampedT * startToEnd; // Return the nearest point on the line segment
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnLineSegment2D(Vec2 const&         referencePos,
-                                    LineSegment2 const& lineSegment)
+Vec2 GetNearestPointOnCapsule2D(Vec2 const& point,
+                                Vec2 const& capsuleStartPosition,
+                                Vec2 const& capsuleEndPosition,
+                                float const capsuleRadius)
 {
-    UNUSED(referencePos)
-    UNUSED(lineSegment)
+    if (IsPointInsideCapsule(point, capsuleStartPosition, capsuleEndPosition, capsuleRadius) == true)
+    {
+        return point;
+    }
 
-    return {};
+    // Calculate the capsule's direction vector
+    Vec2 const startToEnd = capsuleEndPosition - capsuleStartPosition;
+
+    if (startToEnd == Vec2::ZERO)
+    {
+        Vec2 const startToPoint        = point - capsuleStartPosition;
+        Vec2 const centerToPointNormal = startToPoint.GetNormalized();
+
+        return capsuleStartPosition + centerToPointNormal * capsuleRadius;
+    }
+
+    float const capsuleLength    = startToEnd.GetLength();
+    Vec2 const  startToEndNormal = startToEnd.GetNormalized();
+
+    // Calculate the projection of the point onto the capsule's direction
+    float const projectionLength        = GetProjectedLength2D(point - capsuleStartPosition, startToEndNormal);
+    float const clampedProjectionLength = GetClamped(projectionLength, 0.f, capsuleLength);
+
+    // Find the nearest point on the capsule segment
+    Vec2 const nearestPointOnSegment              = capsuleStartPosition + startToEndNormal * clampedProjectionLength;
+    Vec2 const nearestPointOnSegmentToPointNormal = (point - nearestPointOnSegment).GetNormalized();
+
+    return
+        nearestPointOnSegment + nearestPointOnSegmentToPointNormal * capsuleRadius;
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnCapsule2D(Vec2 const&     referencePos,
-                                Capsule2 const& capsule)
+Vec2 GetNearestPointOnTriangle2D(Vec2 const& point,
+                                 Vec2 const  triangle2Points[3])
 {
-    return capsule.GetNearestPoint(referencePos);
+    if (IsPointInsideTriangle(point, triangle2Points[0], triangle2Points[1], triangle2Points[2]))
+    {
+        return point;
+    }
+
+    // Start by finding the closest point on each edge of the triangle
+    Vec2  nearestPoint       = triangle2Points[0];
+    float minDistanceSquared = (point - nearestPoint).GetLengthSquared();
+
+    for (int i = 0; i < 3; ++i)
+    {
+        // Define the endpoints of the current edge
+        Vec2 edgeStart = triangle2Points[i];
+        Vec2 edgeEnd   = triangle2Points[(i + 1) % 3];
+
+        // Find the nearest point on the edge segment to referencePosition
+        Vec2  edgeDirection     = edgeEnd - edgeStart;
+        float edgeLengthSquared = edgeDirection.GetLengthSquared();
+
+        if (edgeLengthSquared > 0.0f)
+        {
+            // Project referencePosition onto the edge (using dot product) and clamp to segment
+            Vec2  startToPoint = point - edgeStart;
+            float t            = DotProduct2D(startToPoint, edgeDirection) / edgeLengthSquared;
+            t                  = GetClamped(t, 0.0f, 1.0f); // Clamp t to the range [0, 1] to stay within the segment
+
+            Vec2  closestPointOnEdge = edgeStart + edgeDirection * t;
+            float distanceSquared    = (point - closestPointOnEdge).GetLengthSquared();
+
+            // Update the nearest point if this edge is closer
+            if (distanceSquared < minDistanceSquared)
+            {
+                minDistanceSquared = distanceSquared;
+                nearestPoint       = closestPointOnEdge;
+            }
+        }
+    }
+
+    return nearestPoint;
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnTriangle2D(Vec2 const&      referencePos,
-                                 Triangle2 const& triangle)
+Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3)
 {
-    return triangle.GetNearestPoint(referencePos);
+    return aabb3.GetNearestPoint(point);
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec3 GetNearestPointOnAABB3D(Vec3 const& referencePosition, AABB3 const& aabb3)
+Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Sphere3 const& sphere)
 {
-    return aabb3.GetNearestPoint(referencePosition);
+    return sphere.GetNearestPoint(point);
 }
 
-//----------------------------------------------------------------------------------------------------
-Vec3 GetNearestPointOnSphere3D(Vec3 const& referencePosition, Sphere3 const& sphere)
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3)
 {
-    return sphere.GetNearestPoint(referencePosition);
-}
-
-Vec3 GetNearestPointOnZCylinder3D(Vec3 const& referencePosition, Cylinder3 const& cylinder3)
-{
-    return cylinder3.GetNearestPoint(referencePosition);
+    return cylinder3.GetNearestPoint(point);
 }
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------

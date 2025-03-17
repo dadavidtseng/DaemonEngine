@@ -28,16 +28,16 @@ FloatRange::FloatRange() = default;
 bool FloatRange::operator==(const FloatRange& compare) const
 {
     return
-        fabs(m_max - compare.m_max) < EPSILON &&
-        fabs(m_min - compare.m_min) < EPSILON;
+        fabs(m_max - compare.m_max) < FLOAT_MIN &&
+        fabs(m_min - compare.m_min) < FLOAT_MIN;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool FloatRange::operator!=(const FloatRange& compare) const
 {
     return
-        fabs(m_max - compare.m_max) >= EPSILON ||
-        fabs(m_min - compare.m_min) >= EPSILON;
+        fabs(m_max - compare.m_max) >= FLOAT_MIN ||
+        fabs(m_min - compare.m_min) >= FLOAT_MIN;
 }
 
 //----------------------------------------------------------------------------------------------------
