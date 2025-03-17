@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "Disc2.hpp"
+#include "FloatRange.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -106,24 +107,6 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition,
 }
 
 //----------------------------------------------------------------------------------------------------
-RaycastResult2D RaycastVsDisc2D(Ray2 const& ray, Vec2 const& discCenter, float const discRadius)
-{
-    return RaycastVsDisc2D(ray.m_startPosition, ray.m_normalDirection, ray.m_maxLength, discCenter, discRadius);
-}
-
-//----------------------------------------------------------------------------------------------------
-RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float const maxLength, Disc2 const& disc)
-{
-    return RaycastVsDisc2D(rayStartPosition, rayForwardNormal, maxLength, disc.m_position, disc.m_radius);
-}
-
-//----------------------------------------------------------------------------------------------------
-RaycastResult2D RaycastVsDisc2D(Ray2 const& ray, Disc2 const& disc)
-{
-    return RaycastVsDisc2D(ray.m_startPosition, ray.m_normalDirection, ray.m_maxLength, disc.m_position, disc.m_radius);
-}
-
-//----------------------------------------------------------------------------------------------------
 RaycastResult2D RayCastVsLineSegment2D(Vec2 const& rayStartPosition,
                                        Vec2 const& rayForwardNormal,
                                        float const maxLength,
@@ -175,16 +158,16 @@ RaycastResult2D RayCastVsLineSegment2D(Vec2 const& rayStartPosition,
 //----------------------------------------------------------------------------------------------------
 RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
                                 Vec2 const&  rayForwardNormal,
-                                float        maxDist,
+                                float        maxLength,
                                 AABB2 const& aabb2)
 {
     RaycastResult2D result;
     result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayStartPosition = rayStartPosition;
-    result.m_rayMaxLength     = maxDist;
-    result.m_didImpact        = false; // Initialize as no impact
+    result.m_rayMaxLength     = maxLength;
+    result.m_didImpact        = false;
 
-    Vec2 endPos = rayStartPosition + rayForwardNormal * maxDist;
+    Vec2 endPos = rayStartPosition + rayForwardNormal * maxLength;
 
     if (!DoAABB2sOverlap2D(AABB2(Vec2(std::min(rayStartPosition.x, endPos.x), std::min(rayStartPosition.y, endPos.y)), Vec2(std::max(rayStartPosition.x, endPos.x), std::max(rayStartPosition.y, endPos.y))), aabb2))
     {
@@ -200,7 +183,7 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         result.m_impactNormal     = -rayForwardNormal;
         result.m_impactPosition   = rayStartPosition;
         result.m_rayForwardNormal = rayForwardNormal;
-        result.m_rayMaxLength     = maxDist;
+        result.m_rayMaxLength     = maxLength;
         result.m_rayStartPosition = rayStartPosition;
         return result;
     }
@@ -220,11 +203,11 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         {
             // hit bottom
             result.m_didImpact        = true;
-            result.m_impactDistance   = maxDist * minYHitT;
+            result.m_impactDistance   = maxLength * minYHitT;
             result.m_impactNormal     = Vec2(0.f, -1.f);
             result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
             result.m_rayForwardNormal = rayForwardNormal;
-            result.m_rayMaxLength     = maxDist;
+            result.m_rayMaxLength     = maxLength;
             result.m_rayStartPosition = rayStartPosition;
             return result;
         }
@@ -233,11 +216,11 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         {
             // hit top
             result.m_didImpact        = true;
-            result.m_impactDistance   = maxDist * maxYHitT;
+            result.m_impactDistance   = maxLength * maxYHitT;
             result.m_impactNormal     = Vec2(0.f, 1.f);
             result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
             result.m_rayForwardNormal = rayForwardNormal;
-            result.m_rayMaxLength     = maxDist;
+            result.m_rayMaxLength     = maxLength;
             result.m_rayStartPosition = rayStartPosition;
             return result;
         }
@@ -262,11 +245,11 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         {
             // hit left
             result.m_didImpact        = true;
-            result.m_impactDistance   = maxDist * minXHitT;
+            result.m_impactDistance   = maxLength * minXHitT;
             result.m_impactNormal     = Vec2(-1.f, 0.f);
             result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
             result.m_rayForwardNormal = rayForwardNormal;
-            result.m_rayMaxLength     = maxDist;
+            result.m_rayMaxLength     = maxLength;
             result.m_rayStartPosition = rayStartPosition;
             return result;
         }
@@ -275,11 +258,11 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         {
             // hit right
             result.m_didImpact        = true;
-            result.m_impactDistance   = maxDist * maxXHitT;
+            result.m_impactDistance   = maxLength * maxXHitT;
             result.m_impactNormal     = Vec2(1.f, 0.f);
             result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
             result.m_rayForwardNormal = rayForwardNormal;
-            result.m_rayMaxLength     = maxDist;
+            result.m_rayMaxLength     = maxLength;
             result.m_rayStartPosition = rayStartPosition;
             return result;
         }
@@ -340,22 +323,22 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
         {
             // hit bottom
             result.m_didImpact        = true;
-            result.m_impactDistance   = maxDist * firstYHitT;
+            result.m_impactDistance   = maxLength * firstYHitT;
             result.m_impactNormal     = Vec2(0.f, -1.f);
             result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
             result.m_rayForwardNormal = rayForwardNormal;
-            result.m_rayMaxLength     = maxDist;
+            result.m_rayMaxLength     = maxLength;
             result.m_rayStartPosition = rayStartPosition;
             return result;
         }
 
         // hit top
         result.m_didImpact        = true;
-        result.m_impactDistance   = maxDist * firstYHitT;
+        result.m_impactDistance   = maxLength * firstYHitT;
         result.m_impactNormal     = Vec2(0.f, 1.f);
         result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
         result.m_rayForwardNormal = rayForwardNormal;
-        result.m_rayMaxLength     = maxDist;
+        result.m_rayMaxLength     = maxLength;
         result.m_rayStartPosition = rayStartPosition;
         return result;
     }
@@ -379,27 +362,27 @@ RaycastResult2D RayCastVsAABB2D(Vec2 const&  rayStartPosition,
     {
         // hit left
         result.m_didImpact        = true;
-        result.m_impactDistance   = maxDist * firstXHitT;
+        result.m_impactDistance   = maxLength * firstXHitT;
         result.m_impactNormal     = Vec2(-1.f, 0.f);
         result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
         result.m_rayForwardNormal = rayForwardNormal;
-        result.m_rayMaxLength     = maxDist;
+        result.m_rayMaxLength     = maxLength;
         result.m_rayStartPosition = rayStartPosition;
         return result;
     }
 
     // hit right
     result.m_didImpact        = true;
-    result.m_impactDistance   = maxDist * firstXHitT;
+    result.m_impactDistance   = maxLength * firstXHitT;
     result.m_impactNormal     = Vec2(1.f, 0.f);
     result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactDistance;
     result.m_rayForwardNormal = rayForwardNormal;
-    result.m_rayMaxLength     = maxDist;
+    result.m_rayMaxLength     = maxLength;
     result.m_rayStartPosition = rayStartPosition;
     return result;
 }
 
-RaycastResult3D RaycastVsAABB3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, AABB3 box)
+RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float const maxLength, AABB3 const& box)
 {
     RaycastResult3D result;
     result.m_rayForwardNormal = rayForwardNormal;
@@ -591,12 +574,196 @@ RaycastResult3D RaycastVsAABB3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, fl
     return result;
 }
 
-RaycastResult3D RaycastVsSphere3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, Vec3 sphereCenter, float sphereRadius)
+RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float const maxLength, Vec3 const& sphereCenter, float const sphereRadius)
 {
-    return {};
-}
+    RaycastResult3D result;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayStartPosition = rayStartPosition;
+    result.m_rayMaxLength     = maxLength;
+    result.m_didImpact        = false; // Initialize as no impact
 
-RaycastResult3D RaycastVsCylinderZ3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, Vec3 const& centerXY, FloatRange const& minMaxZ, float radiusXY)
+    Vec3 SC = sphereCenter - rayStartPosition;
+    //Vec3 upVector = CrossProduct3D( forwardNormal, SC );
+    //Vec3 leftNormal = CrossProduct3D( upVector, forwardNormal ).GetNormalized();
+    float SCi        = DotProduct3D(SC, rayForwardNormal);
+    Vec3  leftVector = (SC - rayForwardNormal * SCi);
+    /*
+    if (leftVector == Vec3( 0.f, 0.f, 0.f )) {
+        // ray go through the center of the sphere
+        float impactLength = SC.GetLength() - radius;
+        // start point inside disc, hit when start
+        if (impactLength > -2 * radius && impactLength < 0) {
+            out_rayCastRes.m_didImpact = true;
+            out_rayCastRes.m_impactDist = 0.f;
+            out_rayCastRes.m_impactNormal = -forwardNormal;
+            out_rayCastRes.m_impactPos = startPos;
+            out_rayCastRes.m_rayForwardNormal = forwardNormal;
+            out_rayCastRes.m_rayMaxLength = maxDist;
+            out_rayCastRes.m_rayStartPos = startPos;
+            return true;
+        }
+        // length is short or direction is reversed, cannot get to disc
+        if (impactLength <= 0.f || impactLength >= maxDist) {
+            return false;
+        }
+        Vec3 impactPos = impactLength * forwardNormal + startPos;
+        out_rayCastRes.m_didImpact = true;
+        out_rayCastRes.m_impactDist = impactLength;
+        out_rayCastRes.m_impactNormal = (impactPos - center) / radius;
+        out_rayCastRes.m_impactPos = impactPos;
+        out_rayCastRes.m_rayForwardNormal = forwardNormal;
+        out_rayCastRes.m_rayMaxLength = maxDist;
+        out_rayCastRes.m_rayStartPos = startPos;
+        return true;
+    }*/
+
+    float squaredSCj = leftVector.GetLengthSquared();
+    float squaredA   = sphereRadius * sphereRadius - squaredSCj;
+    if (squaredA <= 0.f)
+    {
+        return result;
+    }
+
+    float a            = sqrtf(squaredA);
+    float impactLength = SCi - a;
+
+    // start point inside disc, hit when start
+    if (impactLength > -2 * a && impactLength < 0)
+    {
+        result.m_didImpact        = true;
+        result.m_impactDist       = 0.f;
+        result.m_impactNormal     = -rayForwardNormal;
+        result.m_impactPosition   = rayStartPosition;
+        result.m_rayForwardNormal = rayForwardNormal;
+        result.m_rayMaxLength     = maxLength;
+        result.m_rayStartPosition = rayStartPosition;
+        return result;
+    }
+    // length is short or direction is reversed, cannot get to disc
+    if (impactLength <= 0.f || impactLength >= maxLength)
+    {
+        return result;
+    }
+    // hit the disc
+    Vec3 impactPos            = impactLength * rayForwardNormal + rayStartPosition;
+    result.m_didImpact        = true;
+    result.m_impactDist       = impactLength;
+    result.m_impactNormal     = (impactPos - sphereCenter) / sphereRadius;
+    result.m_impactPosition   = impactPos;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxLength;
+    result.m_rayStartPosition = rayStartPosition;
+    return result;
+}
+//
+// RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& centerXY, FloatRange  minMaxZ, float radiusXY)
+// {
+//     return {};
+// }
+
+RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& startPos, Vec3 const& forwardNormal, float maxDist, Vec2 const& cylinderCenter, float minZ, float maxZ, float radius)
 {
-    return {};
+    RaycastResult3D result;
+    result.m_rayForwardNormal = forwardNormal;
+    result.m_rayStartPosition = startPos;
+    result.m_rayMaxLength     = maxDist;
+    result.m_didImpact        = false; // Initialize as no impact
+
+    float distanceTravel = 0.f;
+    Vec3  hitPos;
+    result.m_didImpact = false;
+    // check if hit top or bottom
+    if (startPos.z >= maxZ)
+    {
+        // ray goes up do not hit
+        if (forwardNormal.z < 0)
+        {
+            distanceTravel = (maxZ - startPos.z) / forwardNormal.z;
+            hitPos         = startPos + forwardNormal * distanceTravel;
+            if (distanceTravel < maxDist && IsPointInsideDisc2D(Vec2(hitPos.x, hitPos.y), cylinderCenter, radius))
+            {
+                // hit
+                result.m_didImpact        = true;
+                result.m_impactDist       = distanceTravel;
+                result.m_impactNormal     = Vec3(0.f, 0.f, 1.f);
+                result.m_impactPosition   = hitPos;
+                result.m_rayForwardNormal = forwardNormal;
+                result.m_rayMaxLength     = maxDist;
+                result.m_rayStartPosition = startPos;
+                return result;
+            }
+        }
+    }
+    else if (startPos.z <= minZ)
+    {
+        // ray goes up do not hit
+        if (forwardNormal.z > 0)
+        {
+            distanceTravel = (minZ - startPos.z) / forwardNormal.z;
+            hitPos         = startPos + forwardNormal * distanceTravel;
+            if (distanceTravel < maxDist && IsPointInsideDisc2D(Vec2(hitPos.x, hitPos.y), cylinderCenter, radius))
+            {
+                // hit
+                result.m_didImpact        = true;
+                result.m_impactDist       = distanceTravel;
+                result.m_impactNormal     = Vec3(0.f, 0.f, -1.f);
+                result.m_impactPosition   = hitPos;
+                result.m_rayForwardNormal = forwardNormal;
+                result.m_rayMaxLength     = maxDist;
+                result.m_rayStartPosition = startPos;
+                return result;
+            }
+        }
+    }
+    else if (IsPointInsideDisc2D(Vec2(startPos.x, startPos.y), cylinderCenter, radius))
+    {
+        // start inside cylinder
+        result.m_didImpact        = true;
+        result.m_impactDist       = 0.f;
+        result.m_impactNormal     = -forwardNormal;
+        result.m_impactPosition   = startPos;
+        result.m_rayForwardNormal = forwardNormal;
+        result.m_rayMaxLength     = maxDist;
+        result.m_rayStartPosition = startPos;
+        return result;
+    }
+
+    // hit side
+    float normalLength2D = Vec2(forwardNormal.x, forwardNormal.y).GetLength();
+    if (normalLength2D == 0.f)
+    {
+        return result;
+    }
+    Vec3            ray_forward_normal = forwardNormal / normalLength2D;
+    // try to ray cast 2D disc
+    RaycastResult2D res2D              = RaycastVsDisc2D(Vec2(startPos.x, startPos.y), Vec2(ray_forward_normal.x, ray_forward_normal.y), maxDist * normalLength2D, cylinderCenter, radius);
+    bool            isHit              = res2D.m_didImpact;
+
+    if (!isHit)
+    {
+        return result;
+    }
+
+    distanceTravel = res2D.m_impactDistance / normalLength2D;
+
+    // get the hit position
+    hitPos = Vec3(res2D.m_impactPosition.x, res2D.m_impactPosition.y, startPos.z + distanceTravel * forwardNormal.z);
+    // pass the cylinder without hitting
+    if (hitPos.z > maxZ || hitPos.z < minZ)
+    {
+        return result;
+    }
+    if (result.m_didImpact && result.m_impactDist < distanceTravel)
+    {
+        return result;
+    }
+    // hit side successfully
+    result.m_didImpact        = true;
+    result.m_impactDist       = distanceTravel;
+    result.m_impactNormal     = Vec3(res2D.m_impactNormal.x, res2D.m_impactNormal.y, 0.f);
+    result.m_impactPosition   = hitPos;
+    result.m_rayForwardNormal = forwardNormal;
+    result.m_rayMaxLength     = maxDist;
+    result.m_rayStartPosition = startPos;
+    return result;
 }

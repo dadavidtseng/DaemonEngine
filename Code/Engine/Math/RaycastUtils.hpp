@@ -30,7 +30,7 @@ struct Ray3
     Ray3(Vec3 const& startPosition, Vec3 const& normalDirection, float maxLength);
     Ray3(Vec3 const& startPosition, Vec3 const& endPosition);
 
-    Vec3  m_startPosition      = Vec3::ZERO;
+    Vec3  m_startPosition   = Vec3::ZERO;
     Vec3  m_normalDirection = Vec3::ZERO;
     float m_maxLength       = 0.f;
 };
@@ -66,11 +66,9 @@ struct RaycastResult3D
 };
 
 RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, Vec2 const& discCenter, float discRadius);
-RaycastResult2D RaycastVsDisc2D(Ray2 const& ray, Vec2 const& discCenter, float discRadius);
-RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, Disc2 const& disc);
-RaycastResult2D RaycastVsDisc2D(Ray2 const& ray, Disc2 const& disc);
 RaycastResult2D RayCastVsLineSegment2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, Vec2 const& lineStartPos, Vec2 const& lineEndPos);
 RaycastResult2D RayCastVsAABB2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, AABB2 const& aabb2);
-RaycastResult3D RaycastVsAABB3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, AABB3 box);
-RaycastResult3D RaycastVsSphere3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, Vec3 sphereCenter, float sphereRadius);
-RaycastResult3D RaycastVsCylinderZ3D(Vec3 rayStartPosition, Vec3 rayForwardNormal, float maxLength, Vec3 const& centerXY, FloatRange const& minMaxZ, float radiusXY);
+RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float  maxLength, AABB3 const& box);
+RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& sphereCenter, float sphereRadius);
+// RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& centerXY, FloatRange  minMaxZ, float radiusXY);
+RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec2 const& centerXY, float minZ, float maxZ, float radius);

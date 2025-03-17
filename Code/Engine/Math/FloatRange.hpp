@@ -27,7 +27,6 @@ struct FloatRange
 	float GetLength() const;                // Gets the length of the range
 	float GetMidpoint() const;              // Gets the midpoint of the range
 
-	// Constants
 	static FloatRange ZERO;
 	static FloatRange ONE;
 	static FloatRange ZERO_TO_ONE;

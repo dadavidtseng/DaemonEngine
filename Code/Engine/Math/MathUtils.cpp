@@ -395,6 +395,22 @@ bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB)
 
 bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second)
 {
+    float aMinX = first.m_mins.x;
+    float aMaxX = first.m_maxs.x;
+    float aMinY = first.m_mins.y;
+    float aMaxY = first.m_maxs.y;
+    float aMinZ = first.m_mins.z;
+    float aMaxZ = first.m_maxs.z;
+    float bMinX = second.m_mins.x;
+    float bMaxX = second.m_maxs.x;
+    float bMinY = second.m_mins.y;
+    float bMaxY = second.m_maxs.y;
+    float bMinZ = second.m_mins.z;
+    float bMaxZ = second.m_maxs.z;
+
+    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY && aMaxZ > bMinZ && bMaxZ > aMinZ) {
+        return true;
+    }
     return false;
 }
 
