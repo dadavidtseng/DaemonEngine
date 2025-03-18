@@ -10,7 +10,6 @@
 
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -23,7 +22,7 @@ static bool              m_debugRenderIsVisible  = true;
 std::mutex               m_mutex;
 
 //----------------------------------------------------------------------------------------------------
-enum class DebugRenderObjectType
+enum class DebugRenderObjectType : int8_t
 {
     WORLD_POINT,
     WORLD_LINE,

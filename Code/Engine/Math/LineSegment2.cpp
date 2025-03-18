@@ -1,12 +1,13 @@
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // LineSegment2.cpp
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Math/LineSegment2.hpp"
+
 #include "Engine/Math/MathUtils.hpp"
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 LineSegment2::LineSegment2(Vec2 const& startPosition,
                            Vec2 const& endPosition,
                            float const thickness,
@@ -30,27 +31,32 @@ Vec2 LineSegment2::GetCenter() const
     return (m_startPosition + m_endPosition) * 0.5f;
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec2 LineSegment2::GetNearestPoint(Vec2 const& point) const
 {
-    Vec2 const  startToEnd           = m_endPosition - m_startPosition;
+    // 1. Calculate startToEnd direction on the line and its lengthSquared.
+    Vec2 const  startToEnd              = m_endPosition - m_startPosition;
     float const startToEndLengthSquared = startToEnd.GetLengthSquared();
 
-
+    // 2. If the line's lengthSquared is zero, return the startPosition of the line.
     if (startToEndLengthSquared == 0.f)
     {
-        return m_startPosition; // Return the start point as the nearest point
+        return m_startPosition;
     }
 
-    // Project the reference position onto the infinite line defined by m_start and m_end
-    float const t = DotProduct2D((point - m_startPosition), startToEnd) / startToEndLengthSquared;
+    // 3. Project the point onto the infinite line defined by startToEnd and calculate its proportion t.
+    Vec2 const  startToPoint = point - m_startPosition;
+    float const t            = DotProduct2D(startToPoint, startToEnd) / startToEndLengthSquared;
 
-    if (m_isInfinite)
+    // 4. If the line is infinite, return the nearest point on the infinite line.
+    if (m_isInfinite == true)
     {
-        // Return the nearest point on the infinite line
         return m_startPosition + t * startToEnd;
     }
 
-    // Clamp t to the range [0, 1] for the finite line segment
+    // 5. If the line is not infinite, clamp t to the range [0, 1] to stay within the line segment,
+    // and return the nearest point on the line segment.
     float const clampedT = GetClampedZeroToOne(t);
-    return m_startPosition + clampedT * startToEnd; // Return the nearest point on the line segment
+
+    return m_startPosition + clampedT * startToEnd;
 }

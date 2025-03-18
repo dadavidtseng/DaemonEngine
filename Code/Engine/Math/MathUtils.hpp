@@ -13,10 +13,6 @@ struct Cylinder3;
 struct FloatRange;
 struct AABB2;
 struct AABB3;
-struct Disc2;
-struct IntVec2;
-struct LineSegment2;
-struct OBB2;
 struct Vec2;
 struct Vec3;
 struct Sphere3;
@@ -93,6 +89,7 @@ float GetDistanceXY3D(Vec3 const& positionA, Vec3 const& positionB);
 float GetDistanceXYSquared3D(Vec3 const& positionA, Vec3 const& positionB);
 int   GetTaxicabDistance2D(IntVec2 const& pointA, IntVec2 const& pointB);
 float GetProjectedLength2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjectOnto);
+float GetProjectedLength3D(Vec3 const& vectorToProject, Vec3 const& vectorToProjectOnto);
 Vec2  GetProjectedOnto2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjectOnto);
 
 //-End-of-Distance-&-Projections-Utilities------------------------------------------------------------
@@ -130,12 +127,11 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 //-Start-of-Get-Nearest-Point-Utilities---------------------------------------------------------------
 
 Vec2 GetNearestPointOnDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
-Vec2 GetNearestPointOnDisc2D(Vec2 const& point, Disc2 const& disc);
+Vec2 GetNearestPointOnLineSegment2D(Vec2 const& point, Vec2 const& lineStartPosition, Vec2 const& lineEndPosition, bool isLineInfinite);
+Vec2 GetNearestPointOnTriangle2D(Vec2 const& point, Vec2 const triangle2Points[3]);
 Vec2 GetNearestPointOnAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
 Vec2 GetNearestPointOnOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
-Vec2 GetNearestPointOnLineSegment2D(Vec2 const& point, Vec2 const& lineStartPosition, Vec2 const& lineEndPosition, bool isLineInfinite);
 Vec2 GetNearestPointOnCapsule2D(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
-Vec2 GetNearestPointOnTriangle2D(Vec2 const& point, Vec2 const triangle2Points[3]);
 Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3);
 Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Sphere3 const& sphere3);
 Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3);

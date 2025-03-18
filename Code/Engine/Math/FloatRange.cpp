@@ -7,54 +7,24 @@
 
 #include <cmath>
 
-#include "MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
-FloatRange FloatRange::ONE         = FloatRange(1, 1);
-FloatRange FloatRange::ZERO        = FloatRange(0, 0);
-FloatRange FloatRange::ZERO_TO_ONE = FloatRange(0, 1);
+STATIC FloatRange FloatRange::ONE         = FloatRange(1.f, 1.f);
+STATIC FloatRange FloatRange::ZERO        = FloatRange(0.f, 0.f);
+STATIC FloatRange FloatRange::ZERO_TO_ONE = FloatRange(0.f, 1.f);
 
 //----------------------------------------------------------------------------------------------------
-FloatRange::FloatRange(float const min, float const max)
+FloatRange::FloatRange(float const min,
+                       float const max)
     : m_min(min),
       m_max(max)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-FloatRange::FloatRange() = default;
-
-//----------------------------------------------------------------------------------------------------
-bool FloatRange::operator==(const FloatRange& compare) const
-{
-    return
-        fabs(m_max - compare.m_max) < FLOAT_MIN &&
-        fabs(m_min - compare.m_min) < FLOAT_MIN;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool FloatRange::operator!=(const FloatRange& compare) const
-{
-    return
-        fabs(m_max - compare.m_max) >= FLOAT_MIN ||
-        fabs(m_min - compare.m_min) >= FLOAT_MIN;
-}
-
-//----------------------------------------------------------------------------------------------------
-FloatRange& FloatRange::operator=(const FloatRange& copyFrom)
-{
-    // Check for self-assignment
-    if (this != &copyFrom)
-    {
-        m_min = copyFrom.m_min;
-        m_max = copyFrom.m_max;
-    }
-
-    return *this; // Return the current object by reference (dereference)
-}
-
-//----------------------------------------------------------------------------------------------------
-bool FloatRange::IsOnRange(const float value) const
+bool FloatRange::IsOnRange( float const value) const
 {
     return
         m_min <= value &&
@@ -62,24 +32,11 @@ bool FloatRange::IsOnRange(const float value) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool FloatRange::IsOverlappingWith(const FloatRange& other) const
+bool FloatRange::IsOverlappingWith( FloatRange const& other) const
 {
     return
         m_max >= other.m_min &&
         m_min <= other.m_max;
-}
-
-//----------------------------------------------------------------------------------------------------
-void FloatRange::ExpandToInclude(float const value)
-{
-    if (value < m_min)
-    {
-        m_min = value;
-    }
-    else if (value > m_max)
-    {
-        m_max = value;
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -118,4 +75,46 @@ float FloatRange::GetLength() const
 float FloatRange::GetMidpoint() const
 {
     return (m_min + m_max) * 0.5f;
+}
+
+//----------------------------------------------------------------------------------------------------
+void FloatRange::ExpandToInclude(float const value)
+{
+    if (value < m_min)
+    {
+        m_min = value;
+    }
+    else if (value > m_max)
+    {
+        m_max = value;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool FloatRange::operator==(FloatRange const& compare) const
+{
+    return
+        fabs(m_max - compare.m_max) < FLOAT_MIN &&
+        fabs(m_min - compare.m_min) < FLOAT_MIN;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool FloatRange::operator!=(FloatRange const& compare) const
+{
+    return
+        fabs(m_max - compare.m_max) >= FLOAT_MIN ||
+        fabs(m_min - compare.m_min) >= FLOAT_MIN;
+}
+
+//----------------------------------------------------------------------------------------------------
+FloatRange& FloatRange::operator=(FloatRange const& copyFrom)
+{
+    // Check for self-assignment
+    if (this != &copyFrom)
+    {
+        m_min = copyFrom.m_min;
+        m_max = copyFrom.m_max;
+    }
+
+    return *this; // Return the current object by reference (dereference)
 }

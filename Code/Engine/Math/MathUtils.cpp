@@ -7,22 +7,18 @@
 
 #include <cmath>
 
-#include "Engine/Math/Capsule2.hpp"
-// #include "LineSegment2.hpp"
 #include "Cylinder3.hpp"
 #include "FloatRange.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
-#include "Engine/Math/Mat44.hpp"
-#include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/IntVec2.hpp"
-#include "Engine/Math/OBB2.hpp"
-#include "Engine/Math/Triangle2.hpp"
+#include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/Sphere3.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
-#include "Engine/Math/Sphere3.hpp"
 
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 
@@ -334,6 +330,23 @@ float GetProjectedLength2D(Vec2 const& vectorToProject,
 }
 
 //----------------------------------------------------------------------------------------------------
+float GetProjectedLength3D(Vec3 const& vectorToProject,
+                           Vec3 const& vectorToProjectOnto)
+{
+    float const vectorToProjectOntoLength = vectorToProjectOnto.GetLength();
+
+    if (vectorToProjectOntoLength == 0.f)
+    {
+        return 0.f;
+    }
+
+    float const dotProduct      = DotProduct3D(vectorToProject, vectorToProjectOnto);
+    float const projectedLength = dotProduct / vectorToProjectOntoLength;
+
+    return projectedLength;
+}
+
+//----------------------------------------------------------------------------------------------------
 Vec2 GetProjectedOnto2D(Vec2 const& vectorToProject,
                         Vec2 const& vectorToProjectOnto)
 {
@@ -408,7 +421,8 @@ bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second)
     float bMinZ = second.m_mins.z;
     float bMaxZ = second.m_maxs.z;
 
-    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY && aMaxZ > bMinZ && bMaxZ > aMinZ) {
+    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY && aMaxZ > bMinZ && bMaxZ > aMinZ)
+    {
         return true;
     }
     return false;
@@ -595,23 +609,26 @@ bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, V
 //----------------------------------------------------------------------------------------------------
 bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3)
 {
-    // Implement the barycentric method to check if the point is inside the triangle
-    Vec2 const v0 = ccw2 - ccw1;
-    Vec2 const v1 = ccw3 - ccw1;
-    Vec2 const v2 = point - ccw1;
+    Vec2 const& A = ccw1;
+    Vec2 const& B = ccw2;
+    Vec2 const& C = ccw3;
 
-    float const dot00 = DotProduct2D(v0, v0);
-    float const dot01 = DotProduct2D(v0, v1);
-    float const dot02 = DotProduct2D(v0, v2);
-    float const dot11 = DotProduct2D(v1, v1);
-    float const dot12 = DotProduct2D(v1, v2);
+    Vec2 const AB = B - A;
+    Vec2 const BC = C - B;
+    Vec2 const CA = A - C;
+    Vec2 const AP = point - A;
+    Vec2 const BP = point - B;
+    Vec2 const CP = point - C;
 
-    // Barycentric coordinates
-    float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-    float u        = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    float v        = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    // 計算外積
+    float cross1 = CrossProduct2D(AB, AP);
+    float cross2 = CrossProduct2D(BC, BP);
+    float cross3 = CrossProduct2D(CA, CP);
 
-    return (u >= 0) && (v >= 0) && (u + v <= 1);
+    // 如果外積的符號相同，則點在三角形內
+    return
+        (cross1 >= 0 && cross2 >= 0 && cross3 >= 0) ||
+        (cross1 <= 0 && cross2 <= 0 && cross3 <= 0);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -693,10 +710,86 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnDisc2D(Vec2 const&  point,
-                             Disc2 const& disc)
+Vec2 GetNearestPointOnLineSegment2D(Vec2 const& point,
+                                    Vec2 const& lineStartPosition,
+                                    Vec2 const& lineEndPosition,
+                                    bool const  isLineInfinite)
 {
-    return disc.GetNearestPoint(point);
+    // 1. Calculate startToEnd direction on the line and its lengthSquared.
+    Vec2 const  startToEnd              = lineEndPosition - lineStartPosition;
+    float const startToEndLengthSquared = startToEnd.GetLengthSquared();
+
+    // 2. If the line's lengthSquared is zero, return the startPosition of the line.
+    if (startToEndLengthSquared == 0.f)
+    {
+        return lineStartPosition;
+    }
+
+    // 3. Project the point onto the infinite line defined by startToEnd and calculate its proportion t.
+    Vec2 const  startToPoint = point - lineStartPosition;
+    float const t            = DotProduct2D(startToPoint, startToEnd) / startToEndLengthSquared;
+
+    // 4. If the line is infinite, return the nearest point on the infinite line.
+    if (isLineInfinite == true)
+    {
+        return lineStartPosition + t * startToEnd;
+    }
+
+    // 5. If the line is not infinite, clamp t to the range [0, 1] to stay within the line segment,
+    // and return the nearest point on the line segment.
+    float const clampedT = GetClampedZeroToOne(t);
+    return lineStartPosition + clampedT * startToEnd;
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec2 GetNearestPointOnTriangle2D(Vec2 const& point,
+                                 Vec2 const  triangle2Points[3])
+{
+    // 1. If the point is inside the triangle, return the point itself.
+    if (IsPointInsideTriangle(point, triangle2Points[0], triangle2Points[1], triangle2Points[2]))
+    {
+        return point;
+    }
+
+    // 2. Set the nearestPoint and minLengthSquared on one of the triangle's corner.
+    Vec2  nearestPoint     = triangle2Points[0];
+    float minLengthSquared = (point - nearestPoint).GetLengthSquared();
+
+    for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+    {
+        // 3. Define the edgeStart and edgeEnd.
+        Vec2 edgeStartPosition = triangle2Points[edgeIndex];
+        Vec2 edgeEndPosition   = triangle2Points[(edgeIndex + 1) % 3];
+
+        // 4. Calculate startToEnd direction on the edge and its lengthSquared.
+        Vec2        edgeStartToEnd    = edgeEndPosition - edgeStartPosition;
+        float const edgeLengthSquared = edgeStartToEnd.GetLengthSquared();
+
+        // 5. If the edge's lengthSquared is zero, continue to the next edge.
+        if (edgeLengthSquared <= 0.f)
+        {
+            return point;
+        }
+
+        // 6. Project the point onto the infinite line defined by startToEnd, calculate its proportion t,
+        // clamp t to the range [0, 1] to stay within the line segment.
+        Vec2  startToPoint = point - edgeStartPosition;
+        float t            = DotProduct2D(startToPoint, edgeStartToEnd) / edgeLengthSquared;
+        t                  = GetClampedZeroToOne(t);
+
+        // 7. Calculate the nearest point on the line segment.
+        Vec2        closestPointOnEdge = edgeStartPosition + edgeStartToEnd * t;
+        float const distanceSquared    = (point - closestPointOnEdge).GetLengthSquared();
+
+        // 8. Update the nearest point if this edge is closer.
+        if (distanceSquared < minLengthSquared)
+        {
+            minLengthSquared = distanceSquared;
+            nearestPoint     = closestPointOnEdge;
+        }
+    }
+
+    return nearestPoint;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -744,35 +837,6 @@ Vec2 GetNearestPointOnOBB2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnLineSegment2D(Vec2 const&         point,
-                                    Vec2 const& lineStartPosition,
-                                    Vec2 const& lineEndPosition,
-                                    bool const isLineInfinite)
-{
-    Vec2 const  startToEnd           = lineEndPosition - lineStartPosition;
-    float const startToEndLengthSquared = startToEnd.GetLengthSquared();
-
-
-    if (startToEndLengthSquared == 0.f)
-    {
-        return lineStartPosition; // Return the start point as the nearest point
-    }
-
-    // Project the reference position onto the infinite line defined by m_start and m_end
-    float const t = DotProduct2D((point - lineStartPosition), startToEnd) / startToEndLengthSquared;
-
-    if (isLineInfinite)
-    {
-        // Return the nearest point on the infinite line
-        return lineStartPosition + t * startToEnd;
-    }
-
-    // Clamp t to the range [0, 1] for the finite line segment
-    float const clampedT = GetClampedZeroToOne(t);
-    return lineStartPosition + clampedT * startToEnd; // Return the nearest point on the line segment
-}
-
-//----------------------------------------------------------------------------------------------------
 Vec2 GetNearestPointOnCapsule2D(Vec2 const& point,
                                 Vec2 const& capsuleStartPosition,
                                 Vec2 const& capsuleEndPosition,
@@ -810,51 +874,6 @@ Vec2 GetNearestPointOnCapsule2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 GetNearestPointOnTriangle2D(Vec2 const& point,
-                                 Vec2 const  triangle2Points[3])
-{
-    if (IsPointInsideTriangle(point, triangle2Points[0], triangle2Points[1], triangle2Points[2]))
-    {
-        return point;
-    }
-
-    // Start by finding the closest point on each edge of the triangle
-    Vec2  nearestPoint       = triangle2Points[0];
-    float minDistanceSquared = (point - nearestPoint).GetLengthSquared();
-
-    for (int i = 0; i < 3; ++i)
-    {
-        // Define the endpoints of the current edge
-        Vec2 edgeStart = triangle2Points[i];
-        Vec2 edgeEnd   = triangle2Points[(i + 1) % 3];
-
-        // Find the nearest point on the edge segment to referencePosition
-        Vec2  edgeDirection     = edgeEnd - edgeStart;
-        float edgeLengthSquared = edgeDirection.GetLengthSquared();
-
-        if (edgeLengthSquared > 0.0f)
-        {
-            // Project referencePosition onto the edge (using dot product) and clamp to segment
-            Vec2  startToPoint = point - edgeStart;
-            float t            = DotProduct2D(startToPoint, edgeDirection) / edgeLengthSquared;
-            t                  = GetClamped(t, 0.0f, 1.0f); // Clamp t to the range [0, 1] to stay within the segment
-
-            Vec2  closestPointOnEdge = edgeStart + edgeDirection * t;
-            float distanceSquared    = (point - closestPointOnEdge).GetLengthSquared();
-
-            // Update the nearest point if this edge is closer
-            if (distanceSquared < minDistanceSquared)
-            {
-                minDistanceSquared = distanceSquared;
-                nearestPoint       = closestPointOnEdge;
-            }
-        }
-    }
-
-    return nearestPoint;
-}
-
-//----------------------------------------------------------------------------------------------------
 Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3)
 {
     return aabb3.GetNearestPoint(point);
@@ -879,7 +898,7 @@ Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3)
 void TransformPosition2D(Vec2&       posToTransform,
                          float const uniformScale,
                          float const rotationDegrees,
-                         Vec2 const& translation)	// TODO: refactor 
+                         Vec2 const& translation)	// TODO: refactor
 {
     posToTransform.x *= uniformScale;
     posToTransform.y *= uniformScale;
@@ -1004,10 +1023,20 @@ Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& target
 
             break;
         }
+
+    case eBillboardType::NONE:
+        {
+            Mat44 const identity;
+
+            return identity;
+        }
+
+    case eBillboardType::COUNT:
+        {
+            ERROR_AND_DIE("eBillboardType::COUNT is invalid!")
+        }
     }
 
     billboardMatrix.SetIJK3D(iBasis, jBasis * billboardScale.x, kBasis * billboardScale.y);
     billboardMatrix.SetTranslation3D(billboardPosition);
-
-    return billboardMatrix;
 }

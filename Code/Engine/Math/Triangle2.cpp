@@ -5,9 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Triangle2.hpp"
 
-#include <cmath>
-
-#include "Engine/Math/MathUtils.hpp" // Assuming this includes necessary math functions
+#include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Triangle2::Triangle2(Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3)
@@ -43,52 +41,52 @@ bool Triangle2::IsPointInside(Vec2 const& point) const
     return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
-// Get the nearest point on the triangle to a reference position
+//----------------------------------------------------------------------------------------------------
 Vec2 Triangle2::GetNearestPoint(Vec2 const& point) const
 {
+    // 1. If the point is inside the triangle, return the point itself.
     if (IsPointInside(point))
     {
         return point;
     }
 
-    // Start by finding the closest point on each edge of the triangle
-    Vec2  nearestPoint       = m_positionCounterClockwise[0];
-    float minDistanceSquared = (point - nearestPoint).GetLengthSquared();
+    // 2. Set the nearestPoint and minLengthSquared on one of the triangle's corner.
+    Vec2  nearestPoint     = m_positionCounterClockwise[0];
+    float minLengthSquared = (point - nearestPoint).GetLengthSquared();
 
-    for (int i = 0; i < 3; ++i)
+    for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
     {
-        // Define the endpoints of the current edge
-        Vec2 edgeStart = m_positionCounterClockwise[i];
-        Vec2 edgeEnd   = m_positionCounterClockwise[(i + 1) % 3];
+        // 3. Define the edgeStart and edgeEnd.
+        Vec2 edgeStartPosition = m_positionCounterClockwise[edgeIndex];
+        Vec2 edgeEndPosition   = m_positionCounterClockwise[(edgeIndex + 1) % 3];
 
-        // Find the nearest point on the edge segment to referencePosition
-        Vec2  edgeDirection     = edgeEnd - edgeStart;
-        float edgeLengthSquared = edgeDirection.GetLengthSquared();
+        // 4. Calculate startToEnd direction on the edge and its lengthSquared.
+        Vec2        edgeStartToEnd    = edgeEndPosition - edgeStartPosition;
+        float const edgeLengthSquared = edgeStartToEnd.GetLengthSquared();
 
-        if (edgeLengthSquared > 0.0f)
+        // 5. If the edge's lengthSquared is zero, continue to the next edge.
+        if (edgeLengthSquared == 0.f)
         {
-            // Project referencePosition onto the edge (using dot product) and clamp to segment
-            Vec2  startToPoint = point - edgeStart;
-            float t            = DotProduct2D(startToPoint, edgeDirection) / edgeLengthSquared;
-            t                  = GetClamped(t, 0.0f, 1.0f); // Clamp t to the range [0, 1] to stay within the segment
+            return point;
+        }
 
-            Vec2  closestPointOnEdge = edgeStart + edgeDirection * t;
-            float distanceSquared    = (point - closestPointOnEdge).GetLengthSquared();
+        // 6. Project the point onto the infinite line defined by startToEnd, calculate its proportion t,
+        // clamp t to the range [0, 1] to stay within the line segment.
+        Vec2  startToPoint = point - edgeStartPosition;
+        float t            = DotProduct2D(startToPoint, edgeStartToEnd) / edgeLengthSquared;
+        t                  = GetClampedZeroToOne(t);
 
-            // Update the nearest point if this edge is closer
-            if (distanceSquared < minDistanceSquared)
-            {
-                minDistanceSquared = distanceSquared;
-                nearestPoint       = closestPointOnEdge;
-            }
+        // 7. Calculate the nearest point on the line segment.
+        Vec2        closestPointOnEdge = edgeStartPosition + edgeStartToEnd * t;
+        float const distanceSquared    = (point - closestPointOnEdge).GetLengthSquared();
+
+        // 8. Update the nearest point if this edge is closer.
+        if (distanceSquared < minLengthSquared)
+        {
+            minLengthSquared = distanceSquared;
+            nearestPoint     = closestPointOnEdge;
         }
     }
 
     return nearestPoint;
 }
-
-
-
-
-
-

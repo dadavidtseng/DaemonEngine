@@ -8,26 +8,32 @@
 //-----------------------------------------------------------------------------------------------
 struct FloatRange
 {
-	float m_min = 0.f;
-	float m_max = 0.f;
+    float m_min = 0.f;
+    float m_max = 0.f;
 
-	FloatRange();
-	explicit FloatRange(float min, float max);
+    static FloatRange ZERO;
+    static FloatRange ONE;
+    static FloatRange ZERO_TO_ONE;
 
-	// Operator overloads
-	bool        operator==(const FloatRange& compare) const;
-	bool        operator!=(const FloatRange& compare) const;
-	FloatRange& operator=(const FloatRange& copyFrom);
+    // Construction / Destruction
+    FloatRange()  = default;
+    ~FloatRange() = default;
+    explicit FloatRange(float min, float max);
 
-	// Methods
-	bool  IsOnRange(float value) const;
-	bool  IsOverlappingWith(const FloatRange& other) const;
-	void  ExpandToInclude(float value);     // Expands the range to include a given value
-	void  ClampToRange(float& value) const; // Clamps a value within the range
-	float GetLength() const;                // Gets the length of the range
-	float GetMidpoint() const;              // Gets the midpoint of the range
+    // Accessors (const methods)
+    bool  IsOnRange(float value) const;
+    bool  IsOverlappingWith(FloatRange const& other) const;
+    void  ClampToRange(float& value) const;
+    float GetLength() const;
+    float GetMidpoint() const;
 
-	static FloatRange ZERO;
-	static FloatRange ONE;
-	static FloatRange ZERO_TO_ONE;
+    // Mutators (non-const methods)
+    void  ExpandToInclude(float value);
+
+    // Operators (const)
+    bool        operator==(FloatRange const& compare) const;
+    bool        operator!=(FloatRange const& compare) const;
+
+    // Operators (self-mutating / non-const)
+    FloatRange& operator=(FloatRange const& copyFrom);
 };
