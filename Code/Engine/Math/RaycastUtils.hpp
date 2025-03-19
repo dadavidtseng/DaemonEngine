@@ -4,13 +4,35 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include <cstdint>
+
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 
-struct Disc2;
+//-Forward-Declaration--------------------------------------------------------------------------------
 struct FloatRange;
-struct AABB3;
-struct AABB2;
+
+//----------------------------------------------------------------------------------------------------
+enum class eAABB2HitType : int8_t
+{
+    NONE = -1,
+    TOP,
+    BOTTOM,
+    LEFT,
+    RIGHT
+};
+
+//----------------------------------------------------------------------------------------------------
+enum class eAABB3HitType : int8_t
+{
+    NONE = -1,
+    TOP,
+    BOTTOM,
+    LEFT,
+    RIGHT,
+    FRONT,
+    BACK
+};
 
 //----------------------------------------------------------------------------------------------------
 struct Ray2
@@ -70,5 +92,5 @@ RaycastResult2D RaycastVsLineSegment2D(Vec2 const& rayStartPosition, Vec2 const&
 RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
 
 RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& sphereCenter, float sphereRadius);
-RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, AABB3 const& box);
-RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec2 const& cylinderCenterXY, FloatRange cylinderMinMaxZ, float cylinderRadius);
+RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
+RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec2 const& cylinderCenterXY, FloatRange const& cylinderMinMaxZ, float cylinderRadius);

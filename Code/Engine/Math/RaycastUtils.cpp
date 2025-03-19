@@ -8,11 +8,10 @@
 #include <algorithm>
 #include <cmath>
 
-#include "Disc2.hpp"
-#include "FloatRange.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -98,7 +97,7 @@ RaycastResult2D RaycastVsDisc2D(Vec2 const& rayStartPosition,
         return result;
     }
 
-    // 6. Calculate the adjustedLength and the impactDistance
+    // 6. Calculate the adjustedLength and the impactDistance.
     float const adjustedLength = sqrtf(discRadius * discRadius - SCj * SCj);
     result.m_impactLength      = SCi - adjustedLength;
 
@@ -208,12 +207,12 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
     result.m_rayMaxLength     = maxLength;
 
     // 2. Calculate the rayEndPosition and the rayAABB2.
-    Vec2  rayEndPosition = rayStartPosition + rayForwardNormal * maxLength;
-    float rayAABB2MinsX  = std::min(rayStartPosition.x, rayEndPosition.x);
-    float rayAABB2MinsY  = std::min(rayStartPosition.y, rayEndPosition.y);
-    float rayAABB2MaxsX  = std::max(rayStartPosition.x, rayEndPosition.x);
-    float rayAABB2MaxsY  = std::max(rayStartPosition.y, rayEndPosition.y);
-    AABB2 rayAABB2       = AABB2(Vec2(rayAABB2MinsX, rayAABB2MinsY), Vec2(rayAABB2MaxsX, rayAABB2MaxsY));
+    Vec2 const  rayEndPosition = rayStartPosition + rayForwardNormal * maxLength;
+    float const rayAABB2MinsX  = std::min(rayStartPosition.x, rayEndPosition.x);
+    float const rayAABB2MinsY  = std::min(rayStartPosition.y, rayEndPosition.y);
+    float const rayAABB2MaxsX  = std::max(rayStartPosition.x, rayEndPosition.x);
+    float const rayAABB2MaxsY  = std::max(rayStartPosition.y, rayEndPosition.y);
+    AABB2 const rayAABB2       = AABB2(Vec2(rayAABB2MinsX, rayAABB2MinsY), Vec2(rayAABB2MaxsX, rayAABB2MaxsY));
 
     // 3. If the rayAABB2 and the AABB2 are not overlapping, return with no hit.
     if (DoAABB2sOverlap2D(rayAABB2, AABB2(aabb2Mins, aabb2Maxs)) == false)
@@ -233,12 +232,12 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
     }
 
     // 5. Calculate minXHitT, maxXHitT, minYHitT and maxYHitT.
-    float oneOverRayRangeX = 1.f / (rayEndPosition.x - rayStartPosition.x);
-    float oneOverRayRangeY = 1.f / (rayEndPosition.y - rayStartPosition.y);
-    float minXHitT         = (aabb2Mins.x - rayStartPosition.x) * oneOverRayRangeX;
-    float maxXHitT         = (aabb2Maxs.x - rayStartPosition.x) * oneOverRayRangeX;
-    float minYHitT         = (aabb2Mins.y - rayStartPosition.y) * oneOverRayRangeY;
-    float maxYHitT         = (aabb2Maxs.y - rayStartPosition.y) * oneOverRayRangeY;
+    float const oneOverRayRangeX = 1.f / (rayEndPosition.x - rayStartPosition.x);
+    float const oneOverRayRangeY = 1.f / (rayEndPosition.y - rayStartPosition.y);
+    float const minXHitT         = (aabb2Mins.x - rayStartPosition.x) * oneOverRayRangeX;
+    float const maxXHitT         = (aabb2Maxs.x - rayStartPosition.x) * oneOverRayRangeX;
+    float const minYHitT         = (aabb2Mins.y - rayStartPosition.y) * oneOverRayRangeY;
+    float const maxYHitT         = (aabb2Maxs.y - rayStartPosition.y) * oneOverRayRangeY;
 
     // 6. If the ray is vertical,
     if (rayForwardNormal.x == 0.f)
@@ -412,28 +411,30 @@ RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition,
     result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayMaxLength     = maxLength;
 
-    // 2. Calculate the startToCenterDirection ( SC ) and SCi (projection of SC onto rayForwardNormal).
-    Vec3 const SC = sphereCenter - rayStartPosition;
-    Vec3 kBasis = CrossProduct3D( rayForwardNormal, SC );
-    Vec3 jBasis = CrossProduct3D( kBasis, rayForwardNormal ).GetNormalized();
+    // 2. Calculate the startToCenterDirection ( SC ), kBasis, jBasis, and SCj.
+    Vec3 const  SC     = sphereCenter - rayStartPosition;
+    Vec3 const  kBasis = CrossProduct3D(rayForwardNormal, SC).GetNormalized();
+    Vec3 const  jBasis = CrossProduct3D(kBasis, rayForwardNormal).GetNormalized();
+    float const SCj    = GetProjectedLength3D(SC, jBasis);
 
-    float const SCj = GetProjectedLength3D(SC, jBasis);
-
-    // 3. If SCi is too far from the sphere (outside the sphere along the ray), return with initial result.
+    // 3. If SCj is too far from the sphere (outside the sphere along the ray), return with initial result.
     if (SCj >= sphereRadius ||
         SCj <= -sphereRadius)
     {
         return result;
     }
 
+    // 4. Calculate SCi.
     float const SCi = GetProjectedLength3D(SC, rayForwardNormal);
 
+    // 5. If SCi is not intersecting with the disc, return with initial raycastResult2D.
     if (SCi < -sphereRadius ||
-            SCi > maxLength + sphereRadius)
+        SCi > maxLength + sphereRadius)
     {
         return result;
     }
 
+    // 6. Calculate the adjustedLength and the impactDistance.
     float const adjustedLength = sqrtf(sphereRadius * sphereRadius - SCj * SCj);
     result.m_impactLength      = SCi - adjustedLength;
 
@@ -445,396 +446,307 @@ RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition,
         return result;
     }
 
+    // RAY HIT
     result.m_didImpact      = true;
     result.m_impactPosition = rayStartPosition + rayForwardNormal * result.m_impactLength;
     result.m_impactNormal   = (result.m_impactPosition - sphereCenter).GetNormalized();
 
     return result;
-
-    // // 1. Initialize raycastResult3D.
-    // RaycastResult3D result;
-    // result.m_rayForwardNormal = rayForwardNormal;
-    // result.m_rayStartPosition = rayStartPosition;
-    // result.m_rayMaxLength     = maxLength;
-    //
-    // Vec3 SC = sphereCenter - rayStartPosition;
-    // //Vec3 upVector = CrossProduct3D( forwardNormal, SC );
-    // //Vec3 leftNormal = CrossProduct3D( upVector, forwardNormal ).GetNormalized();
-    // float SCi        = DotProduct3D(SC, rayForwardNormal);
-    // Vec3  leftVector = (SC - rayForwardNormal * SCi);
-    //
-    // // if (leftVector == Vec3( 0.f, 0.f, 0.f )) {
-    // //     // ray go through the center of the sphere
-    // //     float impactLength = SC.GetLength() - sphereRadius;
-    // //     // start point inside disc, hit when start
-    // //     if (impactLength > -2 * sphereRadius && impactLength < 0) {
-    // //         result.m_didImpact = true;
-    // //         result.m_impactLength = 0.f;
-    // //         result.m_impactNormal = -rayForwardNormal;
-    // //         result.m_impactPosition = rayStartPosition;
-    // //
-    // //
-    // //
-    // //         return result;
-    // //     }
-    // //     // length is short or direction is reversed, cannot get to disc
-    // //     if (impactLength <= 0.f || impactLength >= maxLength) {
-    // //         return result;
-    // //     }
-    // //     Vec3 impactPos = impactLength * rayForwardNormal + rayStartPosition;
-    // //     result.m_didImpact = true;
-    // //     result.m_impactLength      = impactLength;
-    // //     result.m_impactNormal = (impactPos - sphereCenter) / sphereRadius;
-    // //     result.m_impactPosition = impactPos;
-    // //
-    // //     return result;
-    // // }
-    //
-    // float squaredSCj = leftVector.GetLengthSquared();
-    // float squaredA   = sphereRadius * sphereRadius - squaredSCj;
-    // if (squaredA <= 0.f)
-    // {
-    //     return result;
-    // }
-    //
-    // float a            = sqrtf(squaredA);
-    // float impactLength = SCi - a;
-    //
-    // // start point inside disc, hit when start
-    // if (impactLength > -2 * a && impactLength < 0)
-    // {
-    //     result.m_didImpact        = true;
-    //     result.m_impactLength     = 0.f;
-    //     result.m_impactNormal     = -rayForwardNormal;
-    //     result.m_impactPosition   = rayStartPosition;
-    //     result.m_rayForwardNormal = rayForwardNormal;
-    //     result.m_rayMaxLength     = maxLength;
-    //     result.m_rayStartPosition = rayStartPosition;
-    //     return result;
-    // }
-    // // length is short or direction is reversed, cannot get to disc
-    // if (impactLength <= 0.f || impactLength >= maxLength)
-    // {
-    //     return result;
-    // }
-    // // hit the disc
-    // Vec3 impactPos            = impactLength * rayForwardNormal + rayStartPosition;
-    // result.m_didImpact        = true;
-    // result.m_impactLength     = impactLength;
-    // result.m_impactNormal     = (impactPos - sphereCenter) / sphereRadius;
-    // result.m_impactPosition   = impactPos;
-    // result.m_rayForwardNormal = rayForwardNormal;
-    // result.m_rayMaxLength     = maxLength;
-    // result.m_rayStartPosition = rayStartPosition;
-    // return result;
 }
 
 //----------------------------------------------------------------------------------------------------
-RaycastResult3D RaycastVsAABB3D(Vec3 const&  rayStartPosition,
-                                Vec3 const&  rayForwardNormal,
-                                float const  maxLength,
-                                AABB3 const& box)
+RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition,
+                                Vec3 const& rayForwardNormal,
+                                float const maxLength,
+                                Vec3 const& aabb3Mins,
+                                Vec3 const& aabb3Maxs)
 {
     // 1. Initialize raycastResult3D.
     RaycastResult3D result;
-    result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayStartPosition = rayStartPosition;
+    result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayMaxLength     = maxLength;
 
-    Vec3 endPos = rayStartPosition + rayForwardNormal * maxLength;
-    if (!DoAABB3sOverlap3D(AABB3(Vec3(std::min(rayStartPosition.x, endPos.x), std::min(rayStartPosition.y, endPos.y), std::min(rayStartPosition.z, endPos.z)), Vec3(std::max(rayStartPosition.x, endPos.x), std::max(rayStartPosition.y, endPos.y), std::max(rayStartPosition.z, endPos.z))), box))
+    // 2. Calculate the rayEndPosition and the rayAABB3.
+    Vec3  rayEndPosition = rayStartPosition + rayForwardNormal * maxLength;
+    float rayAABB3MinsX  = std::min(rayStartPosition.x, rayEndPosition.x);
+    float rayAABB3MinsY  = std::min(rayStartPosition.y, rayEndPosition.y);
+    float rayAABB3MinsZ  = std::min(rayStartPosition.z, rayEndPosition.z);
+    float rayAABB3MaxsX  = std::max(rayStartPosition.x, rayEndPosition.x);
+    float rayAABB3MaxsY  = std::max(rayStartPosition.y, rayEndPosition.y);
+    float rayAABB3MaxsZ  = std::max(rayStartPosition.z, rayEndPosition.z);
+    AABB3 rayAABB3       = AABB3(Vec3(rayAABB3MinsX, rayAABB3MinsY, rayAABB3MinsZ), Vec3(rayAABB3MaxsX, rayAABB3MaxsY, rayAABB3MaxsZ));
+
+    // 3. If the rayAABB3 and the AABB3 are not overlapping, return with no hit.
+    if (DoAABB3sOverlap3D(rayAABB3, AABB3(aabb3Mins, aabb3Maxs)) == false)
     {
-        result.m_didImpact = false;
         return result;
     }
 
-    if (box.IsPointInside(rayStartPosition))
+    // 4. If the rayStartPosition is inside the AABB3, return hit.
+    if (IsPointInsideAABB3D(rayStartPosition, aabb3Mins, aabb3Maxs) == true)
     {
-        result.m_didImpact        = true;
-        result.m_impactLength     = 0.f;
-        result.m_impactNormal     = -rayForwardNormal;
-        result.m_impactPosition   = rayStartPosition;
-        result.m_rayForwardNormal = rayForwardNormal;
-        result.m_rayMaxLength     = maxLength;
-        result.m_rayStartPosition = rayStartPosition;
+        result.m_didImpact      = true;
+        result.m_impactPosition = rayStartPosition;
+        result.m_impactNormal   = -rayForwardNormal;
+        result.m_impactLength   = 0.f;
+
         return result;
     }
 
-    // 0 -x 1 +x 2 -y 3 +y 4 -z 5 +z
-    int   hitFace       = -1;
-    int   hitFaceX      = -1, hitFaceY = -1, hitFaceZ = -1;
-    float oneOverRangeX = 1.f / (endPos.x - rayStartPosition.x);
-    float minXHitT      = (box.m_mins.x - rayStartPosition.x) * oneOverRangeX;
-    float maxXHitT      = (box.m_maxs.x - rayStartPosition.x) * oneOverRangeX;
-    float firstXHitT, secondXHitT;
+    // 5. If rayForwardNormalX is zero ( rayYZ ),
+    // and the rayYZ is outside the AABB3's X hit zone, return with no hit.
     if (rayForwardNormal.x == 0.f)
     {
-        if (rayStartPosition.x > box.m_mins.x && rayStartPosition.x < box.m_maxs.x)
-        {
-            firstXHitT  = -FLOAT_MAX;
-            secondXHitT = FLOAT_MAX;
-        }
-        else
+        if (rayStartPosition.x <= aabb3Mins.x ||
+            rayStartPosition.x >= aabb3Maxs.x)
         {
             return result;
         }
     }
-    else if (minXHitT < maxXHitT)
-    {
-        firstXHitT  = minXHitT;
-        secondXHitT = maxXHitT;
-        hitFaceX    = 0;
-    }
-    else
-    {
-        firstXHitT  = maxXHitT;
-        secondXHitT = minXHitT;
-        hitFaceX    = 1;
-    }
 
-    float oneOverRangeY = 1.f / (endPos.y - rayStartPosition.y);
-    float minYHitT      = (box.m_mins.y - rayStartPosition.y) * oneOverRangeY;
-    float maxYHitT      = (box.m_maxs.y - rayStartPosition.y) * oneOverRangeY;
-    float firstYHitT, secondYHitT;
-
+    // 6. If rayForwardNormalY is zero ( rayXZ ),
+    // and the rayXZ is outside the AABB3's Y hit zone, return with no hit.
     if (rayForwardNormal.y == 0.f)
     {
-        if (rayStartPosition.y > box.m_mins.y && rayStartPosition.y < box.m_maxs.y)
-        {
-            firstYHitT  = -FLOAT_MAX;
-            secondYHitT = FLOAT_MAX;
-        }
-        else
+        if (rayStartPosition.y <= aabb3Mins.y ||
+            rayStartPosition.y >= aabb3Maxs.y)
         {
             return result;
         }
     }
-    else if (minYHitT < maxYHitT)
-    {
-        firstYHitT  = minYHitT;
-        secondYHitT = maxYHitT;
-        hitFaceY    = 2;
-    }
-    else
-    {
-        firstYHitT  = maxYHitT;
-        secondYHitT = minYHitT;
-        hitFaceY    = 3;
-    }
 
-    float firstXYInt, secondXYInt;
-    if (secondXHitT > firstYHitT && secondYHitT > firstXHitT)
-    {
-        if (firstXHitT < firstYHitT)
-        {
-            firstXYInt = firstYHitT;
-            hitFace    = hitFaceY;
-        }
-        else
-        {
-            firstXYInt = firstXHitT;
-            hitFace    = hitFaceX;
-        }
-
-        if (secondXHitT < secondYHitT)
-        {
-            secondXYInt = secondXHitT;
-        }
-        else
-        {
-            secondXYInt = secondYHitT;
-        }
-    }
-    else
-    {
-        result.m_didImpact = false;
-        return result;
-    }
-
-    float oneOverRangeZ = 1.f / (endPos.z - rayStartPosition.z);
-    float minZHitT      = (box.m_mins.z - rayStartPosition.z) * oneOverRangeZ;
-    float maxZHitT      = (box.m_maxs.z - rayStartPosition.z) * oneOverRangeZ;
-    float firstZHitT, secondZHitT;
-
+    // 7. If rayForwardNormalZ is zero ( rayXY ),
+    // and the rayXY is outside the AABB3's Z hit zone, return with no hit.
     if (rayForwardNormal.z == 0.f)
     {
-        if (rayStartPosition.z > box.m_mins.z && rayStartPosition.z < box.m_maxs.z)
-        {
-            firstZHitT  = -FLOAT_MAX;
-            secondZHitT = FLOAT_MAX;
-        }
-        else
+        if (rayStartPosition.z <= aabb3Mins.z ||
+            rayStartPosition.z >= aabb3Maxs.z)
         {
             return result;
         }
     }
-    else if (minZHitT < maxZHitT)
+
+    // 8. Initialize hitType, hitTypeX, hitTypeY, and hitTypeZ;
+    // Calculate minXHitT, maxXHitT, minYHitT, maxYHitT, minZHitT and maxZHitT.
+    eAABB3HitType hitType          = eAABB3HitType::NONE;
+    eAABB3HitType hitTypeX         = eAABB3HitType::NONE;
+    eAABB3HitType hitTypeY         = eAABB3HitType::NONE;
+    eAABB3HitType hitTypeZ         = eAABB3HitType::NONE;
+    float         oneOverRayRangeX = 1.f / (rayEndPosition.x - rayStartPosition.x);
+    float         oneOverRayRangeY = 1.f / (rayEndPosition.y - rayStartPosition.y);
+    float         oneOverRayRangeZ = 1.f / (rayEndPosition.z - rayStartPosition.z);
+    float         minXHitT         = (aabb3Mins.x - rayStartPosition.x) * oneOverRayRangeX;
+    float         maxXHitT         = (aabb3Maxs.x - rayStartPosition.x) * oneOverRayRangeX;
+    float         minYHitT         = (aabb3Mins.y - rayStartPosition.y) * oneOverRayRangeY;
+    float         maxYHitT         = (aabb3Maxs.y - rayStartPosition.y) * oneOverRayRangeY;
+    float         minZHitT         = (aabb3Mins.z - rayStartPosition.z) * oneOverRayRangeZ;
+    float         maxZHitT         = (aabb3Maxs.z - rayStartPosition.z) * oneOverRayRangeZ;
+
+    // 9. Initialize enterXHitT, exitXHitT, enterYHitT, exitYHitT, enterZHitT and exitZHitT.
+    float enterXHitT = -FLOAT_MAX;
+    float exitXHitT  = FLOAT_MAX;
+    float enterYHitT = -FLOAT_MAX;
+    float exitYHitT  = FLOAT_MAX;
+    float enterZHitT = -FLOAT_MAX;
+    float exitZHitT  = FLOAT_MAX;
+
+    if (rayForwardNormal.x != 0.f)
     {
-        firstZHitT  = minZHitT;
-        secondZHitT = maxZHitT;
-        hitFaceZ    = 4;
-    }
-    else
-    {
-        firstZHitT  = maxZHitT;
-        secondZHitT = minZHitT;
-        hitFaceZ    = 5;
+        enterXHitT = std::min(minXHitT, maxXHitT);
+        exitXHitT  = std::max(minXHitT, maxXHitT);
+        hitTypeX   = minXHitT < maxXHitT ? eAABB3HitType::BACK : eAABB3HitType::FRONT;
     }
 
-    float firstXYZInt;
-    if (secondXYInt > firstZHitT && secondZHitT > firstXYInt)
+    if (rayForwardNormal.y != 0.f)
     {
-        if (firstXYInt > firstZHitT)
-        {
-            firstXYZInt = firstXYInt;
-        }
-        else
-        {
-            firstXYZInt = firstZHitT;
-            hitFace     = hitFaceZ;
-        }
+        enterYHitT = std::min(minYHitT, maxYHitT);
+        exitYHitT  = std::max(minYHitT, maxYHitT);
+        hitTypeY   = minYHitT < maxYHitT ? eAABB3HitType::LEFT : eAABB3HitType::RIGHT;
+    }
+
+    float enterXYHitT, exitXYHitT;
+
+    if (enterYHitT < exitXHitT &&
+        enterXHitT < exitYHitT)
+    {
+        enterXYHitT = std::max(enterXHitT, enterYHitT);
+        exitXYHitT  = std::min(exitXHitT, exitYHitT);
+        hitType     = enterXHitT < enterYHitT ? hitTypeY : hitTypeX;
     }
     else
     {
-        result.m_didImpact = false;
         return result;
     }
-    result.m_didImpact    = true;
-    result.m_impactLength = firstXYZInt * maxLength;
 
-    switch (hitFace)
+    if (rayForwardNormal.z != 0.f)
     {
-    case 0: result.m_impactNormal = Vec3(-1.f, 0.f, 0.f);
+        enterZHitT = std::min(minZHitT, maxZHitT);
+        exitZHitT  = std::max(minZHitT, maxZHitT);
+        hitTypeZ   = minZHitT < maxZHitT ? eAABB3HitType::BOTTOM : eAABB3HitType::TOP;
+    }
+
+    float enterXYZHitT;
+
+    if (exitXYHitT > enterZHitT &&
+        exitZHitT > enterXYHitT)
+    {
+        enterXYZHitT = std::max(enterZHitT, enterXYHitT);
+        hitType      = enterZHitT < enterXYHitT ? hitType : hitTypeZ;
+    }
+    else
+    {
+        return result;
+    }
+
+    switch (hitType)
+    {
+    case eAABB3HitType::BACK: result.m_impactNormal = -Vec3::X_BASIS;
         break;
-    case 1: result.m_impactNormal = Vec3(1.f, 0.f, 0.f);
+    case eAABB3HitType::FRONT: result.m_impactNormal = Vec3::X_BASIS;
         break;
-    case 2: result.m_impactNormal = Vec3(0.f, -1.f, 0.f);
+    case eAABB3HitType::LEFT: result.m_impactNormal = -Vec3::Y_BASIS;
         break;
-    case 3: result.m_impactNormal = Vec3(0.f, 1.f, 0.f);
+    case eAABB3HitType::RIGHT: result.m_impactNormal = Vec3::Y_BASIS;
         break;
-    case 4: result.m_impactNormal = Vec3(0.f, 0.f, -1.f);
+    case eAABB3HitType::BOTTOM: result.m_impactNormal = -Vec3::Z_BASIS;
         break;
-    case 5: result.m_impactNormal = Vec3(0.f, 0.f, 1.f);
+    case eAABB3HitType::TOP: result.m_impactNormal = Vec3::Z_BASIS;
+        break;
+    case eAABB3HitType::NONE: ERROR_RECOVERABLE("The input is not handled by RaycastVsAABB3D.")
         break;
     }
-    result.m_impactPosition   = rayStartPosition + rayForwardNormal * result.m_impactLength;
-    result.m_rayForwardNormal = rayForwardNormal;
-    result.m_rayMaxLength     = maxLength;
-    result.m_rayStartPosition = rayStartPosition;
+
+    result.m_didImpact      = true;
+    result.m_impactLength   = enterXYZHitT * maxLength;
+    result.m_impactPosition = rayStartPosition + rayForwardNormal * result.m_impactLength;
 
     return result;
 }
 
 //----------------------------------------------------------------------------------------------------
-RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition,
-                                     Vec3 const& rayForwardNormal,
-                                     float const maxLength,
-                                     Vec2 const& cylinderCenterXY,
-                                     FloatRange  cylinderMinMaxZ,
-                                     float const cylinderRadius)
+RaycastResult3D RaycastVsCylinderZ3D(Vec3 const&       rayStartPosition,
+                                     Vec3 const&       rayForwardNormal,
+                                     float const       maxLength,
+                                     Vec2 const&       cylinderCenterXY,
+                                     FloatRange const& cylinderMinMaxZ,
+                                     float const       cylinderRadius)
 {
     // 1. Initialize raycastResult3D.
     RaycastResult3D result;
-    result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayStartPosition = rayStartPosition;
+    result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayMaxLength     = maxLength;
 
-    float distanceTravel = 0.f;
-    Vec3  hitPos;
-    result.m_didImpact = false;
+    // 2. Declare rayMaxLengthZ and impactPosition.
+    float rayMaxLengthZ;
+    Vec3  impactPosition;
 
-    // check if hit top or bottom
+    // 3. If rayStartPositionZ is larger than cylinder's maxZ,
     if (rayStartPosition.z >= cylinderMinMaxZ.m_max)
     {
-        // ray goes up do not hit
+        // 4. If the ray goes down ( ray goes up does not hit ),
         if (rayForwardNormal.z < 0)
         {
-            distanceTravel = (cylinderMinMaxZ.m_max - rayStartPosition.z) / rayForwardNormal.z;
-            hitPos         = rayStartPosition + rayForwardNormal * distanceTravel;
-            if (distanceTravel < maxLength && IsPointInsideDisc2D(Vec2(hitPos.x, hitPos.y), cylinderCenterXY, cylinderRadius))
+            // 5. Calculate the rayMaxLengthZ and impactPosition
+            rayMaxLengthZ  = (cylinderMinMaxZ.m_max - rayStartPosition.z) / rayForwardNormal.z;
+            impactPosition = rayStartPosition + rayForwardNormal * rayMaxLengthZ;
+
+            // 6. If impactPosition is inside the cylinderDisc, return with hit.
+            if (IsPointInsideDisc2D(Vec2(impactPosition.x, impactPosition.y), cylinderCenterXY, cylinderRadius))
             {
-                // hit
-                result.m_didImpact        = true;
-                result.m_impactLength     = distanceTravel;
-                result.m_impactNormal     = Vec3(0.f, 0.f, 1.f);
-                result.m_impactPosition   = hitPos;
-                result.m_rayForwardNormal = rayForwardNormal;
-                result.m_rayMaxLength     = maxLength;
-                result.m_rayStartPosition = rayStartPosition;
+                // RAY HIT TOP
+                result.m_didImpact      = true;
+                result.m_impactPosition = impactPosition;
+                result.m_impactNormal   = Vec3::Z_BASIS;
+                result.m_impactLength   = rayMaxLengthZ;
+
                 return result;
             }
         }
     }
-    else if (rayStartPosition.z <= cylinderMinMaxZ.m_min)
+
+    // 7. If rayStartPositionZ is smaller than cylinder's minZ,
+    if (rayStartPosition.z <= cylinderMinMaxZ.m_min)
     {
-        // ray goes up do not hit
+        // 8. If the ray goes up ( ray goes down does not hit ),
         if (rayForwardNormal.z > 0)
         {
-            distanceTravel = (cylinderMinMaxZ.m_min - rayStartPosition.z) / rayForwardNormal.z;
-            hitPos         = rayStartPosition + rayForwardNormal * distanceTravel;
-            if (distanceTravel < maxLength && IsPointInsideDisc2D(Vec2(hitPos.x, hitPos.y), cylinderCenterXY, cylinderRadius))
+            // 9. Calculate the rayMaxLengthZ and impactPosition
+            rayMaxLengthZ  = (cylinderMinMaxZ.m_min - rayStartPosition.z) / rayForwardNormal.z;
+            impactPosition = rayStartPosition + rayForwardNormal * rayMaxLengthZ;
+
+            // 10. If impactPosition is inside the cylinderDisc, return with hit.
+            if (IsPointInsideDisc2D(Vec2(impactPosition.x, impactPosition.y), cylinderCenterXY, cylinderRadius))
             {
-                // hit
-                result.m_didImpact        = true;
-                result.m_impactLength     = distanceTravel;
-                result.m_impactNormal     = Vec3(0.f, 0.f, -1.f);
-                result.m_impactPosition   = hitPos;
-                result.m_rayForwardNormal = rayForwardNormal;
-                result.m_rayMaxLength     = maxLength;
-                result.m_rayStartPosition = rayStartPosition;
+                // RAY HIT BOTTOM
+                result.m_didImpact      = true;
+                result.m_impactPosition = impactPosition;
+                result.m_impactNormal   = -Vec3::Z_BASIS;
+                result.m_impactLength   = rayMaxLengthZ;
+
                 return result;
             }
         }
     }
-    else if (IsPointInsideDisc2D(Vec2(rayStartPosition.x, rayStartPosition.y), cylinderCenterXY, cylinderRadius))
+
+    // 11. If rayStartPositionZ is within the cylinder's minZ and maxZ,
+    if (cylinderMinMaxZ.IsOnRange(rayStartPosition.z) == true)
     {
-        // start inside cylinder
-        result.m_didImpact        = true;
-        result.m_impactLength     = 0.f;
-        result.m_impactNormal     = -rayForwardNormal;
-        result.m_impactPosition   = rayStartPosition;
-        result.m_rayForwardNormal = rayForwardNormal;
-        result.m_rayMaxLength     = maxLength;
-        result.m_rayStartPosition = rayStartPosition;
+        // 12. If the ray starts inside the cylinderDisc, return with hit.
+        if (IsPointInsideDisc2D(Vec2(rayStartPosition.x, rayStartPosition.y), cylinderCenterXY, cylinderRadius))
+        {
+            result.m_didImpact      = true;
+            result.m_impactPosition = rayStartPosition;
+            result.m_impactNormal   = -rayForwardNormal;
+            result.m_impactLength   = 0.f;
+
+            return result;
+        }
+    }
+
+    // 13. Handle the case where the ray is with the cylinder's minZ and maxZ,
+    // but starts outside the cylinderDisc;
+    // Calculate the rayForwardNormalXY2D and rayForwardNormalXY2DLength,
+    // in order to get the proportion of the ray's on XY surface.
+    Vec2 const  rayForwardNormalXY2D       = Vec2(rayForwardNormal.x, rayForwardNormal.y);
+    float const rayForwardNormalXY2DLength = rayForwardNormalXY2D.GetLength();
+
+    // 14. If the ray only has Z direction, return with no hit.
+    if (rayForwardNormalXY2DLength == 0.f)
+    {
         return result;
     }
 
-    // hit side
-    float normalLength2D = Vec2(rayForwardNormal.x, rayForwardNormal.y).GetLength();
-    if (normalLength2D == 0.f)
-    {
-        return result;
-    }
-    Vec3 ray_forward_normal = rayForwardNormal / normalLength2D;
-    // try to ray cast 2D disc
-    RaycastResult2D res2D = RaycastVsDisc2D(Vec2(rayStartPosition.x, rayStartPosition.y), Vec2(ray_forward_normal.x, ray_forward_normal.y), maxLength * normalLength2D, cylinderCenterXY, cylinderRadius);
-    bool            isHit = res2D.m_didImpact;
+    // 15. Calculate the raycastResult2D with ray and cylinder both projected on XY surface.
+    // (Notice the variables are adjusted correctly.)
+    RaycastResult2D const result2D = RaycastVsDisc2D(Vec2(rayStartPosition.x, rayStartPosition.y),
+                                                     rayForwardNormalXY2D / rayForwardNormalXY2DLength,
+                                                     maxLength * rayForwardNormalXY2DLength,
+                                                     cylinderCenterXY,
+                                                     cylinderRadius);
 
-    if (!isHit)
+    // 16. If the ray2D does not hit, return with no hit.
+    if (result2D.m_didImpact == false)
     {
         return result;
     }
 
-    distanceTravel = res2D.m_impactLength / normalLength2D;
+    // 17. Calculate the rayImpactLength and impactPosition.
+    float const rayImpactLength = result2D.m_impactLength / rayForwardNormalXY2DLength;
+    impactPosition              = Vec3(result2D.m_impactPosition.x, result2D.m_impactPosition.y, rayStartPosition.z + rayImpactLength * rayForwardNormal.z);
 
-    // get the hit position
-    hitPos = Vec3(res2D.m_impactPosition.x, res2D.m_impactPosition.y, rayStartPosition.z + distanceTravel * rayForwardNormal.z);
-    // pass the cylinder without hitting
-    if (hitPos.z > cylinderMinMaxZ.m_max || hitPos.z < cylinderMinMaxZ.m_min)
+    // 18. If the ray impactPositionZ is outside cylinderMinZ and cylinderMaxZ, return with no hit.
+    if (cylinderMinMaxZ.IsOnRange(impactPosition.z) == false)
     {
         return result;
     }
-    if (result.m_didImpact && result.m_impactLength < distanceTravel)
-    {
-        return result;
-    }
-    // hit side successfully
-    result.m_didImpact        = true;
-    result.m_impactLength     = distanceTravel;
-    result.m_impactNormal     = Vec3(res2D.m_impactNormal.x, res2D.m_impactNormal.y, 0.f);
-    result.m_impactPosition   = hitPos;
-    result.m_rayForwardNormal = rayForwardNormal;
-    result.m_rayMaxLength     = maxLength;
-    result.m_rayStartPosition = rayStartPosition;
+
+    // RAY HIT SIDE
+    result.m_didImpact      = true;
+    result.m_impactPosition = impactPosition;
+    result.m_impactNormal   = Vec3(result2D.m_impactNormal.x, result2D.m_impactNormal.y, 0.f);
+    result.m_impactLength   = rayImpactLength;
+
     return result;
 }

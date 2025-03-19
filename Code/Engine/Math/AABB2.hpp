@@ -18,7 +18,7 @@ struct AABB2
     static AABB2 ZERO_TO_ONE;
     static AABB2 NEG_HALF_TO_HALF;
 
-
+    // Construction / Destruction
     AABB2()                      = default;
     ~AABB2()                     = default;
     AABB2(AABB2 const& copyFrom) = default;

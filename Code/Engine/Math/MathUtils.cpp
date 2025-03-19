@@ -390,59 +390,74 @@ bool DoSpheresOverlap(Vec3 const& centerA,
 //----------------------------------------------------------------------------------------------------
 bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB)
 {
-    float aMinX = boxA.m_mins.x;
-    float aMaxX = boxA.m_maxs.x;
-    float aMinY = boxA.m_mins.y;
-    float aMaxY = boxA.m_maxs.y;
-    float bMinX = boxB.m_mins.x;
-    float bMaxX = boxB.m_maxs.x;
-    float bMinY = boxB.m_mins.y;
-    float bMaxY = boxB.m_maxs.y;
+    float const aMinX = boxA.m_mins.x;
+    float const aMaxX = boxA.m_maxs.x;
+    float const aMinY = boxA.m_mins.y;
+    float const aMaxY = boxA.m_maxs.y;
+    float const bMinX = boxB.m_mins.x;
+    float const bMaxX = boxB.m_maxs.x;
+    float const bMinY = boxB.m_mins.y;
+    float const bMaxY = boxB.m_maxs.y;
 
-    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY)
+    if (aMaxX > bMinX &&
+        bMaxX > aMinX &&
+        aMaxY > bMinY &&
+        bMaxY > aMinY)
     {
         return true;
     }
+
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second)
 {
-    float aMinX = first.m_mins.x;
-    float aMaxX = first.m_maxs.x;
-    float aMinY = first.m_mins.y;
-    float aMaxY = first.m_maxs.y;
-    float aMinZ = first.m_mins.z;
-    float aMaxZ = first.m_maxs.z;
-    float bMinX = second.m_mins.x;
-    float bMaxX = second.m_maxs.x;
-    float bMinY = second.m_mins.y;
-    float bMaxY = second.m_maxs.y;
-    float bMinZ = second.m_mins.z;
-    float bMaxZ = second.m_maxs.z;
+    float const aMinX = first.m_mins.x;
+    float const aMaxX = first.m_maxs.x;
+    float const aMinY = first.m_mins.y;
+    float const aMaxY = first.m_maxs.y;
+    float const aMinZ = first.m_mins.z;
+    float const aMaxZ = first.m_maxs.z;
+    float const bMinX = second.m_mins.x;
+    float const bMaxX = second.m_maxs.x;
+    float const bMinY = second.m_mins.y;
+    float const bMaxY = second.m_maxs.y;
+    float const bMinZ = second.m_mins.z;
+    float const bMaxZ = second.m_maxs.z;
 
-    if (aMaxX > bMinX && bMaxX > aMinX && aMaxY > bMinY && bMaxY > aMinY && aMaxZ > bMinZ && bMaxZ > aMinZ)
+    if (aMaxX > bMinX &&
+        bMaxX > aMinX &&
+        aMaxY > bMinY &&
+        bMaxY > aMinY &&
+        aMaxZ > bMinZ &&
+        bMaxZ > aMinZ)
     {
         return true;
     }
+
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool DoZCylindersOverlap3D(Vec2 cylinder1CenterXY, float cylinder1Radius, FloatRange cylinder1MinMaxZ, Vec2 cylinder2CenterXY, float cylinder2Radius, FloatRange cylinder2MinMaxZ)
 {
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool DoSphereAndAABB3Overlap3D(Vec3 sphereCenter, float sphereRadius, AABB3 box)
 {
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool DoZCylinderAndAABB3Overlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, AABB3 box)
 {
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool DoZCylinderAndSphereOverlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, Vec3 sphereCenter, float sphereRadius)
 {
     return false;
@@ -540,6 +555,32 @@ bool IsPointInsideDisc2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
+bool IsPointInsideTriangle(Vec2 const& point,
+                           Vec2 const& ccw1,
+                           Vec2 const& ccw2,
+                           Vec2 const& ccw3)
+{
+    Vec2 const& A = ccw1;
+    Vec2 const& B = ccw2;
+    Vec2 const& C = ccw3;
+
+    Vec2 const AB = B - A;
+    Vec2 const BC = C - B;
+    Vec2 const CA = A - C;
+    Vec2 const AP = point - A;
+    Vec2 const BP = point - B;
+    Vec2 const CP = point - C;
+
+    float const cross1 = CrossProduct2D(AB, AP);
+    float const cross2 = CrossProduct2D(BC, BP);
+    float const cross3 = CrossProduct2D(CA, CP);
+
+    return
+        (cross1 >= 0 && cross2 >= 0 && cross3 >= 0) ||
+        (cross1 <= 0 && cross2 <= 0 && cross3 <= 0);
+}
+
+//----------------------------------------------------------------------------------------------------
 bool IsPointInsideAABB2D(Vec2 const& point,
                          Vec2 const& aabb2Mins,
                          Vec2 const& aabb2Maxs)
@@ -573,7 +614,10 @@ bool IsPointInsideOBB2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float const capsuleRadius)
+bool IsPointInsideCapsule(Vec2 const& point,
+                          Vec2 const& capsuleStartPosition,
+                          Vec2 const& capsuleEndPosition,
+                          float const capsuleRadius)
 {
     // Calculate the capsule's direction vector
     Vec2 const startToEnd = capsuleEndPosition - capsuleStartPosition;
@@ -604,31 +648,6 @@ bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, V
         distanceToSegment <= capsuleRadius ||
         (point - capsuleStartPosition).GetLengthSquared() <= capsuleRadius * capsuleRadius ||
         (point - capsuleEndPosition).GetLengthSquared() <= capsuleRadius * capsuleRadius;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3)
-{
-    Vec2 const& A = ccw1;
-    Vec2 const& B = ccw2;
-    Vec2 const& C = ccw3;
-
-    Vec2 const AB = B - A;
-    Vec2 const BC = C - B;
-    Vec2 const CA = A - C;
-    Vec2 const AP = point - A;
-    Vec2 const BP = point - B;
-    Vec2 const CP = point - C;
-
-    // 計算外積
-    float cross1 = CrossProduct2D(AB, AP);
-    float cross2 = CrossProduct2D(BC, BP);
-    float cross3 = CrossProduct2D(CA, CP);
-
-    // 如果外積的符號相同，則點在三角形內
-    return
-        (cross1 >= 0 && cross2 >= 0 && cross3 >= 0) ||
-        (cross1 <= 0 && cross2 <= 0 && cross3 <= 0);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -685,6 +704,20 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point,
     const float cosHalfAperture = CosDegrees(sectorApertureDegrees / 2.f);
 
     return dotProduct >= cosHalfAperture;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool IsPointInsideAABB3D(Vec3 const& point,
+                         Vec3 const& aabb3Mins,
+                         Vec3 const& aabb3Maxs)
+{
+    return
+        point.x >= aabb3Mins.x &&
+        point.x <= aabb3Maxs.x &&
+        point.y >= aabb3Mins.y &&
+        point.y <= aabb3Maxs.y &&
+        point.z >= aabb3Mins.z &&
+        point.z <= aabb3Maxs.z;
 }
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
@@ -1039,4 +1072,6 @@ Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& target
 
     billboardMatrix.SetIJK3D(iBasis, jBasis * billboardScale.x, kBasis * billboardScale.y);
     billboardMatrix.SetTranslation3D(billboardPosition);
+
+    return  billboardMatrix;
 }

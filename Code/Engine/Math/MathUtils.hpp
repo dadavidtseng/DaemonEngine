@@ -114,13 +114,13 @@ bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& 
 //-Start-of-Is-Point-Inside-Utilities-----------------------------------------------------------------
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
+bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3);
 bool IsPointInsideAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
 bool IsPointInsideOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
 bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
-bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
-bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees,
-                                   float       sectorRadius);
+bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees, float sectorRadius);
+bool IsPointInsideAABB3D(Vec3 const& point, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
