@@ -7,15 +7,13 @@
 
 #include <cmath>
 
-#include "Cylinder3.hpp"
-#include "FloatRange.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Mat44.hpp"
-#include "Engine/Math/Sphere3.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
@@ -192,7 +190,8 @@ float DotProduct2D(Vec2 const& a,
 }
 
 //----------------------------------------------------------------------------------------------------
-float DotProduct3D(Vec3 const& a, Vec3 const& b)
+float DotProduct3D(Vec3 const& a,
+                   Vec3 const& b)
 {
     return
         a.x * b.x +
@@ -201,7 +200,8 @@ float DotProduct3D(Vec3 const& a, Vec3 const& b)
 }
 
 //----------------------------------------------------------------------------------------------------
-float DotProduct4D(Vec4 const& a, Vec4 const& b)
+float DotProduct4D(Vec4 const& a,
+                   Vec4 const& b)
 {
     return
         a.x * b.x +
@@ -211,7 +211,8 @@ float DotProduct4D(Vec4 const& a, Vec4 const& b)
 }
 
 //----------------------------------------------------------------------------------------------------
-float CrossProduct2D(Vec2 const& a, Vec2 const& b)
+float CrossProduct2D(Vec2 const& a,
+                     Vec2 const& b)
 {
     return
         a.x * b.y -
@@ -219,7 +220,8 @@ float CrossProduct2D(Vec2 const& a, Vec2 const& b)
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec3 CrossProduct3D(Vec3 const& a, Vec3 const& b)
+Vec3 CrossProduct3D(Vec3 const& a,
+                    Vec3 const& b)
 {
     return
         Vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
@@ -368,23 +370,13 @@ Vec2 GetProjectedOnto2D(Vec2 const& vectorToProject,
 //-Start-of-Geometry-Query-Utilities------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-bool DoDiscsOverlap(Vec2 const& centerA,
-                    const float radiusA,
-                    Vec2 const& centerB,
-                    const float radiusB)
-{
-    return
-        GetDistance2D(centerA, centerB) < (radiusA + radiusB);
-}
-
-//----------------------------------------------------------------------------------------------------
-bool DoSpheresOverlap(Vec3 const& centerA,
+bool DoDiscsOverlap2D(Vec2 const& centerA,
                       float const radiusA,
-                      Vec3 const& centerB,
+                      Vec2 const& centerB,
                       float const radiusB)
 {
     return
-        GetDistance3D(centerA, centerB) < (radiusA + radiusB);
+        GetDistanceSquared2D(centerA, centerB) <= (radiusA + radiusB) * (radiusA + radiusB);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -408,6 +400,50 @@ bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB)
     }
 
     return false;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool DoDiscAndAABB2Overlap2D(Vec2 const&  discCenter,
+                             float const  discRadius,
+                             AABB2 const& aabb2)
+{
+    Vec2 const nearestPoint = GetNearestPointOnAABB2D(discCenter, aabb2.m_mins, aabb2.m_maxs);
+
+    return IsPointInsideDisc2D(nearestPoint, discCenter, discRadius);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool DoSpheresOverlap3D(Vec3 const& centerA,
+                        float const radiusA,
+                        Vec3 const& centerB,
+                        float const radiusB)
+{
+    return
+        GetDistanceSquared3D(centerA, centerB) <= (radiusA + radiusB) * (radiusA + radiusB);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool DoSphereAndAABB3Overlap3D(Vec3 const&  sphereCenter,
+                               float const  sphereRadius,
+                               AABB3 const& aabb3)
+{
+    Vec3 const nearestPoint = GetNearestPointOnAABB3D(sphereCenter, aabb3);
+
+    return IsPointInsideSphere3D(nearestPoint, sphereCenter, sphereRadius);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool DoSphereAndZCylinderOverlap3D(Vec3 const&       sphereCenter,
+                                   float const       sphereRadius,
+                                   Vec2 const&       cylinderCenterXY,
+                                   float const       cylinderRadius,
+                                   FloatRange const& cylinderMinMaxZ)
+{
+    Vec3 const cylinderStartPosition = Vec3(cylinderCenterXY.x, cylinderCenterXY.y, cylinderMinMaxZ.m_min);
+    Vec3 const cylinderEndPosition   = Vec3(cylinderCenterXY.x, cylinderCenterXY.y, cylinderMinMaxZ.m_max);
+
+    Vec3 const nearestPoint = GetNearestPointOnZCylinder3D(sphereCenter, cylinderStartPosition, cylinderEndPosition, cylinderRadius);
+    return IsPointInsideSphere3D(nearestPoint, sphereCenter, sphereRadius);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -440,26 +476,35 @@ bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DoZCylindersOverlap3D(Vec2 cylinder1CenterXY, float cylinder1Radius, FloatRange cylinder1MinMaxZ, Vec2 cylinder2CenterXY, float cylinder2Radius, FloatRange cylinder2MinMaxZ)
+bool DoAABB3AndZCylinderOverlap3D(AABB3 const&      aabb3,
+                                  Vec2 const&       cylinderCenterXY,
+                                  float const       cylinderRadius,
+                                  FloatRange const& cylinderMinMaxZ)
 {
+    if (cylinderMinMaxZ.m_max > aabb3.m_mins.z &&
+        cylinderMinMaxZ.m_min < aabb3.m_maxs.z &&
+        DoDiscAndAABB2Overlap2D(cylinderCenterXY, cylinderRadius, AABB2(Vec2(aabb3.m_mins.x, aabb3.m_mins.y), Vec2(aabb3.m_maxs.x, aabb3.m_maxs.y))))
+    {
+        return true;
+    }
+
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DoSphereAndAABB3Overlap3D(Vec3 sphereCenter, float sphereRadius, AABB3 box)
+bool DoZCylindersOverlap3D(Vec2 const&       cylinder1CenterXY,
+                           float const       cylinder1Radius,
+                           FloatRange const& cylinder1MinMaxZ,
+                           Vec2 const&       cylinder2CenterXY,
+                           float const       cylinder2Radius,
+                           FloatRange const& cylinder2MinMaxZ)
 {
-    return false;
-}
+    if (DoDiscsOverlap2D(cylinder1CenterXY, cylinder1Radius, cylinder2CenterXY, cylinder2Radius) &&
+        cylinder1MinMaxZ.IsOverlappingWith(cylinder2MinMaxZ))
+    {
+        return true;
+    }
 
-//----------------------------------------------------------------------------------------------------
-bool DoZCylinderAndAABB3Overlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, AABB3 box)
-{
-    return false;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool DoZCylinderAndSphereOverlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, Vec3 sphereCenter, float sphereRadius)
-{
     return false;
 }
 
@@ -555,10 +600,10 @@ bool IsPointInsideDisc2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideTriangle(Vec2 const& point,
-                           Vec2 const& ccw1,
-                           Vec2 const& ccw2,
-                           Vec2 const& ccw3)
+bool IsPointInsideTriangle2D(Vec2 const& point,
+                             Vec2 const& ccw1,
+                             Vec2 const& ccw2,
+                             Vec2 const& ccw3)
 {
     Vec2 const& A = ccw1;
     Vec2 const& B = ccw2;
@@ -614,10 +659,10 @@ bool IsPointInsideOBB2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideCapsule(Vec2 const& point,
-                          Vec2 const& capsuleStartPosition,
-                          Vec2 const& capsuleEndPosition,
-                          float const capsuleRadius)
+bool IsPointInsideCapsule2D(Vec2 const& point,
+                            Vec2 const& capsuleStartPosition,
+                            Vec2 const& capsuleEndPosition,
+                            float const capsuleRadius)
 {
     // Calculate the capsule's direction vector
     Vec2 const startToEnd = capsuleEndPosition - capsuleStartPosition;
@@ -707,6 +752,14 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
+bool IsPointInsideSphere3D(Vec3 const& point,
+                           Vec3 const& sphereCenter,
+                           float const sphereRadius)
+{
+    return GetDistanceSquared3D(point, sphereCenter) < sphereRadius * sphereRadius;
+}
+
+//----------------------------------------------------------------------------------------------------
 bool IsPointInsideAABB3D(Vec3 const& point,
                          Vec3 const& aabb3Mins,
                          Vec3 const& aabb3Maxs)
@@ -718,6 +771,21 @@ bool IsPointInsideAABB3D(Vec3 const& point,
         point.y <= aabb3Maxs.y &&
         point.z >= aabb3Mins.z &&
         point.z <= aabb3Maxs.z;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool IsPointInsideZCylinder3D(Vec3 const& point,
+                              Vec3 const& cylinderStartPosition,
+                              Vec3 const& cylinderEndPosition, float cylinderRadius)
+{
+    Vec3 const cylinderCenterPosition   = (cylinderStartPosition + cylinderEndPosition) * 0.5f;
+    Vec2 const cylinderCenterPositionXY = Vec2(cylinderCenterPosition.x, cylinderCenterPosition.y);
+    Vec2 const pointXY                  = Vec2(point.x, point.y);
+
+    return
+        IsPointInsideDisc2D(pointXY, cylinderCenterPositionXY, cylinderRadius) &&
+        point.z > cylinderStartPosition.z &&
+        point.z < cylinderEndPosition.z;
 }
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
@@ -779,7 +847,7 @@ Vec2 GetNearestPointOnTriangle2D(Vec2 const& point,
                                  Vec2 const  triangle2Points[3])
 {
     // 1. If the point is inside the triangle, return the point itself.
-    if (IsPointInsideTriangle(point, triangle2Points[0], triangle2Points[1], triangle2Points[2]))
+    if (IsPointInsideTriangle2D(point, triangle2Points[0], triangle2Points[1], triangle2Points[2]))
     {
         return point;
     }
@@ -875,7 +943,7 @@ Vec2 GetNearestPointOnCapsule2D(Vec2 const& point,
                                 Vec2 const& capsuleEndPosition,
                                 float const capsuleRadius)
 {
-    if (IsPointInsideCapsule(point, capsuleStartPosition, capsuleEndPosition, capsuleRadius) == true)
+    if (IsPointInsideCapsule2D(point, capsuleStartPosition, capsuleEndPosition, capsuleRadius) == true)
     {
         return point;
     }
@@ -913,14 +981,39 @@ Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3)
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Sphere3 const& sphere)
+Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float const sphereRadius)
 {
-    return sphere.GetNearestPoint(point);
+    if (IsPointInsideSphere3D(point, sphereCenter, sphereRadius) == true)
+    {
+        return point;
+    }
+
+    Vec3 const centerToPoint = point - sphereCenter;
+
+    return sphereCenter + centerToPoint.GetClamped(sphereRadius);
 }
 
-Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3)
+//----------------------------------------------------------------------------------------------------
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point,
+                                  Vec3 const& cylinderStartPosition,
+                                  Vec3 const& cylinderEndPosition,
+                                  float const cylinderRadius)
 {
-    return cylinder3.GetNearestPoint(point);
+    Vec3 const cylinderCenterPosition   = (cylinderStartPosition + cylinderEndPosition) * 0.5f;
+    Vec2 const cylinderCenterPositionXY = Vec2(cylinderCenterPosition.x, cylinderCenterPosition.y);
+    Vec2 const pointXY                  = Vec2(point.x, point.y);
+
+    if (IsPointInsideZCylinder3D(point, cylinderStartPosition, cylinderEndPosition, cylinderRadius) == true)
+    {
+        return point;
+    }
+
+    Vec2 const nearestPointOnDisc = GetNearestPointOnDisc2D(pointXY, cylinderCenterPositionXY, cylinderRadius);
+    Vec3       nearestPoint       = Vec3(nearestPointOnDisc.x, nearestPointOnDisc.y, 0.f);
+
+    nearestPoint.z = GetClamped(point.z, cylinderStartPosition.z, cylinderEndPosition.z);
+
+    return nearestPoint;
 }
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------
@@ -1073,5 +1166,5 @@ Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& target
     billboardMatrix.SetIJK3D(iBasis, jBasis * billboardScale.x, kBasis * billboardScale.y);
     billboardMatrix.SetTranslation3D(billboardPosition);
 
-    return  billboardMatrix;
+    return billboardMatrix;
 }

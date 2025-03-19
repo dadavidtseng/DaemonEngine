@@ -18,6 +18,6 @@ struct Sphere3
 
     explicit Sphere3(Vec3 const& centerPosition, float radius);
 
-    bool       IsPointInside(Vec3 const& referencePoint) const;
-    Vec3       GetNearestPoint(Vec3 const& referencePoint) const;
+    bool       IsPointInside(Vec3 const& point) const;
+    Vec3       GetNearestPoint(Vec3 const& point) const;
 };

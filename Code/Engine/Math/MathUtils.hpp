@@ -9,13 +9,12 @@
 #include "Engine/Math/Vec2.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
-struct Cylinder3;
-struct FloatRange;
 struct AABB2;
 struct AABB3;
+struct FloatRange;
+struct IntVec2;
 struct Vec2;
 struct Vec3;
-struct Sphere3;
 struct Vec4;
 struct Mat44;
 
@@ -96,14 +95,15 @@ Vec2  GetProjectedOnto2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjec
 //----------------------------------------------------------------------------------------------------
 //-Start-of-Geometry-Query-Utilities------------------------------------------------------------------
 
-bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
-bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
+bool DoDiscsOverlap2D(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB);
 bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB);
+bool DoDiscAndAABB2Overlap2D(Vec2 const& discCenter, float discRadius, AABB2 const& aabb2);
+bool DoSpheresOverlap3D(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
+bool DoSphereAndAABB3Overlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB3 const& aabb3);
+bool DoSphereAndZCylinderOverlap3D( Vec3 const& sphereCenter, float sphereRadius,Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
 bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second);
-bool DoZCylindersOverlap3D(Vec2 cylinder1CenterXY, float cylinder1Radius, FloatRange cylinder1MinMaxZ, Vec2 cylinder2CenterXY, float cylinder2Radius, FloatRange cylinder2MinMaxZ);
-bool DoSphereAndAABB3Overlap3D(Vec3 sphereCenter, float sphereRadius, AABB3 box);
-bool DoZCylinderAndAABB3Overlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, AABB3 box);
-bool DoZCylinderAndSphereOverlap3D(Vec2 cylinderCenterXY, float cylinderRadius, FloatRange cylinderMinMaxZ, Vec3 sphereCenter, float sphereRadius);
+bool DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb3,Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
+bool DoZCylindersOverlap3D(Vec2 const& cylinder1CenterXY, float cylinder1Radius, FloatRange const& cylinder1MinMaxZ, Vec2 const& cylinder2CenterXY, float cylinder2Radius, FloatRange const& cylinder2MinMaxZ);
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
@@ -114,13 +114,15 @@ bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& 
 //-Start-of-Is-Point-Inside-Utilities-----------------------------------------------------------------
 
 bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float discRadius);
-bool IsPointInsideTriangle(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3);
+bool IsPointInsideTriangle2D(Vec2 const& point, Vec2 const& ccw1, Vec2 const& ccw2, Vec2 const& ccw3);
 bool IsPointInsideAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 const& aabb2Maxs);
 bool IsPointInsideOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
-bool IsPointInsideCapsule(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
+bool IsPointInsideCapsule2D(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorForwardDegrees, float sectorApertureDegrees, float sectorRadius);
 bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorForwardNormal, float sectorApertureDegrees, float sectorRadius);
+bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideAABB3D(Vec3 const& point, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
+bool IsPointInsideZCylinder3D(Vec3 const& point, Vec3 const& cylinderStartPosition, Vec3 const& cylinderEndPosition, float cylinderRadius);
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
@@ -133,8 +135,8 @@ Vec2 GetNearestPointOnAABB2D(Vec2 const& point, Vec2 const& aabb2Mins, Vec2 cons
 Vec2 GetNearestPointOnOBB2D(Vec2 const& point, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions);
 Vec2 GetNearestPointOnCapsule2D(Vec2 const& point, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius);
 Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3);
-Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Sphere3 const& sphere3);
-Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Cylinder3 const& cylinder3);
+Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Vec3 const& cylinderStartPosition, Vec3 const& cylinderEndPosition, float cylinderRadius);
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------

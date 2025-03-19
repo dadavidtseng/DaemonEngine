@@ -4,7 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+
+struct FloatRange;
 
 //----------------------------------------------------------------------------------------------------
 struct Cylinder3
@@ -18,6 +21,9 @@ struct Cylinder3
     Cylinder3(Cylinder3 const& copyFrom) = default;
     explicit Cylinder3(Vec3 const& startPosition, Vec3 const& endPosition, float radius);
 
-    bool IsPointInside(Vec3 const& referencePoint) const;
-    Vec3 GetNearestPoint(Vec3 const& referencePoint) const;
+    Vec3 GetCenterPosition() const;
+    Vec2 GetCenterPositionXY()const;
+    FloatRange GetFloatRange() const;
+    bool IsPointInside(Vec3 const& point) const;
+    Vec3 GetNearestPoint(Vec3 const& point) const;
 };
