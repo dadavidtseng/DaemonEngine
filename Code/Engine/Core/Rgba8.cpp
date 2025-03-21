@@ -72,6 +72,16 @@ void Rgba8::GetAsFloats(float* colorAsFloats) const
 }
 
 //----------------------------------------------------------------------------------------------------
+bool Rgba8::operator==(Rgba8 const& compare) const
+{
+    return
+        r == compare.r &&
+        g == compare.g &&
+        b == compare.b &&
+        a == compare.a;
+}
+
+//----------------------------------------------------------------------------------------------------
 Rgba8 Interpolate(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
 {
     float const red   = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);

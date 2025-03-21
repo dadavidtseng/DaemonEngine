@@ -120,7 +120,7 @@ Vec3 const Vec3::GetNormalized() const
 void Vec3::GetOrthonormalBasis(Vec3 const& iBasis, Vec3* jBasis, Vec3* kBasis) const
 {
     // If the iBasis is not collinear with the zBasis.
-    if (abs(iBasis.z) < 1.f)
+    if (abs(DotProduct3D(iBasis, Z_BASIS)) < 0.999f)
     {
         *jBasis = CrossProduct3D(Z_BASIS, iBasis);
         *jBasis = jBasis->GetNormalized();

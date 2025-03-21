@@ -100,9 +100,11 @@ Mat44 Camera::GetCameraToWorldTransform() const
 
     c2w.AppendTranslation3D(m_position);
 
-    c2w.AppendZRotation(m_orientation.m_yawDegrees);
-    c2w.AppendYRotation(m_orientation.m_pitchDegrees);
-    c2w.AppendXRotation(m_orientation.m_rollDegrees);
+    // c2w.AppendZRotation(m_orientation.m_yawDegrees);
+    // c2w.AppendYRotation(m_orientation.m_pitchDegrees);
+    // c2w.AppendXRotation(m_orientation.m_rollDegrees);
+
+    c2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
 
     return c2w;
 }

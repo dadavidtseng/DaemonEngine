@@ -34,6 +34,7 @@ struct Rgba8
 
     void SetFromText(char const* text);
     void GetAsFloats(float* colorAsFloats) const;
+    bool operator==(Rgba8 const& compare) const;
 };
 
 //----------------------------------------------------------------------------------------------------
