@@ -372,6 +372,22 @@ void AddVertsForQuad3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeQuad3D(VertexList&  verts,
+                                Vec3 const&  bottomLeft,
+                                Vec3 const&  bottomRight,
+                                Vec3 const&  topLeft,
+                                Vec3 const&  topRight,
+                                float const  thickness,
+                                Rgba8 const& color,
+                                AABB2 const& uv)
+{
+    AddVertsForCylinder3D(verts, bottomLeft, bottomRight, thickness, color, uv, 4);
+    AddVertsForCylinder3D(verts, bottomRight, topRight, thickness, color, uv, 4);
+    AddVertsForCylinder3D(verts, topLeft, bottomLeft, thickness, color, uv, 4);
+    AddVertsForCylinder3D(verts, topRight, topLeft, thickness, color, uv, 4);
+}
+
+//----------------------------------------------------------------------------------------------------
 void AddVertsForAABB3D(VertexList&  verts,
                        AABB3 const& bounds,
                        Rgba8 const& color,
@@ -404,6 +420,39 @@ void AddVertsForAABB3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeAABB3D(VertexList&  verts,
+                                AABB3 const& bounds,
+                                float const  thickness,
+                                Rgba8 const& color,
+                                AABB2 const& UVs)
+{
+    Vec3 const min = bounds.m_mins;
+    Vec3 const max = bounds.m_maxs;
+
+    Vec3 const frontBottomLeft  = Vec3(max.x, min.y, min.z);
+    Vec3 const frontBottomRight = Vec3(max.x, max.y, min.z);
+    Vec3 const frontTopLeft     = Vec3(max.x, min.y, max.z);
+    Vec3 const frontTopRight    = Vec3(max.x, max.y, max.z);
+
+    Vec3 const backBottomLeft  = Vec3(min.x, max.y, min.z);
+    Vec3 const backBottomRight = Vec3(min.x, min.y, min.z);
+    Vec3 const backTopLeft     = Vec3(min.x, max.y, max.z);
+    Vec3 const backTopRight    = Vec3(min.x, min.y, max.z);
+
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    AABB2 const uv(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight));
+
+    AddVertsForWireframeQuad3D(verts, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, thickness, color, uv);        // Front
+    AddVertsForWireframeQuad3D(verts, backBottomLeft, backBottomRight, backTopLeft, backTopRight, thickness, color, uv);            // Back
+    AddVertsForWireframeQuad3D(verts, backBottomRight, frontBottomLeft, backTopRight, frontTopLeft, thickness, color, uv);          // Left
+    AddVertsForWireframeQuad3D(verts, frontBottomRight, backBottomLeft, frontTopRight, backTopLeft, thickness, color, uv);          // Right
+    AddVertsForWireframeQuad3D(verts, frontTopLeft, frontTopRight, backTopRight, backTopLeft, thickness, color, uv);                // Top
+    AddVertsForWireframeQuad3D(verts, backBottomRight, backBottomLeft, frontBottomLeft, frontBottomRight, thickness, color, uv);    // Bottom
+}
+
+//----------------------------------------------------------------------------------------------------
 void AddVertsForSphere3D(VertexList&  verts,
                          Vec3 const&  center,
                          float const  radius,
@@ -411,6 +460,47 @@ void AddVertsForSphere3D(VertexList&  verts,
                          AABB2 const& UVs,
                          int const    numSlices,
                          int const    numStacks)
+{
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    for (int stack = 0; stack < numStacks; ++stack)
+    {
+        float const phi1 = (1.f - static_cast<float>(stack) / static_cast<float>(numStacks)) * PI;
+        float const phi2 = (1.f - (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks)) * PI;
+
+        float const v1 = static_cast<float>(stack) / static_cast<float>(numStacks);
+        float const v2 = (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks);
+
+        for (int slice = 0; slice < numSlices; ++slice)
+        {
+            float const theta1 = static_cast<float>(slice) / static_cast<float>(numSlices) * 2.f * PI;
+            float const theta2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices) * 2.f * PI;
+
+            float const u1 = static_cast<float>(slice) / static_cast<float>(numSlices);
+            float const u2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices);
+
+            Vec3 bottomLeft  = center + Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
+            Vec3 bottomRight = center + Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
+            Vec3 topRight    = center + Vec3(radius * sinf(phi2) * cosf(theta2), radius * sinf(phi2) * sinf(theta2), radius * cosf(phi2));
+            Vec3 topLeft     = center + Vec3(radius * sinf(phi2) * cosf(theta1), radius * sinf(phi2) * sinf(theta1), radius * cosf(phi2));
+
+            AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
+                         Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
+
+            AddVertsForQuad3D(verts, bottomLeft, bottomRight, topLeft, topRight, color, quadUV);
+        }
+    }
+}
+
+void AddVertsForWireframeSphere3D(VertexList&  verts,
+                                  Vec3 const&  center,
+                                  float const  radius,
+                                  float const  thickness,
+                                  Rgba8 const& color,
+                                  AABB2 const& UVs,
+                                  int const    numSlices,
+                                  int const    numStacks)
 {
     float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
     float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
@@ -439,19 +529,9 @@ void AddVertsForSphere3D(VertexList&  verts,
             AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
                          Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
 
-            AddVertsForQuad3D(verts, center + bottomLeft, center + bottomRight, center + topLeft, center + topRight, color, quadUV);
+            AddVertsForWireframeQuad3D(verts, center + bottomLeft, center + bottomRight, center + topLeft, center + topRight, thickness, color, quadUV);
         }
     }
-}
-
-void AddVertsForWireframeSphere3D(VertexList&  verts,
-                                  Vec3 const&  center,
-                                  float const  radius,
-                                  Rgba8 const& color,
-                                  AABB2 const& UVs,
-                                  int const    numSlices,
-                                  int const    numStacks)
-{
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -538,6 +618,62 @@ void AddVertsForCylinder3D(VertexList&  verts,
         float const uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
 
         AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2(Vec2(uStart, 0.f), Vec2(uEnd, 1.f)));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeCylinder3D(VertexList&  verts,
+                                    Vec3 const&  startPosition,
+                                    Vec3 const&  endPosition,
+                                    float const  radius,
+                                    float const  thickness,
+                                    Rgba8 const& color,
+                                    AABB2 const& UVs,
+                                    int const    numSlices)
+{
+    // 1. Calculate cylinder's forward/normalized direction.
+    Vec3 const forwardDirection = endPosition - startPosition;
+    Vec3 const iBasis           = forwardDirection.GetNormalized();
+
+    // 2. Get jBasis and kBasis based on normalDirection.
+    Vec3 jBasis;
+    Vec3 kBasis;
+    iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+
+    // 3. Calculate the degree of each triangle in the top and bottom disc of the cylinder.
+    float const DEGREES_PER_SIDE = 360.f / static_cast<float>(numSlices);
+
+    for (int sideIndex = 0; sideIndex < numSlices; ++sideIndex)
+    {
+        // 4. Get the degree of each triangle on the unit circle.
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideIndex);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideIndex + 1);
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
+
+        // 5. Get the positions by ( discCenter ) + ( radius ) * ( cos * jBasis + sin * kBasis )
+        Vec3 topCenterPosition(endPosition);
+        Vec3 topLeftPosition(endPosition + radius * (cosStart * jBasis + sinStart * kBasis));
+        Vec3 topRightPosition(endPosition + radius * (cosEnd * jBasis + sinEnd * kBasis));
+        Vec3 bottomCenterPosition(startPosition);
+        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
+        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
+
+        // 6. Stores the vertices using counter-clockwise order with correct UVs.
+        verts.emplace_back(topCenterPosition, color, Vec2::HALF);
+        verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF);
+        verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF);
+        verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
+        verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF);
+        verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF);
+
+        // 7. Add verts for cylinder's side with correct UVs.
+        float const uStart = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices));
+        float const uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
+
+        AddVertsForWireframeQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, thickness, color, AABB2(Vec2(uStart, 0.f), Vec2(uEnd, 1.f)));
     }
 }
 
