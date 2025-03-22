@@ -8,9 +8,11 @@
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
@@ -40,7 +42,15 @@ dxObject = nullptr;       \
 #endif
 
 //----------------------------------------------------------------------------------------------------
-enum class DepthMode
+enum class eVertexType : int8_t
+{
+    VERTEX_PCU,
+    VERTEX_PCUTBN,
+    COUNT
+};
+
+//----------------------------------------------------------------------------------------------------
+enum class eDepthMode : int8_t
 {
     DISABLED,
     READ_ONLY_ALWAYS,
@@ -50,7 +60,7 @@ enum class DepthMode
 };
 
 //----------------------------------------------------------------------------------------------------
-enum class RasterizerMode
+enum class eRasterizerMode : int8_t
 {
     SOLID_CULL_NONE,
     SOLID_CULL_BACK,
@@ -60,7 +70,7 @@ enum class RasterizerMode
 };
 
 //----------------------------------------------------------------------------------------------------
-enum class SamplerMode
+enum class eSamplerMode : int8_t
 {
     POINT_CLAMP,
     BILINEAR_CLAMP,
@@ -68,7 +78,7 @@ enum class SamplerMode
 };
 
 //----------------------------------------------------------------------------------------------------
-enum class BlendMode
+enum class eBlendMode : int8_t
 {
     OPAQUE,
     ALPHA,
@@ -97,6 +107,11 @@ public:
     void BeginCamera(Camera const& camera) const;
     void EndCamera(Camera const& camera);
     void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
+    void DrawVertexArray(int numVertexes, Vertex_PCUTBN const* vertexes);
+    void DrawVertexArray(VertexList_PCU const& verts);
+    void DrawVertexArray(VertexList_PCUTBN const& verts);
+    void DrawVertexArray(VertexList_PCU const& verts, std::vector<unsigned int> const& indexes);
+    void DrawVertexArray(VertexList_PCUTBN const& verts, std::vector<unsigned int> const& indexes);
 
     void BindTexture(Texture const* texture) const;
     void BindShader(Shader const* shader) const;
@@ -104,34 +119,44 @@ public:
 
     Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
+    Shader*     CreateOrGetShaderFromFile(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
+    // Shader* CreateOrGetShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
 
-    void SetBlendMode(BlendMode mode);
-    void SetSamplerMode(SamplerMode mode);
-    void SetRasterizerMode(RasterizerMode mode);
-    void SetDepthMode(DepthMode mode);
+
+    void SetBlendMode(eBlendMode mode);
+    void SetSamplerMode(eSamplerMode mode);
+    void SetRasterizerMode(eRasterizerMode mode);
+    void SetDepthMode(eDepthMode mode);
     void SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
 
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
-    Texture*    CreateTextureFromFile(char const* imageFilePath);
-    Texture*    CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
-    Texture*    CreateTextureFromImage(Image const& image);
-    Image       CreateImageFromFile(char const* imageFilePath);
+    Shader*     GetShaderForFileName(char const* shaderFilePath) const;
 
-    Shader* CreateShader(char const* shaderName, char const* shaderSource);
-    Shader* CreateShader(char const* shaderName);
+    Texture* CreateTextureFromFile(char const* imageFilePath);
+    Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
+    Texture* CreateTextureFromImage(Image const& image);
+    Image    CreateImageFromFile(char const* imageFilePath);
+
+    // Shader* CreateOrGetShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
+    Shader* CreateShader(char const* shaderName, char const* shaderSource, eVertexType vertexType = eVertexType::VERTEX_PCU);
+    Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-    void    DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount) const;
+
+    void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount);
+    void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
 
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
-    void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
-    void            BindVertexBuffer(VertexBuffer const* vbo) const;
+    IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
+    void            BindVertexBuffer(VertexBuffer const* vbo) const;
+    void            BindIndexBuffer(IndexBuffer const* ibo) const;
     void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
     void            SetStatesIfChanged();
-
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;
@@ -143,30 +168,33 @@ protected:
     ID3D11DeviceContext*    m_deviceContext    = nullptr;
     ID3D11RenderTargetView* m_renderTargetView = nullptr;
 
-    Shader*                  m_currentShader                                       = nullptr;
-    Shader*                  m_defaultShader                                       = nullptr;
-    VertexBuffer*            m_immediateVBO                                        = nullptr;
-    ConstantBuffer*          m_cameraCBO                                           = nullptr;
-    ConstantBuffer*          m_modelCBO                                            = nullptr;
-    ID3D11BlendState*        m_blendState                                          = nullptr;
-    BlendMode                m_desiredBlendMode                                    = BlendMode::ALPHA;
-    ID3D11BlendState*        m_blendStates[static_cast<int>(BlendMode::COUNT)]     = {};
-    Texture*                 m_defaultTexture                                      = nullptr;
-    SamplerMode              m_desiredSamplerMode                                  = SamplerMode::POINT_CLAMP;
-    ID3D11SamplerState*      m_samplerState                                        = nullptr;
-    ID3D11SamplerState*      m_samplerStates[static_cast<int>(SamplerMode::COUNT)] = {};
+    Shader*                  m_currentShader                                        = nullptr;
+    Shader*                  m_defaultShader                                        = nullptr;
+    VertexBuffer*            m_immediateVBO_PCU                                     = nullptr;
+    VertexBuffer*            m_immediateVBO_PCUTBN                                  = nullptr;
+    IndexBuffer*             m_immediateIBO                                         = nullptr;
+    ConstantBuffer*          m_cameraCBO                                            = nullptr;
+    ConstantBuffer*          m_modelCBO                                             = nullptr;
+    ConstantBuffer*          m_lightCBO                                             = nullptr;
+    ID3D11BlendState*        m_blendState                                           = nullptr;
+    eBlendMode               m_desiredBlendMode                                     = eBlendMode::ALPHA;
+    ID3D11BlendState*        m_blendStates[static_cast<int>(eBlendMode::COUNT)]     = {};
+    Texture*                 m_defaultTexture                                       = nullptr;
+    eSamplerMode             m_desiredSamplerMode                                   = eSamplerMode::POINT_CLAMP;
+    ID3D11SamplerState*      m_samplerState                                         = nullptr;
+    ID3D11SamplerState*      m_samplerStates[static_cast<int>(eSamplerMode::COUNT)] = {};
     std::vector<Shader*>     m_loadedShaders;
     std::vector<Texture*>    m_loadedTextures;
     std::vector<BitmapFont*> m_loadedFonts;
-    RasterizerMode           m_desiredRasterizerMode                                     = RasterizerMode::SOLID_CULL_BACK;
-    ID3D11RasterizerState*   m_rasterizerState                                           = nullptr;
-    ID3D11RasterizerState*   m_rasterizerStates[static_cast<int>(RasterizerMode::COUNT)] = {};
-    ID3D11Texture2D*         m_depthStencilTexture                                       = nullptr;
-    ID3D11DepthStencilView*  m_depthStencilDSV                                           = nullptr;
+    eRasterizerMode          m_desiredRasterizerMode                                      = eRasterizerMode::SOLID_CULL_BACK;
+    ID3D11RasterizerState*   m_rasterizerState                                            = nullptr;
+    ID3D11RasterizerState*   m_rasterizerStates[static_cast<int>(eRasterizerMode::COUNT)] = {};
+    ID3D11Texture2D*         m_depthStencilTexture                                        = nullptr;
+    ID3D11DepthStencilView*  m_depthStencilDSV                                            = nullptr;
 
-    DepthMode                m_desiredDepthMode                                       = DepthMode::READ_WRITE_LESS_EQUAL;
-    ID3D11DepthStencilState* m_depthStencilState                                      = nullptr;
-    ID3D11DepthStencilState* m_depthStencilStates[static_cast<int>(DepthMode::COUNT)] = {};
+    eDepthMode               m_desiredDepthMode                                        = eDepthMode::READ_WRITE_LESS_EQUAL;
+    ID3D11DepthStencilState* m_depthStencilState                                       = nullptr;
+    ID3D11DepthStencilState* m_depthStencilStates[static_cast<int>(eDepthMode::COUNT)] = {};
 
 #if defined(ENGINE_DEBUG_RENDER)
     void* m_dxgiDebug       = nullptr;

@@ -12,9 +12,30 @@
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/LineSegment2.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Renderer/Window.hpp"
+
+//----------------------------------------------------------------------------------------------------
+AABB2 GetVertexBounds2D(VertexList_PCU const& verts)
+{
+    if (verts.empty() == true)
+    {
+        return {};
+    }
+
+    Vec2 min = Vec2(verts[0].m_position.x, verts[0].m_position.y);
+    Vec2 max = Vec2(verts[0].m_position.x, verts[0].m_position.y);
+
+    for (Vertex_PCU const& vert : verts)
+    {
+        min.x = std::min(min.x, vert.m_position.x);
+        min.y = std::min(min.y, vert.m_position.y);
+        max.x = std::max(max.x, vert.m_position.x);
+        max.y = std::max(max.y, vert.m_position.y);
+    }
+
+    return AABB2(min, max);
+}
 
 //----------------------------------------------------------------------------------------------------
 void TransformVertexArrayXY3D(int const   numVerts,
@@ -32,7 +53,17 @@ void TransformVertexArrayXY3D(int const   numVerts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList&  verts,
+void TransformVertexArray3D(VertexList_PCU&  verts,
+                            Mat44 const& transform)
+{
+    for (Vertex_PCU& vert : verts)
+    {
+        vert.m_position = transform.TransformPosition3D(vert.m_position);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForDisc2D(VertexList_PCU&  verts,
                        Vec2 const&  discCenter,
                        float const  discRadius,
                        Rgba8 const& color)
@@ -63,7 +94,7 @@ void AddVertsForDisc2D(VertexList&  verts,
     }
 }
 
-void AddVertsForDisc3D(VertexList& verts, Vec3 const& discCenter, float const discRadius, Vec3 const& normalDirection, Rgba8 const& color)
+void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float const discRadius, Vec3 const& normalDirection, Rgba8 const& color)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr   NUM_SIDES        = 32;
@@ -96,7 +127,7 @@ void AddVertsForDisc3D(VertexList& verts, Vec3 const& discCenter, float const di
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList&  verts,
+void AddVertsForDisc2D(VertexList_PCU&  verts,
                        Disc2 const& disc,
                        Rgba8 const& color)
 {
@@ -107,7 +138,7 @@ void AddVertsForDisc2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList&  verts,
+void AddVertsForLineSegment2D(VertexList_PCU&  verts,
                               Vec2 const&  startPosition,
                               Vec2 const&  endPosition,
                               float const  thickness,
@@ -155,7 +186,7 @@ void AddVertsForLineSegment2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList&         verts,
+void AddVertsForLineSegment2D(VertexList_PCU&         verts,
                               LineSegment2 const& lineSegment,
                               float const         thickness,
                               bool const          isInfinite,
@@ -170,7 +201,7 @@ void AddVertsForLineSegment2D(VertexList&         verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList&  verts,
+void AddVertsForTriangle2D(VertexList_PCU&  verts,
                            Vec2 const&  ccw0,
                            Vec2 const&  ccw1,
                            Vec2 const&  ccw2,
@@ -182,7 +213,7 @@ void AddVertsForTriangle2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList&      verts,
+void AddVertsForTriangle2D(VertexList_PCU&      verts,
                            Triangle2 const& triangle,
                            Rgba8 const&     color)
 {
@@ -194,7 +225,7 @@ void AddVertsForTriangle2D(VertexList&      verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList&  verts,
+void AddVertsForAABB2D(VertexList_PCU&  verts,
                        AABB2 const& aabb2Box,
                        Rgba8 const& color,
                        Vec2 const&  uvMins,
@@ -210,7 +241,7 @@ void AddVertsForAABB2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList&  verts,
+void AddVertsForAABB2D(VertexList_PCU&  verts,
                        Vec2 const&  aabbMins,
                        Vec2 const&  aabbMaxs,
                        Rgba8 const& color,
@@ -227,7 +258,7 @@ void AddVertsForAABB2D(VertexList&  verts,
 }
 
 //-----------------------------------------------------------------------------------------------
-void AddVertsForOBB2D(VertexList&  verts,
+void AddVertsForOBB2D(VertexList_PCU&  verts,
                       Vec2 const&  obb2Center,
                       Vec2 const&  obb2IBasisNormal,
                       Vec2 const&  obb2HalfDimensions,
@@ -247,7 +278,7 @@ void AddVertsForOBB2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList&  verts,
+void AddVertsForCapsule2D(VertexList_PCU&  verts,
                           Vec2 const&  capsuleStartPosition,
                           Vec2 const&  capsuleEndPosition,
                           float const  capsuleRadius,
@@ -276,7 +307,7 @@ void AddVertsForCapsule2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList&     verts,
+void AddVertsForCapsule2D(VertexList_PCU&     verts,
                           Capsule2 const& capsule,
                           Rgba8 const&    color)
 {
@@ -284,7 +315,7 @@ void AddVertsForCapsule2D(VertexList&     verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForHalfDisc2D(VertexList&  verts,
+void AddVertsForHalfDisc2D(VertexList_PCU&  verts,
                            Vec2 const&  discCenter,
                            float const  discRadius,
                            Rgba8 const& color,
@@ -324,7 +355,7 @@ void AddVertsForHalfDisc2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForArrow2D(VertexList&  verts,
+void AddVertsForArrow2D(VertexList_PCU&  verts,
                         Vec2 const&  tailPosition,
                         Vec2 const&  tipPosition,
                         float const  arrowSize,
@@ -352,7 +383,7 @@ void AddVertsForArrow2D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForQuad3D(VertexList&  verts,
+void AddVertsForQuad3D(VertexList_PCU&  verts,
                        Vec3 const&  bottomLeft,
                        Vec3 const&  bottomRight,
                        Vec3 const&  topLeft,
@@ -372,7 +403,19 @@ void AddVertsForQuad3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeQuad3D(VertexList&  verts,
+void AddVertsForQuad3D(VertexList_PCU&                verts,
+                       std::vector<unsigned int>& indexes,
+                       Vec3 const&                bottomLeft,
+                       Vec3 const&                bottomRight,
+                       Vec3 const&                topLeft,
+                       Vec3 const&                topRight,
+                       Rgba8 const&               color,
+                       AABB2 const&               uv)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeQuad3D(VertexList_PCU&  verts,
                                 Vec3 const&  bottomLeft,
                                 Vec3 const&  bottomRight,
                                 Vec3 const&  topLeft,
@@ -388,7 +431,7 @@ void AddVertsForWireframeQuad3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB3D(VertexList&  verts,
+void AddVertsForAABB3D(VertexList_PCU&  verts,
                        AABB3 const& bounds,
                        Rgba8 const& color,
                        AABB2 const& UVs)
@@ -420,7 +463,16 @@ void AddVertsForAABB3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeAABB3D(VertexList&  verts,
+void AddVertsForAABB3D(VertexList_PCUTBN&         verts,
+                       std::vector<unsigned int>& indexes,
+                       AABB3 const&               bounds,
+                       Rgba8 const&               color,
+                       AABB2 const&               UVs)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeAABB3D(VertexList_PCU&  verts,
                                 AABB3 const& bounds,
                                 float const  thickness,
                                 Rgba8 const& color,
@@ -453,7 +505,7 @@ void AddVertsForWireframeAABB3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForSphere3D(VertexList&  verts,
+void AddVertsForSphere3D(VertexList_PCU&  verts,
                          Vec3 const&  center,
                          float const  radius,
                          Rgba8 const& color,
@@ -493,7 +545,7 @@ void AddVertsForSphere3D(VertexList&  verts,
     }
 }
 
-void AddVertsForWireframeSphere3D(VertexList&  verts,
+void AddVertsForWireframeSphere3D(VertexList_PCU&  verts,
                                   Vec3 const&  center,
                                   float const  radius,
                                   float const  thickness,
@@ -535,39 +587,7 @@ void AddVertsForWireframeSphere3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void TransformVertexArray3D(VertexList&  verts,
-                            Mat44 const& transform)
-{
-    for (Vertex_PCU& vert : verts)
-    {
-        vert.m_position = transform.TransformPosition3D(vert.m_position);
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-AABB2 GetVertexBounds2D(VertexList const& verts)
-{
-    if (verts.empty() == true)
-    {
-        return {};
-    }
-
-    Vec2 min = Vec2(verts[0].m_position.x, verts[0].m_position.y);
-    Vec2 max = Vec2(verts[0].m_position.x, verts[0].m_position.y);
-
-    for (Vertex_PCU const& vert : verts)
-    {
-        min.x = std::min(min.x, vert.m_position.x);
-        min.y = std::min(min.y, vert.m_position.y);
-        max.x = std::max(max.x, vert.m_position.x);
-        max.y = std::max(max.y, vert.m_position.y);
-    }
-
-    return AABB2(min, max);
-}
-
-//----------------------------------------------------------------------------------------------------
-void AddVertsForCylinder3D(VertexList&  verts,
+void AddVertsForCylinder3D(VertexList_PCU&  verts,
                            Vec3 const&  startPosition,
                            Vec3 const&  endPosition,
                            float const  radius,
@@ -622,7 +642,7 @@ void AddVertsForCylinder3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeCylinder3D(VertexList&  verts,
+void AddVertsForWireframeCylinder3D(VertexList_PCU&  verts,
                                     Vec3 const&  startPosition,
                                     Vec3 const&  endPosition,
                                     float const  radius,
@@ -678,7 +698,7 @@ void AddVertsForWireframeCylinder3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCone3D(VertexList&  verts,
+void AddVertsForCone3D(VertexList_PCU&  verts,
                        Vec3 const&  startPosition,
                        Vec3 const&  endPosition,
                        float const  radius,
@@ -729,7 +749,7 @@ void AddVertsForCone3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForArrow3D(VertexList&  verts,
+void AddVertsForArrow3D(VertexList_PCU&  verts,
                         Vec3 const&  startPosition,
                         Vec3 const&  endPosition,
                         float const  coneCylinderHeightRatio,

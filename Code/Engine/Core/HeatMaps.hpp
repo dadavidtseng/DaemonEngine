@@ -31,7 +31,7 @@ public:
     void SetValueAtAllTiles(float value) const;
     void SetValueAtIndex(int tileIndex, float value) const;
     void SetValueAtCoords(IntVec2 const& tileCoords, float value) const;
-    void AddVertsForDebugDraw(VertexList&  verts,
+    void AddVertsForDebugDraw(VertexList_PCU&  verts,
                               AABB2 const& totalBounds,
                               Rgba8 const& lowColor     = Rgba8::BLACK,
                               Rgba8 const& highColor    = Rgba8::WHITE,

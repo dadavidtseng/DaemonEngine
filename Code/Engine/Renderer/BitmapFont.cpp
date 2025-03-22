@@ -22,7 +22,7 @@ Texture const& BitmapFont::GetTexture() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForText2D(VertexList&   verts,
+void BitmapFont::AddVertsForText2D(VertexList_PCU&   verts,
                                    String const& text,
                                    Vec2 const&   textMins,
                                    float const   cellHeight,
@@ -45,7 +45,7 @@ void BitmapFont::AddVertsForText2D(VertexList&   verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForTextInBox2D(VertexList&        verts,
+void BitmapFont::AddVertsForTextInBox2D(VertexList_PCU&        verts,
                                         String const&      text,
                                         AABB2 const&       box,
                                         float              cellHeight,
@@ -139,7 +139,7 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList&        verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList&   verts,
+void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList_PCU&   verts,
                                                    String const& text,
                                                    float const   cellHeight,
                                                    Rgba8 const&  tint,

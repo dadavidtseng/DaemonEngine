@@ -142,7 +142,7 @@ void TileHeatMap::SetValueAtCoords(IntVec2 const& tileCoords, float const value)
 }
 
 //----------------------------------------------------------------------------------------------------
-void TileHeatMap::AddVertsForDebugDraw(VertexList&  verts,
+void TileHeatMap::AddVertsForDebugDraw(VertexList_PCU&  verts,
                                        AABB2 const& totalBounds,
                                        Rgba8 const& lowColor,
                                        Rgba8 const& highColor,

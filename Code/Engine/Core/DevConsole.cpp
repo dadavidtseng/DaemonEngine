@@ -493,16 +493,16 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect)
 {
     // Render background box
-    VertexList  backgroundBoxVerts;
+    VertexList_PCU  backgroundBoxVerts;
     AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
-    renderer.SetBlendMode(BlendMode::ALPHA);
+    renderer.SetBlendMode(eBlendMode::ALPHA);
 
     renderer.BindTexture(nullptr);
     renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());
 
-    VertexList textVerts;
+    VertexList_PCU textVerts;
 
     float const lineHeight = backgroundBox.GetDimensions().y / m_config.m_maxLinesDisplay;
 
@@ -522,7 +522,7 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     AABB2 commandTextBounds = bounds;
 
-    VertexList  insertionPointVerts;
+    VertexList_PCU  insertionPointVerts;
     AABB2 const insertionPointBound = AABB2(commandTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
                                             Vec2(5.f, commandTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
 
