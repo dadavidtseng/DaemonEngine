@@ -495,43 +495,14 @@ void AddVertsForCylinder3D(VertexList&  verts,
                            AABB2 const& UVs,
                            int const    numSlices)
 {
-    // float degreesPerSlice = 360.f / (float)numSlices;
-    // Vec3 center = (startPosition + endPosition) * 0.5f;
-    // float minZ = startPosition.z;
-    // float maxZ = endPosition.z;
-    // Vec3 start = Vec3( center.x, center.y, minZ );
-    // Vec3 end = Vec3( center.x, center.y, maxZ );
-    // float curDegrees = 0.f;
-    // Vec3 sideVector = Vec3( CosDegrees( curDegrees ), SinDegrees( curDegrees ), 0.f );
-    // Vec3 nextSideVector;
-    // for (int i = 0; i < numSlices; i++) {
-    //     curDegrees += degreesPerSlice;
-    //     nextSideVector = Vec3( CosDegrees( curDegrees ), SinDegrees( curDegrees ), 0.f );
-    //     Vec3 startSidePoint = start + sideVector * radius;
-    //     Vec3 startNextSidePoint = start + nextSideVector * radius;
-    //     Vec3 endSidePoint = end + sideVector * radius;
-    //     Vec3 endNextSidePoint = end + nextSideVector * radius;
-    //     // start triangle
-    //     verts.emplace_back( start, color, Vec2( 0.5f, 0.5f ) );
-    //     verts.emplace_back( startNextSidePoint, color, Vec2( nextSideVector.x * 0.5f + 0.5f, nextSideVector.y * 0.5f + 0.5f ) );
-    //     verts.emplace_back( startSidePoint, color, Vec2( sideVector.x * 0.5f + 0.5f, sideVector.y * 0.5f + 0.5f ) );
-    //     // cylinder side quad
-    //     AddVertsForQuad3D( verts, startSidePoint, startNextSidePoint, endSidePoint, endNextSidePoint, color, AABB2( Vec2( Interpolate( UVs.m_mins.x, UVs.m_maxs.x, (float)i / (float)numSlices ), 0.f ), Vec2( Interpolate( UVs.m_mins.x, UVs.m_maxs.x, (float)(i + 1) / (float)numSlices ), 1.f ) ) );
-    //     // end triangle
-    //     verts.emplace_back( end, color, Vec2( 0.5f, 0.5f ) );
-    //     verts.emplace_back( endSidePoint, color, Vec2( sideVector.x * 0.5f + 0.5f, sideVector.y * 0.5f + 0.5f ) );
-    //     verts.emplace_back( endNextSidePoint, color, Vec2( nextSideVector.x * 0.5f + 0.5f, nextSideVector.y * 0.5f + 0.5f ) );
-    //     sideVector = nextSideVector;
-    // }
-
     // 1. Calculate cylinder's forward/normalized direction.
     Vec3 const forwardDirection = endPosition - startPosition;
     Vec3 const iBasis           = forwardDirection.GetNormalized();
 
     // 2. Get jBasis and kBasis based on normalDirection.
-    Vec3 const jBasis = Vec3::X_BASIS;
-    Vec3 const kBasis = Vec3::Y_BASIS;
-    // iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+    Vec3 jBasis;
+    Vec3 kBasis;
+    iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
 
     // 3. Calculate the degree of each triangle in the top and bottom disc of the cylinder.
     float const DEGREES_PER_SIDE = 360.f / static_cast<float>(numSlices);
@@ -553,11 +524,6 @@ void AddVertsForCylinder3D(VertexList&  verts,
         Vec3 bottomCenterPosition(startPosition);
         Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
         Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
-
-        topLeftPosition.z     = endPosition.z;
-        topRightPosition.z    = endPosition.z;
-        bottomLeftPosition.z  = startPosition.z;
-        bottomRightPosition.z = startPosition.z;
 
         // 6. Stores the vertices using counter-clockwise order with correct UVs.
         verts.emplace_back(topCenterPosition, color, Vec2::HALF);
@@ -627,7 +593,16 @@ void AddVertsForCone3D(VertexList&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForArrow3D(VertexList& verts, Vec3 const& startPosition, Vec3 const& endPosition, float const coneCylinderHeightRatio, float const cylinderRadius, float const coneRadius, Rgba8 const& color, AABB2 const& UVs, int numCylinderSlices, int numConeSlices)
+void AddVertsForArrow3D(VertexList&  verts,
+                        Vec3 const&  startPosition,
+                        Vec3 const&  endPosition,
+                        float const  coneCylinderHeightRatio,
+                        float const  cylinderRadius,
+                        float const  coneRadius,
+                        Rgba8 const& color,
+                        AABB2 const& UVs,
+                        int const    numCylinderSlices,
+                        int const    numConeSlices)
 {
     Vec3 const forwardDirection = endPosition - startPosition;
     Vec3 const midPosition      = startPosition + forwardDirection * coneCylinderHeightRatio;
