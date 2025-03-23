@@ -5,6 +5,10 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/NamedStrings.hpp"
 
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Vec2.hpp"
+
 //----------------------------------------------------------------------------------------------------
 void NamedStrings::PopulateFromXmlElementAttributes(XmlElement const& element)
 {

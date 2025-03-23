@@ -121,6 +121,7 @@ public:
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
     Shader*     CreateOrGetShaderFromFile(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     // Shader* CreateOrGetShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
+    Image    CreateImageFromFile(char const* imageFilePath);
 
 
     void SetBlendMode(eBlendMode mode);
@@ -137,7 +138,6 @@ private:
     Texture* CreateTextureFromFile(char const* imageFilePath);
     Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
     Texture* CreateTextureFromImage(Image const& image);
-    Image    CreateImageFromFile(char const* imageFilePath);
 
     // Shader* CreateOrGetShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
     Shader* CreateShader(char const* shaderName, char const* shaderSource, eVertexType vertexType = eVertexType::VERTEX_PCU);

@@ -5,8 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include "Engine/Core/EventSystem.hpp"
-#include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Input/XboxController.hpp"
+#include "Engine/Math/IntVec2.hpp"
 
 //-----------------------------------------------------------------------------------------------
 extern unsigned char const NUMCODE_0;

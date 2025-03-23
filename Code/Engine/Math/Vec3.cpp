@@ -141,6 +141,27 @@ void Vec3::GetOrthonormalBasis(Vec3 const& iBasis,
 }
 
 //----------------------------------------------------------------------------------------------------
+void Vec3::SetFromText(char const* text)
+{
+    // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
+    StringList const parts = SplitStringOnDelimiter(text, ',');
+
+    // Input must contain exactly two parts; otherwise, reset to default values
+    if (parts.size() != 3)
+    {
+        x = 0.f;
+        y = 0.f;
+        z = 0.f;
+        return;
+    }
+
+    // Convert the two parts to floats using atof
+    x = static_cast<float>(atof(parts[0].c_str()));
+    y = static_cast<float>(atof(parts[1].c_str()));
+    z = static_cast<float>(atof(parts[2].c_str()));
+}
+
+//----------------------------------------------------------------------------------------------------
 bool Vec3::operator==(Vec3 const& compare) const
 {
     return

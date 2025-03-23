@@ -49,3 +49,25 @@ Mat44 EulerAngles::GetAsMatrix_IFwd_JLeft_KUp() const
 
     return Mat44(out_forwardIBasis, out_leftJBasis, out_upKBasis, Vec3::ZERO);
 }
+
+//----------------------------------------------------------------------------------------------------
+void EulerAngles::SetFromText(char const* text)
+{
+    // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
+    StringList const parts = SplitStringOnDelimiter(text, ',');
+
+    // Input must contain exactly two parts; otherwise, reset to default values
+    if (parts.size() != 3)
+    {
+        m_yawDegrees   = 0.f;
+        m_pitchDegrees = 0.f;
+        m_rollDegrees  = 0.f;
+
+        return;
+    }
+
+    // Convert the two parts to floats using atof
+    m_yawDegrees   = static_cast<float>(atof(parts[0].c_str()));
+    m_pitchDegrees = static_cast<float>(atof(parts[1].c_str()));
+    m_rollDegrees  = static_cast<float>(atof(parts[2].c_str()));
+}

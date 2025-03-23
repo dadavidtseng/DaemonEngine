@@ -13,7 +13,7 @@ class Image
 {
 public:
     explicit Image(char const* imageFilePath);
-    Image(const IntVec2& size, Rgba8 color);
+    Image(IntVec2 const& size, Rgba8 color);
 
     // Accessors
     String const& GetImageFilePath() const;

@@ -36,6 +36,8 @@ struct Vec3
     Vec3 const GetNormalized() const;
     void       GetOrthonormalBasis(Vec3 const& iBasis, Vec3* jBasis, Vec3* kBasis) const;
 
+    void SetFromText(char const* text);
+
     // Operators (const)
     bool       operator==(Vec3 const& compare) const;       // vec3 == vec3
     bool       operator!=(Vec3 const& compare) const;       // vec3 != vec3

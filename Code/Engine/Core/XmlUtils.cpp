@@ -5,8 +5,17 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/XmlUtils.hpp"
 
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/EulerAngles.hpp"
+#include "Engine/Math/FloatRange.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
+
 //----------------------------------------------------------------------------------------------------
-int ParseXmlAttribute(XmlElement const& element, char const* attributeName, int const defaultValue)
+int ParseXmlAttribute(XmlElement const& element,
+                      char const*       attributeName,
+                      int const         defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -19,7 +28,9 @@ int ParseXmlAttribute(XmlElement const& element, char const* attributeName, int 
 }
 
 //----------------------------------------------------------------------------------------------------
-char ParseXmlAttribute(XmlElement const& element, char const* attributeName, char const defaultValue)
+char ParseXmlAttribute(XmlElement const& element,
+                       char const*       attributeName,
+                       char const        defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -32,7 +43,9 @@ char ParseXmlAttribute(XmlElement const& element, char const* attributeName, cha
 }
 
 //----------------------------------------------------------------------------------------------------
-bool ParseXmlAttribute(XmlElement const& element, char const* attributeName, bool const defaultValue)
+bool ParseXmlAttribute(XmlElement const& element,
+                       char const*       attributeName,
+                       bool const        defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -47,7 +60,9 @@ bool ParseXmlAttribute(XmlElement const& element, char const* attributeName, boo
 }
 
 //----------------------------------------------------------------------------------------------------
-float ParseXmlAttribute(XmlElement const& element, char const* attributeName, float const defaultValue)
+float ParseXmlAttribute(XmlElement const& element,
+                        char const*       attributeName,
+                        float const       defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -60,7 +75,9 @@ float ParseXmlAttribute(XmlElement const& element, char const* attributeName, fl
 }
 
 //----------------------------------------------------------------------------------------------------
-Rgba8 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Rgba8 const& defaultValue)
+Rgba8 ParseXmlAttribute(XmlElement const& element,
+                        char const*       attributeName,
+                        Rgba8 const&      defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -84,7 +101,9 @@ Rgba8 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Rg
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Vec2 const& defaultValue)
+Vec2 ParseXmlAttribute(XmlElement const& element,
+                       char const*       attributeName,
+                       Vec2 const&       defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -95,7 +114,8 @@ Vec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Vec
 
         result.SetFromText(attributeValue);
 
-        if (result.x != previousValue.x || result.y != previousValue.y)
+        if (result.x != previousValue.x ||
+            result.y != previousValue.y)
         {
             return result;
         }
@@ -105,7 +125,9 @@ Vec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, Vec
 }
 
 //----------------------------------------------------------------------------------------------------
-IntVec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, IntVec2 const& defaultValue)
+IntVec2 ParseXmlAttribute(XmlElement const& element,
+                          char const*       attributeName,
+                          IntVec2 const&    defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -116,7 +138,8 @@ IntVec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, 
 
         result.SetFromText(attributeValue);
 
-        if (result.x != previousValue.x || result.y != previousValue.y)
+        if (result.x != previousValue.x ||
+            result.y != previousValue.y)
         {
             return result;
         }
@@ -126,20 +149,98 @@ IntVec2 ParseXmlAttribute(XmlElement const& element, char const* attributeName, 
 }
 
 //----------------------------------------------------------------------------------------------------
-String ParseXmlAttribute(XmlElement const& element, char const* attributeName, String const& defaultValue)
+Vec3 ParseXmlAttribute(XmlElement const& element,
+                       char const*       attributeName,
+                       Vec3 const&       defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
     if (attributeValue)
     {
-        return String(attributeValue);
+        Vec3       result        = defaultValue;
+        Vec3 const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.x != previousValue.x ||
+            result.y != previousValue.y ||
+            result.z != previousValue.z)
+        {
+            return result;
+        }
     }
 
     return defaultValue;
 }
 
 //----------------------------------------------------------------------------------------------------
-StringList ParseXmlAttribute(XmlElement const& element, char const* attributeName, StringList const& defaultValues)
+EulerAngles ParseXmlAttribute(XmlElement const&  element,
+                              char const*        attributeName,
+                              EulerAngles const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        EulerAngles       result        = defaultValue;
+        EulerAngles const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.m_yawDegrees != previousValue.m_yawDegrees ||
+            result.m_pitchDegrees != previousValue.m_pitchDegrees ||
+            result.m_rollDegrees != previousValue.m_rollDegrees)
+        {
+            return result;
+        }
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+FloatRange ParseXmlAttribute(XmlElement const& element,
+                             char const*       attributeName,
+                             FloatRange const& defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        FloatRange       result        = defaultValue;
+        FloatRange const previousValue = result;
+
+        result.SetFromText(attributeValue);
+
+        if (result.m_min != previousValue.m_min ||
+            result.m_max != previousValue.m_max)
+        {
+            return result;
+        }
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+String ParseXmlAttribute(XmlElement const& element,
+                         char const*       attributeName,
+                         String const&     defaultValue)
+{
+    char const* attributeValue = element.Attribute(attributeName);
+
+    if (attributeValue)
+    {
+        return attributeValue;
+    }
+
+    return defaultValue;
+}
+
+//----------------------------------------------------------------------------------------------------
+StringList ParseXmlAttribute(XmlElement const& element,
+                             char const*       attributeName,
+                             StringList const& defaultValues)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
@@ -154,14 +255,16 @@ StringList ParseXmlAttribute(XmlElement const& element, char const* attributeNam
 }
 
 //----------------------------------------------------------------------------------------------------
-String ParseXmlAttribute(XmlElement const& element, char const* attributeName, char const* defaultValue)
+String ParseXmlAttribute(XmlElement const& element,
+                         char const*       attributeName,
+                         char const*       defaultValue)
 {
     char const* attributeValue = element.Attribute(attributeName);
 
     if (attributeValue)
     {
-        return String(attributeValue);
+        return attributeValue;
     }
 
-    return String(defaultValue);
+    return defaultValue;
 }

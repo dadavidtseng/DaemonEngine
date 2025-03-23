@@ -29,6 +29,7 @@ struct FloatRange
 
     // Mutators (non-const methods)
     void  ExpandToInclude(float value);
+    void SetFromText(char const* text);
 
     // Operators (const)
     bool        operator==(FloatRange const& compare) const;

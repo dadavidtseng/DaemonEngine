@@ -24,7 +24,7 @@ FloatRange::FloatRange(float const min,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool FloatRange::IsOnRange( float const value) const
+bool FloatRange::IsOnRange(float const value) const
 {
     return
         m_min <= value &&
@@ -32,7 +32,7 @@ bool FloatRange::IsOnRange( float const value) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool FloatRange::IsOverlappingWith( FloatRange const& other) const
+bool FloatRange::IsOverlappingWith(FloatRange const& other) const
 {
     return
         m_max >= other.m_min &&
@@ -88,6 +88,26 @@ void FloatRange::ExpandToInclude(float const value)
     {
         m_max = value;
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+void FloatRange::SetFromText(char const* text)
+{
+    // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
+    StringList const parts = SplitStringOnDelimiter(text, ',');
+
+    // Input must contain exactly two parts; otherwise, reset to default values
+    if (parts.size() != 2)
+    {
+        m_min = 0.f;
+        m_max = 0.f;
+
+        return;
+    }
+
+    // Convert the two parts to floats using atof
+    m_min = static_cast<float>(atof(parts[0].c_str()));
+    m_max = static_cast<float>(atof(parts[1].c_str()));
 }
 
 //----------------------------------------------------------------------------------------------------
