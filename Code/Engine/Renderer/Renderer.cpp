@@ -209,8 +209,8 @@ void Renderer::Startup()
     }
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-    m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-    m_currentShader = CreateShader("Default", eVertexType::VERTEX_PCU);
+    m_defaultShader = CreateOrGetShaderFromFile("Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_currentShader = CreateShader("Diffuse", eVertexType::VERTEX_PCUTBN);
 
     BindShader(m_currentShader);
 
@@ -529,9 +529,9 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     Vec3 const sunDirection = Vec3(2.f, 1.f, -1.f).GetNormalized();
 
-    lightConstants.SunDirection[0]  = 2.f;
-    lightConstants.SunDirection[1]  = 1.f;
-    lightConstants.SunDirection[2]  = -1.f;
+    lightConstants.SunDirection[0]  = sunDirection.x;
+    lightConstants.SunDirection[1]  = sunDirection.y;
+    lightConstants.SunDirection[2]  = sunDirection.z;
     lightConstants.SunIntensity     = 0.85f;
     lightConstants.AmbientIntensity = 0.35f;
 
@@ -613,7 +613,7 @@ void Renderer::DrawVertexArray(VertexList_PCUTBN const&         verts,
 {
     CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_immediateVBO_PCUTBN);
     CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
-    DrawIndexedVertexBuffer(m_immediateVBO_PCU, m_immediateIBO, static_cast<int>(indexes.size()));
+    DrawIndexedVertexBuffer(m_immediateVBO_PCUTBN, m_immediateIBO, static_cast<int>(indexes.size()));
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -18,10 +18,22 @@ STATIC Vec3 Vec3::Y_BASIS = Vec3(0, 1, 0);
 STATIC Vec3 Vec3::Z_BASIS = Vec3(0, 0, 1);
 
 //----------------------------------------------------------------------------------------------------
-Vec3::Vec3(float const initialX, float const initialY, float const initialZ)
-    : x(initialX)
-      , y(initialY)
-      , z(initialZ)
+Vec3::Vec3(float const initialX,
+           float const initialY,
+           float const initialZ)
+    : x(initialX),
+      y(initialY),
+      z(initialZ)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3::Vec3(int const initialX,
+           int const initialY,
+           int const initialZ)
+    : x(static_cast<float>(initialX)),
+      y(static_cast<float>(initialY)),
+      z(static_cast<float>(initialZ))
 {
 }
 

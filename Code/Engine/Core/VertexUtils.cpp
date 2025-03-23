@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/VertexUtils.hpp"
 
+#include "Vertex_PCUTBN.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -53,8 +54,8 @@ void TransformVertexArrayXY3D(int const   numVerts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void TransformVertexArray3D(VertexList_PCU&  verts,
-                            Mat44 const& transform)
+void TransformVertexArray3D(VertexList_PCU& verts,
+                            Mat44 const&    transform)
 {
     for (Vertex_PCU& vert : verts)
     {
@@ -63,10 +64,10 @@ void TransformVertexArray3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList_PCU&  verts,
-                       Vec2 const&  discCenter,
-                       float const  discRadius,
-                       Rgba8 const& color)
+void AddVertsForDisc2D(VertexList_PCU& verts,
+                       Vec2 const&     discCenter,
+                       float const     discRadius,
+                       Rgba8 const&    color)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr   NUM_SIDES        = 32;
@@ -127,9 +128,9 @@ void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float cons
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList_PCU&  verts,
-                       Disc2 const& disc,
-                       Rgba8 const& color)
+void AddVertsForDisc2D(VertexList_PCU& verts,
+                       Disc2 const&    disc,
+                       Rgba8 const&    color)
 {
     AddVertsForDisc2D(verts,
                       disc.m_position,
@@ -138,12 +139,12 @@ void AddVertsForDisc2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList_PCU&  verts,
-                              Vec2 const&  startPosition,
-                              Vec2 const&  endPosition,
-                              float const  thickness,
-                              bool const   isInfinite,
-                              Rgba8 const& color)
+void AddVertsForLineSegment2D(VertexList_PCU& verts,
+                              Vec2 const&     startPosition,
+                              Vec2 const&     endPosition,
+                              float const     thickness,
+                              bool const      isInfinite,
+                              Rgba8 const&    color)
 {
     // 1. Calculate lineSegment's forward/normalized direction.
     Vec2 const forwardDirection    = endPosition - startPosition;
@@ -186,7 +187,7 @@ void AddVertsForLineSegment2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForLineSegment2D(VertexList_PCU&         verts,
+void AddVertsForLineSegment2D(VertexList_PCU&     verts,
                               LineSegment2 const& lineSegment,
                               float const         thickness,
                               bool const          isInfinite,
@@ -201,11 +202,11 @@ void AddVertsForLineSegment2D(VertexList_PCU&         verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList_PCU&  verts,
-                           Vec2 const&  ccw0,
-                           Vec2 const&  ccw1,
-                           Vec2 const&  ccw2,
-                           Rgba8 const& color)
+void AddVertsForTriangle2D(VertexList_PCU& verts,
+                           Vec2 const&     ccw0,
+                           Vec2 const&     ccw1,
+                           Vec2 const&     ccw2,
+                           Rgba8 const&    color)
 {
     verts.emplace_back(Vec3(ccw0.x, ccw0.y, 0.f), color);
     verts.emplace_back(Vec3(ccw1.x, ccw1.y, 0.f), color);
@@ -213,7 +214,7 @@ void AddVertsForTriangle2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForTriangle2D(VertexList_PCU&      verts,
+void AddVertsForTriangle2D(VertexList_PCU&  verts,
                            Triangle2 const& triangle,
                            Rgba8 const&     color)
 {
@@ -225,11 +226,11 @@ void AddVertsForTriangle2D(VertexList_PCU&      verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList_PCU&  verts,
-                       AABB2 const& aabb2Box,
-                       Rgba8 const& color,
-                       Vec2 const&  uvMins,
-                       Vec2 const&  uvMaxs)
+void AddVertsForAABB2D(VertexList_PCU& verts,
+                       AABB2 const&    aabb2Box,
+                       Rgba8 const&    color,
+                       Vec2 const&     uvMins,
+                       Vec2 const&     uvMaxs)
 {
     verts.emplace_back(Vec3(aabb2Box.m_mins.x, aabb2Box.m_mins.y, 0.f), color, uvMins);
     verts.emplace_back(Vec3(aabb2Box.m_maxs.x, aabb2Box.m_mins.y, 0.f), color, Vec2(uvMaxs.x, uvMins.y));
@@ -241,12 +242,12 @@ void AddVertsForAABB2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB2D(VertexList_PCU&  verts,
-                       Vec2 const&  aabbMins,
-                       Vec2 const&  aabbMaxs,
-                       Rgba8 const& color,
-                       Vec2 const&  uvMins,
-                       Vec2 const&  uvMaxs)
+void AddVertsForAABB2D(VertexList_PCU& verts,
+                       Vec2 const&     aabbMins,
+                       Vec2 const&     aabbMaxs,
+                       Rgba8 const&    color,
+                       Vec2 const&     uvMins,
+                       Vec2 const&     uvMaxs)
 {
     verts.emplace_back(Vec3(aabbMins.x, aabbMins.y, 0.f), color, uvMins);
     verts.emplace_back(Vec3(aabbMaxs.x, aabbMins.y, 0.f), color, Vec2(uvMaxs.x, uvMins.y));
@@ -258,11 +259,11 @@ void AddVertsForAABB2D(VertexList_PCU&  verts,
 }
 
 //-----------------------------------------------------------------------------------------------
-void AddVertsForOBB2D(VertexList_PCU&  verts,
-                      Vec2 const&  obb2Center,
-                      Vec2 const&  obb2IBasisNormal,
-                      Vec2 const&  obb2HalfDimensions,
-                      Rgba8 const& color)
+void AddVertsForOBB2D(VertexList_PCU& verts,
+                      Vec2 const&     obb2Center,
+                      Vec2 const&     obb2IBasisNormal,
+                      Vec2 const&     obb2HalfDimensions,
+                      Rgba8 const&    color)
 {
     Vec2 cornerPoints[4];
 
@@ -278,11 +279,11 @@ void AddVertsForOBB2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList_PCU&  verts,
-                          Vec2 const&  capsuleStartPosition,
-                          Vec2 const&  capsuleEndPosition,
-                          float const  capsuleRadius,
-                          Rgba8 const& color)
+void AddVertsForCapsule2D(VertexList_PCU& verts,
+                          Vec2 const&     capsuleStartPosition,
+                          Vec2 const&     capsuleEndPosition,
+                          float const     capsuleRadius,
+                          Rgba8 const&    color)
 {
     // 1. Calculate capsule's forward/normalized direction.
     Vec2 const forwardDirection    = capsuleEndPosition - capsuleStartPosition;
@@ -307,7 +308,7 @@ void AddVertsForCapsule2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCapsule2D(VertexList_PCU&     verts,
+void AddVertsForCapsule2D(VertexList_PCU& verts,
                           Capsule2 const& capsule,
                           Rgba8 const&    color)
 {
@@ -315,12 +316,12 @@ void AddVertsForCapsule2D(VertexList_PCU&     verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForHalfDisc2D(VertexList_PCU&  verts,
-                           Vec2 const&  discCenter,
-                           float const  discRadius,
-                           Rgba8 const& color,
-                           bool const   isTopHalf,
-                           float const  rotationDegrees)
+void AddVertsForHalfDisc2D(VertexList_PCU& verts,
+                           Vec2 const&     discCenter,
+                           float const     discRadius,
+                           Rgba8 const&    color,
+                           bool const      isTopHalf,
+                           float const     rotationDegrees)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr NUM_SIDES      = 32;
@@ -355,12 +356,12 @@ void AddVertsForHalfDisc2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForArrow2D(VertexList_PCU&  verts,
-                        Vec2 const&  tailPosition,
-                        Vec2 const&  tipPosition,
-                        float const  arrowSize,
-                        float const  thickness,
-                        Rgba8 const& color)
+void AddVertsForArrow2D(VertexList_PCU& verts,
+                        Vec2 const&     tailPosition,
+                        Vec2 const&     tipPosition,
+                        float const     arrowSize,
+                        float const     thickness,
+                        Rgba8 const&    color)
 {
     // 1. Calculate arrow's forward/normalized direction.
     Vec2 const forwardDirection    = tipPosition - tailPosition;
@@ -370,7 +371,7 @@ void AddVertsForArrow2D(VertexList_PCU&  verts,
     Vec2 const arrowLeftDirection  = normalizedDirection.GetRotatedDegrees(-45.f);
     Vec2 const arrowRightDirection = normalizedDirection.GetRotatedDegrees(45.f);
 
-    // 3. Get arrow's left and right position by subtract ( direction ) * ( arrowSize). 
+    // 3. Get arrow's left and right position by subtract ( direction ) * ( arrowSize).
     Vec2 const leftArrowPosition  = tipPosition - arrowLeftDirection * arrowSize;
     Vec2 const rightArrowPosition = tipPosition - arrowRightDirection * arrowSize;
 
@@ -383,13 +384,13 @@ void AddVertsForArrow2D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForQuad3D(VertexList_PCU&  verts,
-                       Vec3 const&  bottomLeft,
-                       Vec3 const&  bottomRight,
-                       Vec3 const&  topLeft,
-                       Vec3 const&  topRight,
-                       Rgba8 const& color,
-                       AABB2 const& uv)
+void AddVertsForQuad3D(VertexList_PCU& verts,
+                       Vec3 const&     bottomLeft,
+                       Vec3 const&     bottomRight,
+                       Vec3 const&     topLeft,
+                       Vec3 const&     topRight,
+                       Rgba8 const&    color,
+                       AABB2 const&    uv)
 {
     // Starting at BL, add triangle A with vertexes BL, BR, TR.
     verts.emplace_back(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y));
@@ -403,26 +404,39 @@ void AddVertsForQuad3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForQuad3D(VertexList_PCU&                verts,
-                       std::vector<unsigned int>& indexes,
-                       Vec3 const&                bottomLeft,
-                       Vec3 const&                bottomRight,
-                       Vec3 const&                topLeft,
-                       Vec3 const&                topRight,
-                       Rgba8 const&               color,
-                       AABB2 const&               uv)
+void AddVertsForQuad3D(VertexList_PCUTBN& verts,
+                       IndexList&         indexes,
+                       Vec3 const&        bottomLeft,
+                       Vec3 const&        bottomRight,
+                       Vec3 const&        topLeft,
+                       Vec3 const&        topRight,
+                       Rgba8 const&       color,
+                       AABB2 const&       uv)
 {
+    unsigned int const currentIndex = static_cast<unsigned int>(verts.size());
+
+    verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
+    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
+    verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
+    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
+
+    indexes.push_back(currentIndex);
+    indexes.push_back(currentIndex + 1);
+    indexes.push_back(currentIndex + 2);
+    indexes.push_back(currentIndex);
+    indexes.push_back(currentIndex + 2);
+    indexes.push_back(currentIndex + 3);
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeQuad3D(VertexList_PCU&  verts,
-                                Vec3 const&  bottomLeft,
-                                Vec3 const&  bottomRight,
-                                Vec3 const&  topLeft,
-                                Vec3 const&  topRight,
-                                float const  thickness,
-                                Rgba8 const& color,
-                                AABB2 const& uv)
+void AddVertsForWireframeQuad3D(VertexList_PCU& verts,
+                                Vec3 const&     bottomLeft,
+                                Vec3 const&     bottomRight,
+                                Vec3 const&     topLeft,
+                                Vec3 const&     topRight,
+                                float const     thickness,
+                                Rgba8 const&    color,
+                                AABB2 const&    uv)
 {
     AddVertsForCylinder3D(verts, bottomLeft, bottomRight, thickness, color, uv, 4);
     AddVertsForCylinder3D(verts, bottomRight, topRight, thickness, color, uv, 4);
@@ -431,10 +445,10 @@ void AddVertsForWireframeQuad3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB3D(VertexList_PCU&  verts,
-                       AABB3 const& bounds,
-                       Rgba8 const& color,
-                       AABB2 const& UVs)
+void AddVertsForAABB3D(VertexList_PCU& verts,
+                       AABB3 const&    bounds,
+                       Rgba8 const&    color,
+                       AABB2 const&    UVs)
 {
     Vec3 const min = bounds.m_mins;
     Vec3 const max = bounds.m_maxs;
@@ -463,20 +477,44 @@ void AddVertsForAABB3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForAABB3D(VertexList_PCUTBN&         verts,
-                       std::vector<unsigned int>& indexes,
-                       AABB3 const&               bounds,
-                       Rgba8 const&               color,
-                       AABB2 const&               UVs)
+void AddVertsForAABB3D(VertexList_PCUTBN& verts,
+                       IndexList&         indexes,
+                       AABB3 const&       bounds,
+                       Rgba8 const&       color,
+                       AABB2 const&       UVs)
 {
+    Vec3 const min = bounds.m_mins;
+    Vec3 const max = bounds.m_maxs;
+
+    Vec3 const frontBottomLeft  = Vec3(max.x, min.y, min.z);
+    Vec3 const frontBottomRight = Vec3(max.x, max.y, min.z);
+    Vec3 const frontTopLeft     = Vec3(max.x, min.y, max.z);
+    Vec3 const frontTopRight    = Vec3(max.x, max.y, max.z);
+
+    Vec3 const backBottomLeft  = Vec3(min.x, max.y, min.z);
+    Vec3 const backBottomRight = Vec3(min.x, min.y, min.z);
+    Vec3 const backTopLeft     = Vec3(min.x, max.y, max.z);
+    Vec3 const backTopRight    = Vec3(min.x, min.y, max.z);
+
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    AABB2 const uv(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight));
+
+    AddVertsForQuad3D(verts, indexes, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, color, uv);        // Front
+    AddVertsForQuad3D(verts, indexes, backBottomLeft, backBottomRight, backTopLeft, backTopRight, color, uv);            // Back
+    AddVertsForQuad3D(verts, indexes, backBottomRight, frontBottomLeft, backTopRight, frontTopLeft, color, uv);          // Left
+    AddVertsForQuad3D(verts, indexes, frontBottomRight, backBottomLeft, frontTopRight, backTopLeft, color, uv);          // Right
+    AddVertsForQuad3D(verts, indexes, frontTopLeft, frontTopRight, backTopRight, backTopLeft, color, uv);                // Top
+    AddVertsForQuad3D(verts, indexes, backBottomRight, backBottomLeft, frontBottomLeft, frontBottomRight, color, uv);    // Bottom
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeAABB3D(VertexList_PCU&  verts,
-                                AABB3 const& bounds,
-                                float const  thickness,
-                                Rgba8 const& color,
-                                AABB2 const& UVs)
+void AddVertsForWireframeAABB3D(VertexList_PCU& verts,
+                                AABB3 const&    bounds,
+                                float const     thickness,
+                                Rgba8 const&    color,
+                                AABB2 const&    UVs)
 {
     Vec3 const min = bounds.m_mins;
     Vec3 const max = bounds.m_maxs;
@@ -505,13 +543,13 @@ void AddVertsForWireframeAABB3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForSphere3D(VertexList_PCU&  verts,
-                         Vec3 const&  center,
-                         float const  radius,
-                         Rgba8 const& color,
-                         AABB2 const& UVs,
-                         int const    numSlices,
-                         int const    numStacks)
+void AddVertsForSphere3D(VertexList_PCU& verts,
+                         Vec3 const&     center,
+                         float const     radius,
+                         Rgba8 const&    color,
+                         AABB2 const&    UVs,
+                         int const       numSlices,
+                         int const       numStacks)
 {
     float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
     float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
@@ -545,14 +583,14 @@ void AddVertsForSphere3D(VertexList_PCU&  verts,
     }
 }
 
-void AddVertsForWireframeSphere3D(VertexList_PCU&  verts,
-                                  Vec3 const&  center,
-                                  float const  radius,
-                                  float const  thickness,
-                                  Rgba8 const& color,
-                                  AABB2 const& UVs,
-                                  int const    numSlices,
-                                  int const    numStacks)
+void AddVertsForWireframeSphere3D(VertexList_PCU& verts,
+                                  Vec3 const&     center,
+                                  float const     radius,
+                                  float const     thickness,
+                                  Rgba8 const&    color,
+                                  AABB2 const&    UVs,
+                                  int const       numSlices,
+                                  int const       numStacks)
 {
     float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
     float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
@@ -587,13 +625,13 @@ void AddVertsForWireframeSphere3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCylinder3D(VertexList_PCU&  verts,
-                           Vec3 const&  startPosition,
-                           Vec3 const&  endPosition,
-                           float const  radius,
-                           Rgba8 const& color,
-                           AABB2 const& UVs,
-                           int const    numSlices)
+void AddVertsForCylinder3D(VertexList_PCU& verts,
+                           Vec3 const&     startPosition,
+                           Vec3 const&     endPosition,
+                           float const     radius,
+                           Rgba8 const&    color,
+                           AABB2 const&    UVs,
+                           int const       numSlices)
 {
     // 1. Calculate cylinder's forward/normalized direction.
     Vec3 const forwardDirection = endPosition - startPosition;
@@ -642,14 +680,14 @@ void AddVertsForCylinder3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForWireframeCylinder3D(VertexList_PCU&  verts,
-                                    Vec3 const&  startPosition,
-                                    Vec3 const&  endPosition,
-                                    float const  radius,
-                                    float const  thickness,
-                                    Rgba8 const& color,
-                                    AABB2 const& UVs,
-                                    int const    numSlices)
+void AddVertsForWireframeCylinder3D(VertexList_PCU& verts,
+                                    Vec3 const&     startPosition,
+                                    Vec3 const&     endPosition,
+                                    float const     radius,
+                                    float const     thickness,
+                                    Rgba8 const&    color,
+                                    AABB2 const&    UVs,
+                                    int const       numSlices)
 {
     // 1. Calculate cylinder's forward/normalized direction.
     Vec3 const forwardDirection = endPosition - startPosition;
@@ -698,13 +736,13 @@ void AddVertsForWireframeCylinder3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForCone3D(VertexList_PCU&  verts,
-                       Vec3 const&  startPosition,
-                       Vec3 const&  endPosition,
-                       float const  radius,
-                       Rgba8 const& color,
-                       AABB2 const& UVs,
-                       int const    numSlices)
+void AddVertsForCone3D(VertexList_PCU& verts,
+                       Vec3 const&     startPosition,
+                       Vec3 const&     endPosition,
+                       float const     radius,
+                       Rgba8 const&    color,
+                       AABB2 const&    UVs,
+                       int const       numSlices)
 {
     // 1. Calculate cone's forward/normalized direction.
     Vec3 const forwardDirection = endPosition - startPosition;
@@ -749,16 +787,16 @@ void AddVertsForCone3D(VertexList_PCU&  verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void AddVertsForArrow3D(VertexList_PCU&  verts,
-                        Vec3 const&  startPosition,
-                        Vec3 const&  endPosition,
-                        float const  coneCylinderHeightRatio,
-                        float const  cylinderRadius,
-                        float const  coneRadius,
-                        Rgba8 const& color,
-                        AABB2 const& UVs,
-                        int const    numCylinderSlices,
-                        int const    numConeSlices)
+void AddVertsForArrow3D(VertexList_PCU& verts,
+                        Vec3 const&     startPosition,
+                        Vec3 const&     endPosition,
+                        float const     coneCylinderHeightRatio,
+                        float const     cylinderRadius,
+                        float const     coneRadius,
+                        Rgba8 const&    color,
+                        AABB2 const&    UVs,
+                        int const       numCylinderSlices,
+                        int const       numConeSlices)
 {
     Vec3 const forwardDirection = endPosition - startPosition;
     Vec3 const midPosition      = startPosition + forwardDirection * coneCylinderHeightRatio;

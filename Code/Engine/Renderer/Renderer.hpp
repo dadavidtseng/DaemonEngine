@@ -129,7 +129,8 @@ public:
     void SetRasterizerMode(eRasterizerMode mode);
     void SetDepthMode(eDepthMode mode);
     void SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
-
+    VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
+    IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
@@ -147,8 +148,7 @@ private:
     void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount);
     void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
 
-    VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
-    IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
+
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
     void            CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;

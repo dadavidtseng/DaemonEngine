@@ -14,6 +14,7 @@ struct AABB3
 
     static AABB3 ZERO_TO_ONE;
     static AABB3 NEG_HALF_TO_HALF;
+    static AABB3 NEG_ONE;
 
     AABB3()                      = default;
     ~AABB3()                     = default;

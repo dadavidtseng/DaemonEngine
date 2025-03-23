@@ -11,6 +11,7 @@
 //----------------------------------------------------------------------------------------------------
 STATIC AABB3 AABB3::ZERO_TO_ONE      = AABB3(Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f));
 STATIC AABB3 AABB3::NEG_HALF_TO_HALF = AABB3(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f));
+STATIC AABB3 AABB3::NEG_ONE = AABB3(Vec3(-1.f, -1.f, -1.f), Vec3(-1.f, -1.f, -1.f));
 
 //----------------------------------------------------------------------------------------------------
 AABB3::AABB3(float const minX, float const minY, float const minZ,

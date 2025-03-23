@@ -22,6 +22,7 @@ struct Vec3
     Vec3()  = default;
     ~Vec3() = default;
     explicit Vec3(float initialX, float initialY, float initialZ);
+    explicit Vec3(int initialX, int initialY, int initialZ);
 
     // Accessors (const methods)
     float      GetLength() const;
