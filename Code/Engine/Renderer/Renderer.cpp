@@ -684,8 +684,7 @@ Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderName,
     // }
 
     // Consider using smart pointers for better memory management
-    ShaderConfig const shaderConfig;
-    Shader*            newShader = new Shader(shaderConfig);
+    Shader*            newShader = CreateShader(shaderName, vertexType);
     m_loadedShaders.push_back(newShader);
 
     return newShader;
