@@ -87,6 +87,39 @@ enum class eBlendMode : int8_t
 };
 
 //----------------------------------------------------------------------------------------------------
+struct LightConstants
+{
+    float SunDirection[3];
+    float SunIntensity;
+    float AmbientIntensity;
+    float padding[3];
+};
+
+//----------------------------------------------------------------------------------------------------
+struct ModelConstants
+{
+    Mat44 ModelToWorldTransform;
+    float ModelColor[4];
+};
+
+//----------------------------------------------------------------------------------------------------
+struct CameraConstants
+{
+    // float OrthoMinX;
+    // float OrthoMinY;
+    // float OrthoMinZ;
+    // float OrthoMaxX;
+    // float OrthoMaxY;
+    // float OrthoMaxZ;
+    // float pad0;
+    // float pad1;
+
+    Mat44 WorldToCameraTransform;       // View transform
+    Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
+    Mat44 RenderToClipTransform;        // Projection transform
+};
+
+//----------------------------------------------------------------------------------------------------
 struct RenderConfig
 {
     Window* m_window = nullptr;
@@ -97,6 +130,10 @@ class Renderer
 {
 public:
     explicit Renderer(RenderConfig const& render_config);
+
+    static int k_lightConstantSlot;
+    static int k_cameraConstantSlot;
+    static int k_modelConstantsSlot;
 
     void Startup();
     void BeginFrame() const;
@@ -121,16 +158,24 @@ public:
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
     Shader*     CreateOrGetShaderFromFile(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     // Shader* CreateOrGetShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
-    Image    CreateImageFromFile(char const* imageFilePath);
+    Image CreateImageFromFile(char const* imageFilePath);
 
 
-    void SetBlendMode(eBlendMode mode);
-    void SetSamplerMode(eSamplerMode mode);
-    void SetRasterizerMode(eRasterizerMode mode);
-    void SetDepthMode(eDepthMode mode);
-    void SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
+    void            SetBlendMode(eBlendMode mode);
+    void            SetSamplerMode(eSamplerMode mode);
+    void            SetRasterizerMode(eRasterizerMode mode);
+    void            SetDepthMode(eDepthMode mode);
+    void            SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
     IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
+    ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
+    void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
+    void            BindVertexBuffer(VertexBuffer const* vbo) const;
+    void            BindIndexBuffer(IndexBuffer const* ibo) const;
+    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
+
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
@@ -149,14 +194,7 @@ private:
     void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
 
 
-    ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
-    void            CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
-    void            CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
-    void            CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
-    void            BindVertexBuffer(VertexBuffer const* vbo) const;
-    void            BindIndexBuffer(IndexBuffer const* ibo) const;
-    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
-    void            SetStatesIfChanged();
+    void SetStatesIfChanged();
 
     RenderConfig m_config;
     // void*                    m_apiRenderingContext = nullptr;

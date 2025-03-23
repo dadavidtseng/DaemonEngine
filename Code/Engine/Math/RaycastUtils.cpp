@@ -261,7 +261,7 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
         }
 
         // RAY HIT TOP
-        if (minYHitT > maxYHitT)
+        if (minYHitT >= maxYHitT)
         {
             result.m_didImpact      = true;
             result.m_impactLength   = maxLength * maxYHitT;
@@ -270,9 +270,6 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
 
             return result;
         }
-
-        // not hit
-        result.m_didImpact = false;
 
         return result;
     }
@@ -299,7 +296,7 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
         }
 
         // RAY HIT RIGHT
-        if (maxXHitT <= minXHitT)
+        if (minXHitT >= maxXHitT)
         {
             result.m_didImpact      = true;
             result.m_impactLength   = maxLength * maxXHitT;
@@ -309,16 +306,14 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
             return result;
         }
 
-        // not hit
-        result.m_didImpact = false;
         return result;
     }
 
     // 10. Calculate enterXHitT, exitXHitT, enterYHitT, and exitYHitT.
-    float enterXHitT = std::min(minXHitT, maxXHitT);
-    float exitXHitT  = std::max(minXHitT, maxXHitT);
-    float enterYHitT = std::min(minYHitT, maxYHitT);
-    float exitYHitT  = std::max(minYHitT, maxYHitT);
+    float const enterXHitT = std::min(minXHitT, maxXHitT);
+    float const exitXHitT  = std::max(minXHitT, maxXHitT);
+    float const enterYHitT = std::min(minYHitT, maxYHitT);
+    float const exitYHitT  = std::max(minYHitT, maxYHitT);
 
     // 11. If the ray enters X before entering Y,
     if (enterXHitT < enterYHitT)
@@ -394,7 +389,7 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition,
         result.m_impactNormal   = Vec2(1.f, 0.f);
     }
 
-    ERROR_RECOVERABLE("The input is not handled by RaycastVsAABB2D.")
+    // ERROR_RECOVERABLE("The input is not handled by RaycastVsAABB2D.")
     return result;
 }
 

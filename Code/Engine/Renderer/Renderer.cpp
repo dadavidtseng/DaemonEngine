@@ -42,42 +42,9 @@
 #endif
 
 //----------------------------------------------------------------------------------------------------
-static constexpr int k_lightConstantSlot  = 1;
-static constexpr int k_cameraConstantSlot = 2;
-static constexpr int k_modelConstantsSlot = 3;
-
-//----------------------------------------------------------------------------------------------------
-struct LightConstants
-{
-    float SunDirection[3];
-    float SunIntensity;
-    float AmbientIntensity;
-    float padding[3];
-};
-
-//----------------------------------------------------------------------------------------------------
-struct ModelConstants
-{
-    Mat44 ModelToWorldTransform;
-    float ModelColor[4];
-};
-
-//----------------------------------------------------------------------------------------------------
-struct CameraConstants
-{
-    // float OrthoMinX;
-    // float OrthoMinY;
-    // float OrthoMinZ;
-    // float OrthoMaxX;
-    // float OrthoMaxY;
-    // float OrthoMaxZ;
-    // float pad0;
-    // float pad1;
-
-    Mat44 WorldToCameraTransform;       // View transform
-    Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
-    Mat44 RenderToClipTransform;        // Projection transform
-};
+STATIC int Renderer::k_lightConstantSlot  = 1;
+STATIC int Renderer::k_cameraConstantSlot = 2;
+STATIC int Renderer::k_modelConstantsSlot = 3;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& render_config)
@@ -114,7 +81,7 @@ void Renderer::Startup()
     }
 #endif
 
-    // Create device and swap chain
+    //-Create device and swap chain-------------------------------------------------------------------
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     Window const*        window        = m_config.m_window;
 
@@ -146,6 +113,7 @@ void Renderer::Startup()
         ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
     }
 
+    //------------------------------------------------------------------------------------------------
     // Get back buffer texture
     ID3D11Texture2D* backBuffer;
     hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
@@ -164,6 +132,7 @@ void Renderer::Startup()
 
     backBuffer->Release();
 
+    //------------------------------------------------------------------------------------------------
     // Set rasterizer state
     D3D11_RASTERIZER_DESC rasterizerDesc;
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
@@ -177,16 +146,16 @@ void Renderer::Startup()
     rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(eRasterizerMode::SOLID_CULL_NONE)]);
-    if (!SUCCEEDED(hr))
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
     }
 
     rasterizerDesc.CullMode = D3D11_CULL_BACK;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(eRasterizerMode::SOLID_CULL_BACK)]);
-    if (!SUCCEEDED(hr))
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_BACK)]);
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed.")
     }
@@ -194,23 +163,23 @@ void Renderer::Startup()
     rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
     rasterizerDesc.CullMode = D3D11_CULL_NONE;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(eRasterizerMode::WIREFRAME_CULL_NONE)]);
-    if (!SUCCEEDED(hr))
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_NONE)]);
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed.")
     }
 
     rasterizerDesc.CullMode = D3D11_CULL_BACK;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)(eRasterizerMode::WIREFRAME_CULL_BACK)]);
-    if (!SUCCEEDED(hr))
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_BACK)]);
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
     }
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-    m_defaultShader = CreateOrGetShaderFromFile("Diffuse", eVertexType::VERTEX_PCUTBN);
-    m_currentShader = CreateShader("Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
+    m_currentShader = CreateShader("Default", eVertexType::VERTEX_PCU);
 
     BindShader(m_currentShader);
 
