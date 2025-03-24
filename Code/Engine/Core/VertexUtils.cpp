@@ -415,10 +415,15 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
 {
     unsigned int const currentIndex = static_cast<unsigned int>(verts.size());
 
-    verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
-    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
-    verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
-    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
+    // verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
+    // verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
+    // verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
+    // verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
+
+    verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
+    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
+    verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
+    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO,Vec3::X_BASIS);
 
     indexes.push_back(currentIndex);
     indexes.push_back(currentIndex + 1);

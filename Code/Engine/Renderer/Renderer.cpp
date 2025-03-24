@@ -179,15 +179,15 @@ void Renderer::Startup()
     //-Set rasterizer state---------------------------------------------------------------------------
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-    m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-    m_currentShader = CreateShader("Default", eVertexType::VERTEX_PCU);
+    m_defaultShader = CreateOrGetShaderFromFile("Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_currentShader = CreateShader("Diffuse", eVertexType::VERTEX_PCUTBN);
 
     BindShader(m_currentShader);
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
-    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
     // Create the camera constant buffer with an initial size for one CameraConstants
     m_lightCBO  = CreateConstantBuffer(sizeof(LightConstants));
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
@@ -515,18 +515,18 @@ void Renderer::BeginCamera(Camera const& camera) const
     // Bind the constant buffer
     BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
 
-    LightConstants lightConstants;
-
-    Vec3 const sunDirection = Vec3(2.f, 1.f, -1.f).GetNormalized();
-
-    lightConstants.SunDirection[0]  = sunDirection.x;
-    lightConstants.SunDirection[1]  = sunDirection.y;
-    lightConstants.SunDirection[2]  = sunDirection.z;
-    lightConstants.SunIntensity     = 0.85f;
-    lightConstants.AmbientIntensity = 0.35f;
-
-    CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
-    BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
+    // LightConstants lightConstants;
+    //
+    // Vec3 const sunDirection = Vec3(2.f, 1.f, -1.f).GetNormalized();
+    //
+    // lightConstants.SunDirection[0]  = sunDirection.x;
+    // lightConstants.SunDirection[1]  = sunDirection.y;
+    // lightConstants.SunDirection[2]  = sunDirection.z;
+    // lightConstants.SunIntensity     = 0.85f;
+    // lightConstants.AmbientIntensity = 0.35f;
+    //
+    // CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
+    // BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
 
     // Set model constants to default
     SetModelConstants();
@@ -904,7 +904,8 @@ Shader* Renderer::CreateShader(char const*       shaderName,
                                char const*       shaderSource,
                                eVertexType const vertexType)
 {
-    ShaderConfig const shaderConfig;
+    ShaderConfig  shaderConfig;
+    shaderConfig.m_name = shaderName;
     Shader*            shader = new Shader(shaderConfig);
 
     std::vector<uint8_t> vertexShaderByteCode;

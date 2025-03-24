@@ -14,9 +14,9 @@ struct Vertex_PCUTBN
     Vec3  m_position    = Vec3::ZERO;
     Rgba8 m_color       = Rgba8::MAGENTA;
     Vec2  m_uvTexCoords = Vec2::ZERO;
-    Vec3  m_tangent     = Vec3::ZERO;
-    Vec3  m_bitangent   = Vec3::ZERO;
-    Vec3  m_normal      = Vec3::ZERO;
+    Vec3  m_tangent     ;
+    Vec3  m_bitangent   ;
+    Vec3  m_normal      ;
 
     Vertex_PCUTBN() = default;
     Vertex_PCUTBN(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords, Vec3 const& tangent, Vec3 const& bitangent, Vec3 const& normal);
