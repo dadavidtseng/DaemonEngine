@@ -108,32 +108,32 @@ void Renderer::Startup()
                                                nullptr,
                                                &m_deviceContext);
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
     }
+    //-Create device and swap chain-------------------------------------------------------------------
 
-    //------------------------------------------------------------------------------------------------
-    // Get back buffer texture
+    //-Get back buffer texture------------------------------------------------------------------------
     ID3D11Texture2D* backBuffer;
     hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("Could not get swap chain buffer.")
     }
 
     hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         ERROR_AND_DIE("Could create render target view for swap chain buffer.")
     }
 
     backBuffer->Release();
+    //-Get back buffer texture------------------------------------------------------------------------
 
-    //------------------------------------------------------------------------------------------------
-    // Set rasterizer state
+    //-Set rasterizer state---------------------------------------------------------------------------
     D3D11_RASTERIZER_DESC rasterizerDesc;
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.CullMode              = D3D11_CULL_NONE;
@@ -176,6 +176,7 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
     }
+    //-Set rasterizer state---------------------------------------------------------------------------
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
     m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
@@ -192,7 +193,8 @@ void Renderer::Startup()
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
     m_modelCBO  = CreateConstantBuffer(sizeof(ModelConstants));
 
-    // Create blend states and store the state in m_blendState
+
+    //-Create blend states and store the state in m_blendState----------------------------------------
     D3D11_BLEND_DESC blendDesc                      = {};
     blendDesc.RenderTarget[0].BlendEnable           = TRUE;
     blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
@@ -226,7 +228,9 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
     }
+    //-Create blend states and store the state in m_blendState----------------------------------------
 
+    //------------------------------------------------------------------------------------------------
     // Initialize m_defaultTexture to a 2x2 white image
     Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
     m_defaultTexture         = CreateTextureFromImage(defaultImage);
@@ -235,7 +239,8 @@ void Renderer::Startup()
     // Bind the default texture
     BindTexture(m_defaultTexture);
 
-    // Create sampler states
+
+    //-Create sampler states--------------------------------------------------------------------------
     D3D11_SAMPLER_DESC samplerDesc = {};
     samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
     samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -264,8 +269,10 @@ void Renderer::Startup()
 
     // Default the sampler state to point clamp
     SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    //-Create sampler states--------------------------------------------------------------------------
 
-    // Create depth stencil texture and view
+
+    //-Create depth stencil texture and view----------------------------------------------------------
     D3D11_TEXTURE2D_DESC depthTextureDesc = {};
     depthTextureDesc.Width                = m_config.m_window->GetClientDimensions().x;
     depthTextureDesc.Height               = m_config.m_window->GetClientDimensions().y;
@@ -289,11 +296,12 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("Could not create depth stencil view.")
     }
+    //-Create depth stencil texture and view----------------------------------------------------------
 
-    // Create depth stencil state
+    //-Create depth stencil state---------------------------------------------------------------------
     D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)eDepthMode::DISABLED]);
+    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::DISABLED)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -301,12 +309,11 @@ void Renderer::Startup()
     }
 
     // For the rest you need to enable depth.
-    depthStencilDesc.DepthEnable = true;
-
+    depthStencilDesc.DepthEnable    = true;
     depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc      = D3D11_COMPARISON_ALWAYS;
 
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)eDepthMode::READ_ONLY_ALWAYS]);
+    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_ONLY_ALWAYS)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -316,7 +323,7 @@ void Renderer::Startup()
     depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
 
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)eDepthMode::READ_ONLY_LESS_EQUAL]);
+    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_ONLY_LESS_EQUAL)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -326,7 +333,7 @@ void Renderer::Startup()
     depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
 
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[(int)eDepthMode::READ_WRITE_LESS_EQUAL]);
+    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_WRITE_LESS_EQUAL)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -334,6 +341,7 @@ void Renderer::Startup()
     }
 
     SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    //-Create depth stencil state---------------------------------------------------------------------
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -494,6 +502,19 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     m_deviceContext->RSSetViewports(1, &viewport);
 
+    // Create a local CameraConstants structure
+    CameraConstants cameraConstants;
+
+    cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
+    cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+    cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
+
+    // Copy the data from the local structure to the constant buffer
+    CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
+
+    // Bind the constant buffer
+    BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
+
     LightConstants lightConstants;
 
     Vec3 const sunDirection = Vec3(2.f, 1.f, -1.f).GetNormalized();
@@ -506,28 +527,6 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
-
-    // Create a local CameraConstants structure
-    CameraConstants cameraConstants;
-    // cameraConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
-    // cameraConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
-    // cameraConstants.OrthoMinZ = 0.f;
-    // cameraConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
-    // cameraConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
-    // cameraConstants.OrthoMaxZ = 1.f;
-    // cameraConstants.pad0      = 0.f;
-    // cameraConstants.pad1      = 0.f;
-
-    cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
-    cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
-    cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
-
-    // Copy the data from the local structure to the constant buffer
-    CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
-
-    // Bind the constant buffer
-    BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
-
 
     // Set model constants to default
     SetModelConstants();
@@ -684,7 +683,7 @@ Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderName,
     // }
 
     // Consider using smart pointers for better memory management
-    Shader*            newShader = CreateShader(shaderName, vertexType);
+    Shader* newShader = CreateShader(shaderName, vertexType);
     m_loadedShaders.push_back(newShader);
 
     return newShader;
@@ -715,7 +714,8 @@ void Renderer::SetDepthMode(eDepthMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform, Rgba8 const& modelColor) const
+void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
+                                 Rgba8 const& modelColor) const
 {
     ModelConstants modelConstants;
     modelConstants.ModelToWorldTransform = modelToWorldTransform;
@@ -1010,19 +1010,17 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
     ID3DBlob* shaderBlob = nullptr;
     ID3DBlob* errorBlob  = nullptr;
 
-    HRESULT hr;
-
-    hr = D3DCompile(source,
-                    strlen(source),
-                    name,
-                    nullptr,
-                    nullptr,
-                    entryPoint,
-                    target,
-                    shaderFlags,
-                    0,
-                    &shaderBlob,
-                    &errorBlob);
+    HRESULT const hr = D3DCompile(source,
+                                  strlen(source),
+                                  name,
+                                  nullptr,
+                                  nullptr,
+                                  entryPoint,
+                                  target,
+                                  shaderFlags,
+                                  0,
+                                  &shaderBlob,
+                                  &errorBlob);
 
     if (SUCCEEDED(hr))
     {
@@ -1238,10 +1236,11 @@ void Renderer::SetStatesIfChanged()
         m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
     }
 
-    if (m_samplerStates[static_cast<int>(m_desiredSamplerMode)] != m_samplerState)
+    if (m_depthStencilState != m_depthStencilStates[static_cast<int>(m_desiredDepthMode)])
     {
-        m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
-        m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+        m_depthStencilState = m_depthStencilStates[static_cast<int>(m_desiredDepthMode)];
+
+        m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
     }
 
     if (m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)] != m_rasterizerState)
@@ -1250,10 +1249,9 @@ void Renderer::SetStatesIfChanged()
         m_deviceContext->RSSetState(m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)]);
     }
 
-    if (m_depthStencilState != m_depthStencilStates[static_cast<int>(m_desiredDepthMode)])
+    if (m_samplerStates[static_cast<int>(m_desiredSamplerMode)] != m_samplerState)
     {
-        m_depthStencilState = m_depthStencilStates[static_cast<int>(m_desiredDepthMode)];
-
-        m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
+        m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
+        m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
     }
 }
