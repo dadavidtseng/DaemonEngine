@@ -179,15 +179,15 @@ void Renderer::Startup()
     //-Set rasterizer state---------------------------------------------------------------------------
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-    m_defaultShader = CreateOrGetShaderFromFile("Diffuse", eVertexType::VERTEX_PCUTBN);
-    m_currentShader = CreateShader("Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
+    m_currentShader = CreateShader("Default", eVertexType::VERTEX_PCU);
 
     BindShader(m_currentShader);
 
     // Create the immediate vertex buffer with an initial size for one Vertex_PCU
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
-    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     // Create the camera constant buffer with an initial size for one CameraConstants
     m_lightCBO  = CreateConstantBuffer(sizeof(LightConstants));
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
@@ -955,9 +955,9 @@ Shader* Renderer::CreateShader(char const*       shaderName,
         inputElementDesc[0] = {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
         inputElementDesc[1] = {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
         inputElementDesc[2] = {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[3] = {"TANGENT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[4] = {"BITANGENT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[5] = {"NORMAL", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[3] = {"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[4] = {"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[5] = {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
         numElements         = 6;
     }
 
