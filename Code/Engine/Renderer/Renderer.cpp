@@ -20,7 +20,6 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
-#include "Engine/Renderer/DefaultShader.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
@@ -133,66 +132,6 @@ void Renderer::Startup()
     backBuffer->Release();
     //-Get back buffer texture------------------------------------------------------------------------
 
-    //-Set rasterizer state---------------------------------------------------------------------------
-    D3D11_RASTERIZER_DESC rasterizerDesc;
-    rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
-    rasterizerDesc.CullMode              = D3D11_CULL_NONE;
-    rasterizerDesc.FrontCounterClockwise = true;
-    rasterizerDesc.DepthBias             = 0;
-    rasterizerDesc.DepthBiasClamp        = 0.f;
-    rasterizerDesc.SlopeScaledDepthBias  = 0.f;
-    rasterizerDesc.DepthClipEnable       = true;
-    rasterizerDesc.ScissorEnable         = false;
-    rasterizerDesc.MultisampleEnable     = false;
-    rasterizerDesc.AntialiasedLineEnable = true;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
-    }
-
-    rasterizerDesc.CullMode = D3D11_CULL_BACK;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_BACK)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed.")
-    }
-
-    rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-    rasterizerDesc.CullMode = D3D11_CULL_NONE;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_NONE)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed.")
-    }
-
-    rasterizerDesc.CullMode = D3D11_CULL_BACK;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_BACK)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
-    }
-    //-Set rasterizer state---------------------------------------------------------------------------
-
-    // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-    m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-    m_currentShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-
-    BindShader(m_currentShader);
-
-    // Create the immediate vertex buffer with an initial size for one Vertex_PCU
-    m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-    m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
-    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-    // Create the camera constant buffer with an initial size for one CameraConstants
-    m_lightCBO  = CreateConstantBuffer(sizeof(LightConstants));
-    m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
-    m_modelCBO  = CreateConstantBuffer(sizeof(ModelConstants));
-
     //-Create blend states and store the state in m_blendState----------------------------------------
     D3D11_BLEND_DESC blendDesc                      = {};
     blendDesc.RenderTarget[0].BlendEnable           = TRUE;
@@ -228,48 +167,6 @@ void Renderer::Startup()
         ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
     }
     //-Create blend states and store the state in m_blendState----------------------------------------
-
-    //------------------------------------------------------------------------------------------------
-    // Initialize m_defaultTexture to a 2x2 white image
-    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
-    m_defaultTexture         = CreateTextureFromImage(defaultImage);
-    m_defaultTexture->m_name = "Default";
-
-    // Bind the default texture
-    BindTexture(m_defaultTexture);
-
-
-    //-Create sampler states--------------------------------------------------------------------------
-    D3D11_SAMPLER_DESC samplerDesc = {};
-    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
-    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
-
-    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
-    }
-
-    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-
-    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_CLAMP failed.")
-    }
-
-    // Default the sampler state to point clamp
-    SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    //-Create sampler states--------------------------------------------------------------------------
-
 
     //-Create depth stencil texture and view----------------------------------------------------------
     D3D11_TEXTURE2D_DESC depthTextureDesc = {};
@@ -341,7 +238,103 @@ void Renderer::Startup()
 
     SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     //-Create depth stencil state---------------------------------------------------------------------
+
+    //-Create sampler states--------------------------------------------------------------------------
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
+    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
+    }
+
+    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_CLAMP failed.")
+    }
+
+    // Default the sampler state to point clamp
+    SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    //-Create sampler states--------------------------------------------------------------------------
+
+    //-Set rasterizer state---------------------------------------------------------------------------
+    D3D11_RASTERIZER_DESC rasterizerDesc;
+    rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
+    rasterizerDesc.CullMode              = D3D11_CULL_NONE;
+    rasterizerDesc.FrontCounterClockwise = true;
+    rasterizerDesc.DepthBias             = 0;
+    rasterizerDesc.DepthBiasClamp        = 0.f;
+    rasterizerDesc.SlopeScaledDepthBias  = 0.f;
+    rasterizerDesc.DepthClipEnable       = true;
+    rasterizerDesc.ScissorEnable         = false;
+    rasterizerDesc.MultisampleEnable     = false;
+    rasterizerDesc.AntialiasedLineEnable = true;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+    if (FAILED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
+    }
+
+    rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_BACK)]);
+    if (FAILED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed.")
+    }
+
+    rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rasterizerDesc.CullMode = D3D11_CULL_NONE;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_NONE)]);
+    if (FAILED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed.")
+    }
+
+    rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_BACK)]);
+    if (FAILED(hr))
+    {
+        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
+    }
+    //-Set rasterizer state---------------------------------------------------------------------------
+
+    m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    m_lightCBO            = CreateConstantBuffer(sizeof(LightConstants));
+    m_cameraCBO           = CreateConstantBuffer(sizeof(CameraConstants));
+    m_modelCBO            = CreateConstantBuffer(sizeof(ModelConstants));
+
+    //------------------------------------------------------------------------------------------------
+    // Initialize m_defaultTexture to a 2x2 white image
+    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+    m_defaultTexture         = CreateTextureFromImage(defaultImage);
+    m_defaultTexture->m_name = "Default";
+    m_defaultShader          = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
+    m_currentShader          = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
+    // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
+
+    BindShader(m_currentShader);
+    BindTexture(m_defaultTexture);
 }
+
 
 //----------------------------------------------------------------------------------------------------
 void Renderer::BeginFrame() const
@@ -365,22 +358,69 @@ void Renderer::EndFrame() const
 //----------------------------------------------------------------------------------------------------
 void Renderer::Shutdown()
 {
-    // Release all depth states
-    for (int i = 0; i < static_cast<int>(eDepthMode::COUNT); ++i)
+    for (int i = 0; i < static_cast<int>(m_loadedShaders.size()); ++i)
     {
-        DX_SAFE_RELEASE(m_depthStencilStates[i])
+        if (m_loadedShaders[i] != nullptr)
+        {
+            delete m_loadedShaders[i];
+            m_loadedShaders[i] = nullptr;
+        }
     }
 
+    for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
+    {
+        if (m_loadedTextures[i] != nullptr)
+        {
+            delete m_loadedTextures[i];
+            m_loadedTextures[i] = nullptr;
+        }
+    }
+
+    m_loadedFonts.clear();
+    m_loadedShaders.clear();
+    m_loadedTextures.clear();
+
+    if (m_modelCBO!=nullptr)
+    {
+        delete m_modelCBO;
+        m_modelCBO = nullptr;
+    }
+
+    if (m_lightCBO!=nullptr)
+    {
+        delete m_lightCBO;
+        m_lightCBO = nullptr;
+    }
+
+    if (m_cameraCBO!=nullptr)
+    {
+        delete m_cameraCBO;
+        m_cameraCBO = nullptr;
+    }
+
+    if (m_immediateIBO!=nullptr)
+    {
+        delete m_immediateIBO;
+        m_immediateIBO = nullptr;
+    }
+
+    if (m_immediateVBO_PCUTBN!=nullptr)
+    {
+        delete m_immediateVBO_PCUTBN;
+        m_immediateVBO_PCUTBN = nullptr;
+    }
+
+    if (m_immediateVBO_PCU!=nullptr)
+    {
+        delete m_immediateVBO_PCU;
+        m_immediateVBO_PCU = nullptr;
+    }
+
+    // Release all DirectX objects and check for memory leaks in your Shutdown function.
     // Release all rasterizer states
     for (int i = 0; i < static_cast<int>(eRasterizerMode::COUNT); ++i)
     {
         DX_SAFE_RELEASE(m_rasterizerStates[i])
-    }
-
-    // Release all blend states
-    for (int i = 0; i < static_cast<int>(eBlendMode::COUNT); ++i)
-    {
-        DX_SAFE_RELEASE(m_blendStates[i])
     }
 
     // Release all sampler states
@@ -389,66 +429,26 @@ void Renderer::Shutdown()
         DX_SAFE_RELEASE(m_samplerStates[i])
     }
 
-    for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
+    // Release all depth states
+    for (int i = 0; i < static_cast<int>(eDepthMode::COUNT); ++i)
     {
-        delete m_loadedTextures[i];
-        m_loadedTextures[i] = nullptr;
+        DX_SAFE_RELEASE(m_depthStencilStates[i])
     }
 
-    for (int i = 0; i < static_cast<int>(m_loadedShaders.size()); ++i)
-    {
-        delete m_loadedShaders[i];
-        m_loadedShaders[i] = nullptr;
-    }
-
-    m_loadedTextures.clear();
-    m_loadedFonts.clear();
-    m_loadedShaders.clear();
-
-    // Release all DirectX objects and check for memory leaks in your Shutdown function.
-    DX_SAFE_RELEASE(m_depthStencilTexture)
     DX_SAFE_RELEASE(m_depthStencilDSV)
+    DX_SAFE_RELEASE(m_depthStencilTexture)
+
+    // Release all blend states
+    for (int i = 0; i < static_cast<int>(eBlendMode::COUNT); ++i)
+    {
+        DX_SAFE_RELEASE(m_blendStates[i])
+    }
+
     DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
 
-    // Delete the immediate vertex buffer
-    if (m_immediateVBO_PCU)
-    {
-        delete m_immediateVBO_PCU;
-        m_immediateVBO_PCU = nullptr;
-    }
-
-    if (m_immediateVBO_PCUTBN)
-    {
-        delete m_immediateVBO_PCUTBN;
-        m_immediateVBO_PCUTBN = nullptr;
-    }
-
-    if (m_immediateIBO)
-    {
-        delete m_immediateIBO;
-        m_immediateIBO = nullptr;
-    }
-
-    if (m_lightCBO)
-    {
-        delete m_lightCBO;
-        m_lightCBO = nullptr;
-    }
-
-    if (m_cameraCBO)
-    {
-        delete m_cameraCBO;
-        m_cameraCBO = nullptr;
-    }
-
-    if (m_modelCBO)
-    {
-        delete m_modelCBO;
-        m_modelCBO = nullptr;
-    }
 
     // Report error leaks and release debug module
 #if defined(ENGINE_DEBUG_RENDER)
