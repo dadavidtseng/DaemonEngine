@@ -166,6 +166,7 @@ public:
     void            SetRasterizerMode(eRasterizerMode mode);
     void            SetDepthMode(eDepthMode mode);
     void            SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
+    void            SetLightConstants(Vec3 const& sunDirection, float sunIntensity, float ambientIntensity) const;
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
     IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;

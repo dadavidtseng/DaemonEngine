@@ -180,7 +180,7 @@ void Renderer::Startup()
 
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
     m_defaultShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-    m_currentShader = CreateShader("Default", eVertexType::VERTEX_PCU);
+    m_currentShader = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
 
     BindShader(m_currentShader);
 
@@ -192,7 +192,6 @@ void Renderer::Startup()
     m_lightCBO  = CreateConstantBuffer(sizeof(LightConstants));
     m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
     m_modelCBO  = CreateConstantBuffer(sizeof(ModelConstants));
-
 
     //-Create blend states and store the state in m_blendState----------------------------------------
     D3D11_BLEND_DESC blendDesc                      = {};
@@ -396,6 +395,12 @@ void Renderer::Shutdown()
         m_loadedTextures[i] = nullptr;
     }
 
+    for (int i = 0; i < static_cast<int>(m_loadedShaders.size()); ++i)
+    {
+        delete m_loadedShaders[i];
+        m_loadedShaders[i] = nullptr;
+    }
+
     m_loadedTextures.clear();
     m_loadedFonts.clear();
     m_loadedShaders.clear();
@@ -425,18 +430,6 @@ void Renderer::Shutdown()
     {
         delete m_immediateIBO;
         m_immediateIBO = nullptr;
-    }
-
-    if (m_currentShader)
-    {
-        delete m_currentShader;
-        m_currentShader = nullptr;
-    }
-
-    if (m_defaultShader)
-    {
-        delete m_defaultShader;
-        m_defaultShader = nullptr;
     }
 
     if (m_lightCBO)
@@ -733,6 +726,25 @@ void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
 }
 
 //----------------------------------------------------------------------------------------------------
+void Renderer::SetLightConstants(Vec3 const& sunDirection,
+                                 float const sunIntensity,
+                                 float const ambientIntensity) const
+{
+    LightConstants lightConstants;
+
+    Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
+
+    lightConstants.SunDirection[0]  = normalizedSunDirection.x;
+    lightConstants.SunDirection[1]  = normalizedSunDirection.y;
+    lightConstants.SunDirection[2]  = normalizedSunDirection.z;
+    lightConstants.SunIntensity     = sunIntensity;
+    lightConstants.AmbientIntensity = ambientIntensity;
+
+    CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
+    BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Renderer::DrawVertexBuffer(VertexBuffer const* vbo,
                                 unsigned int const  vertexCount)
 {
@@ -904,9 +916,9 @@ Shader* Renderer::CreateShader(char const*       shaderName,
                                char const*       shaderSource,
                                eVertexType const vertexType)
 {
-    ShaderConfig  shaderConfig;
+    ShaderConfig shaderConfig;
     shaderConfig.m_name = shaderName;
-    Shader*            shader = new Shader(shaderConfig);
+    Shader* shader      = new Shader(shaderConfig);
 
     std::vector<uint8_t> vertexShaderByteCode;
     std::vector<uint8_t> pixelShaderByteCode;
