@@ -40,7 +40,7 @@ enum class DebugRenderObjectType : int8_t
 struct DebugRenderObject
 {
     DebugRenderObjectType m_type;
-    VertexList_PCU            m_vertices;
+    VertexList_PCU        m_vertices;
     Vec3                  m_startPosition;
     Vec3                  m_endPosition;
     float                 m_radius;
@@ -640,8 +640,8 @@ void DebugAddWorldWireSphere(Vec3 const&           center,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldArrow(Vec3 const&           start,
-                        Vec3 const&           end,
+void DebugAddWorldArrow(Vec3 const&           startPosition,
+                        Vec3 const&           endPosition,
                         float const           radius,
                         float const           duration,
                         Rgba8 const&          startColor,
@@ -650,8 +650,8 @@ void DebugAddWorldArrow(Vec3 const&           start,
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_ARROW;
-    object->m_startPosition   = start;
-    object->m_endPosition     = end;
+    object->m_startPosition   = startPosition;
+    object->m_endPosition     = endPosition;
     object->m_maxElapsedTime  = duration;
     object->m_radius          = radius;
     object->m_startColor      = startColor;
@@ -659,7 +659,7 @@ void DebugAddWorldArrow(Vec3 const&           start,
     object->m_isWireFrame     = true;
     object->m_mode            = mode;
 
-    AddVertsForArrow3D(object->m_vertices, object->m_startPosition, object->m_endPosition * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
+    AddVertsForArrow3D(object->m_vertices, object->m_startPosition, object->m_endPosition, 0.6f, object->m_radius, object->m_radius * 2.f, object->m_startColor);
     m_mutex.lock();
     DebugRenderAddObjectToList(object);
     m_mutex.unlock();
