@@ -1,6 +1,12 @@
+//----------------------------------------------------------------------------------------------------
+// AnalogJoystick.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 
+//----------------------------------------------------------------------------------------------------
 class AnalogJoystick
 {
 public:
@@ -20,6 +26,6 @@ public:
 protected:
     Vec2  m_rawPosition;                   // Flaky; doesn't rest at zero (or consistently snap to rest position)
     Vec2  m_correctedPosition;             // DeadZone-corrected position
-    float m_innerDeadZoneFraction = 0.30f; // if R < this%, R = 0; "input range start" for corrective range map
+    float m_innerDeadZoneFraction = 0.35f; // if R < this%, R = 0; "input range start" for corrective range map
     float m_outerDeadZoneFraction = 0.95f; // if R > this%, R = 1; "input range end" for corrective range map
 };

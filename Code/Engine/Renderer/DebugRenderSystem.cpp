@@ -113,21 +113,45 @@ void DebugRenderBeginFrame()
 {
     float const deltaSeconds = static_cast<float>(Clock::GetSystemClock().GetDeltaSeconds());
 
-    for (std::vector<DebugRenderObject*>::iterator it = m_debugRenderObjectList.begin(); it != m_debugRenderObjectList.end();)
-    {
-        DebugRenderObject* object = *it;
-        if (object != nullptr)
-        {
-            object->m_elapsedTime += deltaSeconds;
+    m_debugRenderObjectList.erase(
+        std::remove_if(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(),
+                       [deltaSeconds](DebugRenderObject* object)
+                       {
+                           if (object == nullptr)
+                           {
+                               return false;
+                           }
 
-            if (object->m_elapsedTime >= object->m_maxElapsedTime && object->m_maxElapsedTime > -1.f)
-            {
-                it = m_debugRenderObjectList.erase(it);     // Safely remove the element and get the next valid iterator
-                continue;       // Prevent `it++` from skipping an element
-            }
-        }
-        ++it;       // Advance the iterator only if the element was not removed
-    }
+                           object->m_elapsedTime += deltaSeconds;
+
+                           return
+                               object->m_elapsedTime >= object->m_maxElapsedTime &&
+                               object->m_maxElapsedTime > -1.f;
+                       }),
+        m_debugRenderObjectList.end());
+
+    // This is equivalent to the code above.
+
+    // for (auto it = m_debugRenderObjectList.begin(); it != m_debugRenderObjectList.end();)
+    // {
+    // 	DebugRenderObject* object = *it;
+    //
+    // 	if (object == nullptr)
+    // 	{
+    // 		it = m_debugRenderObjectList.erase(it);
+    // 		continue;
+    // 	}
+    //
+    // 	object->m_elapsedTime += deltaSeconds;
+    //
+    // 	if (object->m_elapsedTime >= object->m_maxElapsedTime && object->m_maxElapsedTime > -1.f)
+    // 	{
+    // 		it = m_debugRenderObjectList.erase(it);
+    // 		continue;
+    // 	}
+    //
+    // 	++it;
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------

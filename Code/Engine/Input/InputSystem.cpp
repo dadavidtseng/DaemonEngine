@@ -9,11 +9,10 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Renderer/Window.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
-#include "Engine/Renderer/Window.hpp"
 
 //----------------------------------------------------------------------------------------------------
 unsigned char const NUMCODE_0           = 0x30;
@@ -278,15 +277,10 @@ STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
 {
     if (g_theDevConsole == nullptr)
     {
-        ERROR_RECOVERABLE("g_theDevConsole is null")
+        ERROR_RECOVERABLE("g_theDevConsole is nullptr")
     }
 
     if (g_theInput == nullptr)
-    {
-        return false;
-    }
-
-    if (g_theDevConsole->IsOpen())
     {
         return false;
     }
@@ -311,10 +305,10 @@ STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
         return false;
     }
 
-    if (g_theDevConsole->IsOpen())
-    {
-        return false;
-    }
+    // if (g_theDevConsole->IsOpen())
+    // {
+    //     return false;
+    // }
 
     int const           value   = args.GetValue("OnWindowKeyReleased", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);

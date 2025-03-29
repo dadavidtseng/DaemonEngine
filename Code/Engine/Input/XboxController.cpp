@@ -4,15 +4,34 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Input/XboxController.hpp"
+
+#include "Engine/Math/MathUtils.hpp"
+
 #define WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
 #include <Xinput.h>
 
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/EventSystem.hpp"
-#include "Engine/Math/MathUtils.hpp"
 #pragma comment(lib, "xinput")
+
+//----------------------------------------------------------------------------------------------------
+float constexpr XBOX_JOYSTICK_INNER_DEAD_ZONE = 0.35f;
+float constexpr XBOX_JOYSTICK_OUTER_DEAD_ZONE = 0.95f;
+
+//----------------------------------------------------------------------------------------------------
+XboxController::XboxController()
+{
+    m_leftStick.SetDeadZoneThresholds(XBOX_JOYSTICK_INNER_DEAD_ZONE, XBOX_JOYSTICK_OUTER_DEAD_ZONE);
+    m_rightStick.SetDeadZoneThresholds(XBOX_JOYSTICK_INNER_DEAD_ZONE, XBOX_JOYSTICK_OUTER_DEAD_ZONE);
+}
+
+//----------------------------------------------------------------------------------------------------
+XboxController::XboxController(int const id)
+    : m_id(id)
+{
+    m_leftStick.SetDeadZoneThresholds(XBOX_JOYSTICK_INNER_DEAD_ZONE, XBOX_JOYSTICK_OUTER_DEAD_ZONE);
+    m_rightStick.SetDeadZoneThresholds(XBOX_JOYSTICK_INNER_DEAD_ZONE, XBOX_JOYSTICK_OUTER_DEAD_ZONE);
+}
 
 //----------------------------------------------------------------------------------------------------
 bool XboxController::IsConnected() const
@@ -65,15 +84,27 @@ bool XboxController::IsButtonDown(XboxButtonID const buttonID) const
 //----------------------------------------------------------------------------------------------------
 bool XboxController::WasButtonJustPressed(XboxButtonID const buttonID) const
 {
-    return m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
+    return
+        m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
         !m_buttons[static_cast<int>(buttonID)].m_wasKeyDownLastFrame;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool XboxController::WasButtonJustReleased(XboxButtonID const buttonID) const
 {
-    return !m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
+    return
+        !m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
         m_buttons[static_cast<int>(buttonID)].m_wasKeyDownLastFrame;
+}
+
+//----------------------------------------------------------------------------------------------------
+void XboxController::SetVibration(unsigned short const leftSpeed,
+                                  unsigned short const rightSpeed) const
+{
+    XINPUT_VIBRATION xVibration;
+    xVibration.wLeftMotorSpeed  = leftSpeed;
+    xVibration.wRightMotorSpeed = rightSpeed;
+    XInputSetState(m_id, &xVibration);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -81,7 +112,7 @@ void XboxController::Update()
 {
     // Read raw controller state via XInput API
     XINPUT_STATE xboxControllerState = {};
-    DWORD const errorStatus          = XInputGetState(m_id, &xboxControllerState);
+    DWORD const  errorStatus         = XInputGetState(m_id, &xboxControllerState);
 
     if (errorStatus != ERROR_SUCCESS)
     {
@@ -134,7 +165,9 @@ void XboxController::Reset()
 }
 
 //----------------------------------------------------------------------------------------------------
-void XboxController::UpdateJoystick(AnalogJoystick& out_joystick, short const rawX, short const rawY)
+void XboxController::UpdateJoystick(AnalogJoystick& out_joystick,
+                                    short const     rawX,
+                                    short const     rawY)
 {
     float const rawNormalizedX = RangeMap(rawX, -32768, 32767, -1, 1);
     float const rawNormalizedY = RangeMap(rawY, -32768, 32767, -1, 1);
@@ -143,31 +176,19 @@ void XboxController::UpdateJoystick(AnalogJoystick& out_joystick, short const ra
 }
 
 //----------------------------------------------------------------------------------------------------
-void XboxController::UpdateTrigger(float& out_triggerValue, unsigned char const rawValue)
+void XboxController::UpdateTrigger(float&              out_triggerValue,
+                                   unsigned char const rawValue)
 {
     out_triggerValue = rawValue;
 }
 
 //----------------------------------------------------------------------------------------------------
-void XboxController::UpdateButton(XboxButtonID const buttonID, unsigned short const buttonFlags, unsigned short const buttonFlag)
+void XboxController::UpdateButton(XboxButtonID const   buttonID,
+                                  unsigned short const buttonFlags,
+                                  unsigned short const buttonFlag)
 {
     KeyButtonState& button = m_buttons[buttonID];
 
     button.m_wasKeyDownLastFrame = button.m_isKeyDown;
     button.m_isKeyDown           = (buttonFlags & buttonFlag) != 0;
-
-    FireButtonEvent(buttonID, "OnXboxButtonPressed", &XboxController::WasButtonJustPressed);
-    FireButtonEvent(buttonID, "OnXboxButtonReleased", &XboxController::WasButtonJustReleased);
-    FireButtonEvent(buttonID, "OnXboxButtonDown", &XboxController::IsButtonDown);
-}
-
-//----------------------------------------------------------------------------------------------------
-void XboxController::FireButtonEvent(XboxButtonID const buttonID, std::string const& eventName, bool (XboxController::*buttonCheckFunction)(XboxButtonID) const)
-{
-    if ((this->*buttonCheckFunction)(buttonID))
-    {
-        EventArgs args;
-        args.SetValue(eventName, Stringf("%d", static_cast<unsigned char>(buttonID)));
-        g_theEventSystem->FireEvent(eventName, args);
-    }
 }
