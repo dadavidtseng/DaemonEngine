@@ -725,12 +725,12 @@ void AddVertsForWireframeCylinder3D(VertexList_PCU& verts,
         Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
 
         // 6. Stores the vertices using counter-clockwise order with correct UVs.
-        verts.emplace_back(topCenterPosition, color, Vec2::HALF);
-        verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF);
-        verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF);
-        verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
-        verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF);
-        verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(topCenterPosition, color, Vec2::HALF);
+        // verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
+        // verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF);
 
         // 7. Add verts for cylinder's side with correct UVs.
         float const uStart = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices));
