@@ -791,6 +791,57 @@ void AddVertsForCone3D(VertexList_PCU& verts,
     }
 }
 
+void AddVertsForWireframeCone3D(VertexList_PCU& verts,
+                                Vec3 const&     startPosition,
+                                Vec3 const&     endPosition,
+                                float           radius,
+                                float           thickness,
+                                Rgba8 const&    color,
+                                AABB2 const&    UVs,
+                                int             numSlices)
+{
+    // 1. Calculate cone's forward/normalized direction.
+    Vec3 const forwardDirection = endPosition - startPosition;
+    Vec3 const iBasis           = forwardDirection.GetNormalized();
+
+    // 2. Get jBasis and kBasis based on normalDirection.
+    Vec3 jBasis, kBasis;
+    iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+
+    // 3. Calculate the degree of each triangle in the bottom disc of the cone.
+    float const DEGREES_PER_SIDE = 360.f / static_cast<float>(numSlices);
+
+    for (int sideIndex = 0; sideIndex < numSlices; ++sideIndex)
+    {
+        // 4. Get the degree of each triangle on the unit circle.
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideIndex);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideIndex + 1);
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
+
+        // 5. Get the positions by ( discCenter ) + ( radius ) * ( cos * jBasis + sin * kBasis )
+        Vec3 topCenterPosition(endPosition);
+        Vec3 topLeftPosition(endPosition);
+        Vec3 topRightPosition(endPosition);
+        Vec3 bottomCenterPosition(startPosition);
+        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
+        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
+
+        // 6. Stores the vertices using counter-clockwise order.
+        // verts.emplace_back(topCenterPosition, color);
+        // verts.emplace_back(topLeftPosition, color);
+        // verts.emplace_back(topRightPosition, color);
+        // verts.emplace_back(bottomCenterPosition, color);
+        // verts.emplace_back(bottomRightPosition, color);
+        // verts.emplace_back(bottomLeftPosition, color);
+
+        // 7. Add verts for cone's side.
+        AddVertsForWireframeQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, thickness, color, UVs);
+    }
+}
+
 //----------------------------------------------------------------------------------------------------
 void AddVertsForArrow3D(VertexList_PCU& verts,
                         Vec3 const&     startPosition,
