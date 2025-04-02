@@ -133,8 +133,14 @@ Vec2 Vec2::GetClamped(float const maxLength) const
 //----------------------------------------------------------------------------------------------------
 Vec2 Vec2::GetNormalized() const
 {
-    float const length      = GetLength();
-    float const scale       = 1 / length;
+    float const length = GetLength();
+
+    if (length == 0.0f)
+    {
+        return ZERO;
+    }
+
+    float const scale       = 1.f / length;
     float const normalizedX = x * scale;
     float const normalizedY = y * scale;
 
