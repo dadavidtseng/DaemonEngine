@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include "EulerAngles.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
