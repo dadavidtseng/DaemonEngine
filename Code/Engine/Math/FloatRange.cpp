@@ -93,8 +93,8 @@ void FloatRange::ExpandToInclude(float const value)
 //----------------------------------------------------------------------------------------------------
 void FloatRange::SetFromText(char const* text)
 {
-    // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter ','
-    StringList const parts = SplitStringOnDelimiter(text, ',');
+    // Use SplitStringOnDelimiter to divide the input text into parts based on the delimiter '~'
+    StringList const parts = SplitStringOnDelimiter(text, '~');
 
     // Input must contain exactly two parts; otherwise, reset to default values
     if (parts.size() != 2)
