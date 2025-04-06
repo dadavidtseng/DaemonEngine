@@ -157,3 +157,40 @@ unsigned char DenormalizeByte(float zeroToOne);
 //-End-of-Byte-Denormalization------------------------------------------------------------------------
 
 Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 const& billboardScale = Vec2::ONE);
+
+
+//----------------------------
+// 2D curve
+
+///
+float ComputeCubicBezier1D( float A, float B, float C, float D, float t );
+///
+float ComputeQuinticBezier1D( float A, float B, float C, float D, float E, float F, float t );
+///
+float SmoothStart2( float t );
+///
+float SmoothStart3( float t );
+///
+float SmoothStart4( float t );
+///
+float SmoothStart5( float t );
+///
+float SmoothStart6( float t );
+///
+float SmoothStop2( float t );
+///
+float SmoothStop3( float t );
+///
+float SmoothStop4( float t );
+///
+float SmoothStop5( float t );
+///
+float SmoothStop6( float t );
+///
+float SmoothStep3( float t );
+///
+float SmoothStep5( float t );
+///
+float Hesitate3( float t );
+///
+float Hesitate5( float t );
