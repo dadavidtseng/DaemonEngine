@@ -194,6 +194,7 @@
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\AABB3.cpp" />
     <ClCompile Include="Math\Capsule2.cpp" />
+    <ClCompile Include="Math\Curve2D.cpp" />
     <ClCompile Include="Math\Cylinder3.cpp" />
     <ClCompile Include="Math\Disc2.cpp" />
     <ClCompile Include="Math\EulerAngles.cpp" />
@@ -262,6 +263,7 @@
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\AABB3.hpp" />
     <ClInclude Include="Math\Capsule2.hpp" />
+    <ClInclude Include="Math\Curve2D.hpp" />
     <ClInclude Include="Math\Cylinder3.hpp" />
     <ClInclude Include="Math\Disc2.hpp" />
     <ClInclude Include="Math\EulerAngles.hpp" />
