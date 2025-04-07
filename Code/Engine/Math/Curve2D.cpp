@@ -29,23 +29,21 @@ CubicBezierCurve2D::CubicBezierCurve2D(CubicHermiteCurve2D const& cubicHermiteCu
     // v2 = 3 * (d - c)
 }
 
-Vec2 CubicBezierCurve2D::EvaluateAtParametric(float parametricZeroToOne) const
+Vec2 CubicBezierCurve2D::EvaluateAtParametric(float const parametricZeroToOne) const
 {
-    float x = ComputeCubicBezier1D(m_startPosition.x, m_guidePosition1.x, m_guidePosition2.x, m_endPosition.x, parametricZeroToOne);
-    float y = ComputeCubicBezier1D(m_startPosition.y, m_guidePosition1.y, m_guidePosition2.y, m_endPosition.y, parametricZeroToOne);
+    float const x = ComputeCubicBezier1D(m_startPosition.x, m_guidePosition1.x, m_guidePosition2.x, m_endPosition.x, parametricZeroToOne);
+    float const y = ComputeCubicBezier1D(m_startPosition.y, m_guidePosition1.y, m_guidePosition2.y, m_endPosition.y, parametricZeroToOne);
     return Vec2(x, y);
 }
 
 float CubicBezierCurve2D::GetApproximateLength(int const numSubdivisions) const
 {
     float totalLength = 0.f;
-    Vec2  curPos;
-    Vec2  nextPos;
-    curPos = EvaluateAtParametric(0.f);
+    Vec2  curPos      = EvaluateAtParametric(0.f);
     for (int i = 0; i < numSubdivisions; i++)
     {
-        float t = (float)(i + 1) / (float)numSubdivisions;
-        nextPos = EvaluateAtParametric(t);
+        float t       = (float)(i + 1) / (float)numSubdivisions;
+        Vec2  nextPos = EvaluateAtParametric(t);
         totalLength += GetDistance2D(curPos, nextPos);
         curPos = nextPos;
     }
@@ -78,18 +76,18 @@ Vec2 CubicBezierCurve2D::EvaluateAtApproximateDistance(float distanceAlongCurve,
 }
 
 CubicHermiteCurve2D::CubicHermiteCurve2D(Vec2 const& startPos, Vec2 const& startVel, Vec2 const& endPos, Vec2 const& endVel)
-    : m_startPos(startPos)
-      , m_endPos(endPos)
-      , m_startVel(startVel)
-      , m_endVel(endVel)
+    : m_startPos(startPos),
+      m_endPos(endPos),
+      m_startVel(startVel),
+      m_endVel(endVel)
 {
 }
 
 CubicHermiteCurve2D::CubicHermiteCurve2D(CubicBezierCurve2D const& cubicBezierCurve2D)
-    : m_startPos(cubicBezierCurve2D.m_startPosition)
-      , m_endPos(cubicBezierCurve2D.m_endPosition)
-      , m_startVel(3.f * (cubicBezierCurve2D.m_guidePosition1 - cubicBezierCurve2D.m_startPosition))
-      , m_endVel(3.f * (cubicBezierCurve2D.m_endPosition - cubicBezierCurve2D.m_guidePosition2))
+    : m_startPos(cubicBezierCurve2D.m_startPosition),
+      m_endPos(cubicBezierCurve2D.m_endPosition),
+      m_startVel(3.f * (cubicBezierCurve2D.m_guidePosition1 - cubicBezierCurve2D.m_startPosition)),
+      m_endVel(3.f * (cubicBezierCurve2D.m_endPosition - cubicBezierCurve2D.m_guidePosition2))
 {
 }
 
@@ -139,16 +137,18 @@ Vec2 CubicHermiteCurve2D::EvaluateAtApproximateDistance(float distanceAlongCurve
     Vec2  curPos;
     Vec2  nextPos;
     curPos = EvaluateAtParametric(0.f);
-    // for (int i = 0; i < numSubdivisions; i++) {
-    // 	float t = (float)(i + 1) / (float)numSubdivisions;
-    // 	nextPos = EvaluateAtParametric( t );
-    // 	float thisDist = GetDistance2D( curPos, nextPos );
-    // 	if (thisDist > distanceAlongCurve - totalLength) {
-    // 		return Interpolate( curPos, nextPos, (distanceAlongCurve - totalLength) / thisDist );
-    // 	}
-    // 	totalLength += thisDist;
-    // 	curPos = nextPos;
-    // }
+    for (int i = 0; i < numSubdivisions; i++)
+    {
+        float t        = (float)(i + 1) / (float)numSubdivisions;
+        nextPos        = EvaluateAtParametric(t);
+        float thisDist = GetDistance2D(curPos, nextPos);
+        if (thisDist > distanceAlongCurve - totalLength)
+        {
+            return Interpolate(curPos, nextPos, (distanceAlongCurve - totalLength) / thisDist);
+        }
+        totalLength += thisDist;
+        curPos = nextPos;
+    }
     return m_endPos;
 }
 
@@ -208,7 +208,8 @@ float CatmullRomSpline2D::GetApproximateLength(int numSubdivisions /*= 64 */) co
     return totalLength;
 }
 
-Vec2 CatmullRomSpline2D::EvaluateAtApproximateDistance(float distanceAlongCurve, int numSubdivisions /*= 64 */) const
+Vec2 CatmullRomSpline2D::EvaluateAtApproximateDistance(float const distanceAlongCurve,
+                                                       int const   numSubdivisions /*= 64 */) const
 {
     int size = (int)m_curves.size();
     if (size == 0)
@@ -327,7 +328,7 @@ void CatmullRomSpline2D::AddVertsForCurve2D(std::vector<Vertex_PCU>& verts, floa
         {
             float t  = (float)i / numSubdivisions;
             float nt = (float)(i + 1) / numSubdivisions;
-            // AddVertsForLineSegment2D( verts, curve.EvaluateAtParametric( t ), curve.EvaluateAtParametric( nt ), thickness, color );
+            AddVertsForLineSegment2D( verts, curve.EvaluateAtParametric( t ), curve.EvaluateAtParametric( nt ), thickness,false, color );
         }
     }
 }

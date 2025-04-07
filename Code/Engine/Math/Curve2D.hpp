@@ -15,7 +15,7 @@ class CubicHermiteCurve2D;
 class CubicBezierCurve2D
 {
 public:
-    // CubicBezierCurve2D();
+    CubicBezierCurve2D() = default;
     explicit CubicBezierCurve2D(Vec2 const& startPosition, Vec2 const& guidePosition1, Vec2 const& guidePosition2, Vec2 const& endPosition);
     explicit CubicBezierCurve2D(CubicHermiteCurve2D const& cubicHermiteCurve2D);
     Vec2     EvaluateAtParametric(float parametricZeroToOne) const;
@@ -32,7 +32,7 @@ class CubicHermiteCurve2D
 {
 public:
     CubicHermiteCurve2D();
-    CubicHermiteCurve2D(Vec2 const& startPos, Vec2 const& startVel, Vec2 const& endPos, Vec2 const& endVel);
+    explicit CubicHermiteCurve2D(Vec2 const& startPos, Vec2 const& startVel, Vec2 const& endPos, Vec2 const& endVel);
     explicit CubicHermiteCurve2D(CubicBezierCurve2D const& cubicBezierCurve2D);
     Vec2     EvaluateAtParametric(float parametricZeroToOne) const;
     float    GetApproximateLength(int numSubdivisions = 64) const;
