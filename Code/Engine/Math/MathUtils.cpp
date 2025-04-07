@@ -1168,3 +1168,141 @@ Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& target
 
     return billboardMatrix;
 }
+
+//----------------------------------------------------------------------------------------------------
+// A, B, C, D are the Cubic (3rd order) Bezier control points (A is the start pos, and D is the end pos),
+// and t is the parametric in [0,1]
+float ComputeCubicBezier1D(float const A,
+                           float const B,
+                           float const C,
+                           float const D,
+                           float const t)
+{
+    float const AB  = Interpolate(A, B, t);
+    float const BC  = Interpolate(B, C, t);
+    float const CD  = Interpolate(C, D, t);
+    float const ABC = Interpolate(AB, BC, t);
+    float const BCD = Interpolate(BC, CD, t);
+
+    return Interpolate(ABC, BCD, t);
+}
+
+//----------------------------------------------------------------------------------------------------
+// A, B, C, D, E, F are the Quintic (5th order) Bezier control points (A is the start, and F is the end),
+// and t is the parametric in [0,1].
+float ComputeQuinticBezier1D(float const A,
+                             float const B,
+                             float const C,
+                             float const D,
+                             float const E,
+                             float const F,
+                             float const t)
+{
+    float const AB = Interpolate(A, B, t);
+    float const BC = Interpolate(B, C, t);
+    float const CD = Interpolate(C, D, t);
+    float const DE = Interpolate(D, E, t);
+    float const EF = Interpolate(E, F, t);
+
+    float const AC = Interpolate(AB, BC, t);
+    float const BD = Interpolate(BC, CD, t);
+    float const CE = Interpolate(CD, DE, t);
+    float const DF = Interpolate(DE, EF, t);
+
+    float const AD = Interpolate(AC, BD, t);
+    float const BE = Interpolate(BD, CE, t);
+    float const CF = Interpolate(CE, DF, t);
+
+    float const AE = Interpolate(AD, BE, t);
+    float const BF = Interpolate(BE, CF, t);
+
+    return Interpolate(AE, BF, t);
+}
+
+float SmoothStart2(float const t)
+{
+    return t * t;
+}
+
+float SmoothStart3(float const t)
+{
+    return t * t * t;
+}
+
+float SmoothStart4(float const t)
+{
+    return t * t * t * t;
+}
+
+float SmoothStart5(float const t)
+{
+    return t * t * t * t * t;
+}
+
+float SmoothStart6(float const t)
+{
+    return t * t * t * t * t * t;
+}
+
+float SmoothStop2(float const t)
+{
+    float const inverseT = 1.f - t;
+
+    return 1.f - inverseT * inverseT;
+}
+
+float SmoothStop3(float const t)
+{
+    float const inverseT = 1.f - t;
+
+    return 1.f - inverseT * inverseT * inverseT;
+}
+
+float SmoothStop4(float const t)
+{
+    float const inverseT = 1.f - t;
+
+    return 1.f - inverseT * inverseT * inverseT * inverseT;
+}
+
+float SmoothStop5(float const t)
+{
+    float const inverseT = 1.f - t;
+
+    return 1.f - inverseT * inverseT * inverseT * inverseT * inverseT;
+}
+
+float SmoothStop6(float const t)
+{
+    float const inverseT = 1.f - t;
+
+    return 1.f - inverseT * inverseT * inverseT * inverseT * inverseT * inverseT;
+}
+
+float SmoothStep3(float const t)
+{
+    return ComputeCubicBezier1D(0.f, 0.f, 1.f, 1.f, t);
+}
+
+float SmoothStep5(float const t)
+{
+    return ComputeQuinticBezier1D(0.f, 0.f, 0.f, 1.f, 1.f, 1.f, t);
+}
+
+float Hesitate3(float const t)
+{
+    return ComputeCubicBezier1D(0.f, 1.f, 0.f, 1.f, t);
+}
+
+float Hesitate5(float const t)
+{
+    return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
+}
+
+float CustomFunkyEasingFunction(float const  t)
+{
+    if (t < 0.8f)
+        return SmoothStart3(t); // 正常加速
+    else
+        return 1.f - 0.1f * (1.f - t); // 突然反彈減速
+}

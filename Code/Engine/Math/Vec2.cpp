@@ -401,3 +401,15 @@ Vec2 operator*(float const uniformScale,
     return
         Vec2(vecToScale.x * uniformScale, vecToScale.y * uniformScale);
 }
+
+//----------------------------------------------------------------------------------------------------
+Vec2 Interpolate(Vec2 const& start,
+                 Vec2 const& end,
+                 float const t)
+{
+    Vec2 result;
+    result.x = Interpolate(start.x, end.x, t);
+    result.y = Interpolate(start.y, end.y, t);
+
+    return result;
+}

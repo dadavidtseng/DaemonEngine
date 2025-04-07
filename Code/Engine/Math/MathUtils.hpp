@@ -100,9 +100,9 @@ bool DoAABB2sOverlap2D(AABB2 const& boxA, AABB2 const& boxB);
 bool DoDiscAndAABB2Overlap2D(Vec2 const& discCenter, float discRadius, AABB2 const& aabb2);
 bool DoSpheresOverlap3D(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
 bool DoSphereAndAABB3Overlap3D(Vec3 const& sphereCenter, float sphereRadius, AABB3 const& aabb3);
-bool DoSphereAndZCylinderOverlap3D( Vec3 const& sphereCenter, float sphereRadius,Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
+bool DoSphereAndZCylinderOverlap3D(Vec3 const& sphereCenter, float sphereRadius, Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
 bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second);
-bool DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb3,Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
+bool DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb3, Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
 bool DoZCylindersOverlap3D(Vec2 const& cylinder1CenterXY, float cylinder1Radius, FloatRange const& cylinder1MinMaxZ, Vec2 const& cylinder2CenterXY, float cylinder2Radius, FloatRange const& cylinder2MinMaxZ);
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
@@ -155,42 +155,26 @@ float         NormalizeByte(unsigned char byte);
 unsigned char DenormalizeByte(float zeroToOne);
 
 //-End-of-Byte-Denormalization------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 
 Mat44 GetBillboardMatrix(eBillboardType billboardType, Mat44 const& targetMatrix, Vec3 const& billboardPosition, Vec2 const& billboardScale = Vec2::ONE);
 
 
-//----------------------------
-// 2D curve
-
-///
-float ComputeCubicBezier1D( float A, float B, float C, float D, float t );
-///
-float ComputeQuinticBezier1D( float A, float B, float C, float D, float E, float F, float t );
-///
-float SmoothStart2( float t );
-///
-float SmoothStart3( float t );
-///
-float SmoothStart4( float t );
-///
-float SmoothStart5( float t );
-///
-float SmoothStart6( float t );
-///
-float SmoothStop2( float t );
-///
-float SmoothStop3( float t );
-///
-float SmoothStop4( float t );
-///
-float SmoothStop5( float t );
-///
-float SmoothStop6( float t );
-///
-float SmoothStep3( float t );
-///
-float SmoothStep5( float t );
-///
-float Hesitate3( float t );
-///
-float Hesitate5( float t );
+//-Start-of-Curves-and-Splines------------------------------------------------------------------------
+float ComputeCubicBezier1D(float A, float B, float C, float D, float t);
+float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float F, float t);
+float SmoothStart2(float t);
+float SmoothStart3(float t);
+float SmoothStart4(float t);
+float SmoothStart5(float t);
+float SmoothStart6(float t);
+float SmoothStop2(float t);
+float SmoothStop3(float t);
+float SmoothStop4(float t);
+float SmoothStop5(float t);
+float SmoothStop6(float t);
+float SmoothStep3(float t);
+float SmoothStep5(float t);
+float Hesitate3(float t);
+float Hesitate5(float t);
+float CustomFunkyEasingFunction(float t);

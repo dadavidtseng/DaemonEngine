@@ -15,18 +15,17 @@ class CubicHermiteCurve2D;
 class CubicBezierCurve2D
 {
 public:
-    CubicBezierCurve2D();
-    CubicBezierCurve2D(Vec2 const& startPos, Vec2 const& guidePos1, Vec2 const& guidePos2, Vec2 const& endPos);
+    // CubicBezierCurve2D();
+    explicit CubicBezierCurve2D(Vec2 const& startPosition, Vec2 const& guidePosition1, Vec2 const& guidePosition2, Vec2 const& endPosition);
     explicit CubicBezierCurve2D(CubicHermiteCurve2D const& cubicHermiteCurve2D);
     Vec2     EvaluateAtParametric(float parametricZeroToOne) const;
     float    GetApproximateLength(int numSubdivisions = 64) const;
     Vec2     EvaluateAtApproximateDistance(float distanceAlongCurve, int numSubdivisions = 64) const;
 
-public:
-    Vec2 m_startPos;
-    Vec2 m_endPos;
-    Vec2 m_guidePos1;
-    Vec2 m_guidePos2;
+    Vec2 m_startPosition;
+    Vec2 m_endPosition;
+    Vec2 m_guidePosition1;
+    Vec2 m_guidePosition2;
 };
 
 class CubicHermiteCurve2D

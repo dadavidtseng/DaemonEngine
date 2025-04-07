@@ -38,4 +38,4 @@ struct Rgba8
 };
 
 //----------------------------------------------------------------------------------------------------
-Rgba8 Interpolate(Rgba8 startColor, Rgba8 endColor, float fractionOfEnd);
+Rgba8 Interpolate(Rgba8 start, Rgba8 end, float fractionOfEnd);

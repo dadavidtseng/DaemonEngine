@@ -82,12 +82,14 @@ bool Rgba8::operator==(Rgba8 const& compare) const
 }
 
 //----------------------------------------------------------------------------------------------------
-Rgba8 Interpolate(Rgba8 const startColor, Rgba8 const endColor, float const fractionOfEnd)
+Rgba8 Interpolate(Rgba8 const start,
+                  Rgba8 const end,
+                  float const fractionOfEnd)
 {
-    float const red   = Interpolate(NormalizeByte(startColor.r), NormalizeByte(endColor.r), fractionOfEnd);
-    float const green = Interpolate(NormalizeByte(startColor.g), NormalizeByte(endColor.g), fractionOfEnd);
-    float const blue  = Interpolate(NormalizeByte(startColor.b), NormalizeByte(endColor.b), fractionOfEnd);
-    float const alpha = Interpolate(NormalizeByte(startColor.a), NormalizeByte(endColor.a), fractionOfEnd);
+    float const red   = Interpolate(NormalizeByte(start.r), NormalizeByte(end.r), fractionOfEnd);
+    float const green = Interpolate(NormalizeByte(start.g), NormalizeByte(end.g), fractionOfEnd);
+    float const blue  = Interpolate(NormalizeByte(start.b), NormalizeByte(end.b), fractionOfEnd);
+    float const alpha = Interpolate(NormalizeByte(start.a), NormalizeByte(end.a), fractionOfEnd);
 
     return Rgba8(DenormalizeByte(red), DenormalizeByte(green), DenormalizeByte(blue), DenormalizeByte(alpha));
 }
