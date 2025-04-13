@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Clock.hpp"
 
+#include <thread>
+
 #include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time.hpp"
@@ -156,13 +158,22 @@ void Clock::TickSystemClock()
 //
 void Clock::Tick()
 {
-    double const currentSeconds    = GetCurrentTimeSeconds();
-    double       deltaDeltaSeconds = currentSeconds - m_lastUpdateTimeInSeconds;
-    m_lastUpdateTimeInSeconds      = currentSeconds;
+    double currentSeconds     = GetCurrentTimeSeconds();
+    double deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
 
-    deltaDeltaSeconds = GetClamped(deltaDeltaSeconds, 0.0, m_maxDeltaSeconds);
+    // Optional: enforce minimum delta time (i.e., framerate cap)
+    while (deltaSeconds < m_minDeltaSeconds)
+    {
+        std::this_thread::yield();
+        currentSeconds     = GetCurrentTimeSeconds();
+        deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
+    }
 
-    Advance(deltaDeltaSeconds);
+    m_lastUpdateTimeInSeconds = currentSeconds;
+
+    deltaSeconds = GetClamped(deltaSeconds, 0.0, m_maxDeltaSeconds);
+
+    Advance(deltaSeconds);
 }
 
 //----------------------------------------------------------------------------------------------------

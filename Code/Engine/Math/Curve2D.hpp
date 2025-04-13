@@ -28,26 +28,28 @@ public:
     Vec2 m_guidePosition2;
 };
 
+//----------------------------------------------------------------------------------------------------
 class CubicHermiteCurve2D
 {
 public:
-    CubicHermiteCurve2D();
-    explicit CubicHermiteCurve2D(Vec2 const& startPos, Vec2 const& startVel, Vec2 const& endPos, Vec2 const& endVel);
+    CubicHermiteCurve2D() = default;
+    explicit CubicHermiteCurve2D(Vec2 const& startPosition, Vec2 const& startVelocity, Vec2 const& endPosition, Vec2 const& endVelocity);
     explicit CubicHermiteCurve2D(CubicBezierCurve2D const& cubicBezierCurve2D);
     Vec2     EvaluateAtParametric(float parametricZeroToOne) const;
     float    GetApproximateLength(int numSubdivisions = 64) const;
     Vec2     EvaluateAtApproximateDistance(float distanceAlongCurve, int numSubdivisions = 64) const;
 
-    Vec2 m_startPos;
-    Vec2 m_endPos;
-    Vec2 m_startVel;
-    Vec2 m_endVel;
+    Vec2 m_startPosition;
+    Vec2 m_endPosition;
+    Vec2 m_startVelocity;
+    Vec2 m_endVelocity;
 };
 
+//----------------------------------------------------------------------------------------------------
 class CatmullRomSpline2D
 {
 public:
-    CatmullRomSpline2D();
+    CatmullRomSpline2D() = default;
     explicit CatmullRomSpline2D(std::vector<Vec2> const& points);
 
     Vec2  EvaluateAtParametric(float parametric) const;
@@ -67,4 +69,4 @@ private:
     std::vector<CubicHermiteCurve2D> m_curves;
 
     Vec2 m_standAlonePoint;
-};;
+};

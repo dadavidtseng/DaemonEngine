@@ -52,5 +52,6 @@ protected:
     float               m_timeScale               = 1.f;    // Timescale for this clock.
     bool                m_isPaused                = false;  // Pauses the clock completely.
     bool                m_stepSingleFrame         = false;  // For single stepping frames.
-    double              m_maxDeltaSeconds         = 0.1;    // Max delta time. Useful for preventing large time steps when stepping in a debugger.
+    double              m_minDeltaSeconds         = 1.0 / 120.0;    // Max delta time. Useful for preventing large time steps when stepping in a debugger.
+    double              m_maxDeltaSeconds         = 1.0 / 15.0;    // Max delta time. Useful for preventing large time steps when stepping in a debugger.
 };
