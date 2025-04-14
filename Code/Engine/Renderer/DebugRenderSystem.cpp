@@ -115,8 +115,7 @@ void DebugRenderBeginFrame()
 
     m_debugRenderObjectList.erase(
         std::remove_if(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(),
-                       [deltaSeconds](DebugRenderObject* object)
-                       {
+                       [deltaSeconds](DebugRenderObject* object) {
                            if (object == nullptr)
                            {
                                return false;
@@ -492,8 +491,7 @@ void DebugRenderScreen(Camera const& camera)
     m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
     m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
 
-    std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b)
-    {
+    std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b) {
         return a->m_maxElapsedTime < b->m_maxElapsedTime;
     });
 
@@ -614,13 +612,14 @@ void DebugAddWorldLine(Vec3 const&           startPosition,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldWireCylinder(Vec3 const&           base,
-                               Vec3 const&           top,
-                               float const           radius,
-                               float const           duration,
-                               Rgba8 const&          startColor,
-                               Rgba8 const&          endColor,
-                               DebugRenderMode const mode)
+void DebugAddWorldCylinder(Vec3 const&           base,
+                           Vec3 const&           top,
+                           float const           radius,
+                           float const           duration,
+                           bool const            isWireframe,
+                           Rgba8 const&          startColor,
+                           Rgba8 const&          endColor,
+                           DebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_WIRE_CYLINDER;
@@ -630,7 +629,7 @@ void DebugAddWorldWireCylinder(Vec3 const&           base,
     object->m_radius          = radius;
     object->m_startColor      = startColor;
     object->m_endColor        = endColor;
-    object->m_isWireFrame     = true;
+    object->m_isWireFrame     = isWireframe;
     object->m_mode            = mode;
 
     AddVertsForCylinder3D(object->m_vertices, base, top, radius);

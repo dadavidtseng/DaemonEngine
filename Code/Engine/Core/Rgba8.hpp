@@ -21,6 +21,7 @@ struct Rgba8
     static Rgba8 DARK_GREY;
     static Rgba8 GREY;
     static Rgba8 RED;
+    static Rgba8 DARK_RED;
     static Rgba8 GREEN;
     static Rgba8 MAGENTA;
     static Rgba8 CYAN;

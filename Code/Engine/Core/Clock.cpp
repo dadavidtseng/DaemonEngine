@@ -7,7 +7,6 @@
 
 #include <thread>
 
-#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Math/MathUtils.hpp"
