@@ -26,6 +26,7 @@ public:
                          SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP);
 
     SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; // Most of the logic for this class is done here!
+    // float GetDuration();
 
 private:
     SpriteSheet const&     m_spriteSheet;
