@@ -5,9 +5,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/AABB2.hpp"
 
+#include "RandomNumberGenerator.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC AABB2 AABB2::ZERO_TO_ONE      = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
@@ -106,6 +108,15 @@ Vec2 AABB2::GetUVForPoint(Vec2 const& pointPos) const
     float const v = GetFractionWithinRange(pointPos.y, m_mins.y, m_maxs.y);
 
     return Vec2(u, v);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec2 AABB2::GetRandomPointInBounds() const
+{
+    float const randomX = g_theRNG->RollRandomFloatInRange(m_mins.x, m_maxs.x);
+    float const randomY = g_theRNG->RollRandomFloatInRange(m_mins.y, m_maxs.y);
+
+    return Vec2(randomX, randomY);
 }
 
 //----------------------------------------------------------------------------------------------------
