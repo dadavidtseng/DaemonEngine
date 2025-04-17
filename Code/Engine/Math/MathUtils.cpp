@@ -584,6 +584,136 @@ bool PushDiscOutOfAABB2D(Vec2&        mobileDiscCenter,
     return PushDiscOutOfPoint2D(mobileDiscCenter, discRadius, nearestPoint);
 }
 
+//----------------------------------------------------------------------------------------------------
+bool BounceDiscOutOfEachOther2D(Vec2&       aCenter,
+                                float const aRadius,
+                                Vec2&       aVelocity,
+                                float const aElasticity,
+                                Vec2&       bCenter,
+                                float const bRadius,
+                                Vec2&       bVelocity,
+                                float const bElasticity)
+{
+    Vec2        normalAtoB    = bCenter - aCenter;
+    float const squaredLength = normalAtoB.GetLengthSquared();
+
+    // Do discs overlap
+    if (squaredLength >= (aRadius + bRadius) * (aRadius + bRadius) || squaredLength == 0.f)
+    {
+        return false;
+    }
+
+    float length         = sqrtf(squaredLength);
+    float inversedLength = 1.f / length;
+    normalAtoB           = normalAtoB * inversedLength;
+
+    float dotANormal = DotProduct2D(normalAtoB, aVelocity);
+    float dotBNormal = DotProduct2D(normalAtoB, bVelocity);
+
+    // Push disc out of each other
+    Vec2 nearestPointFromAonB = bCenter - bRadius * normalAtoB;
+    Vec2 nearestPointFromBonA = aCenter + aRadius * normalAtoB;
+    Vec2 difference           = nearestPointFromAonB - nearestPointFromBonA;
+    aCenter += difference * 0.5f;
+    bCenter -= difference * 0.5f;
+
+    if (dotANormal <= dotBNormal)
+    {
+        return false;
+    }
+    // accept
+    Vec2 velocityAgreeOnNormalDirA = dotANormal * normalAtoB;
+    Vec2 velocityAgreeOnNormalDirB = dotBNormal * normalAtoB;
+    Vec2 velocityIndependentA      = aVelocity - velocityAgreeOnNormalDirA;
+    Vec2 velocityIndependentB      = bVelocity - velocityAgreeOnNormalDirB;
+
+    // Bounce the velocity of disc A
+    aVelocity = velocityIndependentA + aElasticity * bElasticity * velocityAgreeOnNormalDirB;
+
+    // Bounce the velocity of disc B
+    bVelocity = velocityIndependentB + aElasticity * bElasticity * velocityAgreeOnNormalDirA;
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool BounceDiscOutOfFixedPoint2D(Vec2&       discCenter,
+                                 float const discRadius,
+                                 Vec2&       discVelocity,
+                                 float const discElasticity,
+                                 Vec2 const& fixedPoint,
+                                 float const pointElasticity)
+{
+    Vec2  normal        = discCenter - fixedPoint;
+    float squaredLength = normal.GetLengthSquared();
+
+    // Do disc overlap the point?
+    if (squaredLength >= discRadius * discRadius || squaredLength == 0.f)
+    {
+        return false;
+    }
+
+    float length         = sqrtf(squaredLength);
+    float inversedLength = 1.f / length;
+    normal               = normal * inversedLength;
+
+    // Push disc out of the fixed point
+    discCenter += normal * (discRadius - length);
+
+    // velocity not agree?
+    if (DotProduct2D(normal, discVelocity) > 0.f)
+    {
+        return false;
+    }
+
+    // Bounce the velocity
+    Vec2 velocityAgreeOnNormalDir = DotProduct2D(normal, discVelocity) * normal;
+    discVelocity                  = discVelocity - velocityAgreeOnNormalDir - discElasticity * pointElasticity * velocityAgreeOnNormalDir;
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool BounceDiscOutOfFixedDisc2D(Vec2&       mobileCenter,
+                                float const mobileRadius,
+                                Vec2&       mobileVelocity,
+                                float const mobileElasticity,
+                                Vec2 const& fixedCenter,
+                                float const fixedRadius,
+                                float const fixedElasticity)
+{
+    Vec2 const point = GetNearestPointOnDisc2D(mobileCenter, fixedCenter, fixedRadius);
+    return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool BounceDiscOutOfFixedOBB2D(Vec2&       mobileCenter,
+                               float const mobileRadius,
+                               Vec2&       mobileVelocity,
+                               float const mobileElasticity,
+                               Vec2 const& obbCenter,
+                               Vec2 const& obb2IBasisNormal,
+                               Vec2 const& obb2HalfDimensions,
+                               float const fixedElasticity)
+{
+    Vec2 point = GetNearestPointOnOBB2D(mobileCenter, obbCenter, obb2IBasisNormal, obb2HalfDimensions);
+    return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool BounceDiscOutOfFixedCapsule2D(Vec2&       mobileCenter,
+                                   float       const mobileRadius,
+                                   Vec2&       mobileVelocity,
+                                   float       const mobileElasticity,
+                                   Vec2 const& fixedBoneStart,
+                                   Vec2 const& fixedBoneEnd,
+                                   float      const fixedRadius,
+                                   float      const  fixedElasticity)
+{
+    Vec2 point = GetNearestPointOnCapsule2D(mobileCenter, fixedBoneStart, fixedBoneEnd, fixedRadius);
+    return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
+}
+
 //-End-of-Geometry-Query-Utilities--------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
 //-Start-of-Is-Point-Inside-Utilities-----------------------------------------------------------------
@@ -1299,10 +1429,8 @@ float Hesitate5(float const t)
     return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
 }
 
-float CustomFunkyEasingFunction(float const  t)
+float CustomFunkyEasingFunction(float const t)
 {
-    if (t < 0.8f)
-        return SmoothStart3(t); // 正常加速
-    else
-        return 1.f - 0.1f * (1.f - t); // 突然反彈減速
+    if (t < 0.8f) return SmoothStart3(t); // 正常加速
+    else return 1.f - 0.1f * (1.f - t); // 突然反彈減速
 }

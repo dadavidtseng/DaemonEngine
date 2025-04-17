@@ -108,6 +108,11 @@ bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& 
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
 bool PushDiscOutOfAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox);
+bool BounceDiscOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& aVelocity, float aElasticity, Vec2& bCenter, float bRadius, Vec2& bVelocity, float bElasticity);
+bool BounceDiscOutOfFixedPoint2D(Vec2& discCenter, float discRadius, Vec2& discVelocity, float discElasticity, Vec2 const& fixedPoint, float pointElasticity);
+bool BounceDiscOutOfFixedDisc2D(Vec2& mobileCenter, float mobileRadius, Vec2& mobileVelocity, float mobileElasticity, Vec2 const& fixedCenter, float fixedRadius, float fixedElasticity);
+bool BounceDiscOutOfFixedOBB2D(Vec2& mobileCenter, float mobileRadius, Vec2& mobileVelocity, float mobileElasticity, Vec2 const& obbCenter, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions, float fixedElasticity);
+bool BounceDiscOutOfFixedCapsule2D(Vec2& mobileCenter, float mobileRadius, Vec2& mobileVelocity, float mobileElasticity, Vec2 const& fixedBoneStart, Vec2 const& fixedBoneEnd, float fixedRadius, float fixedElasticity);
 
 //-End-of-Geometry-Query-Utilities--------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
