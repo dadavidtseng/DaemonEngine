@@ -207,7 +207,7 @@ void DebugRenderWorld(Camera const& camera)
             m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
             m_debugRenderConfig.m_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
             {
@@ -242,7 +242,7 @@ void DebugRenderWorld(Camera const& camera)
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
             {
@@ -274,7 +274,7 @@ void DebugRenderWorld(Camera const& camera)
         if (object->m_type == DebugRenderObjectType::WORLD_WIRE_CYLINDER)
         {
             m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
 
             if (object->m_isWireFrame)
@@ -319,7 +319,7 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
             if (object->m_isWireFrame)
             {
@@ -362,7 +362,7 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
@@ -399,7 +399,7 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
             m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
@@ -436,7 +436,7 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
             m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
             if (object->m_mode == DebugRenderMode::ALWAYS)
             {
@@ -489,7 +489,7 @@ void DebugRenderScreen(Camera const& camera)
     m_debugRenderConfig.m_renderer->BeginCamera(camera);
 
     m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
-    m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU));
+    m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
     std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b) {
         return a->m_maxElapsedTime < b->m_maxElapsedTime;

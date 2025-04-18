@@ -196,6 +196,13 @@ bool Vec3::operator!=(Vec3 const& compare) const
         !(*this == compare);
 }
 
+bool Vec3::operator<(Vec3 const& compare) const
+{
+    if (x != compare.x) return x < compare.x;
+    if (y != compare.y) return y < compare.y;
+    return z < compare.z;
+}
+
 //----------------------------------------------------------------------------------------------------
 Vec3 const Vec3::operator+(Vec3 const& vecToAdd) const
 {

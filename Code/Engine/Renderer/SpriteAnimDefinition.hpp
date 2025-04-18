@@ -26,6 +26,8 @@ public:
                          SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP);
 
     SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; // Most of the logic for this class is done here!
+    int                     GetTotalFrameInCycle();
+    float                   GetDuration();
     // float GetDuration();
 
 private:

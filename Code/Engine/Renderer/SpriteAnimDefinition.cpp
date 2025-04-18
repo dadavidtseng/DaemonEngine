@@ -75,3 +75,13 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) 
     return m_spriteSheet.GetSpriteDef(spriteIndex);
 }
 
+int SpriteAnimDefinition::GetTotalFrameInCycle()
+{
+    return 0;
+}
+
+float SpriteAnimDefinition::GetDuration()
+{
+    return 0.f;
+}
+

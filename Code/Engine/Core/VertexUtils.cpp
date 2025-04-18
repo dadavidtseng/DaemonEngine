@@ -67,7 +67,7 @@ void TransformVertexArray3D(VertexList_PCU& verts,
 void AddVertsForDisc2D(VertexList_PCU& verts,
                        Vec2 const&     discCenter,
                        float const     discRadius,
-                       Rgba8 const&    color)
+                       Rgba8 const&    fillColor)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr   NUM_SIDES        = 32;
@@ -89,13 +89,54 @@ void AddVertsForDisc2D(VertexList_PCU& verts,
         Vec3 endOuterPosition(discCenter.x + discRadius * cosEnd, discCenter.y + discRadius * sinEnd, 0.f);
 
         // 4. Stores the vertices using counter-clockwise order.
-        verts.emplace_back(centerPosition, color);
-        verts.emplace_back(startOuterPosition, color);
-        verts.emplace_back(endOuterPosition, color);
+        verts.emplace_back(centerPosition, fillColor);
+        verts.emplace_back(startOuterPosition, fillColor);
+        verts.emplace_back(endOuterPosition, fillColor);
     }
 }
 
-void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float const discRadius, Vec3 const& normalDirection, Rgba8 const& color)
+void AddVertsForDisc2D(VertexList_PCU& verts,
+                       Vec2 const&     discCenter,
+                       float const     discRadius,
+                       float const     thickness,
+                       Rgba8 const&    outlineColor)
+{
+    float const     halfThickness    = thickness * 0.5f;
+    float const     innerRadius      = discRadius - halfThickness;
+    float const     outerRadius      = discRadius + halfThickness;
+    int constexpr   NUM_SIDES        = 32;
+    float constexpr DEGREES_PER_SIDE = 360.f / static_cast<float>(NUM_SIDES);
+
+    for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
+    {
+        // Compute angle-related terms
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideNum);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideNum + 1);
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
+
+        // Compute inner & outer positions
+        Vec3 const innerStartPos(discCenter.x + innerRadius * cosStart, discCenter.y + innerRadius * sinStart, 0.f);
+        Vec3 const outerStartPos(discCenter.x + outerRadius * cosStart, discCenter.y + outerRadius * sinStart, 0.f);
+        Vec3 const outerEndPos(discCenter.x + outerRadius * cosEnd, discCenter.y + outerRadius * sinEnd, 0.f);
+        Vec3 const innerEndPos(discCenter.x + innerRadius * cosEnd, discCenter.y + innerRadius * sinEnd, 0.f);
+
+        verts.emplace_back(innerEndPos, outlineColor);
+        verts.emplace_back(innerStartPos, outlineColor);
+        verts.emplace_back(outerStartPos, outlineColor);
+        verts.emplace_back(innerEndPos, outlineColor);
+        verts.emplace_back(outerStartPos, outlineColor);
+        verts.emplace_back(outerEndPos, outlineColor);
+    }
+}
+
+void AddVertsForDisc3D(VertexList_PCU& verts,
+                       Vec3 const&     discCenter,
+                       float const     discRadius,
+                       Vec3 const&     normalDirection,
+                       Rgba8 const&    color)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr   NUM_SIDES        = 32;
@@ -303,8 +344,8 @@ void AddVertsForCapsule2D(VertexList_PCU& verts,
     Vec2 const& halfDiscCenterStart     = capsuleStartPosition;
     Vec2 const& halfDiscCenterEnd       = capsuleEndPosition;
 
-    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, capsuleRadius, color, false, halfDiscRotationDegrees);
-    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, capsuleRadius, color, true, halfDiscRotationDegrees);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterStart, capsuleRadius, false, halfDiscRotationDegrees, color);
+    AddVertsForHalfDisc2D(verts, halfDiscCenterEnd, capsuleRadius, true, halfDiscRotationDegrees, color);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -319,9 +360,9 @@ void AddVertsForCapsule2D(VertexList_PCU& verts,
 void AddVertsForHalfDisc2D(VertexList_PCU& verts,
                            Vec2 const&     discCenter,
                            float const     discRadius,
-                           Rgba8 const&    color,
                            bool const      isTopHalf,
-                           float const     rotationDegrees)
+                           float const     rotationDegrees,
+                           Rgba8 const&    color)
 {
     // 1. Calculate the degree of each triangle in the disc.
     int constexpr NUM_SIDES      = 32;

@@ -148,7 +148,7 @@ public:
 
     Image       CreateImageFromFile(char const* imageFilePath);
     BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
-    Shader*     CreateOrGetShaderFromFile(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
+    Shader*     CreateOrGetShaderFromFile(char const* shaderFilePath, eVertexType vertexType = eVertexType::VERTEX_PCU);
     Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
 
     void            SetBlendMode(eBlendMode mode);

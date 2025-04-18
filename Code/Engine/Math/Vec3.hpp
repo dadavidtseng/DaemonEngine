@@ -44,6 +44,7 @@ struct Vec3
     // Operators (const)
     bool       operator==(Vec3 const& compare) const;       // vec3 == vec3
     bool       operator!=(Vec3 const& compare) const;       // vec3 != vec3
+    bool       operator<(Vec3 const& compare) const;
     Vec3 const operator+(Vec3 const& vecToAdd) const;       // vec3 + vec3
     Vec3 const operator-(Vec3 const& vecToSubtract) const;  // vec3 - vec3
     Vec3       operator-() const;                           // -vec3, i.e. "unary negation"

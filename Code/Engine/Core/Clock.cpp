@@ -42,10 +42,10 @@ Clock::~Clock()
         m_parent->RemoveChild(this);
     }
 
-    for (int i = 0, n = static_cast<int>(m_children.size()); i < n; ++i)
-    {
-        m_children[i]->m_parent = nullptr;
-    }
+    // for (int i = 0, n = static_cast<int>(m_children.size()); i < n; ++i)
+    // {
+    //     m_children[i]->m_parent = nullptr;
+    // }
 
     m_children.clear();
 }
@@ -160,13 +160,13 @@ void Clock::Tick()
     double currentSeconds     = GetCurrentTimeSeconds();
     double deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
 
-    // Optional: enforce minimum delta time (i.e., framerate cap)
-    while (deltaSeconds < m_minDeltaSeconds)
-    {
-        std::this_thread::yield();
-        currentSeconds     = GetCurrentTimeSeconds();
-        deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
-    }
+    // // Optional: enforce minimum delta time (i.e., framerate cap)
+    // while (deltaSeconds < m_minDeltaSeconds)
+    // {
+    //     std::this_thread::yield();
+    //     currentSeconds     = GetCurrentTimeSeconds();
+    //     deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
+    // }
 
     m_lastUpdateTimeInSeconds = currentSeconds;
 

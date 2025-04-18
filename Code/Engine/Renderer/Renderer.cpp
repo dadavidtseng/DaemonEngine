@@ -327,8 +327,8 @@ void Renderer::Startup()
     Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
     m_defaultTexture         = CreateTextureFromImage(defaultImage);
     m_defaultTexture->m_name = "Default";
-    m_defaultShader          = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
-    m_currentShader          = CreateOrGetShaderFromFile("Default", eVertexType::VERTEX_PCU);
+    m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
+    m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
 
     BindShader(m_currentShader);
@@ -658,10 +658,10 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
     return newBitMapFont;
 }
 
-Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderName,
+Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderFilePath,
                                             eVertexType const vertexType)
 {
-    if (Shader* existingShader = GetShaderForFileName(shaderName))
+    if (Shader* existingShader = GetShaderForFileName(shaderFilePath))
     {
         return existingShader;
     }
@@ -676,7 +676,7 @@ Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderName,
     // }
 
     // Consider using smart pointers for better memory management
-    Shader* newShader = CreateShader(shaderName, vertexType);
+    Shader* newShader = CreateShader(shaderFilePath, vertexType);
     m_loadedShaders.push_back(newShader);
 
     return newShader;
@@ -993,7 +993,7 @@ Shader* Renderer::CreateShader(char const*       shaderName,
                                eVertexType const vertexType)
 {
     // Append the .hlsl extension to the shader name
-    String const shaderFileName = Stringf("Data/Shaders/%s.hlsl", shaderName);
+    String const shaderFileName = Stringf("%s.hlsl", shaderName);
 
     String shaderSource;
 
