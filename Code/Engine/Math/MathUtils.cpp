@@ -683,6 +683,7 @@ bool BounceDiscOutOfFixedDisc2D(Vec2&       mobileCenter,
                                 float const fixedElasticity)
 {
     Vec2 const point = GetNearestPointOnDisc2D(mobileCenter, fixedCenter, fixedRadius);
+
     return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
 }
 
@@ -696,21 +697,23 @@ bool BounceDiscOutOfFixedOBB2D(Vec2&       mobileCenter,
                                Vec2 const& obb2HalfDimensions,
                                float const fixedElasticity)
 {
-    Vec2 point = GetNearestPointOnOBB2D(mobileCenter, obbCenter, obb2IBasisNormal, obb2HalfDimensions);
+    Vec2 const point = GetNearestPointOnOBB2D(mobileCenter, obbCenter, obb2IBasisNormal, obb2HalfDimensions);
+
     return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
 }
 
 //----------------------------------------------------------------------------------------------------
 bool BounceDiscOutOfFixedCapsule2D(Vec2&       mobileCenter,
-                                   float       const mobileRadius,
+                                   float const mobileRadius,
                                    Vec2&       mobileVelocity,
-                                   float       const mobileElasticity,
+                                   float const mobileElasticity,
                                    Vec2 const& fixedBoneStart,
                                    Vec2 const& fixedBoneEnd,
-                                   float      const fixedRadius,
-                                   float      const  fixedElasticity)
+                                   float const fixedRadius,
+                                   float const fixedElasticity)
 {
-    Vec2 point = GetNearestPointOnCapsule2D(mobileCenter, fixedBoneStart, fixedBoneEnd, fixedRadius);
+    Vec2 const point = GetNearestPointOnCapsule2D(mobileCenter, fixedBoneStart, fixedBoneEnd, fixedRadius);
+
     return BounceDiscOutOfFixedPoint2D(mobileCenter, mobileRadius, mobileVelocity, mobileElasticity, point, fixedElasticity);
 }
 
@@ -1054,8 +1057,6 @@ Vec2 GetNearestPointOnOBB2D(Vec2 const& point,
     Vec2 const centerToWorldPosition = point - obb2Center;
     float      localPointX           = DotProduct2D(centerToWorldPosition, obb2IBasisNormal);
     float      localPointY           = DotProduct2D(centerToWorldPosition, Vec2(-obb2IBasisNormal.y, obb2IBasisNormal.x));
-
-    // Vec2 localPoint = GetLocalPosFromWorldPos(point);
 
     localPointX = GetClamped(localPointX, -obb2HalfDimensions.x, obb2HalfDimensions.x);
     localPointY = GetClamped(localPointY, -obb2HalfDimensions.y, obb2HalfDimensions.y);

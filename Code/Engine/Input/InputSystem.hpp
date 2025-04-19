@@ -75,6 +75,8 @@ extern unsigned char const KEYCODE_DELETE;
 extern unsigned char const KEYCODE_HOME;
 extern unsigned char const KEYCODE_END;
 extern unsigned char const KEYCODE_TILDE;
+extern unsigned char const KEYCODE_LEFT_BRACKET;
+extern unsigned char const KEYCODE_RIGHT_BRACKET;
 extern unsigned char const KEYCODE_SHIFT;
 extern unsigned char const KEYCODE_CONTROL;
 

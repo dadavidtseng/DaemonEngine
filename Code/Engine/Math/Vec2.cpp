@@ -394,6 +394,11 @@ Vec2& Vec2::operator=(Vec2 const& copyFrom)
     return *this;	// Return the current object by reference (dereference)
 }
 
+Vec2 Vec2::operator*(Vec2 const& vecToMultiply) const
+{
+    return Vec2(x * vecToMultiply.x, y * vecToMultiply.y);
+}
+
 //----------------------------------------------------------------------------------------------------
 Vec2 operator*(float const uniformScale,
                Vec2 const& vecToScale)

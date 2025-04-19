@@ -74,6 +74,7 @@ struct Vec2
     void  operator*=(float uniformScale);           // vec2 *= float
     void  operator/=(float uniformDivisor);         // vec2 /= float
     Vec2& operator=(Vec2 const& copyFrom);          // vec2 = vec2
+    Vec2  operator*(Vec2 const& vecToMultiply) const;
 
     // Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
     friend Vec2 operator*(float uniformScale, Vec2 const& vecToScale); // float * vec2

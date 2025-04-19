@@ -42,10 +42,10 @@ Clock::~Clock()
         m_parent->RemoveChild(this);
     }
 
-    // for (int i = 0, n = static_cast<int>(m_children.size()); i < n; ++i)
-    // {
-    //     m_children[i]->m_parent = nullptr;
-    // }
+    for (int i = 0, n = static_cast<int>(m_children.size()); i < n; ++i)
+    {
+        m_children[i]->m_parent = nullptr;
+    }
 
     m_children.clear();
 }
