@@ -49,10 +49,11 @@ void AddVertsForCapsule2D(VertexList_PCU& verts, Vec2 const& capsuleStartPositio
 void AddVertsForCapsule2D(VertexList_PCU& verts, Capsule2 const& capsule, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForHalfDisc2D(VertexList_PCU& verts, Vec2 const& discCenter, float discRadius, bool isTopHalf, float rotationDegrees, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForArrow2D(VertexList_PCU& verts, Vec2 const& tailPosition, Vec2 const& tipPosition, float arrowSize, float thickness, Rgba8 const& color = Rgba8::WHITE);
-void AddVertsForQuad3D(VertexList_PCU& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
-void AddVertsForQuad3D(VertexList_PCUTBN& verts, IndexList& indexes, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
-void AddVertsForRoundedQuad3D(VertexList_PCUTBN& vertexes, Vec3 const& topLeft, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
-void AddVertsForWireframeQuad3D(VertexList_PCU& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& uv = AABB2::ZERO_TO_ONE);
+void AddVertsForQuad3D(VertexList_PCU& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForQuad3D(VertexList_PCUTBN& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForQuad3D(VertexList_PCUTBN& verts, IndexList& indexes, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForRoundedQuad3D(VertexList_PCUTBN& verts, Vec3 const& topLeft, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForWireframeQuad3D(VertexList_PCU& verts, Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topLeft, Vec3 const& topRight, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForAABB3D(VertexList_PCU& verts, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForAABB3D(VertexList_PCUTBN& verts, IndexList& indexes, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForWireframeAABB3D(VertexList_PCU& verts, AABB3 const& bounds, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);

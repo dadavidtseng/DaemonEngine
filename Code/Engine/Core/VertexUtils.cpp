@@ -431,17 +431,40 @@ void AddVertsForQuad3D(VertexList_PCU& verts,
                        Vec3 const&     topLeft,
                        Vec3 const&     topRight,
                        Rgba8 const&    color,
-                       AABB2 const&    uv)
+                       AABB2 const&    UVs)
 {
     // Starting at BL, add triangle A with vertexes BL, BR, TR.
-    verts.emplace_back(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y));
-    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y));
-    verts.emplace_back(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y));
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y));
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y));
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y));
 
     // Starting again at BL, add triangle B with vertexes BL, TR, TL.
-    verts.emplace_back(bottomLeft, color, Vec2(uv.m_mins.x, uv.m_mins.y));
-    verts.emplace_back(topRight, color, Vec2(uv.m_maxs.x, uv.m_maxs.y));
-    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y));
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y));
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y));
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y));
+}
+
+void AddVertsForQuad3D(VertexList_PCUTBN& verts,
+    Vec3 const& bottomLeft,
+    Vec3 const& bottomRight,
+    Vec3 const& topLeft,
+    Vec3 const& topRight,
+    Rgba8 const& color,
+    AABB2 const& UVs)
+{
+    Vec3 middleTop = (topRight + topLeft) * 0.5f;
+    Vec3 middleBottom = (bottomRight + bottomLeft) * 0.5f;
+    Vec3 normal = CrossProduct3D( bottomRight - bottomLeft, topLeft - bottomLeft ).GetNormalized();
+
+    // Starting at BL, add triangle A with vertexes BL, BR, TR.
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
+
+    // Starting again at BL, add triangle B with vertexes BL, TR, TL.
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -452,14 +475,14 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
                        Vec3 const&        topLeft,
                        Vec3 const&        topRight,
                        Rgba8 const&       color,
-                       AABB2 const&       uv)
+                       AABB2 const&       UVs)
 {
     unsigned int const currentIndex = static_cast<unsigned int>(verts.size());
 
-    verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
-    verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
-    verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
-    verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
+    verts.emplace_back(topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
 
     // verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
     // verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
@@ -474,6 +497,34 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
     indexes.push_back(currentIndex + 3);
 }
 
+void AddVertsForRoundedQuad3D(VertexList_PCUTBN& verts,
+                              Vec3 const&        topLeft,
+                              Vec3 const&        bottomLeft,
+                              Vec3 const&        bottomRight,
+                              Vec3 const&        topRight,
+                              Rgba8 const&       color,
+                              AABB2 const&       UVs)
+{
+    Vec3 middleTop = (topRight + topLeft) * 0.5f;
+    Vec3 middleBottom = (bottomRight + bottomLeft) * 0.5f;
+    Vec3 normal = CrossProduct3D( bottomRight - bottomLeft, topLeft - bottomLeft ).GetNormalized();
+    verts.emplace_back( bottomLeft, color, UVs.m_mins,Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized() );
+    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,normal );
+    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
+    verts.emplace_back( bottomLeft, color, UVs.m_mins,Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized() );
+    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
+    verts.emplace_back( topLeft, color, Vec2( UVs.m_mins.x, UVs.m_maxs.y ), Vec3::ZERO, Vec3::ZERO,(topLeft - topRight).GetNormalized() );
+
+
+    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,normal );
+    verts.emplace_back( bottomRight, color, Vec2( UVs.m_maxs.x, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,(bottomRight - bottomLeft).GetNormalized() );
+    verts.emplace_back( topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO,(topRight - topLeft).GetNormalized() );
+    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ),Vec3::ZERO, Vec3::ZERO, normal );
+    verts.emplace_back( topRight, color, UVs.m_maxs,Vec3::ZERO, Vec3::ZERO, (topRight - topLeft).GetNormalized() );
+    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
+
+}
+
 //----------------------------------------------------------------------------------------------------
 void AddVertsForWireframeQuad3D(VertexList_PCU& verts,
                                 Vec3 const&     bottomLeft,
@@ -482,12 +533,12 @@ void AddVertsForWireframeQuad3D(VertexList_PCU& verts,
                                 Vec3 const&     topRight,
                                 float const     thickness,
                                 Rgba8 const&    color,
-                                AABB2 const&    uv)
+                                AABB2 const&    UVs)
 {
-    AddVertsForCylinder3D(verts, bottomLeft, bottomRight, thickness, color, uv, 4);
-    AddVertsForCylinder3D(verts, bottomRight, topRight, thickness, color, uv, 4);
-    AddVertsForCylinder3D(verts, topLeft, bottomLeft, thickness, color, uv, 4);
-    AddVertsForCylinder3D(verts, topRight, topLeft, thickness, color, uv, 4);
+    AddVertsForCylinder3D(verts, bottomLeft, bottomRight, thickness, color, UVs, 4);
+    AddVertsForCylinder3D(verts, bottomRight, topRight, thickness, color, UVs, 4);
+    AddVertsForCylinder3D(verts, topLeft, bottomLeft, thickness, color, UVs, 4);
+    AddVertsForCylinder3D(verts, topRight, topLeft, thickness, color, UVs, 4);
 }
 
 //----------------------------------------------------------------------------------------------------
