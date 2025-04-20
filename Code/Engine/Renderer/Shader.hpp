@@ -24,7 +24,7 @@ class Shader
     friend class Renderer;
 
 public:
-    Shader(ShaderConfig const& config);
+    explicit Shader(ShaderConfig const& config);
     Shader(Shader& copy) = delete;
     ~Shader();
 

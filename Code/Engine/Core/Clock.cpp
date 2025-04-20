@@ -160,13 +160,13 @@ void Clock::Tick()
     double currentSeconds     = GetCurrentTimeSeconds();
     double deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
 
-    // // Optional: enforce minimum delta time (i.e., framerate cap)
-    // while (deltaSeconds < m_minDeltaSeconds)
-    // {
-    //     std::this_thread::yield();
-    //     currentSeconds     = GetCurrentTimeSeconds();
-    //     deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
-    // }
+    // Optional: enforce minimum delta time (i.e., framerate cap)
+    while (deltaSeconds < m_minDeltaSeconds)
+    {
+        std::this_thread::yield();
+        currentSeconds     = GetCurrentTimeSeconds();
+        deltaSeconds  = currentSeconds - m_lastUpdateTimeInSeconds;
+    }
 
     m_lastUpdateTimeInSeconds = currentSeconds;
 
