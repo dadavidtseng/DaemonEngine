@@ -77,11 +77,26 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float seconds) 
 
 int SpriteAnimDefinition::GetTotalFrameInCycle()
 {
-    return 0;
+    int totalFrames = m_endSpriteIndex - m_startSpriteIndex + 1;
+
+    switch (m_playbackType)
+    {
+    case SpriteAnimPlaybackType::ONCE:
+    case SpriteAnimPlaybackType::LOOP:
+        return totalFrames;
+
+    case SpriteAnimPlaybackType::PINGPONG:
+        return (totalFrames * 2) - 2; // 前後各一次，中間的幀不重複
+
+    default:
+        ERROR_AND_DIE("Unknown SpriteAnimPlaybackType");
+        return 0;
+    }
 }
 
 float SpriteAnimDefinition::GetDuration()
 {
-    return 0.f;
+    int totalFramesInCycle = GetTotalFrameInCycle();
+    return static_cast<float>(totalFramesInCycle) / m_framesPerSecond;
 }
 
