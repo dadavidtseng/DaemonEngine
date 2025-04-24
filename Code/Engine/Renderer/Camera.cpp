@@ -187,4 +187,5 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& vec2)
 
 void Camera::SetNormalizedViewport(AABB2 const& viewPort)
 {
+    m_viewPort = viewPort;
 }
