@@ -1,37 +1,11 @@
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Camera.cpp
-//
+//----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Camera.hpp"
 
 #include "Engine/Core/ErrorWarningAssert.hpp"
-
-// //-----------------------------------------------------------------------------------------------
-// void Camera::SetOrthoView(Vec2 const& bottomLeft, Vec2 const& topRight)
-// {
-//     m_bottomLeft = bottomLeft;
-//     m_topRight   = topRight;
-// }
-//
-// //-----------------------------------------------------------------------------------------------
-// Vec2 Camera::GetOrthoBottomLeft() const
-// {
-//     return m_bottomLeft;
-// }
-//
-// //-----------------------------------------------------------------------------------------------
-// Vec2 Camera::GetOrthoTopRight() const
-// {
-//     return m_topRight;
-// }
-//
-// //-----------------------------------------------------------------------------------------------
-// void Camera::Translate2D(Vec2 const& translation)
-// {
-//     m_bottomLeft += translation;
-//     m_topRight += translation;
-// }
 
 //----------------------------------------------------------------------------------------------------
 void Camera::SetOrthoGraphicView(Vec2 const& bottomLeft,
@@ -99,11 +73,6 @@ Mat44 Camera::GetCameraToWorldTransform() const
     Mat44 c2w;
 
     c2w.AppendTranslation3D(m_position);
-
-    // c2w.AppendZRotation(m_orientation.m_yawDegrees);
-    // c2w.AppendYRotation(m_orientation.m_pitchDegrees);
-    // c2w.AppendXRotation(m_orientation.m_rollDegrees);
-
     c2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
 
     return c2w;
@@ -209,4 +178,13 @@ Mat44 Camera::GetPerspectiveMatrix() const
 Mat44 Camera::GetProjectionMatrix() const
 {
     return GetRenderToClipTransform();
+}
+
+AABB2 Camera::GetViewPortUnnormalized(Vec2 const& vec2)
+{
+    return AABB2(m_orthographicBottomLeft, m_orthographicTopRight);
+}
+
+void Camera::SetNormalizedViewport(AABB2 const& viewPort)
+{
 }

@@ -4,9 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Game/Controller.hpp"
 
 struct EulerAngles;
 struct Vec3;
@@ -53,9 +55,11 @@ public:
     Mat44 GetOrthographicMatrix() const;
     Mat44 GetPerspectiveMatrix() const;
     Mat44 GetProjectionMatrix() const;
+    AABB2 GetViewPortUnnormalized(Vec2 const& vec2);
+    void SetNormalizedViewport(AABB2 const& viewPort);
+    Mode m_mode = eMode_Orthographic;
 
 private:
-    Mode m_mode = eMode_Orthographic;
 
     Vec3        m_position    = Vec3::ZERO;
     EulerAngles m_orientation = EulerAngles::ZERO;
@@ -72,7 +76,5 @@ private:
 
     Mat44 m_cameraToRenderTransform;
 
-    //-old-variables----------------------------------------------------------------------------------------------------
-    // Vec2 m_bottomLeft;
-    // Vec2 m_topRight;
+    AABB2 m_viewPort;
 };
