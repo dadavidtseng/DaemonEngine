@@ -485,11 +485,17 @@ void Renderer::BeginCamera(Camera const& camera) const
     // Set viewport
     D3D11_VIEWPORT viewport;
     Window const*  window = m_config.m_window;
-
-    viewport.TopLeftX = 0.f;
-    viewport.TopLeftY = 0.f;
-    viewport.Width    = static_cast<float>(window->GetClientDimensions().x);
-    viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
+    AABB2 const& viewportAABB = camera.m_viewPort;
+    viewport.TopLeftX = viewportAABB.m_mins.x;
+    viewport.TopLeftY = viewportAABB.m_mins.y;
+    // viewport.TopLeftX = 0.f;
+    // viewport.TopLeftY = 0.f;
+    viewport.Width = viewportAABB.m_maxs.x - viewportAABB.m_mins.x;
+    viewport.Height = viewportAABB.m_maxs.y - viewportAABB.m_mins.y;
+    // DebuggerPrintf("%f,%f\n", viewport.Width, viewport.Height);
+    // DebuggerPrintf("%d,%d\n", window->GetClientDimensions().x, window->GetClientDimensions().y);
+    // viewport.Width    = static_cast<float>(window->GetClientDimensions().x);
+    // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;
     viewport.MaxDepth = 1.f;
 

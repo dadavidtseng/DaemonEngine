@@ -8,7 +8,6 @@
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
-#include "Game/Controller.hpp"
 
 struct EulerAngles;
 struct Vec3;
@@ -58,7 +57,7 @@ public:
     AABB2 GetViewPortUnnormalized(Vec2 const& vec2);
     void SetNormalizedViewport(AABB2 const& viewPort);
     Mode m_mode = eMode_Orthographic;
-
+    AABB2 m_viewPort;
 private:
 
     Vec3        m_position    = Vec3::ZERO;
@@ -76,5 +75,5 @@ private:
 
     Mat44 m_cameraToRenderTransform;
 
-    AABB2 m_viewPort;
+
 };
