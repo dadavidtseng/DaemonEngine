@@ -145,7 +145,7 @@ void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList_PCU&   verts,
                                                    Rgba8 const&  tint,
                                                    float const   cellAspectRatio,
                                                    Vec2 const&   alignment,
-                                                   int const     maxGlyphsToDraw)
+                                                   int const     maxGlyphsToDraw) const
 {
     float const textWidth = GetTextWidth(cellHeight, text, cellAspectRatio);
 
