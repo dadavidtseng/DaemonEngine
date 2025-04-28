@@ -380,37 +380,37 @@ void Renderer::Shutdown()
     m_loadedShaders.clear();
     m_loadedTextures.clear();
 
-    if (m_modelCBO!=nullptr)
+    if (m_modelCBO != nullptr)
     {
         delete m_modelCBO;
         m_modelCBO = nullptr;
     }
 
-    if (m_lightCBO!=nullptr)
+    if (m_lightCBO != nullptr)
     {
         delete m_lightCBO;
         m_lightCBO = nullptr;
     }
 
-    if (m_cameraCBO!=nullptr)
+    if (m_cameraCBO != nullptr)
     {
         delete m_cameraCBO;
         m_cameraCBO = nullptr;
     }
 
-    if (m_immediateIBO!=nullptr)
+    if (m_immediateIBO != nullptr)
     {
         delete m_immediateIBO;
         m_immediateIBO = nullptr;
     }
 
-    if (m_immediateVBO_PCUTBN!=nullptr)
+    if (m_immediateVBO_PCUTBN != nullptr)
     {
         delete m_immediateVBO_PCUTBN;
         m_immediateVBO_PCUTBN = nullptr;
     }
 
-    if (m_immediateVBO_PCU!=nullptr)
+    if (m_immediateVBO_PCU != nullptr)
     {
         delete m_immediateVBO_PCU;
         m_immediateVBO_PCU = nullptr;
@@ -484,16 +484,15 @@ void Renderer::BeginCamera(Camera const& camera) const
 {
     // Set viewport
     D3D11_VIEWPORT viewport;
-    Window const*  window = m_config.m_window;
-    AABB2 const& viewportAABB = camera.m_viewPort;
-    viewport.TopLeftX = viewportAABB.m_mins.x;
-    viewport.TopLeftY = viewportAABB.m_mins.y;
+    Window const*  window       = m_config.m_window;
+    AABB2 const&   viewportAABB = camera.m_viewPort;
+    viewport.TopLeftX           = viewportAABB.m_mins.x;
+    viewport.TopLeftY           = viewportAABB.m_mins.y;
     // viewport.TopLeftX = 0.f;
     // viewport.TopLeftY = 0.f;
-    viewport.Width = viewportAABB.m_maxs.x - viewportAABB.m_mins.x;
+    viewport.Width  = viewportAABB.m_maxs.x - viewportAABB.m_mins.x;
     viewport.Height = viewportAABB.m_maxs.y - viewportAABB.m_mins.y;
-    // DebuggerPrintf("%f,%f\n", viewport.Width, viewport.Height);
-    // DebuggerPrintf("%d,%d\n", window->GetClientDimensions().x, window->GetClientDimensions().y);
+
     // viewport.Width    = static_cast<float>(window->GetClientDimensions().x);
     // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;

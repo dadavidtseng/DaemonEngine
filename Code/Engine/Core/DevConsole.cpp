@@ -490,11 +490,14 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, BitmapFont const& font, float const fontAspect)
+void DevConsole::Render_OpenFull(AABB2 const&      bounds,
+                                 Renderer&         renderer,
+                                 BitmapFont const& font,
+                                 float const       fontAspect)
 {
     // Render background box
-    VertexList_PCU  backgroundBoxVerts;
-    AABB2 const backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
+    VertexList_PCU backgroundBoxVerts;
+    AABB2 const    backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
     renderer.SetBlendMode(eBlendMode::ALPHA);
@@ -522,8 +525,8 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
 
     AABB2 commandTextBounds = bounds;
 
-    VertexList_PCU  insertionPointVerts;
-    AABB2 const insertionPointBound = AABB2(commandTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
+    VertexList_PCU insertionPointVerts;
+    AABB2 const    insertionPointBound = AABB2(commandTextBounds.m_mins + Vec2((float)m_insertionPointPosition * lineHeight, 0.f),
                                             Vec2(5.f, commandTextBounds.m_maxs.y) + Vec2((float)m_insertionPointPosition * lineHeight, 0.f));
 
     if (m_insertionPointVisible == true)
@@ -558,6 +561,11 @@ void DevConsole::Render_OpenFull(AABB2 const& bounds, Renderer& renderer, Bitmap
         );
     }
 
+    renderer.SetModelConstants();
+    renderer.SetBlendMode(eBlendMode::ALPHA);
+    renderer.SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
+    renderer.SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    renderer.SetDepthMode(eDepthMode::DISABLED);
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
 }

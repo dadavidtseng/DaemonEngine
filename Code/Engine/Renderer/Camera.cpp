@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Camera.hpp"
 
+#include "Window.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -182,10 +183,16 @@ Mat44 Camera::GetProjectionMatrix() const
 
 AABB2 Camera::GetViewPortUnnormalized(Vec2 const& vec2)
 {
-    return AABB2(m_orthographicBottomLeft, m_orthographicTopRight);
+    return m_viewPort;
 }
 
+// viewport = AABB2(Vec2(0, 0.5f), Vec2::ONE)
 void Camera::SetNormalizedViewport(AABB2 const& viewPort)
 {
-    m_viewPort = viewPort;
+    float x = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_maxs.x;
+    float y = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_maxs.y;
+    float x1 = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_mins.x;
+    float y1 = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_mins.y;
+
+    m_viewPort = AABB2(Vec2(x1, y1), Vec2(x, y));
 }
