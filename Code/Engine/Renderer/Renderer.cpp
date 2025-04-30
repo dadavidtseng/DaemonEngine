@@ -339,6 +339,7 @@ void Renderer::Startup()
 //----------------------------------------------------------------------------------------------------
 void Renderer::BeginFrame() const
 {
+    // TODO: BindDefaultRenderTarget();
     // This code needs to run every frame and should be in your Render function.
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
 }
@@ -484,10 +485,10 @@ void Renderer::BeginCamera(Camera const& camera) const
 {
     // Set viewport
     D3D11_VIEWPORT viewport;
-    Window const*  window       = m_config.m_window;
-    AABB2 const&   viewportAABB = camera.m_viewPort;
-    viewport.TopLeftX           = viewportAABB.m_mins.x;
-    viewport.TopLeftY           = viewportAABB.m_mins.y;
+    //Window const*  window       = m_config.m_window;
+    AABB2 const& viewportAABB = camera.GetViewPortUnnormalized(Vec2::ZERO);
+    viewport.TopLeftX         = viewportAABB.m_mins.x;
+    viewport.TopLeftY         = viewportAABB.m_mins.y;
     // viewport.TopLeftX = 0.f;
     // viewport.TopLeftY = 0.f;
     viewport.Width  = viewportAABB.m_maxs.x - viewportAABB.m_mins.x;

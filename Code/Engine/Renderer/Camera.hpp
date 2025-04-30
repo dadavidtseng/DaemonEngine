@@ -7,6 +7,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/RaycastUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
 
 struct EulerAngles;
@@ -22,13 +23,6 @@ public:
         eMode_Perspective,
         eMode_Count
     };
-
-    //----------------------------------------------------------------------------------------------------
-    // void SetOrthoView(Vec2 const& bottomLeft, Vec2 const& topRight);
-    // Vec2 GetOrthoBottomLeft() const;
-    // Vec2 GetOrthoTopRight() const;
-    // void Translate2D(Vec2 const& translation);
-    //----------------------------------------------------------------------------------------------------
 
     void SetOrthoGraphicView(Vec2 const& bottomLeft, Vec2 const& topRight, float near = 0.f, float far = 1.f);
     void SetPerspectiveGraphicView(float aspect, float fov, float near, float far);
@@ -54,14 +48,17 @@ public:
     Mat44 GetOrthographicMatrix() const;
     Mat44 GetPerspectiveMatrix() const;
     Mat44 GetProjectionMatrix() const;
-    AABB2 GetViewPortUnnormalized(Vec2 const& vec2);
-    void SetNormalizedViewport(AABB2 const& viewPort);
-    Mode m_mode = eMode_Orthographic;
-    AABB2 m_viewPort;
-private:
+    AABB2 GetViewPortUnnormalized(Vec2 const& space) const;
+    void  SetNormalizedViewport(AABB2 const& viewPort);
+    Vec2  PerspectiveWorldPosToScreen(Vec3 const& worldPos) const;
+    Vec3  PerspectiveScreenPosToWorld(Vec2 const& screenPos) const;
+    Ray3  ScreenPosToWorldRay(Vec2 const& screenPos) const;
+    Mode  m_mode = eMode_Orthographic;
 
+private:
     Vec3        m_position    = Vec3::ZERO;
     EulerAngles m_orientation = EulerAngles::ZERO;
+    AABB2       m_viewPort;
 
     Vec2  m_orthographicBottomLeft = Vec2::ZERO;
     Vec2  m_orthographicTopRight   = Vec2::ZERO;
@@ -74,6 +71,4 @@ private:
     float m_perspectiveFar    = 0.f;
 
     Mat44 m_cameraToRenderTransform;
-
-
 };

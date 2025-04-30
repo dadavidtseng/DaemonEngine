@@ -7,6 +7,10 @@
 
 #include "Window.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include <Engine/Core/EngineCommon.hpp>
+
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/RaycastUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 void Camera::SetOrthoGraphicView(Vec2 const& bottomLeft,
@@ -181,18 +185,111 @@ Mat44 Camera::GetProjectionMatrix() const
     return GetRenderToClipTransform();
 }
 
-AABB2 Camera::GetViewPortUnnormalized(Vec2 const& vec2)
+//----------------------------------------------------------------------------------------------------
+AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 {
     return m_viewPort;
 }
 
+//----------------------------------------------------------------------------------------------------
 // viewport = AABB2(Vec2(0, 0.5f), Vec2::ONE)
 void Camera::SetNormalizedViewport(AABB2 const& viewPort)
 {
-    float x = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_maxs.x;
-    float y = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_maxs.y;
+    float x  = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_maxs.x;
+    float y  = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_maxs.y;
     float x1 = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_mins.x;
     float y1 = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_mins.y;
 
     m_viewPort = AABB2(Vec2(x1, y1), Vec2(x, y));
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec2 Camera::PerspectiveWorldPosToScreen(Vec3 const& worldPos) const
+{
+    // Step 1: Camera Basis（依照你的座標系）
+    Vec3 iBasis, jBasis, kBasis;
+    m_orientation.GetAsVectors_IFwd_JLeft_KUp(iBasis, jBasis, kBasis); // X: forward, Y: left, Z: up
+
+    // Step 2: 將 worldPos 轉換為 camera space
+    Vec3  camToWorld = worldPos - m_position;
+    float x_cam      = DotProduct3D(camToWorld, iBasis);  // forward (depth)
+    float y_cam      = DotProduct3D(camToWorld, jBasis);  // left-right
+    float z_cam      = DotProduct3D(camToWorld, kBasis);  // up-down
+
+    if (x_cam <= 0.0001f)
+    {
+        // 在相機後面或太接近相機
+        return Vec2(-9999.f, -9999.f); // 或可視範圍外的 sentinel 值
+    }
+
+    // Step 3: 計算投影比例
+    float halfFOVDeg = m_perspectiveFOV * 0.5f;
+    float halfFOVRad = ConvertDegreesToRadians(halfFOVDeg);
+    float tanHalfFOV = tanf(halfFOVRad);
+
+    // Step 4: 投影至 NDC 空間（[-1, 1]）
+    float ndcY = y_cam / (x_cam * tanHalfFOV * m_perspectiveAspect); // 左右方向
+    float ndcZ = z_cam / (x_cam * tanHalfFOV);                       // 上下方向
+
+    // Step 5: 映射至螢幕座標 [0, 1]
+    float screenX = 0.5f - ndcY * 0.5f; // 注意 Y 是 left，因此螢幕 X 要反過來
+    float screenY = 0.5f + ndcZ * 0.5f;
+
+    return Vec2(screenX, screenY);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 Camera::PerspectiveScreenPosToWorld(Vec2 const& screenPos) const
+{
+    // // make sure this is normalized to 0-1
+    // Vec3 iBasis, jBasis, kBasis;
+    // m_orientation.GetAsVectors_IFwd_JLeft_KUp(iBasis, jBasis, kBasis);
+    // Vec3  worldPos = m_position + iBasis * m_perspectiveNear;
+    // float h        = 2.f * m_perspectiveNear * SinDegrees(m_perspectiveFOV * 0.5f) / CosDegrees(m_perspectiveFOV * 0.5f);
+    // float w        = h * m_perspectiveAspect;
+    // worldPos -= jBasis * (screenPos.x - 0.5f) * w;
+    // worldPos += kBasis * (screenPos.y - 0.5f) * h;
+    // return worldPos;
+    // Step 1: 拿取 I, J, K 向量
+    Vec3 iBasis, jBasis, kBasis;
+    m_orientation.GetAsVectors_IFwd_JLeft_KUp(iBasis, jBasis, kBasis); // i: X (forward), j: Y (left), k: Z (up)
+
+    // Step 2: 算出 near plane 的中心點
+    Vec3 nearCenter = m_position + iBasis * m_perspectiveNear;
+
+    // Step 3: 計算 near plane 高度和寬度（根據 FOV 與 aspect ratio）
+    float halfFOV = m_perspectiveFOV * 0.5f;
+    float h = 2.f * m_perspectiveNear * SinDegrees(halfFOV) / CosDegrees(halfFOV);
+    float w = h * m_perspectiveAspect;
+
+    // Step 4: 根據螢幕座標偏移 (0.5, 0.5) 為中心
+    Vec3 worldPos = nearCenter;
+    worldPos -= jBasis * ((screenPos.x - 0.5f) * w); // 往右是 -j（因為 j 是 left）
+    worldPos += kBasis * ((screenPos.y - 0.5f) * h); // 往上是 +k（因為 k 是 up）
+
+    return worldPos;
+}
+
+Ray3 Camera::ScreenPosToWorldRay(Vec2 const& screenPos) const
+{
+    // Get basis vectors from camera orientation
+    Vec3 iBasis, jBasis, kBasis;
+    m_orientation.GetAsVectors_IFwd_JLeft_KUp(iBasis, jBasis, kBasis);
+
+    // Near plane world position
+    Vec3 nearWorld = PerspectiveScreenPosToWorld(screenPos);
+
+    // Compute far plane world position (manually, similar to PerspectiveScreenPosToWorld but using far)
+    float h = 2.f * m_perspectiveFar * SinDegrees(m_perspectiveFOV * 0.5f) / CosDegrees(m_perspectiveFOV * 0.5f);
+    float w = h * m_perspectiveAspect;
+    Vec3 farWorld = m_position + iBasis * m_perspectiveFar;
+    farWorld -= jBasis * (screenPos.x - 0.5f) * w;
+    farWorld += kBasis * (screenPos.y - 0.5f) * h;
+
+    // Create ray from near to far
+    Ray3 ray = Ray3(nearWorld, (farWorld - nearWorld).GetNormalized(), 10.f);
+    // ray.m_startPosition = nearWorld;
+    // ray.m_forwardNormal = (farWorld - nearWorld).GetNormalized();
+
+    return ray;
 }

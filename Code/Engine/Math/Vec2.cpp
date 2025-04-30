@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include "Vec3.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
@@ -19,8 +20,8 @@ STATIC Vec2 Vec2::ONE  = Vec2(1.f, 1.f);
 
 //----------------------------------------------------------------------------------------------------
 Vec2::Vec2(float const initialX, float const initialY)
-    : x(initialX)
-      , y(initialY)
+    : x(initialX),
+      y(initialY)
 {
 }
 
@@ -153,6 +154,12 @@ Vec2 Vec2::GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const
     float const dotProduct = DotProduct2D(*this, normalOfSurfaceToReflectOffOf);
 
     return *this - 2 * dotProduct * normalOfSurfaceToReflectOffOf;
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 Vec2::GetAsVec3() const
+{
+    return Vec3(x, y, 0.f);
 }
 
 //----------------------------------------------------------------------------------------------------

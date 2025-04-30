@@ -205,6 +205,12 @@
     <ClCompile Include="Math\Curve2D.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Plane3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\OBB3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -409,6 +415,12 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Math\Curve2D.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\OBB3.hpp">
       <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>

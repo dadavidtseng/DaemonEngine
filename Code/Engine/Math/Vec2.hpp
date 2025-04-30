@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+struct Vec3;
 struct IntVec2;
 
 //----------------------------------------------------------------------------------------------------
@@ -42,6 +43,7 @@ struct Vec2
     Vec2  GetClamped(float maxLength) const;
     Vec2  GetNormalized() const;
     Vec2  GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const;
+    Vec3 GetAsVec3()const;
 
     // Mutators (non-const methods)
     void  SetOrientationRadians(float newOrientationRadians);

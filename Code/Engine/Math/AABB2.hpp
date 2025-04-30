@@ -36,6 +36,7 @@ struct AABB2
     Vec2  GetUVForPoint(Vec2 const& pointPos) const; // uv=(.5,.5) is at center; u or v outside [0,1] extrapolated
     Vec2  GetRandomPointInBounds() const;
     AABB2 GetBoxAtUVs(Vec2 const& uvMins, Vec2 const& uvMaxs) const;
+    float GetHeightWidthRatios() const;
 
     // Mutators (non-const methods)
     void Translate(Vec2 const& translationToApply);

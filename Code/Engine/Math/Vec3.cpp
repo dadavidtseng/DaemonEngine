@@ -7,7 +7,6 @@
 
 #include <cmath>
 
-#include "EulerAngles.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
@@ -157,6 +156,12 @@ void Vec3::GetOrthonormalBasis(Vec3 const& iBasis,
         *jBasis = CrossProduct3D(*kBasis, iBasis);
         *jBasis = jBasis->GetNormalized();
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec2  Vec3::GetXY() const
+{
+    return Vec2(x, y);
 }
 
 //----------------------------------------------------------------------------------------------------

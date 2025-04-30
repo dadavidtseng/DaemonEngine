@@ -4,11 +4,14 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-struct SpriteDefinition;
+#include <cstdint>
+
+//-Forward-Declaration--------------------------------------------------------------------------------
 class SpriteSheet;
+struct SpriteDefinition;
 
 //----------------------------------------------------------------------------------------------------
-enum class SpriteAnimPlaybackType
+enum class SpriteAnimPlaybackType : int8_t
 {
     ONCE,		// for 5-frame anim, plays 0,1,2,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4...
     LOOP,		// for 5-frame anim, plays 0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0...
@@ -26,8 +29,8 @@ public:
                          SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP);
 
     SpriteDefinition const& GetSpriteDefAtTime(float seconds) const; // Most of the logic for this class is done here!
-    int                     GetTotalFrameInCycle();
-    float                   GetDuration();
+    int                     GetTotalFrameInCycle() const;
+    float                   GetDuration() const;
 
 private:
     SpriteSheet const&     m_spriteSheet;

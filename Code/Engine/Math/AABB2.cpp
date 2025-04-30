@@ -120,6 +120,15 @@ Vec2 AABB2::GetRandomPointInBounds() const
 }
 
 //----------------------------------------------------------------------------------------------------
+float AABB2::GetHeightWidthRatios() const
+{
+    float const width  = m_maxs.x - m_mins.x;
+    float const height = m_maxs.y - m_mins.y;
+
+    return width / height;
+}
+
+//----------------------------------------------------------------------------------------------------
 void AABB2::Translate(Vec2 const& translationToApply)
 {
     m_mins += translationToApply;
