@@ -120,7 +120,7 @@ Vec2 AABB2::GetRandomPointInBounds() const
 }
 
 //----------------------------------------------------------------------------------------------------
-float AABB2::GetHeightWidthRatios() const
+float AABB2::GetWidthOverHeightRatios() const
 {
     float const width  = m_maxs.x - m_mins.x;
     float const height = m_maxs.y - m_mins.y;

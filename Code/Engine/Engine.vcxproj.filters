@@ -211,6 +211,9 @@
     <ClCompile Include="Math\OBB3.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Plane2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -421,6 +424,9 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\OBB3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane2.hpp">
       <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
