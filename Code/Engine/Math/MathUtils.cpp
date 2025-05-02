@@ -7,6 +7,8 @@
 
 #include <cmath>
 
+#include "OBB3.hpp"
+#include "Plane3.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -513,7 +515,8 @@ bool DoSphereAndOBB3Overlap3D(Vec3 const& sphereCenter,
                               float       sphereRadius,
                               OBB3 const& obb)
 {
-    return false;
+    Vec3 nearestPoint = GetNearestPointOnOBB3D(sphereCenter, obb);
+    return IsPointInsideSphere3D(nearestPoint, sphereCenter, sphereRadius);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -586,17 +589,17 @@ bool PushDiscsOutOfEachOther2D(Vec2&       aCenter,
                                Vec2&       bCenter,
                                const float bRadius)
 {
-    const Vec2  aCenterTobCenter        = bCenter - aCenter;
-    const float twoDiscRadiusSum        = aRadius + bRadius;
-    const float twoDiscRadiusSumSquared = twoDiscRadiusSum * twoDiscRadiusSum;
+    Vec2 const  aCenterTobCenter        = bCenter - aCenter;
+    float const twoDiscRadiusSum        = aRadius + bRadius;
+    float const twoDiscRadiusSumSquared = twoDiscRadiusSum * twoDiscRadiusSum;
 
     if (aCenterTobCenter.GetLengthSquared() >= twoDiscRadiusSumSquared)
     {
         return false;
     }
 
-    const float overlapDist   = twoDiscRadiusSum - aCenterTobCenter.GetLength();
-    const Vec2  correctionVec = aCenterTobCenter.GetNormalized() * (overlapDist / 2.f);
+    float const overlapDist   = twoDiscRadiusSum - aCenterTobCenter.GetLength();
+    Vec2 const  correctionVec = aCenterTobCenter.GetNormalized() * (overlapDist / 2.f);
 
     aCenter = aCenter - correctionVec;
     bCenter = bCenter + correctionVec;
@@ -609,7 +612,7 @@ bool PushDiscOutOfAABB2D(Vec2&        mobileDiscCenter,
                          const float  discRadius,
                          AABB2 const& fixedBox)
 {
-    const Vec2 nearestPoint = fixedBox.GetNearestPoint(mobileDiscCenter);
+    Vec2 const nearestPoint = fixedBox.GetNearestPoint(mobileDiscCenter);
 
     return PushDiscOutOfPoint2D(mobileDiscCenter, discRadius, nearestPoint);
 }
@@ -951,6 +954,11 @@ bool IsPointInsideZCylinder3D(Vec3 const& point,
         point.z < cylinderEndPosition.z;
 }
 
+bool IsPointInsideOBB3D(Vec3 const& point, OBB3 const& obb3)
+{
+    return obb3.IsPointInside(point);
+}
+
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
 //-Start-of-Get-Nearest-Point-Utilities---------------------------------------------------------------
@@ -1175,6 +1183,18 @@ Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point,
     nearestPoint.z = GetClamped(point.z, cylinderStartPosition.z, cylinderEndPosition.z);
 
     return nearestPoint;
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 GetNearestPointOnPlane3D(Vec3 const& point, Plane3 const& plane)
+{
+    return plane.GetNearestPoint(point);
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 GetNearestPointOnOBB3D(Vec3 const& point, OBB3 const& obb3)
+{
+    return obb3.GetNearestPoint(point);
 }
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------

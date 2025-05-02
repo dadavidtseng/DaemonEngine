@@ -134,6 +134,7 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideAABB3D(Vec3 const& point, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
 bool IsPointInsideZCylinder3D(Vec3 const& point, Vec3 const& cylinderStartPosition, Vec3 const& cylinderEndPosition, float cylinderRadius);
+bool IsPointInsideOBB3D( Vec3 const& point, OBB3 const& obb3 );
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
@@ -148,6 +149,8 @@ Vec2 GetNearestPointOnCapsule2D(Vec2 const& point, Vec2 const& capsuleStartPosit
 Vec3 GetNearestPointOnAABB3D(Vec3 const& point, AABB3 const& aabb3);
 Vec3 GetNearestPointOnSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 Vec3 GetNearestPointOnZCylinder3D(Vec3 const& point, Vec3 const& cylinderStartPosition, Vec3 const& cylinderEndPosition, float cylinderRadius);
+Vec3 GetNearestPointOnPlane3D(Vec3 const& point, Plane3 const& plane);
+Vec3 GetNearestPointOnOBB3D(Vec3 const& point, OBB3 const& obb3);
 
 //-End-of-Get-Nearest-Point-Utilities-----------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------

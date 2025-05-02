@@ -9,7 +9,7 @@
 //----------------------------------------------------------------------------------------------------
 struct OBB3
 {
-    OBB3();
+    OBB3() = default;
     OBB3(Vec3 const& center, Vec3 const& halfDimensions, Vec3 const& iBasis, Vec3 const& jBasis, Vec3 const& kBasis);
     ~OBB3() = default;
 

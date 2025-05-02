@@ -15,8 +15,8 @@ struct Plane3
 
     /// Get the point on plane nearest to origin(0,0,0)
     Vec3  GetOriginPoint() const;
-    float GetAltitudeOfPoint(Vec3 const& refPoint) const;
-    Vec3  GetNearestPoint(Vec3 const& refPoint) const;
+    float GetAltitudeOfPoint(Vec3 const& point) const;
+    Vec3  GetNearestPoint(Vec3 const& point) const;
     void  Translate(Vec3 const& translationToApply);
 
     Vec3  m_normal             = Vec3::Z_BASIS;

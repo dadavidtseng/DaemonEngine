@@ -13,6 +13,7 @@
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/LineSegment2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Renderer/Window.hpp"
 
@@ -320,6 +321,66 @@ void AddVertsForOBB2D(VertexList_PCU& verts,
 }
 
 //----------------------------------------------------------------------------------------------------
+void AddVertsForOBB3D(VertexList_PCU& verts,
+                      OBB3 const&     obb3,
+                      Rgba8 const&    color,
+                      AABB2 const&    UVs)
+{
+    Vec3 minXminYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXminYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXmaxYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXmaxYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXminYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXminYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXmaxYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    AddVertsForQuad3D(verts,maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, minXmaxYminZ, minXminYminZ, minXmaxYmaxZ, minXminYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, minXminYminZ, maxXminYminZ, minXminYmaxZ, maxXminYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, maxXmaxYminZ, minXmaxYminZ,maxXmaxYmaxZ, minXmaxYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, maxXminYmaxZ, maxXmaxYmaxZ, minXminYmaxZ, minXmaxYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, minXminYminZ, minXmaxYminZ,maxXminYminZ, maxXmaxYminZ, color, UVs);
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForWireframeOBB3D(VertexList_PCU& verts,
+                           OBB3 const&     obb3,
+                           Rgba8 const&    color)
+{
+    Vec3 minXminYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXminYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXmaxYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 minXmaxYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXminYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXminYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXmaxYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
+        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    float diagonalLength = 2.f * obb3.m_halfDimensions.GetLength();
+    AddVertsForWireframeQuad3D(verts, minXminYmaxZ, maxXminYmaxZ, maxXmaxYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXmaxYminZ, maxXmaxYminZ, maxXminYminZ, minXminYminZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXmaxYmaxZ, maxXminYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXmaxYminZ, minXminYminZ, minXminYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, maxXmaxYminZ, minXmaxYminZ, minXmaxYmaxZ, maxXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXminYminZ, maxXminYminZ, maxXminYmaxZ, minXminYmaxZ, diagonalLength / 200.f, color);
+}
+
+//----------------------------------------------------------------------------------------------------
 void AddVertsForCapsule2D(VertexList_PCU& verts,
                           Vec2 const&     capsuleStartPosition,
                           Vec2 const&     capsuleEndPosition,
@@ -445,26 +506,26 @@ void AddVertsForQuad3D(VertexList_PCU& verts,
 }
 
 void AddVertsForQuad3D(VertexList_PCUTBN& verts,
-    Vec3 const& bottomLeft,
-    Vec3 const& bottomRight,
-    Vec3 const& topLeft,
-    Vec3 const& topRight,
-    Rgba8 const& color,
-    AABB2 const& UVs)
+                       Vec3 const&        bottomLeft,
+                       Vec3 const&        bottomRight,
+                       Vec3 const&        topLeft,
+                       Vec3 const&        topRight,
+                       Rgba8 const&       color,
+                       AABB2 const&       UVs)
 {
-    Vec3 middleTop = (topRight + topLeft) * 0.5f;
+    Vec3 middleTop    = (topRight + topLeft) * 0.5f;
     Vec3 middleBottom = (bottomRight + bottomLeft) * 0.5f;
-    Vec3 normal = CrossProduct3D( bottomRight - bottomLeft, topLeft - bottomLeft ).GetNormalized();
+    Vec3 normal       = CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized();
 
     // Starting at BL, add triangle A with vertexes BL, BR, TR.
-    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
 
     // Starting again at BL, add triangle B with vertexes BL, TR, TL.
-    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y),Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y),Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -505,24 +566,23 @@ void AddVertsForRoundedQuad3D(VertexList_PCUTBN& verts,
                               Rgba8 const&       color,
                               AABB2 const&       UVs)
 {
-    Vec3 middleTop = (topRight + topLeft) * 0.5f;
+    Vec3 middleTop    = (topRight + topLeft) * 0.5f;
     Vec3 middleBottom = (bottomRight + bottomLeft) * 0.5f;
-    Vec3 normal = CrossProduct3D( bottomRight - bottomLeft, topLeft - bottomLeft ).GetNormalized();
-    verts.emplace_back( bottomLeft, color, UVs.m_mins,Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized() );
-    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,normal );
-    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
-    verts.emplace_back( bottomLeft, color, UVs.m_mins,Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized() );
-    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
-    verts.emplace_back( topLeft, color, Vec2( UVs.m_mins.x, UVs.m_maxs.y ), Vec3::ZERO, Vec3::ZERO,(topLeft - topRight).GetNormalized() );
+    Vec3 normal       = CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized();
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized());
+    verts.emplace_back(middleBottom, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(middleTop, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, Vec3::ZERO, Vec3::ZERO, (bottomLeft - bottomRight).GetNormalized());
+    verts.emplace_back(middleTop, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, (topLeft - topRight).GetNormalized());
 
 
-    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,normal );
-    verts.emplace_back( bottomRight, color, Vec2( UVs.m_maxs.x, UVs.m_mins.y ), Vec3::ZERO, Vec3::ZERO,(bottomRight - bottomLeft).GetNormalized() );
-    verts.emplace_back( topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO,(topRight - topLeft).GetNormalized() );
-    verts.emplace_back( middleBottom, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y ),Vec3::ZERO, Vec3::ZERO, normal );
-    verts.emplace_back( topRight, color, UVs.m_maxs,Vec3::ZERO, Vec3::ZERO, (topRight - topLeft).GetNormalized() );
-    verts.emplace_back( middleTop, color, Vec2( (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y ),Vec3::ZERO, Vec3::ZERO, normal );
-
+    verts.emplace_back(middleBottom, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, (bottomRight - bottomLeft).GetNormalized());
+    verts.emplace_back(topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO, (topRight - topLeft).GetNormalized());
+    verts.emplace_back(middleBottom, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
+    verts.emplace_back(topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO, (topRight - topLeft).GetNormalized());
+    verts.emplace_back(middleTop, color, Vec2((UVs.m_mins.x + UVs.m_maxs.x) * 0.5f, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
 }
 
 //----------------------------------------------------------------------------------------------------
