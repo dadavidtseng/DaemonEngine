@@ -524,21 +524,57 @@ bool DoSphereAndPlaneOverlap3D(Vec3 const&   sphereCenter,
                                float         sphereRadius,
                                Plane3 const& plane)
 {
-    return false;
+    float altitude = plane.GetAltitudeOfPoint( sphereCenter );
+    return sphereRadius > abs( altitude );
 }
 
 //----------------------------------------------------------------------------------------------------
 bool DoAABB3AndPlaneOverlap3D(AABB3 const&  aabb3,
                               Plane3 const& plane)
 {
-    return false;
+    // reference: unreal engine source code
+    /*
+    * If the point positively farthest to the plane is below the plane
+    * or negatively farthest to the plane is above the plane, then there is no intersection
+    * So get the max and min point
+    */
+    Vec3 planeRelativeMin, planeRelativeMax;
+    float* planeRelativeMinPtr = (float*)&planeRelativeMin;
+    float* planeRelativeMaxPtr = (float*)&planeRelativeMax;
+
+    float const* aabbMinPtr = (float*)&aabb3.m_mins;
+    float const* aabbMaxPtr = (float*)&aabb3.m_maxs;
+    float const* planeNormalPtr = (float*)&plane.m_normal;
+
+    for (int i = 0; i < 3; i++) {
+        if (planeNormalPtr[i] > 0.f) {
+            planeRelativeMinPtr[i] = aabbMinPtr[i];
+            planeRelativeMaxPtr[i] = aabbMaxPtr[i];
+        }
+        else {
+            planeRelativeMinPtr[i] = aabbMaxPtr[i];
+            planeRelativeMaxPtr[i] = aabbMinPtr[i];
+        }
+    }
+
+    float distanceMax = plane.GetAltitudeOfPoint( planeRelativeMax );
+    float distanceMin = plane.GetAltitudeOfPoint( planeRelativeMin );
+    if (distanceMax <= 0.f || distanceMin >= 0.f) {
+        return false;
+    }
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool DoOBB3AndPlaneOverlap3D(OBB3 const&   obb3,
                              Plane3 const& plane)
 {
-    return false;
+    Plane3 tempPlane( plane.m_normal, plane.m_distanceFromOrigin );
+    tempPlane.Translate( -obb3.m_center );
+    tempPlane.m_normal = Vec3( DotProduct3D( plane.m_normal, obb3.m_iBasis ), DotProduct3D( plane.m_normal, obb3.m_jBasis ), DotProduct3D( plane.m_normal, obb3.m_kBasis ) );
+
+    AABB3 localBox = AABB3( -obb3.m_halfDimensions, obb3.m_halfDimensions );
+    return DoAABB3AndPlaneOverlap3D( localBox, tempPlane );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -939,10 +975,17 @@ bool IsPointInsideAABB3D(Vec3 const& point,
         point.z <= aabb3Maxs.z;
 }
 
+/// @brief Checks whether a point is inside the given 3D ZCylinder.
+/// @param point The reference point.
+/// @param cylinderStartPosition
+/// @param cylinderEndPosition
+/// @param cylinderRadius
+/// @return True if the point is inside the ZCylinder3D; false otherwise.
 //----------------------------------------------------------------------------------------------------
 bool IsPointInsideZCylinder3D(Vec3 const& point,
                               Vec3 const& cylinderStartPosition,
-                              Vec3 const& cylinderEndPosition, float cylinderRadius)
+                              Vec3 const& cylinderEndPosition,
+                              float const cylinderRadius)
 {
     Vec3 const cylinderCenterPosition   = (cylinderStartPosition + cylinderEndPosition) * 0.5f;
     Vec2 const cylinderCenterPositionXY = Vec2(cylinderCenterPosition.x, cylinderCenterPosition.y);
@@ -954,7 +997,12 @@ bool IsPointInsideZCylinder3D(Vec3 const& point,
         point.z < cylinderEndPosition.z;
 }
 
-bool IsPointInsideOBB3D(Vec3 const& point, OBB3 const& obb3)
+/// @brief Checks whether a point is inside the given 3D oriented bounding box (OBB).
+/// @param point The 3D position to test.
+/// @param obb3 The oriented bounding box to check against.
+/// @return True if the point is inside the OBB; false otherwise.
+bool IsPointInsideOBB3D(Vec3 const& point,
+                        OBB3 const& obb3)
 {
     return obb3.IsPointInside(point);
 }

@@ -9,6 +9,8 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 
+struct Plane3;
+struct OBB3;
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct FloatRange;
 
@@ -94,3 +96,5 @@ RaycastResult2D RaycastVsAABB2D(Vec2 const& rayStartPosition, Vec2 const& rayFor
 RaycastResult3D RaycastVsSphere3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& sphereCenter, float sphereRadius);
 RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
 RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec2 const& cylinderCenterXY, FloatRange const& cylinderMinMaxZ, float cylinderRadius);
+RaycastResult3D RaycastVsOBB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, OBB3 const& obb3);
+RaycastResult3D RaycastVsPlane3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Plane3 const& plane3);

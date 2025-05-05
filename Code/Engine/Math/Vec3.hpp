@@ -4,8 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Vec2.hpp"
 
+//-Forward-Declaration--------------------------------------------------------------------------------
+struct Vec2;
 struct EulerAngles;
 
 //----------------------------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ struct Vec3
     Vec3 const GetClamped(float maxLength) const;
     Vec3 const GetNormalized() const;
     void       GetOrthonormalBasis(Vec3 const& iBasis, Vec3* jBasis, Vec3* kBasis) const;
-    Vec2  GetXY() const;
+    Vec2       GetXY() const;
 
     void SetFromText(char const* text);
 

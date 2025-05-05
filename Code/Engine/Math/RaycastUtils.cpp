@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Mat44.hpp"
+#include "OBB3.hpp"
+#include "Plane3.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -742,6 +745,84 @@ RaycastResult3D RaycastVsCylinderZ3D(Vec3 const&       rayStartPosition,
     result.m_impactPosition = impactPosition;
     result.m_impactNormal   = Vec3(result2D.m_impactNormal.x, result2D.m_impactNormal.y, 0.f);
     result.m_impactLength   = rayImpactLength;
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+RaycastResult3D RaycastVsOBB3D(Vec3 const& rayStartPosition,
+                               Vec3 const& rayForwardNormal,
+                               float const maxLength,
+                               OBB3 const& obb3)
+{
+    // 1. Initialize raycastResult3D.
+    RaycastResult3D result;
+    result.m_rayStartPosition = rayStartPosition;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxLength;
+
+    Mat44 obb3Matrix(obb3.m_iBasis, obb3.m_jBasis, obb3.m_kBasis, obb3.m_center);
+    Mat44 transformMatrix = obb3Matrix.GetOrthonormalInverse();
+    AABB3 localAABB3(-obb3.m_halfDimensions, obb3.m_halfDimensions);
+    Vec3  newStartPos      = transformMatrix.TransformPosition3D(rayStartPosition);
+    Vec3  newForwardNormal = transformMatrix.TransformVectorQuantity3D(rayForwardNormal);
+
+    result = RaycastVsAABB3D(newStartPos, newForwardNormal, maxLength, localAABB3.m_mins, localAABB3.m_maxs);
+
+    if (!result.m_didImpact)
+    {
+        return result;
+    }
+
+    result.m_impactNormal     = obb3Matrix.TransformVectorQuantity3D(result.m_impactNormal);
+    result.m_impactPosition   = obb3Matrix.TransformPosition3D(result.m_impactPosition);
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayStartPosition = rayStartPosition;
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+RaycastResult3D RaycastVsPlane3D(Vec3 const&   rayStartPosition,
+                                 Vec3 const&   rayForwardNormal,
+                                 float const   maxLength,
+                                 Plane3 const& plane3)
+{
+    RaycastResult3D result;
+    result.m_rayStartPosition = rayStartPosition;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxLength;
+
+    Vec3 endPos = rayStartPosition + rayForwardNormal * maxLength;
+
+    float startPosAltitude = plane3.GetAltitudeOfPoint(rayStartPosition);
+    float endPosAltitude   = plane3.GetAltitudeOfPoint(endPos);
+
+    // all on one side of the plane
+    if ((startPosAltitude <= 0.f && endPosAltitude <= 0.f) || (startPosAltitude >= 0.f && endPosAltitude >= 0.f))
+    {
+        return result;
+    }
+
+    // start from the back side of the plane, so hit the back side and the normal is negative
+    if (startPosAltitude < 0.f)
+    {
+        result.m_impactNormal = -plane3.m_normal;
+    }
+    else
+    {
+        result.m_impactNormal = plane3.m_normal;
+    }
+
+    startPosAltitude = abs(startPosAltitude);
+    endPosAltitude   = abs(endPosAltitude);
+
+    result.m_didImpact      = true;
+    result.m_impactLength   = maxLength * (startPosAltitude / (startPosAltitude + endPosAltitude));
+    result.m_impactPosition = rayStartPosition + rayForwardNormal * result.m_impactLength;
+
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxLength;
+    result.m_rayStartPosition = rayStartPosition;
 
     return result;
 }
