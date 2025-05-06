@@ -792,10 +792,10 @@ RaycastResult3D RaycastVsPlane3D(Vec3 const&   rayStartPosition,
     result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayMaxLength     = maxLength;
 
-    Vec3 endPos = rayStartPosition + rayForwardNormal * maxLength;
+    Vec3 const rayEndPosition = rayStartPosition + rayForwardNormal * maxLength;
 
     float startPosAltitude = plane3.GetAltitudeOfPoint(rayStartPosition);
-    float endPosAltitude   = plane3.GetAltitudeOfPoint(endPos);
+    float endPosAltitude   = plane3.GetAltitudeOfPoint(rayEndPosition);
 
     // all on one side of the plane
     if ((startPosAltitude <= 0.f && endPosAltitude <= 0.f) || (startPosAltitude >= 0.f && endPosAltitude >= 0.f))

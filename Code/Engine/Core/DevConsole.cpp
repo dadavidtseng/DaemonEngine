@@ -155,7 +155,8 @@ void DevConsole::AddLine(Rgba8 const& color, String const& text)
 // camera being used to render. The current input line renders at the bottom with all other
 // lines rendered above it, with the most recent lines at the bottom.
 //
-void DevConsole::Render(AABB2 const& bounds, Renderer* rendererOverride)
+void DevConsole::Render(AABB2 const& bounds,
+                        Renderer*    rendererOverride)
 {
     if (rendererOverride == nullptr)
     {

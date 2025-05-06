@@ -188,6 +188,7 @@ Mat44 Camera::GetProjectionMatrix() const
 //----------------------------------------------------------------------------------------------------
 AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 {
+    UNUSED(space)
     return m_viewPort;
 }
 

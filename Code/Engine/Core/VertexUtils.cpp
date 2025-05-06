@@ -342,18 +342,19 @@ void AddVertsForOBB3D(VertexList_PCU& verts,
         obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
         obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
-    AddVertsForQuad3D(verts,maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, color, UVs);
+
+    AddVertsForQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, color, UVs);
     AddVertsForQuad3D(verts, minXmaxYminZ, minXminYminZ, minXmaxYmaxZ, minXminYmaxZ, color, UVs);
     AddVertsForQuad3D(verts, minXminYminZ, maxXminYminZ, minXminYmaxZ, maxXminYmaxZ, color, UVs);
-    AddVertsForQuad3D(verts, maxXmaxYminZ, minXmaxYminZ,maxXmaxYmaxZ, minXmaxYmaxZ, color, UVs);
+    AddVertsForQuad3D(verts, maxXmaxYminZ, minXmaxYminZ, maxXmaxYmaxZ, minXmaxYmaxZ, color, UVs);
     AddVertsForQuad3D(verts, maxXminYmaxZ, maxXmaxYmaxZ, minXminYmaxZ, minXmaxYmaxZ, color, UVs);
-    AddVertsForQuad3D(verts, minXminYminZ, minXmaxYminZ,maxXminYminZ, maxXmaxYminZ, color, UVs);
+    AddVertsForQuad3D(verts, minXminYminZ, minXmaxYminZ, maxXminYminZ, maxXmaxYminZ, color, UVs);
 }
 
 //----------------------------------------------------------------------------------------------------
 void AddVertsForWireframeOBB3D(VertexList_PCU& verts,
-                           OBB3 const&     obb3,
-                           Rgba8 const&    color)
+                               OBB3 const&     obb3,
+                               Rgba8 const&    color)
 {
     Vec3 minXminYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
         obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
@@ -372,12 +373,13 @@ void AddVertsForWireframeOBB3D(VertexList_PCU& verts,
     Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
         obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     float diagonalLength = 2.f * obb3.m_halfDimensions.GetLength();
-    AddVertsForWireframeQuad3D(verts, minXminYmaxZ, maxXminYmaxZ, maxXmaxYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
-    AddVertsForWireframeQuad3D(verts, minXmaxYminZ, maxXmaxYminZ, maxXminYminZ, minXminYminZ, diagonalLength / 200.f, color);
-    AddVertsForWireframeQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXmaxYmaxZ, maxXminYmaxZ, diagonalLength / 200.f, color);
-    AddVertsForWireframeQuad3D(verts, minXmaxYminZ, minXminYminZ, minXminYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
-    AddVertsForWireframeQuad3D(verts, maxXmaxYminZ, minXmaxYminZ, minXmaxYmaxZ, maxXmaxYmaxZ, diagonalLength / 200.f, color);
-    AddVertsForWireframeQuad3D(verts, minXminYminZ, maxXminYminZ, maxXminYmaxZ, minXminYmaxZ, diagonalLength / 200.f, color);
+
+    AddVertsForWireframeQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXmaxYminZ, minXminYminZ, minXmaxYmaxZ, minXminYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXminYminZ, maxXminYminZ, minXminYmaxZ, maxXminYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, maxXmaxYminZ, minXmaxYminZ, maxXmaxYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, maxXminYmaxZ, maxXmaxYmaxZ, minXminYmaxZ, minXmaxYmaxZ, diagonalLength / 200.f, color);
+    AddVertsForWireframeQuad3D(verts, minXminYminZ, minXmaxYminZ, maxXminYminZ, maxXmaxYminZ, diagonalLength / 200.f, color);
 }
 
 //----------------------------------------------------------------------------------------------------

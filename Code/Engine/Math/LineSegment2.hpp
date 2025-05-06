@@ -12,10 +12,10 @@ struct LineSegment2
     Vec2  m_startPosition = Vec2::ZERO;
     Vec2  m_endPosition   = Vec2::ZERO;
     float m_thickness     = 0.f;
-    bool  m_isInfinite    = false;
+    bool  m_bIsInfinite    = false;
 
     LineSegment2() = default;
-    explicit LineSegment2(Vec2 const& startPosition, Vec2 const& endPosition, float thickness, bool isInfinite);
+    explicit LineSegment2(Vec2 const& startPosition, Vec2 const& endPosition, float thickness, bool bIsInfinite);
 
     // Accessors (const methods)
     float GetLength() const;

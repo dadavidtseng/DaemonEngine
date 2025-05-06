@@ -106,10 +106,10 @@ bool DoSphereAndZCylinderOverlap3D(Vec3 const& sphereCenter, float sphereRadius,
 bool DoAABB3sOverlap3D(AABB3 const& first, AABB3 const& second);
 bool DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb3, Vec2 const& cylinderCenterXY, float cylinderRadius, FloatRange const& cylinderMinMaxZ);
 bool DoZCylindersOverlap3D(Vec2 const& cylinder1CenterXY, float cylinder1Radius, FloatRange const& cylinder1MinMaxZ, Vec2 const& cylinder2CenterXY, float cylinder2Radius, FloatRange const& cylinder2MinMaxZ);
-bool DoSphereAndOBB3Overlap3D(Vec3 const& sphereCenter, float sphereRadius, OBB3 const& obb);
-bool DoSphereAndPlaneOverlap3D(Vec3 const& sphereCenter, float sphereRadius, Plane3 const& plane);
-bool DoAABB3AndPlaneOverlap3D(AABB3 const& aabb3, Plane3 const& plane);
-bool DoOBB3AndPlaneOverlap3D(OBB3 const& obb3, Plane3 const& plane);
+bool DoSphereAndOBB3Overlap3D(Vec3 const& sphereCenter, float sphereRadius, OBB3 const& obb3);
+bool DoSphereAndPlaneOverlap3D(Vec3 const& sphereCenter, float sphereRadius, Plane3 const& plane3);
+bool DoAABB3AndPlane3Overlap3D(AABB3 const& aabb3, Plane3 const& plane3);
+bool DoOBB3AndPlane3Overlap3D(OBB3 const& obb3, Plane3 const& plane3);
 bool PushDiscOutOfPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool PushDiscOutOfDisc2D(Vec2& mobileDiscCenter, float mobileDiscRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius);
@@ -134,7 +134,7 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius);
 bool IsPointInsideAABB3D(Vec3 const& point, Vec3 const& aabb3Mins, Vec3 const& aabb3Maxs);
 bool IsPointInsideZCylinder3D(Vec3 const& point, Vec3 const& cylinderStartPosition, Vec3 const& cylinderEndPosition, float cylinderRadius);
-bool IsPointInsideOBB3D( Vec3 const& point, OBB3 const& obb3 );
+bool IsPointInsideOBB3D(Vec3 const& point, OBB3 const& obb3);
 
 //-End-of-Is-Point-Inside-Utilities-------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
@@ -182,13 +182,16 @@ float SmoothStart3(float t);
 float SmoothStart4(float t);
 float SmoothStart5(float t);
 float SmoothStart6(float t);
+float SmoothStartN(float t, int n);
 float SmoothStop2(float t);
 float SmoothStop3(float t);
 float SmoothStop4(float t);
 float SmoothStop5(float t);
 float SmoothStop6(float t);
+float SmoothStopN(float t, int n);
 float SmoothStep3(float t);
 float SmoothStep5(float t);
+float SmoothStep6(float t);
 float Hesitate3(float t);
 float Hesitate5(float t);
 float CustomFunkyEasingFunction(float t);

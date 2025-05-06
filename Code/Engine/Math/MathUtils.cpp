@@ -513,24 +513,24 @@ bool DoZCylindersOverlap3D(Vec2 const&       cylinder1CenterXY,
 //----------------------------------------------------------------------------------------------------
 bool DoSphereAndOBB3Overlap3D(Vec3 const& sphereCenter,
                               float       sphereRadius,
-                              OBB3 const& obb)
+                              OBB3 const& obb3)
 {
-    Vec3 nearestPoint = GetNearestPointOnOBB3D(sphereCenter, obb);
+    Vec3 nearestPoint = GetNearestPointOnOBB3D(sphereCenter, obb3);
     return IsPointInsideSphere3D(nearestPoint, sphereCenter, sphereRadius);
 }
 
 //----------------------------------------------------------------------------------------------------
 bool DoSphereAndPlaneOverlap3D(Vec3 const&   sphereCenter,
                                float         sphereRadius,
-                               Plane3 const& plane)
+                               Plane3 const& plane3)
 {
-    float altitude = plane.GetAltitudeOfPoint( sphereCenter );
-    return sphereRadius > abs( altitude );
+    float altitude = plane3.GetAltitudeOfPoint(sphereCenter);
+    return sphereRadius > abs(altitude);
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DoAABB3AndPlaneOverlap3D(AABB3 const&  aabb3,
-                              Plane3 const& plane)
+bool DoAABB3AndPlane3Overlap3D(AABB3 const&  aabb3,
+                               Plane3 const& plane3)
 {
     // reference: unreal engine source code
     /*
@@ -538,43 +538,47 @@ bool DoAABB3AndPlaneOverlap3D(AABB3 const&  aabb3,
     * or negatively farthest to the plane is above the plane, then there is no intersection
     * So get the max and min point
     */
-    Vec3 planeRelativeMin, planeRelativeMax;
+    Vec3   planeRelativeMin, planeRelativeMax;
     float* planeRelativeMinPtr = (float*)&planeRelativeMin;
     float* planeRelativeMaxPtr = (float*)&planeRelativeMax;
 
-    float const* aabbMinPtr = (float*)&aabb3.m_mins;
-    float const* aabbMaxPtr = (float*)&aabb3.m_maxs;
-    float const* planeNormalPtr = (float*)&plane.m_normal;
+    float const* aabbMinPtr     = (float*)&aabb3.m_mins;
+    float const* aabbMaxPtr     = (float*)&aabb3.m_maxs;
+    float const* planeNormalPtr = (float*)&plane3.m_normal;
 
-    for (int i = 0; i < 3; i++) {
-        if (planeNormalPtr[i] > 0.f) {
+    for (int i = 0; i < 3; i++)
+    {
+        if (planeNormalPtr[i] > 0.f)
+        {
             planeRelativeMinPtr[i] = aabbMinPtr[i];
             planeRelativeMaxPtr[i] = aabbMaxPtr[i];
         }
-        else {
+        else
+        {
             planeRelativeMinPtr[i] = aabbMaxPtr[i];
             planeRelativeMaxPtr[i] = aabbMinPtr[i];
         }
     }
 
-    float distanceMax = plane.GetAltitudeOfPoint( planeRelativeMax );
-    float distanceMin = plane.GetAltitudeOfPoint( planeRelativeMin );
-    if (distanceMax <= 0.f || distanceMin >= 0.f) {
+    float distanceMax = plane3.GetAltitudeOfPoint(planeRelativeMax);
+    float distanceMin = plane3.GetAltitudeOfPoint(planeRelativeMin);
+    if (distanceMax <= 0.f || distanceMin >= 0.f)
+    {
         return false;
     }
     return true;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool DoOBB3AndPlaneOverlap3D(OBB3 const&   obb3,
-                             Plane3 const& plane)
+bool DoOBB3AndPlane3Overlap3D(OBB3 const&   obb3,
+                              Plane3 const& plane3)
 {
-    Plane3 tempPlane( plane.m_normal, plane.m_distanceFromOrigin );
-    tempPlane.Translate( -obb3.m_center );
-    tempPlane.m_normal = Vec3( DotProduct3D( plane.m_normal, obb3.m_iBasis ), DotProduct3D( plane.m_normal, obb3.m_jBasis ), DotProduct3D( plane.m_normal, obb3.m_kBasis ) );
+    Plane3 tempPlane(plane3.m_normal, plane3.m_distanceFromOrigin);
+    tempPlane.Translate(-obb3.m_center);
+    tempPlane.m_normal = Vec3(DotProduct3D(plane3.m_normal, obb3.m_iBasis), DotProduct3D(plane3.m_normal, obb3.m_jBasis), DotProduct3D(plane3.m_normal, obb3.m_kBasis));
 
-    AABB3 localBox = AABB3( -obb3.m_halfDimensions, obb3.m_halfDimensions );
-    return DoAABB3AndPlaneOverlap3D( localBox, tempPlane );
+    AABB3 localBox = AABB3(-obb3.m_halfDimensions, obb3.m_halfDimensions);
+    return DoAABB3AndPlane3Overlap3D(localBox, tempPlane);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -962,26 +966,12 @@ bool IsPointInsideSphere3D(Vec3 const& point,
 }
 
 //----------------------------------------------------------------------------------------------------
-bool IsPointInsideAABB3D(Vec3 const& point,
-                         Vec3 const& aabb3Mins,
-                         Vec3 const& aabb3Maxs)
-{
-    return
-        point.x >= aabb3Mins.x &&
-        point.x <= aabb3Maxs.x &&
-        point.y >= aabb3Mins.y &&
-        point.y <= aabb3Maxs.y &&
-        point.z >= aabb3Mins.z &&
-        point.z <= aabb3Maxs.z;
-}
-
 /// @brief Checks whether a point is inside the given 3D ZCylinder.
 /// @param point The reference point.
 /// @param cylinderStartPosition
 /// @param cylinderEndPosition
 /// @param cylinderRadius
 /// @return True if the point is inside the ZCylinder3D; false otherwise.
-//----------------------------------------------------------------------------------------------------
 bool IsPointInsideZCylinder3D(Vec3 const& point,
                               Vec3 const& cylinderStartPosition,
                               Vec3 const& cylinderEndPosition,
@@ -997,6 +987,20 @@ bool IsPointInsideZCylinder3D(Vec3 const& point,
         point.z < cylinderEndPosition.z;
 }
 
+bool IsPointInsideAABB3D(Vec3 const& point,
+                         Vec3 const& aabb3Mins,
+                         Vec3 const& aabb3Maxs)
+{
+    return
+        point.x >= aabb3Mins.x &&
+        point.x <= aabb3Maxs.x &&
+        point.y >= aabb3Mins.y &&
+        point.y <= aabb3Maxs.y &&
+        point.z >= aabb3Mins.z &&
+        point.z <= aabb3Maxs.z;
+}
+
+//----------------------------------------------------------------------------------------------------
 /// @brief Checks whether a point is inside the given 3D oriented bounding box (OBB).
 /// @param point The 3D position to test.
 /// @param obb3 The oriented bounding box to check against.
@@ -1017,7 +1021,7 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& point,
                              float const discRadius)
 {
     // 1. If the point is inside the disc, return the point itself.
-    if (IsPointInsideDisc2D(point, discCenter, discRadius) == true)
+    if (IsPointInsideDisc2D(point, discCenter, discRadius))
     {
         return point;
     }
@@ -1448,31 +1452,51 @@ float ComputeQuinticBezier1D(float const A,
     return Interpolate(AE, BF, t);
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStart2(float const t)
 {
     return t * t;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStart3(float const t)
 {
     return t * t * t;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStart4(float const t)
 {
     return t * t * t * t;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStart5(float const t)
 {
     return t * t * t * t * t;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStart6(float const t)
 {
     return t * t * t * t * t * t;
 }
 
+//----------------------------------------------------------------------------------------------------
+float SmoothStartN(float const t,
+                   int const   n)
+{
+    float result = 1.f;
+
+    for (int i = 0; i < n; ++i)
+    {
+        result *= t;
+    }
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
 float SmoothStop2(float const t)
 {
     float const inverseT = 1.f - t;
@@ -1480,6 +1504,7 @@ float SmoothStop2(float const t)
     return 1.f - inverseT * inverseT;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStop3(float const t)
 {
     float const inverseT = 1.f - t;
@@ -1487,6 +1512,7 @@ float SmoothStop3(float const t)
     return 1.f - inverseT * inverseT * inverseT;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStop4(float const t)
 {
     float const inverseT = 1.f - t;
@@ -1494,6 +1520,7 @@ float SmoothStop4(float const t)
     return 1.f - inverseT * inverseT * inverseT * inverseT;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStop5(float const t)
 {
     float const inverseT = 1.f - t;
@@ -1501,11 +1528,27 @@ float SmoothStop5(float const t)
     return 1.f - inverseT * inverseT * inverseT * inverseT * inverseT;
 }
 
+//----------------------------------------------------------------------------------------------------
 float SmoothStop6(float const t)
 {
     float const inverseT = 1.f - t;
 
     return 1.f - inverseT * inverseT * inverseT * inverseT * inverseT * inverseT;
+}
+
+//----------------------------------------------------------------------------------------------------
+float SmoothStopN(float const t,
+                  int const   n)
+{
+    float const inverseT = 1.f - t;
+    float       result   = 1.f;
+
+    for (int i = 0; i < n; ++i)
+    {
+        result *= inverseT;
+    }
+
+    return 1.f - result;
 }
 
 float SmoothStep3(float const t)
@@ -1528,8 +1571,10 @@ float Hesitate5(float const t)
     return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
 }
 
+//----------------------------------------------------------------------------------------------------
+
 float CustomFunkyEasingFunction(float const t)
 {
-    if (t < 0.8f) return SmoothStart3(t); // 正常加速
-    else return 1.f - 0.1f * (1.f - t); // 突然反彈減速
+    if (t < 0.8f) return SmoothStart3(t);
+    return 1.f - 0.1f * (1.f - t);
 }

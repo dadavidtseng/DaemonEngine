@@ -11,11 +11,11 @@
 LineSegment2::LineSegment2(Vec2 const& startPosition,
                            Vec2 const& endPosition,
                            float const thickness,
-                           bool const  isInfinite)
+                           bool const  bIsInfinite)
     : m_startPosition(startPosition),
       m_endPosition(endPosition),
       m_thickness(thickness),
-      m_isInfinite(isInfinite)
+      m_bIsInfinite(bIsInfinite)
 {
 }
 
@@ -49,7 +49,7 @@ Vec2 LineSegment2::GetNearestPoint(Vec2 const& point) const
     float const t            = DotProduct2D(startToPoint, startToEnd) / startToEndLengthSquared;
 
     // 4. If the line is infinite, return the nearest point on the infinite line.
-    if (m_isInfinite == true)
+    if (m_bIsInfinite)
     {
         return m_startPosition + t * startToEnd;
     }
