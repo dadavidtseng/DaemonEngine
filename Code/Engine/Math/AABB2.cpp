@@ -3,13 +3,13 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
+#include <algorithm>
+
 #include "Engine/Math/AABB2.hpp"
 
-#include "RandomNumberGenerator.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Game/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC AABB2 AABB2::ZERO_TO_ONE      = AABB2(Vec2(0.f, 0.f), Vec2(1.f, 1.f));
@@ -111,15 +111,6 @@ Vec2 AABB2::GetUVForPoint(Vec2 const& pointPos) const
 }
 
 //----------------------------------------------------------------------------------------------------
-Vec2 AABB2::GetRandomPointInBounds() const
-{
-    float const randomX = g_theRNG->RollRandomFloatInRange(m_mins.x, m_maxs.x);
-    float const randomY = g_theRNG->RollRandomFloatInRange(m_mins.y, m_maxs.y);
-
-    return Vec2(randomX, randomY);
-}
-
-//----------------------------------------------------------------------------------------------------
 float AABB2::GetWidthOverHeightRatios() const
 {
     float const width  = m_maxs.x - m_mins.x;
@@ -149,8 +140,8 @@ void AABB2::SetDimensions(Vec2 const& newDimensions)
     float const deltaX = newDimensions.x - GetDimensions().x;
     float const deltaY = newDimensions.y - GetDimensions().y;
 
-    m_mins -= Vec2(deltaX / 2, deltaY / 2);
-    m_maxs += Vec2(deltaX / 2, deltaY / 2);
+    m_mins -= Vec2(deltaX * 0.5f, deltaY * 0.5f);
+    m_maxs += Vec2(deltaX * 0.5f, deltaY * 0.5f);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -158,13 +149,10 @@ void AABB2::StretchToIncludePoint(Vec2 const& targetPointPos)
 {
     if (IsPointInside(targetPointPos)) return;
 
-    if (targetPointPos.x < m_mins.x) m_mins.x = targetPointPos.x;
-
-    if (targetPointPos.x > m_maxs.x) m_maxs.x = targetPointPos.x;
-
-    if (targetPointPos.y < m_mins.y) m_mins.y = targetPointPos.y;
-
-    if (targetPointPos.y > m_maxs.y) m_maxs.y = targetPointPos.y;
+    m_mins.x = std::min(targetPointPos.x, m_mins.x);
+    m_mins.y = std::min(targetPointPos.y, m_mins.y);
+    m_maxs.x = std::max(targetPointPos.x, m_maxs.x);
+    m_maxs.y = std::max(targetPointPos.y, m_maxs.y);
 }
 
 //----------------------------------------------------------------------------------------------------
