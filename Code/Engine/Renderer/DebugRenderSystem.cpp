@@ -13,13 +13,6 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/GameCommon.hpp"
-
-//----------------------------------------------------------------------------------------------------
-static DebugRenderConfig m_debugRenderConfig;
-static BitmapFont*       m_debugRenderBitmapFont = nullptr;
-static bool              m_debugRenderIsVisible  = true;
-std::mutex               m_mutex;
 
 //----------------------------------------------------------------------------------------------------
 enum class DebugRenderObjectType : int8_t
@@ -52,15 +45,22 @@ struct DebugRenderObject
     float                 m_textHeight;
     Vec2                  m_alignment;
     Mat44                 m_m2wTransform;
-    DebugRenderMode       m_mode;
+    eDebugRenderMode       m_mode;
     bool                  m_isWireFrame = false;
 };
 
 //----------------------------------------------------------------------------------------------------
-static std::vector<DebugRenderObject*> m_debugRenderObjectList;
+namespace
+{
+    sDebugRenderConfig               m_debugRenderConfig;
+    BitmapFont*                     m_debugRenderBitmapFont = nullptr;
+    bool                            m_debugRenderIsVisible  = true;
+    std::mutex                      m_mutex;
+    std::vector<DebugRenderObject*> m_debugRenderObjectList;
+}
 
 //----------------------------------------------------------------------------------------------------
-void DebugRenderSystemStartup(DebugRenderConfig const& config)
+void DebugRenderSystemStartup(sDebugRenderConfig const& config)
 {
     m_debugRenderConfig.m_renderer = config.m_renderer;
     m_debugRenderConfig.m_fontName = config.m_fontName;
@@ -163,7 +163,7 @@ Rgba8 const DebugRenderGetDebugObjectCurrentColor(DebugRenderObject const* objec
 
     Rgba8 currentColor = Interpolate(object->m_startColor, object->m_endColor, object->m_elapsedTime / object->m_maxElapsedTime);
 
-    if (object->m_mode == DebugRenderMode::X_RAY)
+    if (object->m_mode == eDebugRenderMode::X_RAY)
     {
         currentColor.r = static_cast<unsigned char>(GetClamped(currentColor.r + 50, 0, 255));
         currentColor.g = static_cast<unsigned char>(GetClamped(currentColor.g + 50, 0, 255));
@@ -207,23 +207,23 @@ void DebugRenderWorld(Camera const& camera)
             m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
             m_debugRenderConfig.m_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::DISABLED);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -242,23 +242,23 @@ void DebugRenderWorld(Camera const& camera)
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::DISABLED);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -274,7 +274,7 @@ void DebugRenderWorld(Camera const& camera)
         if (object->m_type == DebugRenderObjectType::WORLD_WIRE_CYLINDER)
         {
             m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
 
             if (object->m_isWireFrame)
@@ -286,21 +286,21 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
             }
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::DISABLED);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -319,7 +319,7 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
             if (object->m_isWireFrame)
             {
@@ -330,21 +330,21 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
             }
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::DISABLED);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
                 m_debugRenderConfig.m_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -362,10 +362,10 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->BindTexture(nullptr);
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
@@ -373,7 +373,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::OPAQUE);
@@ -381,7 +381,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -399,10 +399,10 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
             m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -410,7 +410,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(object->m_m2wTransform, DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -418,7 +418,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -436,9 +436,9 @@ void DebugRenderWorld(Camera const& camera)
         {
             m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
             m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
-            m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+            m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
-            if (object->m_mode == DebugRenderMode::ALWAYS)
+            if (object->m_mode == eDebugRenderMode::ALWAYS)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(GetBillboardMatrix(eBillboardType::FULL_OPPOSING, camera.GetCameraToWorldTransform(), object->m_startPosition), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -446,7 +446,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::USE_DEPTH)
+            if (object->m_mode == eDebugRenderMode::USE_DEPTH)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(GetBillboardMatrix(eBillboardType::FULL_OPPOSING, camera.GetCameraToWorldTransform(), object->m_startPosition), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -454,7 +454,7 @@ void DebugRenderWorld(Camera const& camera)
                 m_debugRenderConfig.m_renderer->DrawVertexArray(static_cast<int>(object->m_vertices.size()), object->m_vertices.data());
             }
 
-            if (object->m_mode == DebugRenderMode::X_RAY)
+            if (object->m_mode == eDebugRenderMode::X_RAY)
             {
                 m_debugRenderConfig.m_renderer->SetModelConstants(Mat44(), DebugRenderGetDebugObjectCurrentColor(object));
                 m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -489,7 +489,7 @@ void DebugRenderScreen(Camera const& camera)
     m_debugRenderConfig.m_renderer->BeginCamera(camera);
 
     m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
-    m_debugRenderConfig.m_renderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
+    m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
     std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b) {
         return a->m_maxElapsedTime < b->m_maxElapsedTime;
@@ -510,7 +510,7 @@ void DebugRenderScreen(Camera const& camera)
             object->m_vertices.clear();
             m_debugRenderBitmapFont->AddVertsForTextInBox2D(object->m_vertices,
                                                             object->m_text,
-                                                            AABB2(Vec2(object->m_startPosition.x, object->m_startPosition.y), Vec2(object->m_startPosition.x, object->m_startPosition.y) + Vec2((float)object->m_text.size() * object->m_textHeight, object->m_textHeight)),
+                                                            AABB2(Vec2(object->m_startPosition.x, object->m_startPosition.y), Vec2(object->m_startPosition.x, object->m_startPosition.y) + Vec2(static_cast<float>(object->m_text.size()) * object->m_textHeight, object->m_textHeight)),
                                                             object->m_textHeight,
                                                             DebugRenderGetDebugObjectCurrentColor(object),
                                                             1.f,
@@ -568,7 +568,7 @@ void DebugAddWorldPoint(Vec3 const&           pos,
                         float const           duration,
                         Rgba8 const&          startColor,
                         Rgba8 const&          endColor,
-                        DebugRenderMode const mode)
+                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_POINT;
@@ -593,7 +593,7 @@ void DebugAddWorldLine(Vec3 const&           startPosition,
                        float const           duration,
                        Rgba8 const&          startColor,
                        Rgba8 const&          endColor,
-                       DebugRenderMode const mode)
+                       eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_LINE;
@@ -619,7 +619,7 @@ void DebugAddWorldCylinder(Vec3 const&           base,
                            bool const            isWireframe,
                            Rgba8 const&          startColor,
                            Rgba8 const&          endColor,
-                           DebugRenderMode const mode)
+                           eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_WIRE_CYLINDER;
@@ -644,7 +644,7 @@ void DebugAddWorldWireSphere(Vec3 const&           center,
                              float const           duration,
                              Rgba8 const&          startColor,
                              Rgba8 const&          endColor,
-                             DebugRenderMode const mode)
+                             eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_WIRE_SPHERE;
@@ -669,7 +669,7 @@ void DebugAddWorldArrow(Vec3 const&           startPosition,
                         float const           duration,
                         Rgba8 const&          startColor,
                         Rgba8 const&          endColor,
-                        DebugRenderMode const mode)
+                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_ARROW;
@@ -696,7 +696,7 @@ void DebugAddWorldText(String const&         text,
                        float const           duration,
                        Rgba8 const&          startColor,
                        Rgba8 const&          endColor,
-                       DebugRenderMode const mode)
+                       eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_TEXT;
@@ -709,7 +709,7 @@ void DebugAddWorldText(String const&         text,
     object->m_endColor        = endColor;
     object->m_mode            = mode;
 
-    g_theBitmapFont->AddVertsForText3DAtOriginXForward(object->m_vertices, text, textHeight, startColor, 1.f, alignment);
+    m_debugRenderBitmapFont->AddVertsForText3DAtOriginXForward(object->m_vertices, text, textHeight, startColor, 1.f, alignment);
     m_mutex.lock();
     DebugRenderAddObjectToList(object);
     m_mutex.unlock();
@@ -723,7 +723,7 @@ void DebugAddBillboardText(String const&         text,
                            float const           duration,
                            Rgba8 const&          startColor,
                            Rgba8 const&          endColor,
-                           DebugRenderMode const mode)
+                           eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::WORLD_BILLBOARD_TEXT;
@@ -734,7 +734,7 @@ void DebugAddBillboardText(String const&         text,
     object->m_isWireFrame     = true;
     object->m_mode            = mode;
 
-    g_theBitmapFont->AddVertsForText3DAtOriginXForward(object->m_vertices, text, textHeight, startColor, 1.f, alignment);
+    m_debugRenderBitmapFont->AddVertsForText3DAtOriginXForward(object->m_vertices, text, textHeight, startColor, 1.f, alignment);
     m_mutex.lock();
     DebugRenderAddObjectToList(object);
     m_mutex.unlock();
@@ -743,7 +743,7 @@ void DebugAddBillboardText(String const&         text,
 //----------------------------------------------------------------------------------------------------
 void DebugAddWorldBasis(Mat44 const&          transform,
                         float const           duration,
-                        DebugRenderMode const mode)
+                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     Vec3 const         origin = transform.GetTranslation3D();
@@ -772,7 +772,7 @@ void DebugAddScreenText(String const&         text,
                         float const           duration,
                         Rgba8 const&          startColor,
                         Rgba8 const&          endColor,
-                        DebugRenderMode const mode)
+                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
     object->m_type            = DebugRenderObjectType::SCREEN_TEXT;
