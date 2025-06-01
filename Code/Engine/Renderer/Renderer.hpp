@@ -87,7 +87,7 @@ enum class eRasterizerMode : int8_t
 };
 
 //----------------------------------------------------------------------------------------------------
-struct CameraConstants
+struct sCameraConstants
 {
     Mat44 WorldToCameraTransform;       // View transform
     Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
@@ -95,7 +95,7 @@ struct CameraConstants
 };
 
 //----------------------------------------------------------------------------------------------------
-struct LightConstants
+struct sLightConstants
 {
     float SunDirection[3];
     float SunIntensity;
@@ -104,14 +104,14 @@ struct LightConstants
 };
 
 //----------------------------------------------------------------------------------------------------
-struct ModelConstants
+struct sModelConstants
 {
     Mat44 ModelToWorldTransform;
     float ModelColor[4];
 };
 
 //----------------------------------------------------------------------------------------------------
-struct RenderConfig
+struct sRenderConfig
 {
     Window* m_window = nullptr;
 };
@@ -120,7 +120,7 @@ struct RenderConfig
 class Renderer
 {
 public:
-    explicit Renderer(RenderConfig const& render_config);
+    explicit Renderer(sRenderConfig const& config);
 
     static int k_lightConstantSlot;
     static int k_cameraConstantSlot;
@@ -185,7 +185,7 @@ private:
     void BindVertexBuffer(VertexBuffer const* vbo) const;
     void SetStatesIfChanged();
 
-    RenderConfig m_config;
+    sRenderConfig m_config;
 
 protected:
     // Create variables to store DirectX state.

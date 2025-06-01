@@ -46,9 +46,9 @@ STATIC int Renderer::k_cameraConstantSlot = 2;
 STATIC int Renderer::k_modelConstantsSlot = 3;
 
 //----------------------------------------------------------------------------------------------------
-Renderer::Renderer(RenderConfig const& render_config)
+Renderer::Renderer(sRenderConfig const& config)
 {
-    m_config = render_config;
+    m_config = config;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -318,9 +318,9 @@ void Renderer::Startup()
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
     m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-    m_lightCBO            = CreateConstantBuffer(sizeof(LightConstants));
-    m_cameraCBO           = CreateConstantBuffer(sizeof(CameraConstants));
-    m_modelCBO            = CreateConstantBuffer(sizeof(ModelConstants));
+    m_lightCBO            = CreateConstantBuffer(sizeof(sLightConstants));
+    m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
+    m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
 
     //------------------------------------------------------------------------------------------------
     // Initialize m_defaultTexture to a 2x2 white image
@@ -502,14 +502,14 @@ void Renderer::BeginCamera(Camera const& camera) const
     m_deviceContext->RSSetViewports(1, &viewport);
 
     // Create a local CameraConstants structure
-    CameraConstants cameraConstants;
+    sCameraConstants cameraConstants;
 
     cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
     cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
     cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
 
     // Copy the data from the local structure to the constant buffer
-    CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
+    CopyCPUToGPU(&cameraConstants, sizeof(sCameraConstants), m_cameraCBO);
 
     // Bind the constant buffer
     BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
@@ -716,7 +716,7 @@ void Renderer::SetDepthMode(eDepthMode const mode)
 void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
                                  Rgba8 const& modelColor) const
 {
-    ModelConstants modelConstants;
+    sModelConstants modelConstants;
     modelConstants.ModelToWorldTransform = modelToWorldTransform;
 
     float colorAsFloat[4];
@@ -727,7 +727,7 @@ void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
     modelConstants.ModelColor[2] = colorAsFloat[2];
     modelConstants.ModelColor[3] = colorAsFloat[3];
 
-    CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
+    CopyCPUToGPU(&modelConstants, sizeof(sModelConstants), m_modelCBO);
     BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
@@ -736,7 +736,7 @@ void Renderer::SetLightConstants(Vec3 const& sunDirection,
                                  float const sunIntensity,
                                  float const ambientIntensity) const
 {
-    LightConstants lightConstants;
+    sLightConstants lightConstants;
 
     Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
 
@@ -746,7 +746,7 @@ void Renderer::SetLightConstants(Vec3 const& sunDirection,
     lightConstants.SunIntensity     = sunIntensity;
     lightConstants.AmbientIntensity = ambientIntensity;
 
-    CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
+    CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
 }
 

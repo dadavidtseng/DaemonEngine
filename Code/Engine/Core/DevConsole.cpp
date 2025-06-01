@@ -34,16 +34,11 @@ STATIC Rgba8 const DevConsole::INPUT_TEXT            = Rgba8(255, 255, 255);
 STATIC Rgba8 const DevConsole::INPUT_INSERTION_POINT = Rgba8(255, 255, 255, 200);
 
 //----------------------------------------------------------------------------------------------------
-DevConsole::DevConsole(DevConsoleConfig const& config)
+DevConsole::DevConsole(sDevConsoleConfig const& config)
     : m_config(config)
 {
     AddLine(INFO_MINOR, "<Welcome to DevConsole v0.2.0>");
     AddLine(INFO_MINOR, "<Please type \"help\" to see all available commands.>");
-}
-
-//----------------------------------------------------------------------------------------------------
-DevConsole::~DevConsole()
-{
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -58,8 +53,13 @@ void DevConsole::StartUp()
     g_theEventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
 
     m_insertionPointBlinkTimer = new Timer(0.5f);
-    Clock::TickSystemClock();
     m_insertionPointBlinkTimer->Start();
+
+    Vec2 const bottomLeft     = Vec2::ZERO;
+    Vec2 const screenTopRight = Vec2(1600.f, 800.f);
+
+    m_config.m_defaultCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    m_config.m_defaultCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -81,11 +81,12 @@ void DevConsole::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-// Parses the current input line and executes it using the event system. Commands and arguments
-// are delimited from each other with space (' ') and argument names and values are delimited
-// with equals ('='). Echos the command to the dev console as well as any command output.
-//
-void DevConsole::Execute(String const& consoleCommandText, bool const echoCommand)
+/// @brief
+/// Parses the current input line and executes it using the event system.
+/// Commands and arguments are delimited from each other with space (' ') and argument names and values are delimited with equals ('=').
+/// Echos the command to the dev console as well as any command output.
+void DevConsole::Execute(String const& consoleCommandText,
+                         bool const    echoCommand)
 {
     // Create an input stream and initialize it
     std::istringstream stream;
@@ -142,7 +143,7 @@ void DevConsole::Execute(String const& consoleCommandText, bool const echoComman
 //
 void DevConsole::AddLine(Rgba8 const& color, String const& text)
 {
-    DevConsoleLine line;
+    sDevConsoleLine line;
     line.m_color              = color;
     line.m_text               = text;
     line.m_frameNumberPrinted = m_frameNumber;
@@ -199,12 +200,12 @@ void DevConsole::PasteFromClipboard()
     if (!IsClipboardFormatAvailable(CF_TEXT)) return;
     if (!OpenClipboard(nullptr)) return;
     HANDLE hglb = GetClipboardData(CF_TEXT);
-    if (hglb != NULL)
+    if (hglb != nullptr)
     {
         char* lptstr = static_cast<char*>(GlobalLock(hglb));
-        if (lptstr != NULL)
+        if (lptstr != nullptr)
         {
-            String clipboardText = lptstr;
+            String const clipboardText = lptstr;
             GlobalUnlock(hglb);
 
             // Insert text at the current insertion point
@@ -216,13 +217,13 @@ void DevConsole::PasteFromClipboard()
 }
 
 //----------------------------------------------------------------------------------------------------
-DevConsoleMode DevConsole::GetMode() const
+eDevConsoleMode DevConsole::GetMode() const
 {
     return m_mode;
 }
 
 //----------------------------------------------------------------------------------------------------
-void DevConsole::SetMode(DevConsoleMode const mode)
+void DevConsole::SetMode(eDevConsoleMode const mode)
 {
     m_mode = mode;
 
@@ -237,9 +238,9 @@ void DevConsole::SetMode(DevConsoleMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-// Toggles between open and closed.
-//
-void DevConsole::ToggleMode(DevConsoleMode const mode)
+/// @brief
+/// Toggles between open and closed.
+void DevConsole::ToggleMode(eDevConsoleMode const mode)
 {
     if (m_mode == mode)
     {
@@ -436,7 +437,7 @@ STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
         float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
 
 
-        if ((float)g_theDevConsole->m_inputText.size() * lineWidth >= 1600.f)
+        if (static_cast<float>(g_theDevConsole->m_inputText.size()) * lineWidth >= 1600.f)
         {
             return false;
         }
@@ -536,7 +537,7 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
         renderer.DrawVertexArray(static_cast<int>(insertionPointVerts.size()), insertionPointVerts.data());
     }
 
-    std::vector<DevConsoleLine> reversedLines = m_lines;
+    std::vector<sDevConsoleLine> reversedLines = m_lines;
     std::reverse(reversedLines.begin(), reversedLines.end());
 
     for (size_t i = 0; i < m_lines.size(); ++i)
@@ -544,12 +545,12 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
         commandTextBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i + 1) * lineHeight;
         commandTextBounds.m_mins.y = commandTextBounds.m_maxs.y - lineHeight;
 
-        if (i > (size_t)m_config.m_maxLinesDisplay - 1)
+        if (i > static_cast<size_t>(m_config.m_maxLinesDisplay) - 1)
         {
             break;
         }
 
-        DevConsoleLine const& reversedLine = reversedLines[i];
+        sDevConsoleLine const& reversedLine = reversedLines[i];
 
         font.AddVertsForTextInBox2D(
             textVerts,
