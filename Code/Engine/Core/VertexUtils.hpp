@@ -60,9 +60,11 @@ void AddVertsForAABB3D(VertexList_PCU& verts, AABB3 const& bounds, Rgba8 const& 
 void AddVertsForAABB3D(VertexList_PCUTBN& verts, IndexList& indexes, AABB3 const& bounds, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForWireframeAABB3D(VertexList_PCU& verts, AABB3 const& bounds, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForSphere3D(VertexList_PCU& verts, Vec3 const& center, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
+void AddVertsForSphere3D(VertexList_PCUTBN& verts, IndexList& indexes, Vec3 const& center, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
 void AddVertsForWireframeSphere3D(VertexList_PCU& verts, Vec3 const& center, float radius, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32, int numStacks = 16);
 
 void AddVertsForCylinder3D(VertexList_PCU& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
+void AddVertsForCylinder3D(VertexList_PCUTBN& verts, IndexList& indexes, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
 void AddVertsForWireframeCylinder3D(VertexList_PCU& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
 void AddVertsForCone3D(VertexList_PCU& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);
 void AddVertsForWireframeCone3D(VertexList_PCU& verts, Vec3 const& startPosition, Vec3 const& endPosition, float radius, float thickness, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE, int numSlices = 32);

@@ -742,6 +742,47 @@ void AddVertsForSphere3D(VertexList_PCU& verts,
     }
 }
 
+void AddVertsForSphere3D(VertexList_PCUTBN& verts,
+    IndexList& indexes,
+    Vec3 const& center,
+    float const radius,
+    Rgba8 const& color,
+    AABB2 const& UVs,
+    int const numSlices,
+    int const numStacks)
+{
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
+
+    for (int stack = 0; stack < numStacks; ++stack)
+    {
+        float const phi1 = (1.f - static_cast<float>(stack) / static_cast<float>(numStacks)) * PI;
+        float const phi2 = (1.f - (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks)) * PI;
+
+        float const v1 = static_cast<float>(stack) / static_cast<float>(numStacks);
+        float const v2 = (static_cast<float>(stack) + 1.f) / static_cast<float>(numStacks);
+
+        for (int slice = 0; slice < numSlices; ++slice)
+        {
+            float const theta1 = static_cast<float>(slice) / static_cast<float>(numSlices) * 2.f * PI;
+            float const theta2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices) * 2.f * PI;
+
+            float const u1 = static_cast<float>(slice) / static_cast<float>(numSlices);
+            float const u2 = (static_cast<float>(slice) + 1.f) / static_cast<float>(numSlices);
+
+            Vec3 bottomLeft  = center + Vec3(radius * sinf(phi1) * cosf(theta1), radius * sinf(phi1) * sinf(theta1), radius * cosf(phi1));
+            Vec3 bottomRight = center + Vec3(radius * sinf(phi1) * cosf(theta2), radius * sinf(phi1) * sinf(theta2), radius * cosf(phi1));
+            Vec3 topRight    = center + Vec3(radius * sinf(phi2) * cosf(theta2), radius * sinf(phi2) * sinf(theta2), radius * cosf(phi2));
+            Vec3 topLeft     = center + Vec3(radius * sinf(phi2) * cosf(theta1), radius * sinf(phi2) * sinf(theta1), radius * cosf(phi2));
+
+            AABB2 quadUV(Vec2(UVs.m_mins.x + uvWidth * u1, UVs.m_mins.y + uvHeight * v1),
+                         Vec2(UVs.m_mins.x + uvWidth * u2, UVs.m_mins.y + uvHeight * v2));
+
+            AddVertsForQuad3D(verts, indexes, bottomLeft, bottomRight, topLeft, topRight, color, quadUV);
+        }
+    }
+}
+
 void AddVertsForWireframeSphere3D(VertexList_PCU& verts,
                                   Vec3 const&     center,
                                   float const     radius,
@@ -835,6 +876,92 @@ void AddVertsForCylinder3D(VertexList_PCU& verts,
         float const uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
 
         AddVertsForQuad3D(verts, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2(Vec2(uStart, 0.f), Vec2(uEnd, 1.f)));
+    }
+}
+
+void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
+                           IndexList&         indexes,
+                           Vec3 const&        startPosition,
+                           Vec3 const&        endPosition,
+                           float const        radius,
+                           Rgba8 const&       color,
+                           AABB2 const&       UVs,
+                           int const          numSlices)
+{
+    // 1. Calculate cylinder's forward/normalized direction.
+    Vec3 const forwardDirection = endPosition - startPosition;
+    Vec3 const iBasis           = forwardDirection.GetNormalized();
+
+    // 2. Get jBasis and kBasis based on normalDirection.
+    Vec3 jBasis;
+    Vec3 kBasis;
+    iBasis.GetOrthonormalBasis(iBasis, &jBasis, &kBasis);
+
+    // 3. Calculate the degree of each triangle in the top and bottom disc of the cylinder.
+    float const DEGREES_PER_SIDE = 360.f / static_cast<float>(numSlices);
+
+    for (int sideIndex = 0; sideIndex < numSlices; ++sideIndex)
+    {
+        // 4. Get the degree of each triangle on the unit circle.
+        float const startDegrees = DEGREES_PER_SIDE * static_cast<float>(sideIndex);
+        float const endDegrees   = DEGREES_PER_SIDE * static_cast<float>(sideIndex + 1);
+        float const cosStart     = CosDegrees(startDegrees);
+        float const sinStart     = SinDegrees(startDegrees);
+        float const cosEnd       = CosDegrees(endDegrees);
+        float const sinEnd       = SinDegrees(endDegrees);
+
+        // 5. Get the positions by ( discCenter ) + ( radius ) * ( cos * jBasis + sin * kBasis )
+        Vec3 topCenterPosition(endPosition);
+        Vec3 topLeftPosition(endPosition + radius * (cosStart * jBasis + sinStart * kBasis));
+        Vec3 topRightPosition(endPosition + radius * (cosEnd * jBasis + sinEnd * kBasis));
+        Vec3 bottomCenterPosition(startPosition);
+        Vec3 bottomLeftPosition(startPosition + radius * (-cosStart * -jBasis + -sinStart * -kBasis));
+        Vec3 bottomRightPosition(startPosition + radius * (-cosEnd * -jBasis + -sinEnd * -kBasis));
+
+        // // 6. Stores the vertices using counter-clockwise order with correct UVs.
+        // verts.emplace_back(topCenterPosition, color, Vec2::HALF );
+        // verts.emplace_back(topLeftPosition, color, Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(topRightPosition, color, Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(bottomCenterPosition, color, Vec2::HALF);
+        // verts.emplace_back(bottomRightPosition, color, Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF);
+        // verts.emplace_back(bottomLeftPosition, color, Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF);
+
+        // 上蓋
+        Vec3 topNormal = iBasis;  // iBasis 是圓柱方向（start→end）
+        Vec3 topBitangent = topNormal;  // 圓面朝上
+        Vec3 topTangent = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+
+        Vec2 uvTopLeft = Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF;
+        Vec2 uvTopRight = Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF;
+
+        verts.emplace_back(topCenterPosition, color, Vec2::HALF, topTangent, topBitangent, topNormal);
+        verts.emplace_back(topLeftPosition, color, uvTopLeft, topTangent, topBitangent, topNormal);
+        verts.emplace_back(topRightPosition, color, uvTopRight, topTangent, topBitangent, topNormal);
+
+        // 下蓋
+        Vec3 bottomNormal = -iBasis;
+        Vec3 bottomBitangent = bottomNormal;
+        Vec3 bottomTangent = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+
+        Vec2 uvBottomRight = Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF;
+        Vec2 uvBottomLeft  = Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF;
+
+        verts.emplace_back(bottomCenterPosition, color, Vec2::HALF, bottomTangent, bottomBitangent, bottomNormal);
+        verts.emplace_back(bottomRightPosition, color, uvBottomRight, bottomTangent, bottomBitangent, bottomNormal);
+        verts.emplace_back(bottomLeftPosition, color, uvBottomLeft, bottomTangent, bottomBitangent, bottomNormal);
+        int baseIndex = static_cast<int>(verts.size()) - 6;
+        indexes.push_back(baseIndex + 0);
+        indexes.push_back(baseIndex + 1);
+        indexes.push_back(baseIndex + 2);
+
+        indexes.push_back(baseIndex + 3);
+        indexes.push_back(baseIndex + 4);
+        indexes.push_back(baseIndex + 5);
+        // 7. Add verts for cylinder's side with correct UVs.
+        float const uStart = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices));
+        float const uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
+
+        AddVertsForQuad3D(verts,indexes, bottomLeftPosition, bottomRightPosition, topLeftPosition, topRightPosition, color, AABB2(Vec2(uStart, 0.f), Vec2(uEnd, 1.f)));
     }
 }
 
