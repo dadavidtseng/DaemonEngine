@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -20,8 +22,6 @@ struct OBB2;
 struct OBB3;
 struct Triangle2;
 struct Vec3;
-struct Vertex_PCU;
-struct Vertex_PCUTBN;
 
 //----------------------------------------------------------------------------------------------------
 typedef std::vector<Vertex_PCU>    VertexList_PCU;
