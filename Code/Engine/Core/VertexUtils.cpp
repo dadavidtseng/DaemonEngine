@@ -351,6 +351,73 @@ void AddVertsForOBB3D(VertexList_PCU& verts,
     AddVertsForQuad3D(verts, minXminYminZ, minXmaxYminZ, maxXminYminZ, maxXmaxYminZ, color, UVs);
 }
 
+void AddVertsForOBB3D(VertexList_PCUTBN& verts,
+                      IndexList&         indexes,
+                      OBB3 const&        obb3,
+                      Rgba8 const&       color,
+                      AABB2 const&       UVs)
+{
+    Vec3 center = obb3.m_center;
+    Vec3 i = obb3.m_iBasis * obb3.m_halfDimensions.x;
+    Vec3 j = obb3.m_jBasis * obb3.m_halfDimensions.y;
+    Vec3 k = obb3.m_kBasis * obb3.m_halfDimensions.z;
+
+    Vec3 corners[8] = {
+        center - i - j - k, // 0
+        center - i - j + k, // 1
+        center - i + j - k, // 2
+        center - i + j + k, // 3
+        center + i - j - k, // 4
+        center + i - j + k, // 5
+        center + i + j - k, // 6
+        center + i + j + k  // 7
+    };
+
+    struct Face {
+        int idx[4];
+        Vec3 normal;
+        Vec3 tangent;
+        Vec3 bitangent;
+    };
+
+    Face faces[6] = {
+        // idx: TL, TR, BL, BR
+        {{4, 6, 5, 7},  i.GetNormalized(),  j.GetNormalized(),  k.GetNormalized()},  // +X
+        {{2, 0, 3, 1}, -i.GetNormalized(),  j.GetNormalized(), -k.GetNormalized()},  // -X
+        {{2, 6, 3, 7},  j.GetNormalized(),  i.GetNormalized(),  k.GetNormalized()},  // +Y
+        {{0, 4, 1, 5}, -j.GetNormalized(),  i.GetNormalized(), -k.GetNormalized()},  // -Y
+        {{1, 5, 3, 7},  k.GetNormalized(),  i.GetNormalized(),  j.GetNormalized()},  // +Z
+        {{0, 2, 4, 6}, -k.GetNormalized(),  i.GetNormalized(), -j.GetNormalized()},  // -Z
+    };
+
+    unsigned int baseIndex = static_cast<unsigned int>(verts.size());
+
+    for (int f = 0; f < 6; ++f)
+    {
+        const Face& face = faces[f];
+
+        Vec2 uvBL(UVs.m_mins.x, UVs.m_mins.y); // Bottom Left
+        Vec2 uvBR(UVs.m_maxs.x, UVs.m_mins.y); // Bottom Right
+        Vec2 uvTL(UVs.m_mins.x, UVs.m_maxs.y); // Top Left
+        Vec2 uvTR(UVs.m_maxs.x, UVs.m_maxs.y); // Top Right
+
+        verts.emplace_back(Vertex_PCUTBN(corners[face.idx[0]], color, uvTL, face.tangent, face.bitangent, face.normal));
+        verts.emplace_back(Vertex_PCUTBN(corners[face.idx[1]], color, uvTR, face.tangent, face.bitangent, face.normal));
+        verts.emplace_back(Vertex_PCUTBN(corners[face.idx[2]], color, uvBL, face.tangent, face.bitangent, face.normal));
+        verts.emplace_back(Vertex_PCUTBN(corners[face.idx[3]], color, uvBR, face.tangent, face.bitangent, face.normal));
+
+        indexes.push_back(baseIndex + 0);
+        indexes.push_back(baseIndex + 1);
+        indexes.push_back(baseIndex + 2);
+
+        indexes.push_back(baseIndex + 2);
+        indexes.push_back(baseIndex + 1);
+        indexes.push_back(baseIndex + 3);
+
+        baseIndex += 4;
+    }
+}
+
 //----------------------------------------------------------------------------------------------------
 void AddVertsForWireframeOBB3D(VertexList_PCU& verts,
                                OBB3 const&     obb3,
@@ -743,15 +810,15 @@ void AddVertsForSphere3D(VertexList_PCU& verts,
 }
 
 void AddVertsForSphere3D(VertexList_PCUTBN& verts,
-    IndexList& indexes,
-    Vec3 const& center,
-    float const radius,
-    Rgba8 const& color,
-    AABB2 const& UVs,
-    int const numSlices,
-    int const numStacks)
+                         IndexList&         indexes,
+                         Vec3 const&        center,
+                         float const        radius,
+                         Rgba8 const&       color,
+                         AABB2 const&       UVs,
+                         int const          numSlices,
+                         int const          numStacks)
 {
-    float const uvWidth = UVs.m_maxs.x - UVs.m_mins.x;
+    float const uvWidth  = UVs.m_maxs.x - UVs.m_mins.x;
     float const uvHeight = UVs.m_maxs.y - UVs.m_mins.y;
 
     std::vector<std::vector<unsigned int>> vertIndexGrid(numStacks + 1, std::vector<unsigned int>(numSlices + 1));
@@ -759,12 +826,12 @@ void AddVertsForSphere3D(VertexList_PCUTBN& verts,
     for (int stack = 0; stack <= numStacks; ++stack)
     {
         float phi = (1.f - static_cast<float>(stack) / static_cast<float>(numStacks)) * PI;
-        float v = static_cast<float>(stack) / static_cast<float>(numStacks);
+        float v   = static_cast<float>(stack) / static_cast<float>(numStacks);
 
         for (int slice = 0; slice <= numSlices; ++slice)
         {
             float theta = static_cast<float>(slice) / static_cast<float>(numSlices) * 2.f * PI;
-            float u = static_cast<float>(slice) / static_cast<float>(numSlices);
+            float u     = static_cast<float>(slice) / static_cast<float>(numSlices);
 
             // 球面座標轉直角座標
             Vec3 normal = Vec3(sinf(phi) * cosf(theta),
@@ -772,7 +839,7 @@ void AddVertsForSphere3D(VertexList_PCUTBN& verts,
                                cosf(phi));
 
             Vec3 position = center + radius * normal;
-            Vec2 uv = Vec2(UVs.m_mins.x + uvWidth * u, UVs.m_mins.y + uvHeight * v);
+            Vec2 uv       = Vec2(UVs.m_mins.x + uvWidth * u, UVs.m_mins.y + uvHeight * v);
 
             vertIndexGrid[stack][slice] = static_cast<unsigned int>(verts.size());
             verts.emplace_back(position, color, uv, Vec3::ZERO, Vec3::ZERO, normal);
@@ -906,7 +973,7 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
                            int const          numSlices)
 {
     Vec3 const forwardDirection = endPosition - startPosition;
-    Vec3 const iBasis = forwardDirection.GetNormalized();
+    Vec3 const iBasis           = forwardDirection.GetNormalized();
 
     Vec3 jBasis;
     Vec3 kBasis;
@@ -926,17 +993,17 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
         Vec3 topCenterPosition(endPosition);
         Vec3 bottomCenterPosition(startPosition);
 
-        Vec3 topLeftPosition = topCenterPosition + radius * (cosStart * jBasis + sinStart * kBasis);
-        Vec3 topRightPosition = topCenterPosition + radius * (cosEnd * jBasis + sinEnd * kBasis);
-        Vec3 bottomLeftPosition = bottomCenterPosition + radius * (cosStart * jBasis + sinStart * kBasis);
+        Vec3 topLeftPosition     = topCenterPosition + radius * (cosStart * jBasis + sinStart * kBasis);
+        Vec3 topRightPosition    = topCenterPosition + radius * (cosEnd * jBasis + sinEnd * kBasis);
+        Vec3 bottomLeftPosition  = bottomCenterPosition + radius * (cosStart * jBasis + sinStart * kBasis);
         Vec3 bottomRightPosition = bottomCenterPosition + radius * (cosEnd * jBasis + sinEnd * kBasis);
 
         // ===== 上蓋 =====
-        Vec3 topNormal = iBasis;
+        Vec3 topNormal    = iBasis;
         Vec3 topBitangent = topNormal;
-        Vec3 topTangent = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+        Vec3 topTangent   = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
 
-        Vec2 uvTopLeft = Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF;
+        Vec2 uvTopLeft  = Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF;
         Vec2 uvTopRight = Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF;
 
         verts.emplace_back(topCenterPosition, color, Vec2::HALF, topTangent, topBitangent, topNormal);
@@ -944,9 +1011,9 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
         verts.emplace_back(topRightPosition, color, uvTopRight, topTangent, topBitangent, topNormal);
 
         // ===== 下蓋 =====
-        Vec3 bottomNormal = -iBasis;
+        Vec3 bottomNormal    = -iBasis;
         Vec3 bottomBitangent = bottomNormal;
-        Vec3 bottomTangent = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+        Vec3 bottomTangent   = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
 
         Vec2 uvBottomRight = Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF;
         Vec2 uvBottomLeft  = Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF;
@@ -965,7 +1032,7 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
         indexes.push_back(baseIndex + 5);
 
         // ===== 側面（使用從柱心 outward 的 normal）=====
-        Vec3 centerTop = topCenterPosition;
+        Vec3 centerTop    = topCenterPosition;
         Vec3 centerBottom = bottomCenterPosition;
 
         Vec3 normalBL = (bottomLeftPosition - (centerBottom + centerTop) * 0.5f).GetNormalized();
@@ -975,11 +1042,11 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
 
         float uStart = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex) / static_cast<float>(numSlices));
         float uEnd   = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, static_cast<float>(sideIndex + 1) / static_cast<float>(numSlices));
-        float vMin = UVs.m_mins.y;
-        float vMax = UVs.m_maxs.y;
+        float vMin   = UVs.m_mins.y;
+        float vMax   = UVs.m_maxs.y;
 
         // 自行添加側面的 tangent/bitangent 可選用 jBasis/kBasis 為參考
-        Vec3 tangent = jBasis;
+        Vec3 tangent   = jBasis;
         Vec3 bitangent = kBasis;
 
         int sideVertStartIndex = static_cast<int>(verts.size());

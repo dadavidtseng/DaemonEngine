@@ -46,6 +46,7 @@ void AddVertsForAABB2D(VertexList_PCU& verts, AABB2 const& aabb2Box, Rgba8 const
 void AddVertsForAABB2D(VertexList_PCU& verts, Vec2 const& aabbMins, Vec2 const& aabbMaxs, Rgba8 const& color = Rgba8::WHITE, Vec2 const& uvMins = Vec2::ZERO, Vec2 const& uvMaxs = Vec2::ONE);
 void AddVertsForOBB2D(VertexList_PCU& verts, Vec2 const& obb2Center, Vec2 const& obb2IBasisNormal, Vec2 const& obb2HalfDimensions, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForOBB3D(VertexList_PCU& verts, OBB3 const& obb3, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
+void AddVertsForOBB3D(VertexList_PCUTBN& verts,IndexList& indexes, OBB3 const& obb3, Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2::ZERO_TO_ONE);
 void AddVertsForWireframeOBB3D(VertexList_PCU& verts, OBB3 const& obb3, Rgba8 const& color);
 void AddVertsForCapsule2D(VertexList_PCU& verts, Vec2 const& capsuleStartPosition, Vec2 const& capsuleEndPosition, float capsuleRadius, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForCapsule2D(VertexList_PCU& verts, Capsule2 const& capsule, Rgba8 const& color = Rgba8::WHITE);
