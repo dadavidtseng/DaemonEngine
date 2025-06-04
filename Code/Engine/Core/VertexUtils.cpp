@@ -65,6 +65,16 @@ void TransformVertexArray3D(VertexList_PCU& verts,
 }
 
 //----------------------------------------------------------------------------------------------------
+void TransformVertexArray3D(VertexList_PCUTBN& verts,
+                            Mat44 const&    transform)
+{
+    for (Vertex_PCUTBN& vert : verts)
+    {
+        vert.m_position = transform.TransformPosition3D(vert.m_position);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 void AddVertsForDisc2D(VertexList_PCU& verts,
                        Vec2 const&     discCenter,
                        float const     discRadius,
@@ -384,7 +394,7 @@ void AddVertsForOBB3D(VertexList_PCUTBN& verts,
         // idx: TL, TR, BL, BR
         {{4, 6, 5, 7},  i.GetNormalized(),  j.GetNormalized(),  k.GetNormalized()},  // +X
         {{2, 0, 3, 1}, -i.GetNormalized(),  j.GetNormalized(), -k.GetNormalized()},  // -X
-        {{2, 6, 3, 7},  j.GetNormalized(),  i.GetNormalized(),  k.GetNormalized()},  // +Y
+        {{6,2, 7, 3},  j.GetNormalized(),  i.GetNormalized(),  k.GetNormalized()},  // +Y
         {{0, 4, 1, 5}, -j.GetNormalized(),  i.GetNormalized(), -k.GetNormalized()},  // -Y
         {{1, 5, 3, 7},  k.GetNormalized(),  i.GetNormalized(),  j.GetNormalized()},  // +Z
         {{0, 2, 4, 6}, -k.GetNormalized(),  i.GetNormalized(), -j.GetNormalized()},  // -Z

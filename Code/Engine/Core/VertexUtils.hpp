@@ -33,6 +33,7 @@ AABB2 GetVertexBounds2D(VertexList_PCU const& verts);
 
 void TransformVertexArrayXY3D(int numVerts, Vertex_PCU* verts, float uniformScaleXY, float rotationDegreesAboutZ, const Vec2& translationXY);
 void TransformVertexArray3D(VertexList_PCU& verts, Mat44 const& transform);
+void TransformVertexArray3D(VertexList_PCUTBN& verts, Mat44 const& transform);
 
 void AddVertsForDisc2D(VertexList_PCU& verts, Vec2 const& discCenter, float discRadius, Rgba8 const& fillColor = Rgba8::WHITE);
 void AddVertsForDisc2D(VertexList_PCU& verts, Vec2 const& discCenter, float discRadius, float thickness, Rgba8 const& outlineColor = Rgba8::WHITE);
