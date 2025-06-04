@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
 
+#include <algorithm>
 #include <cstdarg>
 
 //----------------------------------------------------------------------------------------------------
@@ -85,5 +86,14 @@ StringList const SplitStringOnDelimiter(String const& originalString,
     // 3. Store the last substring of originalString (or the full string if no delimiter was found).
     result.emplace_back(originalString.substr(start));
 
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+String ToUpperCase(String const& text)
+{
+    String result = text;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char const c) { return std::toupper(c); });
     return result;
 }

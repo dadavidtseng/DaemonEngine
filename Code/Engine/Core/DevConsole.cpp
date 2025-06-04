@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/DevConsole.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
