@@ -6,9 +6,11 @@
 #include "Engine/Core/NamedStrings.hpp"
 
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
 void NamedStrings::PopulateFromXmlElementAttributes(XmlElement const& element)
@@ -197,6 +199,24 @@ Vec2 NamedStrings::GetValue(String const& keyName, Vec2 const& defaultValue) con
 }
 
 //----------------------------------------------------------------------------------------------------
+Vec3 NamedStrings::GetValue(String const& keyName, Vec3 const& defaultValue) const
+{
+    auto const it = m_keyValuePairs.find(keyName);
+
+    if (it == m_keyValuePairs.end())
+    {
+        printf("( %s ) is not in the game config!\n", keyName.c_str());
+
+        return defaultValue;
+    }
+
+    Vec3 result = defaultValue;
+    result.SetFromText(it->second.c_str());
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
 IntVec2 NamedStrings::GetValue(String const& keyName, IntVec2 const& defaultValue) const
 {
     auto const it = m_keyValuePairs.find(keyName);
@@ -209,6 +229,24 @@ IntVec2 NamedStrings::GetValue(String const& keyName, IntVec2 const& defaultValu
     }
     
     IntVec2 result = defaultValue;
+    result.SetFromText(it->second.c_str());
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+EulerAngles NamedStrings::GetValue(String const& keyName, EulerAngles const& defaultValue) const
+{
+    auto const it = m_keyValuePairs.find(keyName);
+
+    if (it == m_keyValuePairs.end())
+    {
+        printf("( %s ) is not in the game config!\n", keyName.c_str());
+
+        return defaultValue;
+    }
+
+    EulerAngles result = defaultValue;
     result.SetFromText(it->second.c_str());
 
     return result;
