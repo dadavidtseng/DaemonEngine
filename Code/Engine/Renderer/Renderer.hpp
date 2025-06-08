@@ -161,6 +161,13 @@ public:
     IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
 
+    void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount);
+    void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
+
+    void CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
+    void CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
+    void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
@@ -174,12 +181,7 @@ private:
     Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
 
-    void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount);
-    void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
 
-    void CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
-    void CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
-    void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
     void BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
     void BindIndexBuffer(IndexBuffer const* ibo) const;
     void BindVertexBuffer(VertexBuffer const* vbo) const;

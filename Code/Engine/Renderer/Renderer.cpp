@@ -566,8 +566,8 @@ void Renderer::DrawVertexArray(VertexList_PCUTBN const& verts)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::DrawVertexArray(VertexList_PCU const&            verts,
-                               std::vector<unsigned int> const& indexes)
+void Renderer::DrawVertexArray(VertexList_PCU const& verts,
+                               IndexList const&      indexes)
 {
     CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCU), m_immediateVBO_PCU);
     CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
@@ -575,8 +575,8 @@ void Renderer::DrawVertexArray(VertexList_PCU const&            verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::DrawVertexArray(VertexList_PCUTBN const&         verts,
-                               std::vector<unsigned int> const& indexes)
+void Renderer::DrawVertexArray(VertexList_PCUTBN const& verts,
+                               IndexList const&         indexes)
 {
     CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_immediateVBO_PCUTBN);
     CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
@@ -584,6 +584,7 @@ void Renderer::DrawVertexArray(VertexList_PCUTBN const&         verts,
 }
 
 //----------------------------------------------------------------------------------------------------
+// TODO: BindTexture(Texture const* texture, int slot=1);
 void Renderer::BindTexture(Texture const* texture) const
 {
     if (texture == nullptr)
