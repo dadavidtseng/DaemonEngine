@@ -13,7 +13,7 @@
 class InputSystem;
 
 //----------------------------------------------------------------------------------------------------
-struct WindowConfig
+struct sWindowConfig
 {
     InputSystem* m_inputSystem = nullptr;
     float        m_aspectRatio = 16.f / 9.f;
@@ -24,9 +24,10 @@ struct WindowConfig
 //----------------------------------------------------------------------------------------------------
 class Window
 {
-public:
     friend class Renderer;
-    explicit Window(WindowConfig const& config);
+
+public:
+    explicit Window(sWindowConfig const& config);
     ~Window() = default;
     void Startup();
     void Shutdown();
@@ -34,11 +35,11 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    WindowConfig const& GetConfig() const;
-    void*               GetDisplayContext() const;
-    void*               GetWindowHandle() const;
-    Vec2                GetNormalizedMouseUV() const;
-    IntVec2             GetClientDimensions() const;
+    sWindowConfig const& GetConfig() const;
+    void*                GetDisplayContext() const;
+    void*                GetWindowHandle() const;
+    Vec2                 GetNormalizedMouseUV() const;
+    IntVec2              GetClientDimensions() const;
 
     static Window* s_mainWindow; // fancy way of advertising global variables (advertisement)
 
@@ -47,8 +48,8 @@ private:
     void CreateConsole();
     void RunMessagePump();
 
-    WindowConfig m_config;
-    void*        m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
-    void*        m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
-    IntVec2      m_clientDimensions = IntVec2::ZERO;
+    sWindowConfig m_config;
+    void*         m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
+    void*         m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
+    IntVec2       m_clientDimensions = IntVec2::ZERO;
 };

@@ -19,13 +19,14 @@ size_t constexpr MISSING_SOUND_ID = static_cast<size_t>(-1); // for bad SoundIDs
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct Vec3;
 
-enum class AudioSystemSoundDimension {
+enum class eAudioSystemSoundDimension : int8_t
+{
     Sound2D,
     Sound3D,
 };
 
 //----------------------------------------------------------------------------------------------------
-struct AudioSystemConfig
+struct sAudioSystemConfig
 {
 };
 
@@ -33,7 +34,7 @@ struct AudioSystemConfig
 class AudioSystem
 {
 public:
-    explicit AudioSystem(AudioSystemConfig const& config);
+    explicit AudioSystem(sAudioSystemConfig const& config);
     virtual  ~AudioSystem() = default;
 
     void         Startup();
@@ -41,7 +42,7 @@ public:
     virtual void BeginFrame();
     virtual void EndFrame();
 
-    virtual SoundID         CreateOrGetSound(String const& soundFilePath, AudioSystemSoundDimension dimension);
+    virtual SoundID         CreateOrGetSound(String const& soundFilePath, eAudioSystemSoundDimension dimension);
     virtual SoundPlaybackID StartSound(SoundID soundID, bool isLooped = false, float volume = 1.f, float balance = 0.f, float speed = 1.f, bool isPaused = false);
     virtual SoundPlaybackID StartSoundAt(SoundID soundID, Vec3 const& soundPosition, bool isLooped = false, float volume = 10.0f, float balance = 0.0f, float speed = 1.0f, bool isPaused = false);
     virtual void            StopSound(SoundPlaybackID soundPlaybackID);
@@ -63,5 +64,5 @@ protected:
     std::vector<FMOD::Sound*> m_registeredSounds;
 
 private:
-    AudioSystemConfig m_audioConfig;
+    sAudioSystemConfig m_audioConfig;
 };

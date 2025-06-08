@@ -90,7 +90,7 @@ unsigned char const KEYCODE_CONTROL       = VK_CONTROL;
 InputSystem* g_theInput = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-InputSystem::InputSystem(InputSystemConfig const& config)
+InputSystem::InputSystem(sInputSystemConfig const& config)
 {
     m_inputConfig = config;
 }

@@ -11,7 +11,7 @@
 EventSystem* g_theEventSystem = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-EventSystem::EventSystem(EventSystemConfig const& config)
+EventSystem::EventSystem(sEventSystemConfig const& config)
     : m_config(config)
 {
 }

@@ -35,7 +35,7 @@
 //----------------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
 //
-AudioSystem::AudioSystem(AudioSystemConfig const& config)
+AudioSystem::AudioSystem(sAudioSystemConfig const& config)
     : m_fmodSystem(nullptr)
 {
     m_audioConfig = config;
@@ -73,7 +73,7 @@ void AudioSystem::EndFrame()
 
 //----------------------------------------------------------------------------------------------------
 SoundID AudioSystem::CreateOrGetSound(std::string const&              soundFilePath,
-                                      AudioSystemSoundDimension const dimension)
+                                      eAudioSystemSoundDimension const dimension)
 {
     std::map<std::string, SoundID>::iterator found = m_registeredSoundIDs.find(soundFilePath);
     if (found != m_registeredSoundIDs.end())
@@ -83,11 +83,11 @@ SoundID AudioSystem::CreateOrGetSound(std::string const&              soundFileP
     else
     {
         FMOD::Sound* newSound = nullptr;
-        if (dimension == AudioSystemSoundDimension::Sound2D)
+        if (dimension == eAudioSystemSoundDimension::Sound2D)
         {
             m_fmodSystem->createSound(soundFilePath.c_str(), FMOD_DEFAULT, nullptr, &newSound);
         }
-        else if (dimension == AudioSystemSoundDimension::Sound3D)
+        else if (dimension == eAudioSystemSoundDimension::Sound3D)
         {
             m_fmodSystem->createSound(soundFilePath.c_str(), FMOD_3D, nullptr, &newSound);
         }

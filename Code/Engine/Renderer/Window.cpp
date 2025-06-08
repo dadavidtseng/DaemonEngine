@@ -14,13 +14,14 @@
 
 // #define CONSOLE_HANDLER
 #define WIN32_LEAN_AND_MEAN
+
 #include <windows.h>
 
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-Window::Window(WindowConfig const& config)
+Window::Window(sWindowConfig const& config)
 {
     m_config     = config;
     s_mainWindow = this;
@@ -204,7 +205,7 @@ void Window::RunMessagePump()
 //----------------------------------------------------------------------------------------------------
 // return a reference that is read only
 //
-WindowConfig const& Window::GetConfig() const
+sWindowConfig const& Window::GetConfig() const
 {
     return m_config;
 }

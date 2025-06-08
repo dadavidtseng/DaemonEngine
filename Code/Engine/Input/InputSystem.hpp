@@ -100,7 +100,7 @@ struct CursorState
     CursorMode m_cursorMode = CursorMode::POINTER;
 };
 
-struct InputSystemConfig
+struct sInputSystemConfig
 {
 };
 
@@ -108,7 +108,7 @@ struct InputSystemConfig
 class InputSystem
 {
 public:
-    explicit InputSystem(InputSystemConfig const& config);
+    explicit InputSystem(sInputSystemConfig const& config);
     ~InputSystem() = default;
     void                  Startup();
     void                  Shutdown();
@@ -135,5 +135,5 @@ protected:
     CursorState    m_cursorState;
 
 private:
-    InputSystemConfig m_inputConfig;
+    sInputSystemConfig m_inputConfig;
 };

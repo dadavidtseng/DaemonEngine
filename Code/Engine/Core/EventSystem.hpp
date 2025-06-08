@@ -22,7 +22,7 @@ struct EventSubscription
 };
 
 //----------------------------------------------------------------------------------------------------
-struct EventSystemConfig
+struct sEventSystemConfig
 {
 };
 
@@ -33,7 +33,7 @@ typedef std::vector<EventSubscription> SubscriptionList;
 class EventSystem
 {
 public:
-    explicit EventSystem(EventSystemConfig const& config);
+    explicit EventSystem(sEventSystemConfig const& config);
     ~EventSystem() = default;
 
     void Startup();
@@ -49,7 +49,7 @@ public:
     StringList GetAllRegisteredEventNames() const;
 
 protected:
-    EventSystemConfig m_config;
+    sEventSystemConfig m_config;
     std::map<String, SubscriptionList> m_subscriptionsByEventName;
 };
 
