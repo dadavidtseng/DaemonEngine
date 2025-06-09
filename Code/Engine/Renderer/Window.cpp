@@ -37,7 +37,7 @@ void Window::Startup()
 #endif
 
     CreateOSWindow();
-    CreateOSWindow();
+    // CreateOSWindow();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -266,7 +266,7 @@ IntVec2 Window::GetClientDimensions() const
     float const desktopHeight = static_cast<float>(desktopRect.bottom - desktopRect.top);
     float const desktopAspect = desktopWidth / desktopHeight;
     return IntVec2(desktopWidth, desktopHeight);
-    return  m_clientDimensions;
+    return m_clientDimensions;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -277,18 +277,17 @@ void Window::CreateOSWindow()
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     // Define a window style/class
-    WNDCLASSEX windowClassDescription  = {};
-    windowClassDescription.cbSize      = sizeof(windowClassDescription);
-    windowClassDescription.style       = CS_OWNDC; // Redraw on move, request own Display Context
-    windowClassDescription.lpfnWndProc = static_cast<WNDPROC>(WindowsMessageHandlingProcedure);
+    WNDCLASSEX windowClassEx  = {};                                 // Contains window class information. It is used with the `RegisterClassEx` and `GetClassInfoEx` functions.
+    windowClassEx.cbSize      = sizeof(windowClassEx);              // The size, in bytes, of this structure. Set this member to sizeof(WNDCLASSEX). Be sure to set this member before calling the GetClassInfoEx function.
+    windowClassEx.style       = CS_OWNDC;                           // The class style(s). This member can be any combination of the Class Styles. https://learn.microsoft.com/en-us/windows/win32/winmsg/window-class-styles
+    windowClassEx.lpfnWndProc = static_cast<WNDPROC>(WindowsMessageHandlingProcedure);      // Long Pointer to the Windows Procedure function.
 
-    // long pointer of windows proc
     // Register our Windows message-handling function
-    windowClassDescription.hInstance     = GetModuleHandle(nullptr);
-    windowClassDescription.hIcon         = nullptr;
-    windowClassDescription.hCursor       = nullptr;
-    windowClassDescription.lpszClassName = TEXT("Simple Window Class");
-    RegisterClassEx(&windowClassDescription);
+    windowClassEx.hInstance     = GetModuleHandle(nullptr);
+    windowClassEx.hIcon         = nullptr;
+    windowClassEx.hCursor       = nullptr;
+    windowClassEx.lpszClassName = TEXT("Simple Window Class");
+    RegisterClassEx(&windowClassEx);
 
     // #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
     DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_POPUP | WS_SYSMENU | WS_OVERLAPPEDWINDOW;
@@ -324,16 +323,16 @@ void Window::CreateOSWindow()
     // Calculate client rect bounds by centering the client area
     float const clientMarginX = 0.5f * (desktopWidth - clientWidth);
     float const clientMarginY = 0.5f * (desktopHeight - clientHeight);
-    RECT        clientRect;
-    clientRect.left   = static_cast<int>(clientMarginX);
-    clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
-    clientRect.top    = static_cast<int>(clientMarginY);
-    clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
-    // RECT clientRect;
-    // clientRect.left   = 0;
-    // clientRect.top    = 0;
-    // clientRect.right  = static_cast<LONG>(desktopWidth*0.5f);
-    // clientRect.bottom = static_cast<LONG>(desktopHeight);
+    // RECT        clientRect;
+    // clientRect.left   = static_cast<int>(clientMarginX);
+    // clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
+    // clientRect.top    = static_cast<int>(clientMarginY);
+    // clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
+    RECT clientRect;
+    clientRect.left   = 0;
+    clientRect.top    = 0;
+    clientRect.right  = static_cast<LONG>(desktopWidth * 0.5f);
+    clientRect.bottom = static_cast<LONG>(desktopHeight);
 
     // Calculate the outer dimensions of the physical window, including frame et al.
     RECT windowRect = clientRect;
@@ -351,7 +350,7 @@ void Window::CreateOSWindow()
     HMODULE const applicationInstanceHandle = GetModuleHandle(nullptr);
     m_windowHandle                          = CreateWindowEx(
         windowStyleExFlags,                   // Extended window style
-        windowClassDescription.lpszClassName, // Window class name, here "Simple Window Class"
+        windowClassEx.lpszClassName, // Window class name, here "Simple Window Class"
         windowTitle,                          // Window title
         windowStyleFlags,                     // Window style
         windowRect.left,                      // X-coordinate of the window's top-left corner
