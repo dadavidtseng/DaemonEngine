@@ -17,6 +17,8 @@
 
 #include <windows.h>
 
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
 
@@ -34,6 +36,7 @@ void Window::Startup()
     CreateConsole();
 #endif
 
+    CreateOSWindow();
     CreateOSWindow();
 }
 
@@ -72,6 +75,17 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     switch (wmMessageCode)
     {
+    case WM_SIZE:
+        {
+            UINT newWidth  = LOWORD(lParam);
+            UINT newHeight = HIWORD(lParam);
+            DebuggerPrintf("(%d, %d)\n", newWidth, newHeight);
+            EventArgs args;
+            args.SetValue("newWidth", Stringf("%d", static_cast<int>(newWidth)));
+            args.SetValue("newHeight", Stringf("%d", static_cast<int>(newHeight)));
+            FireEvent("OnWindowSizeChanged", args);
+            return 0;
+        }
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
@@ -245,16 +259,22 @@ Vec2 Window::GetNormalizedMouseUV() const
 //----------------------------------------------------------------------------------------------------
 IntVec2 Window::GetClientDimensions() const
 {
-    return m_clientDimensions;
+    RECT       desktopRect;
+    HWND const desktopWindowHandle = GetDesktopWindow();
+    GetClientRect(desktopWindowHandle, &desktopRect);
+    float const desktopWidth  = static_cast<float>(desktopRect.right - desktopRect.left);
+    float const desktopHeight = static_cast<float>(desktopRect.bottom - desktopRect.top);
+    float const desktopAspect = desktopWidth / desktopHeight;
+    return IntVec2(desktopWidth, desktopHeight);
+    return  m_clientDimensions;
 }
 
 //----------------------------------------------------------------------------------------------------
 void Window::CreateOSWindow()
 {
+    // Sets the current process to a specified dots per inch (dpi) awareness context.
+    // The DPI awareness contexts are from the DPI_AWARENESS_CONTEXT value.
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-    HMODULE const applicationInstanceHandle = ::GetModuleHandle(nullptr);
-    float const   clientAspect              = m_config.m_aspectRatio;
 
     // Define a window style/class
     WNDCLASSEX windowClassDescription  = {};
@@ -271,8 +291,10 @@ void Window::CreateOSWindow()
     RegisterClassEx(&windowClassDescription);
 
     // #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
-    DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_OVERLAPPED;
+    DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_POPUP | WS_SYSMENU | WS_OVERLAPPEDWINDOW;
     DWORD constexpr windowStyleExFlags = WS_EX_APPWINDOW;
+    // DWORD constexpr windowStyleFlags   = WS_POPUP;
+    // DWORD constexpr windowStyleExFlags = WS_EX_APPWINDOW;
 
     // Get desktop rect, dimensions, aspect
     RECT       desktopRect;
@@ -283,7 +305,8 @@ void Window::CreateOSWindow()
     float const desktopAspect = desktopWidth / desktopHeight;
 
     // Calculate maximum client size (as some % of desktop size)
-    constexpr float maxClientFractionOfDesktop = 0.90f;
+    float constexpr maxClientFractionOfDesktop = 0.90f;
+    float const     clientAspect               = m_config.m_aspectRatio;
     float           clientWidth                = desktopWidth * maxClientFractionOfDesktop;
     float           clientHeight               = desktopHeight * maxClientFractionOfDesktop;
 
@@ -306,10 +329,15 @@ void Window::CreateOSWindow()
     clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
     clientRect.top    = static_cast<int>(clientMarginY);
     clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
+    // RECT clientRect;
+    // clientRect.left   = 0;
+    // clientRect.top    = 0;
+    // clientRect.right  = static_cast<LONG>(desktopWidth*0.5f);
+    // clientRect.bottom = static_cast<LONG>(desktopHeight);
 
     // Calculate the outer dimensions of the physical window, including frame et al.
     RECT windowRect = clientRect;
-    // AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
+    AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
 
 
     WCHAR windowTitle[1024];
@@ -320,8 +348,8 @@ void Window::CreateOSWindow()
                         windowTitle,
                         sizeof(windowTitle) / sizeof(windowTitle[0]));
 
-
-    m_windowHandle = CreateWindowEx(
+    HMODULE const applicationInstanceHandle = GetModuleHandle(nullptr);
+    m_windowHandle                          = CreateWindowEx(
         windowStyleExFlags,                   // Extended window style
         windowClassDescription.lpszClassName, // Window class name, here "Simple Window Class"
         windowTitle,                          // Window title
@@ -339,6 +367,11 @@ void Window::CreateOSWindow()
     HWND const windowHandle = static_cast<HWND>(m_windowHandle);
 
     ShowWindow(windowHandle, SW_SHOW);
+    // SetWindowLong((HWND)m_windowHandle, GWL_STYLE, windowStyleFlags);
+    // SetWindowLong((HWND)m_windowHandle, GWL_EXSTYLE, windowStyleExFlags);
+
+    // Optional: 塞滿畫面（如果你想像 fullscreen 一樣）
+    // SetWindowPos((HWND)m_windowHandle, HWND_TOP, 0, 0, desktopWidth, desktopHeight, SWP_FRAMECHANGED);
     SetForegroundWindow(windowHandle);
     SetFocus(windowHandle);
 

@@ -255,10 +255,14 @@ void Renderer::Startup()
         ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
     }
 
-    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.BorderColor[0] = 0.0f; // R
+    samplerDesc.BorderColor[1] = 0.0f; // G
+    samplerDesc.BorderColor[2] = 0.0f; // B
+    samplerDesc.BorderColor[3] = 0.0f; // A = 0 → 完全透明
 
     hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
     if (!SUCCEEDED(hr))
@@ -341,7 +345,11 @@ void Renderer::BeginFrame() const
 {
     // TODO: BindDefaultRenderTarget();
     // This code needs to run every frame and should be in your Render function.
+    // m_config.m_window->m_renderTargetView[0] = m_renderTargetView;
+    // m_config.m_window->m_renderTargetView[1] = m_renderTargetView;
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+    // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[0], m_depthStencilDSV);
+    // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[1], m_depthStencilDSV);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -498,8 +506,10 @@ void Renderer::BeginCamera(Camera const& camera) const
     // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;
     viewport.MaxDepth = 1.f;
+    DebuggerPrintf("DX11 Viewport (%f, %f)\n", viewport.Width, viewport.Height);
 
     m_deviceContext->RSSetViewports(1, &viewport);
+
 
     // Create a local CameraConstants structure
     sCameraConstants cameraConstants;

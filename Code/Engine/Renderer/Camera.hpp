@@ -49,7 +49,8 @@ public:
     Mat44 GetPerspectiveMatrix() const;
     Mat44 GetProjectionMatrix() const;
     AABB2 GetViewPortUnnormalized(Vec2 const& space) const;
-    void  SetNormalizedViewport(AABB2 const& viewPort);
+    void  SetNormalizedViewport(AABB2 const& newViewPort);
+    void SetViewport(AABB2 const& newViewPort);
     Vec2  PerspectiveWorldPosToScreen(Vec3 const& worldPos) const;
     Vec3  PerspectiveScreenPosToWorld(Vec2 const& screenPos) const;
     Ray3  ScreenPosToWorldRay(Vec2 const& screenPos) const;

@@ -194,14 +194,19 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 
 //----------------------------------------------------------------------------------------------------
 // viewport = AABB2(Vec2(0, 0.5f), Vec2::ONE)
-void Camera::SetNormalizedViewport(AABB2 const& viewPort)
+void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
 {
-    float x  = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_maxs.x;
-    float y  = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_maxs.y;
-    float x1 = (float)Window::s_mainWindow->GetClientDimensions().x * viewPort.m_mins.x;
-    float y1 = (float)Window::s_mainWindow->GetClientDimensions().y * viewPort.m_mins.y;
+    float x  = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_maxs.x;
+    float y  = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_maxs.y;
+    float x1 = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_mins.x;
+    float y1 = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_mins.y;
 
     m_viewPort = AABB2(Vec2(x1, y1), Vec2(x, y));
+}
+
+void Camera::SetViewport(AABB2 const& newViewPort)
+{
+    m_viewPort = newViewPort;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -260,8 +265,8 @@ Vec3 Camera::PerspectiveScreenPosToWorld(Vec2 const& screenPos) const
 
     // Step 3: 計算 near plane 高度和寬度（根據 FOV 與 aspect ratio）
     float halfFOV = m_perspectiveFOV * 0.5f;
-    float h = 2.f * m_perspectiveNear * SinDegrees(halfFOV) / CosDegrees(halfFOV);
-    float w = h * m_perspectiveAspect;
+    float h       = 2.f * m_perspectiveNear * SinDegrees(halfFOV) / CosDegrees(halfFOV);
+    float w       = h * m_perspectiveAspect;
 
     // Step 4: 根據螢幕座標偏移 (0.5, 0.5) 為中心
     Vec3 worldPos = nearCenter;
@@ -281,9 +286,9 @@ Ray3 Camera::ScreenPosToWorldRay(Vec2 const& screenPos) const
     Vec3 nearWorld = PerspectiveScreenPosToWorld(screenPos);
 
     // Compute far plane world position (manually, similar to PerspectiveScreenPosToWorld but using far)
-    float h = 2.f * m_perspectiveFar * SinDegrees(m_perspectiveFOV * 0.5f) / CosDegrees(m_perspectiveFOV * 0.5f);
-    float w = h * m_perspectiveAspect;
-    Vec3 farWorld = m_position + iBasis * m_perspectiveFar;
+    float h        = 2.f * m_perspectiveFar * SinDegrees(m_perspectiveFOV * 0.5f) / CosDegrees(m_perspectiveFOV * 0.5f);
+    float w        = h * m_perspectiveAspect;
+    Vec3  farWorld = m_position + iBasis * m_perspectiveFar;
     farWorld -= jBasis * (screenPos.x - 0.5f) * w;
     farWorld += kBasis * (screenPos.y - 0.5f) * h;
 
