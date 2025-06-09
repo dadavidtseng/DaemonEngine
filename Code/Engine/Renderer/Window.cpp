@@ -277,18 +277,23 @@ void Window::CreateOSWindow()
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     // Define a window style/class
-    WNDCLASSEX windowClassEx  = {};                                 // Contains window class information. It is used with the `RegisterClassEx` and `GetClassInfoEx` functions.
-    windowClassEx.cbSize      = sizeof(windowClassEx);              // The size, in bytes, of this structure. Set this member to sizeof(WNDCLASSEX). Be sure to set this member before calling the GetClassInfoEx function.
-    windowClassEx.style       = CS_OWNDC;                           // The class style(s). This member can be any combination of the Class Styles. https://learn.microsoft.com/en-us/windows/win32/winmsg/window-class-styles
+    WNDCLASSEX windowClassEx  = {};                                                         // Contains window class information. It is used with the `RegisterClassEx` and `GetClassInfoEx` functions.
+    windowClassEx.cbSize      = sizeof(windowClassEx);                                      // The size, in bytes, of this structure. Set this member to sizeof(WNDCLASSEX). Be sure to set this member before calling the GetClassInfoEx function.
+    windowClassEx.style       = CS_OWNDC;                                                   // The class style(s). This member can be any combination of the Class Styles. https://learn.microsoft.com/en-us/windows/win32/winmsg/window-class-styles
     windowClassEx.lpfnWndProc = static_cast<WNDPROC>(WindowsMessageHandlingProcedure);      // Long Pointer to the Windows Procedure function.
 
     // Register our Windows message-handling function
-    windowClassEx.hInstance     = GetModuleHandle(nullptr);
-    windowClassEx.hIcon         = nullptr;
+    windowClassEx.hInstance     = GetModuleHandle(nullptr);                                 // A handle to the instance that contains the window procedure for the class.
+    windowClassEx.hIcon         = (HICON)LoadImage(
+    NULL,                  // hInstance = NULL 表示從檔案
+    L"C:/p4/Personal/SD/FirstMultipleWindows/Run/Data/Images/Test_StbiFlippedAndOpenGL.ico",         // 檔案路徑
+    IMAGE_ICON,
+    32, 32,                // 大小 (通常是 32x32)
+    LR_LOADFROMFILE
+);
     windowClassEx.hCursor       = nullptr;
     windowClassEx.lpszClassName = TEXT("Simple Window Class");
     RegisterClassEx(&windowClassEx);
-
     // #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
     DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_POPUP | WS_SYSMENU | WS_OVERLAPPEDWINDOW;
     DWORD constexpr windowStyleExFlags = WS_EX_APPWINDOW;
