@@ -29,6 +29,9 @@
     <Filter Include="ThirdParty\TinyXML2">
       <UniqueIdentifier>{f9eda815-7ba5-4c1d-975c-8ac067052fe6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{cc0452f8-e2b1-4605-afa8-3f8971c3d115}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -90,9 +93,6 @@
     </ClCompile>
     <ClCompile Include="Core\SimpleTriangleFont.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Window.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Core\EngineCommon.cpp">
       <Filter>Core</Filter>
@@ -214,6 +214,12 @@
     <ClCompile Include="Math\Plane2.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Platform\Window.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Platform\WindowEx.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -299,9 +305,6 @@
     </ClInclude>
     <ClInclude Include="Core\SimpleTriangleFont.hpp">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Window.hpp">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Core\EngineCommon.hpp">
       <Filter>Core</Filter>
@@ -428,6 +431,12 @@
     </ClInclude>
     <ClInclude Include="Math\Plane2.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\Window.hpp">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\WindowEx.hpp">
+      <Filter>Platform</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

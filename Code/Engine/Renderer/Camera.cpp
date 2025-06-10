@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Camera.hpp"
 
-#include "Window.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include <Engine/Core/EngineCommon.hpp>
 

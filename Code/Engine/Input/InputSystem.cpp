@@ -5,11 +5,10 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Input/InputSystem.hpp"
 
-#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
-#include "Engine/Renderer/Window.hpp"
+#include "Engine/Platform/Window.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>

@@ -15,7 +15,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/Triangle2.hpp"
-#include "Engine/Renderer/Window.hpp"
+#include "Engine/Platform/Window.hpp"
 
 //----------------------------------------------------------------------------------------------------
 AABB2 GetVertexBounds2D(VertexList_PCU const& verts)
