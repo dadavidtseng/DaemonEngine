@@ -23,6 +23,7 @@ enum eTextBoxMode
 class BitmapFont
 {
     friend class Renderer;  // Only the Renderer can create new BitmapFont objects!
+    friend class RendererEx;
 
 public:
     Texture const& GetTexture() const;

@@ -12,6 +12,7 @@ struct ID3D11Device;
 class ConstantBuffer
 {
     friend class Renderer;
+    friend class RendererEx;
 
 public:
     ConstantBuffer(ID3D11Device* device, size_t size);

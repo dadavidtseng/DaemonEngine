@@ -6,6 +6,7 @@
 #include "Engine/Renderer/Camera.hpp"
 
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Platform/WindowEx.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include <Engine/Core/EngineCommon.hpp>
 
@@ -194,12 +195,26 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 
 //----------------------------------------------------------------------------------------------------
 // viewport = AABB2(Vec2(0, 0.5f), Vec2::ONE)
+// TODO: FIX this crap
 void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
 {
-    float x  = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_maxs.x;
-    float y  = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_maxs.y;
-    float x1 = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_mins.x;
-    float y1 = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_mins.y;
+    float x, y, x1, y1;
+    if (WindowEx::s_mainWindowEx != nullptr)
+    {
+        x  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_maxs.x;
+        y  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_maxs.y;
+        x1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_mins.x;
+        y1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_mins.y;
+    }
+
+
+    if (Window::s_mainWindow != nullptr)
+    {
+        x  = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_maxs.x;
+        y  = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_maxs.y;
+        x1 = (float)Window::s_mainWindow->GetClientDimensions().x * newViewPort.m_mins.x;
+        y1 = (float)Window::s_mainWindow->GetClientDimensions().y * newViewPort.m_mins.y;
+    }
 
     m_viewPort = AABB2(Vec2(x1, y1), Vec2(x, y));
 }

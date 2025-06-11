@@ -286,7 +286,7 @@ void Window::CreateOSWindow()
     windowClassEx.hInstance = GetModuleHandle(nullptr);                                 // A handle to the instance that contains the window procedure for the class.
     windowClassEx.hIcon     = (HICON)LoadImage(
         NULL,                  // hInstance = NULL 表示從檔案
-        L"C:/p4/Personal/SD/FirstMultipleWindows/Run/Data/Images/Test_StbiFlippedAndOpenGL.ico",         // 檔案路徑
+        m_config.m_iconFilePath,         // 檔案路徑
         IMAGE_ICON,
         32, 32,                // 大小 (通常是 32x32)
         LR_LOADFROMFILE

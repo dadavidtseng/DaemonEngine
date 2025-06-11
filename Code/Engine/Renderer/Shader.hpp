@@ -22,6 +22,7 @@ struct ShaderConfig
 class Shader
 {
     friend class Renderer;
+    friend class RendererEx;
 
 public:
     explicit Shader(ShaderConfig const& config);

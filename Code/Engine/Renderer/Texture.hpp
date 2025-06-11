@@ -13,6 +13,7 @@
 class Texture
 {
     friend class Renderer; // Only the Renderer can create new Texture objects!
+    friend class RendererEx;
 
 public:
     ~Texture();

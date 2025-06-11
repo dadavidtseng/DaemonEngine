@@ -22,7 +22,7 @@ class ConstantBuffer;
 class Image;
 class Shader;
 class VertexBuffer;
-class Window;
+class WindowEx;
 struct IntVec2;
 struct ID3D11RasterizerState;
 struct ID3D11RenderTargetView;
@@ -44,7 +44,7 @@ dxObject = nullptr;       \
 
 
 //----------------------------------------------------------------------------------------------------
-class Renderer
+class RendererEx
 {
 public:
     //----------------------------------------------------------------------------------------------------
@@ -117,12 +117,12 @@ public:
     };
 
     //----------------------------------------------------------------------------------------------------
-    struct sRenderConfig
+    struct sRenderExConfig
     {
-        Window* m_window = nullptr;
+        WindowEx* m_window = nullptr;
     };
 
-    explicit Renderer(sRenderConfig const& config);
+    explicit RendererEx(sRenderExConfig const& config);
 
     static int k_lightConstantSlot;
     static int k_cameraConstantSlot;
@@ -189,7 +189,7 @@ private:
     void BindVertexBuffer(VertexBuffer const* vbo) const;
     void SetStatesIfChanged();
 
-    sRenderConfig m_config;
+    sRenderExConfig m_config;
 
 protected:
     // Create variables to store DirectX state.

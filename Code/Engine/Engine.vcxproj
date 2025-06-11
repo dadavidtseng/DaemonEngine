@@ -225,6 +225,7 @@
     <ClCompile Include="Renderer\DebugRenderSystem.cpp" />
     <ClCompile Include="Renderer\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Renderer\RendererEx.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
     <ClCompile Include="Renderer\SpriteAnimDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteDefinition.cpp" />
@@ -299,6 +300,7 @@
     <ClInclude Include="Renderer\DefaultShader.hpp" />
     <ClInclude Include="Renderer\IndexBuffer.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
+    <ClInclude Include="Renderer\RendererEx.hpp" />
     <ClInclude Include="Renderer\Shader.hpp" />
     <ClInclude Include="Renderer\SpriteAnimDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />

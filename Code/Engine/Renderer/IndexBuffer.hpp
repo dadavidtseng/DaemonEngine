@@ -12,6 +12,7 @@ struct ID3D11Device;
 class IndexBuffer
 {
     friend class Renderer;
+    friend class RendererEx;
 
 public:
     IndexBuffer(ID3D11Device* device, unsigned int size, unsigned int stride);

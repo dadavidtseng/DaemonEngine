@@ -503,7 +503,7 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
     AABB2 const    backgroundBox = AABB2(Vec2::ZERO, Vec2(1600.f, 800.f));
 
     AddVertsForAABB2D(backgroundBoxVerts, backgroundBox, Rgba8::TRANSLUCENT_BLACK);
-    renderer.SetBlendMode(eBlendMode::ALPHA);
+    renderer.SetBlendMode(Renderer::eBlendMode::ALPHA);
 
     renderer.BindTexture(nullptr);
     renderer.DrawVertexArray(static_cast<int>(backgroundBoxVerts.size()), backgroundBoxVerts.data());
@@ -565,10 +565,10 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
     }
 
     renderer.SetModelConstants();
-    renderer.SetBlendMode(eBlendMode::ALPHA);
-    renderer.SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
-    renderer.SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    renderer.SetDepthMode(eDepthMode::DISABLED);
+    renderer.SetBlendMode(Renderer::eBlendMode::ALPHA);
+    renderer.SetRasterizerMode(Renderer::eRasterizerMode::SOLID_CULL_NONE);
+    renderer.SetSamplerMode(Renderer::eSamplerMode::POINT_CLAMP);
+    renderer.SetDepthMode(Renderer::eDepthMode::DISABLED);
     renderer.BindTexture(&font.GetTexture());
     renderer.DrawVertexArray(static_cast<int>(textVerts.size()), textVerts.data());
 }
