@@ -26,6 +26,9 @@ protected:
 
     // #ToDo: multi-renderer compability
     // unsigned int m_openglTextureID = 0xFFFFFFFF;
+    /// A 2D texture interface manages texel data, which is structured memory.
     ID3D11Texture2D*          m_texture            = nullptr;
+    /// A shader-resource-view interface specifies the subresources a shader can access during rendering.
+    /// Examples of shader resources include a constant buffer, a texture buffer, and a texture.
     ID3D11ShaderResourceView* m_shaderResourceView = nullptr;
 };

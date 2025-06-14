@@ -13,6 +13,14 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RaycastUtils.hpp"
 
+#if defined near
+#undef near
+#endif
+
+#if defined far
+#undef far
+#endif
+
 //----------------------------------------------------------------------------------------------------
 void Camera::SetOrthoGraphicView(Vec2 const& bottomLeft,
                                  Vec2 const& topRight,
@@ -199,13 +207,13 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
 {
     float x, y, x1, y1;
-    if (WindowEx::s_mainWindowEx != nullptr)
-    {
-        x  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_maxs.x;
-        y  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_maxs.y;
-        x1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_mins.x;
-        y1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_mins.y;
-    }
+    // if (WindowEx::s_mainWindowEx != nullptr)
+    // {
+    //     x  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_maxs.x;
+    //     y  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_maxs.y;
+    //     x1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_mins.x;
+    //     y1 = (float)WindowEx::s_mainWindowEx->GetClientDimensions().y * newViewPort.m_mins.y;
+    // }
 
 
     if (Window::s_mainWindow != nullptr)

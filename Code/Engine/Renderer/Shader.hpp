@@ -32,8 +32,11 @@ public:
     String const& GetName() const;
 
 private:
-    ShaderConfig        m_config;
+    ShaderConfig m_config;
+    /// A vertex-shader interface manages an executable program (a vertex shader) that controls the vertex-shader stage.
     ID3D11VertexShader* m_vertexShader = nullptr;
-    ID3D11PixelShader*  m_pixelShader  = nullptr;
-    ID3D11InputLayout*  m_inputLayout  = nullptr;
+    /// A pixel-shader interface manages an executable program (a pixel shader) that controls the pixel-shader stage.
+    ID3D11PixelShader* m_pixelShader = nullptr;
+    /// An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
+    ID3D11InputLayout* m_inputLayout = nullptr;
 };

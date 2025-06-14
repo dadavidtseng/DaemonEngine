@@ -276,10 +276,10 @@ Vec2 InputSystem::GetCursorNormalizedPosition() const
 //----------------------------------------------------------------------------------------------------
 STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
 {
-    if (g_theDevConsole == nullptr)
-    {
-        ERROR_RECOVERABLE("g_theDevConsole is nullptr")
-    }
+    // if (g_theDevConsole == nullptr)
+    // {
+    //     ERROR_RECOVERABLE("g_theDevConsole is nullptr")
+    // }
 
     if (g_theInput == nullptr)
     {
@@ -296,10 +296,10 @@ STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
 {
-    if (g_theDevConsole == nullptr)
-    {
-        return false;
-    }
+    // if (g_theDevConsole == nullptr)
+    // {
+    //     return false;
+    // }
 
     if (g_theInput == nullptr)
     {

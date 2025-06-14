@@ -24,7 +24,10 @@ public:
     size_t GetSize() const;
 
 private:
+    /// A buffer interface accesses a buffer resource, which is unstructured memory.
+    /// Buffers typically store vertex or index data.
     ID3D11Buffer* m_buffer = nullptr;
+    /// The device interface represents a virtual adapter; it is used to create resources.
     ID3D11Device* m_device = nullptr;
     size_t        m_size   = 0;
 };

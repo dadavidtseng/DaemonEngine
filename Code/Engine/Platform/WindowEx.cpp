@@ -20,13 +20,17 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
-STATIC WindowEx* WindowEx::s_mainWindowEx = nullptr;
+// STATIC WindowEx* WindowEx::s_mainWindowEx = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 WindowEx::WindowEx(sWindowExConfig const& config)
 {
-    m_config       = config;
-    s_mainWindowEx = this;
+    m_config = config;
+
+    // if (s_mainWindowEx == nullptr)
+    // {
+    //     s_mainWindowEx = this;
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -36,13 +40,14 @@ void WindowEx::Startup()
     CreateConsole();
 #endif
 
-    CreateOSWindow();
     // CreateOSWindow();
+    CreateOSWindow();
 }
 
 //----------------------------------------------------------------------------------------------------
 void WindowEx::Shutdown()
 {
+    ReleaseDC((HWND)m_windowHandle, (HDC)m_displayContext);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -67,14 +72,22 @@ LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND const   windowHandle,
 {
     InputSystem* input = nullptr;
 
-    if (WindowEx::s_mainWindowEx != nullptr &&
-        WindowEx::s_mainWindowEx->GetConfig().m_inputSystem)
-    {
-        input = WindowEx::s_mainWindowEx->GetConfig().m_inputSystem;
-    }
+    // if (WindowEx::s_mainWindowEx != nullptr &&
+    //     WindowEx::s_mainWindowEx->GetConfig().m_inputSystem)
+    // {
+    //     input = WindowEx::s_mainWindowEx->GetConfig().m_inputSystem;
+    // }
 
     switch (wmMessageCode)
     {
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC         hdc = BeginPaint(windowHandle, &ps);
+            // 渲染由 WindowKillRenderer 處理
+            EndPaint(windowHandle, &ps);
+            return 0;
+        }
     case WM_SIZE:
         {
             UINT newWidth  = LOWORD(lParam);
@@ -89,10 +102,10 @@ LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND const   windowHandle,
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             g_theEventSystem->FireEvent("OnCloseButtonClicked");
 
@@ -102,10 +115,10 @@ LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -117,10 +130,10 @@ LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -131,10 +144,10 @@ LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND const   windowHandle,
 
     case WM_CHAR:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -269,6 +282,108 @@ IntVec2 WindowEx::GetClientDimensions() const
     return m_clientDimensions;
 }
 
+bool WindowEx::IsWindowClassRegistered()
+{
+    WNDCLASSEX wc = {};
+    return GetClassInfoEx(GetModuleHandle(nullptr), L"GameWindow", &wc) != 0;
+}
+
+WindowEx* WindowEx::CreateChildWindow(wchar_t const* title, int x, int y, int width, int height)
+{
+    HINSTANCE hInst = GetModuleHandle(NULL);
+    WNDCLASS      wc                        = {};
+    wc.lpfnWndProc                          = WindowsExMessageHandlingProcedure;
+    wc.hInstance                            = hInst;
+    wc.lpszClassName                        = L"GameWindow";
+    wc.hbrBackground                        = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.hCursor                              = LoadCursor(nullptr, IDC_ARROW);
+
+    RegisterClass(&wc);
+
+    // 首先確保窗口類別已註冊
+    if (!IsWindowClassRegistered())
+    {
+        DebuggerPrintf("Error: The window is not registered\n");
+        // return nullptr;
+    }
+
+    HWND hwnd = CreateWindowEx(
+        0,
+        L"GameWindow",
+        title,
+        WS_OVERLAPPEDWINDOW,
+        x, y, width, height,
+        nullptr,
+        nullptr,
+        hInst,
+        nullptr
+    );
+
+    if (!hwnd)
+    {
+        DWORD error = GetLastError();
+        printf("錯誤：CreateWindowEx 失敗，錯誤碼：%lu\n", error);
+        // return nullptr;
+    }
+
+    if (hwnd)
+    {
+        ShowWindow(hwnd, SW_SHOW);
+        UpdateWindow(hwnd);
+
+        // WindowEx* childWindow       = new WindowEx();
+        // childWindow->m_windowHandle = hwnd;
+        //
+        // printf("成功：子視窗 HWND 創建成功 - %p\n", hwnd);
+        // return childWindow; // 返回新物件
+    }
+    printf("成功：子視窗 HWND 創建成功 - %p\n", hwnd);
+    return this;
+}
+
+void WindowEx::UpdateWindowPosition(int const sceneWidth,
+                                    int const sceneHeight,
+                                    int const virtualScreenWidth,
+                                    int const virtualScreenHeight)
+{
+    RECT windowRect;
+    GetWindowRect((HWND)m_windowHandle, &windowRect);
+
+    // if (memcmp(&windowRect, &lastRect, sizeof(sRECT)) != 0)
+    // {
+    lastRect.bottom = windowRect.bottom;
+    lastRect.left   = windowRect.left;
+    lastRect.right  = windowRect.right;
+    lastRect.top    = windowRect.top;
+
+    needsUpdate = true;
+
+    RECT clientRect;
+    GetClientRect((HWND)m_windowHandle, &clientRect);
+    width  = clientRect.right - clientRect.left;
+    height = clientRect.bottom - clientRect.top;
+
+    viewportX      = (float)windowRect.left / (float)virtualScreenWidth;
+    viewportY      = (float)windowRect.top / (float)virtualScreenHeight;
+    viewportWidth  = (float)width / (float)virtualScreenWidth;
+    viewportHeight = (float)height / (float)virtualScreenHeight;
+
+    // 確保座標對齊到像素邊界
+    float pixelAlignX = 1.0f / (float)sceneWidth;
+    float pixelAlignY = 1.0f / (float)sceneHeight;
+
+    viewportX      = floor(viewportX / pixelAlignX) * pixelAlignX;
+    viewportY      = floor(viewportY / pixelAlignY) * pixelAlignY;
+    viewportWidth  = ceil(viewportWidth / pixelAlignX) * pixelAlignX;
+    viewportHeight = ceil(viewportHeight / pixelAlignY) * pixelAlignY;
+
+    viewportX      = max(0.0f, min(1.0f,viewportX));
+    viewportY      = max(0.0f, min(1.0f, viewportY));
+    viewportWidth  = max(0.0f, min(1.0f - viewportX, viewportWidth));
+    viewportHeight = max(0.0f, min(1.0f - viewportY, viewportHeight));
+    // }
+}
+
 //----------------------------------------------------------------------------------------------------
 void WindowEx::CreateOSWindow()
 {
@@ -292,10 +407,10 @@ void WindowEx::CreateOSWindow()
         LR_LOADFROMFILE
     );
     windowClassEx.hCursor       = nullptr;
-    windowClassEx.lpszClassName = TEXT("Simple Window Class");
+    windowClassEx.lpszClassName = L"GameWindow";
     RegisterClassEx(&windowClassEx);
     // #SD1ToDo: Add support for fullscreen mode (requires different window style flags than windowed mode)
-    DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_POPUP | WS_SYSMENU | WS_OVERLAPPED;
+    DWORD constexpr windowStyleFlags   = WS_CAPTION | WS_POPUP | WS_SYSMENU | WS_OVERLAPPEDWINDOW;
     DWORD constexpr windowStyleExFlags = WS_EX_APPWINDOW;
     // DWORD constexpr windowStyleFlags   = WS_POPUP;
     // DWORD constexpr windowStyleExFlags = WS_EX_APPWINDOW;

@@ -26,7 +26,10 @@ public:
     unsigned int GetStride() const;
 
 private:
+    /// A buffer interface accesses a buffer resource, which is unstructured memory.
+    /// Buffers typically store vertex or index data.
     ID3D11Buffer* m_buffer = nullptr;
+    /// The device interface represents a virtual adapter; it is used to create resources.
     ID3D11Device* m_device = nullptr;
     unsigned int  m_size   = 0;
     unsigned int  m_stride = 0;

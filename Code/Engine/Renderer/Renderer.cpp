@@ -54,6 +54,8 @@ Renderer::Renderer(sRenderConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
+
+
     // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
     unsigned int deviceFlags = 0;
 
@@ -255,14 +257,10 @@ void Renderer::Startup()
         ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
     }
 
-    samplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.BorderColor[0] = 0.0f; // R
-    samplerDesc.BorderColor[1] = 0.0f; // G
-    samplerDesc.BorderColor[2] = 0.0f; // B
-    samplerDesc.BorderColor[3] = 0.0f; // A = 0 → 完全透明
+    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 
     hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
     if (!SUCCEEDED(hr))

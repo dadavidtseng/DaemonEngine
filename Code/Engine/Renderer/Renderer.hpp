@@ -42,7 +42,6 @@ dxObject = nullptr;       \
 #endif
 
 
-
 //----------------------------------------------------------------------------------------------------
 class Renderer
 {
@@ -192,27 +191,36 @@ private:
     sRenderConfig m_config;
 
 protected:
-    // Create variables to store DirectX state.
-    IDXGISwapChain*         m_swapChain        = nullptr;
-    ID3D11Device*           m_device           = nullptr;
-    ID3D11DeviceContext*    m_deviceContext    = nullptr;
+    // Create variables to store DirectX state------------------------------------------------------------
+    /// An IDXGISwapChain interface implements one or more surfaces for storing rendered data before presenting it to an output.
+    IDXGISwapChain* m_swapChain = nullptr;
+    /// The device interface represents a virtual adapter; it is used to create resources.
+    ID3D11Device* m_device = nullptr;
+    /// The ID3D11DeviceContext interface represents a device context which generates rendering commands.
+    ID3D11DeviceContext* m_deviceContext = nullptr;
+    /// A render-target-view interface identifies the render-target subresources that can be accessed during rendering.
     ID3D11RenderTargetView* m_renderTargetView = nullptr;
 
-    eBlendMode        m_desiredBlendMode                                 = eBlendMode::ALPHA;
+    eBlendMode m_desiredBlendMode = eBlendMode::ALPHA;
+    /// The blend-state interface holds a description for blending state that you can bind to the output-merger stage.
     ID3D11BlendState* m_blendState                                       = nullptr;
     ID3D11BlendState* m_blendStates[static_cast<int>(eBlendMode::COUNT)] = {};
 
-    ID3D11Texture2D*         m_depthStencilTexture                                     = nullptr;
-    ID3D11DepthStencilView*  m_depthStencilDSV                                         = nullptr;
-    eDepthMode               m_desiredDepthMode                                        = eDepthMode::READ_WRITE_LESS_EQUAL;
+    /// A depth-stencil-view interface accesses a texture resource during depth-stencil testing.
+    ID3D11DepthStencilView* m_depthStencilDSV     = nullptr;
+    ID3D11Texture2D*        m_depthStencilTexture = nullptr;
+    eDepthMode              m_desiredDepthMode    = eDepthMode::READ_WRITE_LESS_EQUAL;
+    /// The depth-stencil-state interface holds a description for depth-stencil state that you can bind to the output-merger stage.
     ID3D11DepthStencilState* m_depthStencilState                                       = nullptr;
     ID3D11DepthStencilState* m_depthStencilStates[static_cast<int>(eDepthMode::COUNT)] = {};
 
-    eSamplerMode        m_desiredSamplerMode                                   = eSamplerMode::POINT_CLAMP;
+    eSamplerMode m_desiredSamplerMode = eSamplerMode::POINT_CLAMP;
+    /// The sampler-state interface holds a description for sampler state that you can bind to any shader stage of the pipeline for reference by texture sample operations.
     ID3D11SamplerState* m_samplerState                                         = nullptr;
     ID3D11SamplerState* m_samplerStates[static_cast<int>(eSamplerMode::COUNT)] = {};
 
-    eRasterizerMode        m_desiredRasterizerMode                                      = eRasterizerMode::SOLID_CULL_BACK;
+    eRasterizerMode m_desiredRasterizerMode = eRasterizerMode::SOLID_CULL_BACK;
+    /// The rasterizer-state interface holds a description for rasterizer state that you can bind to the rasterizer stage.
     ID3D11RasterizerState* m_rasterizerState                                            = nullptr;
     ID3D11RasterizerState* m_rasterizerStates[static_cast<int>(eRasterizerMode::COUNT)] = {};
 

@@ -5,30 +5,31 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/RendererEx.hpp"
 
+#include <comdef.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 #include <dxgi.h>
+#include <wincodec.h>
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/Image.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/IntVec2.hpp"
-#include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Platform/WindowEx.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
-#include "Engine/Platform/WindowEx.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "windowscodecs.lib")
+
+using namespace DirectX;
 
 // Define ENGINE_DEBUG_RENDERER if this is a Debug configuration and link debug libraries if it is.
 #if defined(_DEBUG)
@@ -40,16 +41,134 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
-//----------------------------------------------------------------------------------------------------
-STATIC int RendererEx::k_lightConstantSlot  = 1;
-STATIC int RendererEx::k_cameraConstantSlot = 2;
-STATIC int RendererEx::k_modelConstantsSlot = 3;
+// 簡單的頂點結構
+struct Vertex
+{
+    XMFLOAT3 m_position;
+    XMFLOAT2 m_texCoord;
+};
 
 //----------------------------------------------------------------------------------------------------
 RendererEx::RendererEx(sRenderExConfig const& config)
 {
     m_config = config;
+
+    virtualScreenWidth  = GetSystemMetrics(SM_CXSCREEN);
+    virtualScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
+    bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth       = sceneWidth;
+    bitmapInfo.bmiHeader.biHeight      = -static_cast<LONG>(sceneHeight);
+    bitmapInfo.bmiHeader.biPlanes      = 1;
+    bitmapInfo.bmiHeader.biBitCount    = 32;
+    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+    pixelData.resize(sceneWidth * sceneHeight * 4);
 }
+
+
+
+//----------------------------------------------------------------------------------------------------
+/// @brief
+/// Create device and swap chain.
+void RendererEx::CreateDeviceAndSwapChain()
+{
+    WindowEx const*      windowEx      = m_config.m_window;
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+    swapChainDesc.BufferCount          = 1;
+    swapChainDesc.BufferDesc.Width     = sceneWidth;
+    swapChainDesc.BufferDesc.Height    = sceneHeight;
+    swapChainDesc.BufferDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.OutputWindow         = (HWND)windowEx->GetWindowHandle();
+    swapChainDesc.SampleDesc.Count     = 1;
+    swapChainDesc.Windowed             = TRUE;
+
+    HRESULT const hr = D3D11CreateDeviceAndSwapChain(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        D3D11_CREATE_DEVICE_DEBUG,
+        nullptr,
+        0,
+        D3D11_SDK_VERSION,
+        &swapChainDesc,
+        &m_swapChain,
+        &m_device,
+        nullptr,
+        &m_deviceContext
+    );
+
+    if (FAILED(hr))ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
+}
+
+//----------------------------------------------------------------------------------------------------
+/// @brief
+/// Get back buffer texture.
+void RendererEx::CreateRenderTargetView()
+{
+    ID3D11Texture2D* backBuffer;
+
+    HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+    if (FAILED(hr)) ERROR_AND_DIE("Could not get swap chain buffer.")
+
+    hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
+    if (FAILED(hr)) ERROR_AND_DIE("Could create render target view for swap chain buffer.")
+
+    backBuffer->Release();
+}
+
+//----------------------------------------------------------------------------------------------------
+/// @brief
+/// Create depth stencil texture and view.
+void RendererEx::CreateDepthStencilTextureAndView()
+{
+    D3D11_TEXTURE2D_DESC depthTextureDesc = {};
+    depthTextureDesc.Width                = sceneWidth;
+    depthTextureDesc.Height               = sceneHeight;
+    depthTextureDesc.MipLevels            = 1;
+    depthTextureDesc.ArraySize            = 1;
+    depthTextureDesc.Usage                = D3D11_USAGE_DEFAULT;
+    depthTextureDesc.Format               = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depthTextureDesc.BindFlags            = D3D11_BIND_DEPTH_STENCIL;
+    depthTextureDesc.SampleDesc.Count     = 1;
+
+    HRESULT hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
+    if (FAILED(hr)) ERROR_AND_DIE("Could not create texture for depth stencil.")
+
+    hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
+    if (FAILED(hr)) ERROR_AND_DIE("Could not create depth stencil view.")
+}
+
+
+
+void RendererEx::CreateSamplerState()
+{
+    //-Create sampler states--------------------------------------------------------------------------
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD             = 0;
+    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
+
+    HRESULT hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
+
+    if (FAILED(hr)) ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
+
+    samplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
+    if (FAILED(hr)) ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_CLAMP failed.")
+}
+
+
 
 //----------------------------------------------------------------------------------------------------
 void RendererEx::Startup()
@@ -81,262 +200,93 @@ void RendererEx::Startup()
 #endif
 
     //-Create device and swap chain-------------------------------------------------------------------
-    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-    WindowEx const*        window        = m_config.m_window;
+    // DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 
-    swapChainDesc.BufferDesc.Width  = window->GetClientDimensions().x;
-    swapChainDesc.BufferDesc.Height = window->GetClientDimensions().y;
-    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.SampleDesc.Count  = 1;
-    swapChainDesc.BufferUsage       = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount       = 2;
-    swapChainDesc.OutputWindow      = static_cast<HWND>(window->GetWindowHandle());
-    swapChainDesc.Windowed          = true;
-    swapChainDesc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    // swapChainDesc.BufferDesc.Width  = window->GetClientDimensions().x;
+    // swapChainDesc.BufferDesc.Height = window->GetClientDimensions().y;
+    // swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    // swapChainDesc.SampleDesc.Count  = 1;
+    // swapChainDesc.BufferUsage       = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    // swapChainDesc.BufferCount       = 2;
+    // swapChainDesc.OutputWindow      = static_cast<HWND>(window->GetWindowHandle());
+    // swapChainDesc.Windowed          = true;
+    // swapChainDesc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    //
+    // HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr,
+    //                                            D3D_DRIVER_TYPE_HARDWARE,
+    //                                            nullptr,
+    //                                            deviceFlags,
+    //                                            nullptr,
+    //                                            0,
+    //                                            D3D11_SDK_VERSION,
+    //                                            &swapChainDesc,
+    //                                            &m_swapChain,
+    //                                            &m_device,
+    //                                            nullptr,
+    //                                            &m_deviceContext);
 
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr,
-                                               D3D_DRIVER_TYPE_HARDWARE,
-                                               nullptr,
-                                               deviceFlags,
-                                               nullptr,
-                                               0,
-                                               D3D11_SDK_VERSION,
-                                               &swapChainDesc,
-                                               &m_swapChain,
-                                               &m_device,
-                                               nullptr,
-                                               &m_deviceContext);
 
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
-    }
-    //-Create device and swap chain-------------------------------------------------------------------
-
-    //-Get back buffer texture------------------------------------------------------------------------
-    ID3D11Texture2D* backBuffer;
-    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("Could not get swap chain buffer.")
-    }
-
-    hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
-
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("Could create render target view for swap chain buffer.")
-    }
-
-    backBuffer->Release();
-    //-Get back buffer texture------------------------------------------------------------------------
-
-    //-Create blend states and store the state in m_blendState----------------------------------------
-    D3D11_BLEND_DESC blendDesc                      = {};
-    blendDesc.RenderTarget[0].BlendEnable           = TRUE;
-    blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_ZERO;
-    blendDesc.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].SrcBlendAlpha         = blendDesc.RenderTarget[0].SrcBlend;
-    blendDesc.RenderTarget[0].DestBlendAlpha        = blendDesc.RenderTarget[0].DestBlend;
-    blendDesc.RenderTarget[0].BlendOpAlpha          = blendDesc.RenderTarget[0].BlendOp;
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(eBlendMode::OPAQUE)]);
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateBlendState for BlendMode::OPAQUE failed.")
-    }
-
-    blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
-    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-
-    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(eBlendMode::ALPHA)]);
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateBlendState for BlendMode::ALPHA failed.")
-    }
-
-    blendDesc.RenderTarget[0].SrcBlend  = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-
-    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(eBlendMode::ADDITIVE)]);
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
-    }
-    //-Create blend states and store the state in m_blendState----------------------------------------
-
-    //-Create depth stencil texture and view----------------------------------------------------------
-    D3D11_TEXTURE2D_DESC depthTextureDesc = {};
-    depthTextureDesc.Width                = m_config.m_window->GetClientDimensions().x;
-    depthTextureDesc.Height               = m_config.m_window->GetClientDimensions().y;
-    depthTextureDesc.MipLevels            = 1;
-    depthTextureDesc.ArraySize            = 1;
-    depthTextureDesc.Usage                = D3D11_USAGE_DEFAULT;
-    depthTextureDesc.Format               = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthTextureDesc.BindFlags            = D3D11_BIND_DEPTH_STENCIL;
-    depthTextureDesc.SampleDesc.Count     = 1;
-
-    hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Could not create texture for depth stencil.")
-    }
-
-    hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Could not create depth stencil view.")
-    }
-    //-Create depth stencil texture and view----------------------------------------------------------
-
-    //-Create depth stencil state---------------------------------------------------------------------
-    D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
-
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::DISABLED)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateDepthStencilState for DepthMode::DISABLED failed.")
-    }
-
-    // For the rest you need to enable depth.
-    depthStencilDesc.DepthEnable    = true;
-    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc      = D3D11_COMPARISON_ALWAYS;
-
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_ONLY_ALWAYS)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_ALWAYS failed.")
-    }
-
-    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
-
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_ONLY_LESS_EQUAL)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_LESS_EQUAL failed.")
-    }
-
-    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    depthStencilDesc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
-
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::READ_WRITE_LESS_EQUAL)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_WRITE_LESS_EQUAL failed.")
-    }
-
-    SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-    //-Create depth stencil state---------------------------------------------------------------------
-
-    //-Create sampler states--------------------------------------------------------------------------
-    D3D11_SAMPLER_DESC samplerDesc = {};
-    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
-    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
-
-    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateSamplerState for SamplerMode::POINT_CLAMP failed.")
-    }
-
-    samplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
-    samplerDesc.BorderColor[0] = 0.0f; // R
-    samplerDesc.BorderColor[1] = 0.0f; // G
-    samplerDesc.BorderColor[2] = 0.0f; // B
-    samplerDesc.BorderColor[3] = 0.0f; // A = 0 → 完全透明
-
-    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::BILINEAR_CLAMP)]);
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("CreateSamplerState for SamplerMode::BILINEAR_CLAMP failed.")
-    }
-
-    // Default the sampler state to point clamp
+    CreateDeviceAndSwapChain();
+    CreateRenderTargetView();
+    // CreateBlendState();
+    // CreateDepthStencilTextureAndView();
+    // CreateDepthStencilState();
+    CreateSamplerState();
+    // CreateRasterizerState();
+    // SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    //-Create sampler states--------------------------------------------------------------------------
 
-    //-Set rasterizer state---------------------------------------------------------------------------
-    D3D11_RASTERIZER_DESC rasterizerDesc;
-    rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
-    rasterizerDesc.CullMode              = D3D11_CULL_NONE;
-    rasterizerDesc.FrontCounterClockwise = true;
-    rasterizerDesc.DepthBias             = 0;
-    rasterizerDesc.DepthBiasClamp        = 0.f;
-    rasterizerDesc.SlopeScaledDepthBias  = 0.f;
-    rasterizerDesc.DepthClipEnable       = true;
-    rasterizerDesc.ScissorEnable         = false;
-    rasterizerDesc.MultisampleEnable     = false;
-    rasterizerDesc.AntialiasedLineEnable = true;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+    // m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    // m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    // m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
+    // m_lightCBO            = CreateConstantBuffer(sizeof(sLightConstants));
+    // m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
+    // m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
+    //
+    // //------------------------------------------------------------------------------------------------
+    // // Initialize m_defaultTexture to a 2x2 white image
+    // Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+    // m_defaultTexture         = CreateTextureFromImage(defaultImage);
+    // m_defaultTexture->m_name = "Default";
+    // m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
+    // m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
+    // // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
+    //
+    // BindShader(m_currentShader);
+    // BindTexture(m_defaultTexture);
+
+    // m_sceneTexture   = m_defaultTexture;
+    // m_testTexture   = m_defaultTexture;
+    // m_stagingTexture = m_defaultTexture;
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        IID_IWICImagingFactory,
+        reinterpret_cast<void**>(&m_wicFactory)
+    );
     if (FAILED(hr))
     {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
+        // WIC 初始化失敗，但繼續執行（使用程序生成紋理）
+        m_wicFactory = nullptr;
     }
+    hr = CreateSceneRenderTexture();
+    if (FAILED(hr)) return;
 
-    rasterizerDesc.CullMode = D3D11_CULL_BACK;
+    hr = CreateStagingTexture();
+    if (FAILED(hr)) return;
+    // m_testTexture = CreateOrGetTextureFromFile("Data/Images/Butler.png");
+    hr = CreateTestTexture(L"C:/p4/Personal/SD/FirstMultipleWindows/Run/Data/Images/Butler.png");
+    if (FAILED(hr)) return;
+    hr = CreateShaders();
+    if (FAILED(hr)) return;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_BACK)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_BACK failed.")
-    }
+    hr = CreateVertexBuffer();
+    if (FAILED(hr)) return;
 
-    rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-    rasterizerDesc.CullMode = D3D11_CULL_NONE;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_NONE)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_NONE failed.")
-    }
-
-    rasterizerDesc.CullMode = D3D11_CULL_BACK;
-
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::WIREFRAME_CULL_BACK)]);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
-    }
-    //-Set rasterizer state---------------------------------------------------------------------------
-
-    m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-    m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
-    m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-    m_lightCBO            = CreateConstantBuffer(sizeof(sLightConstants));
-    m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
-    m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
-
-    //------------------------------------------------------------------------------------------------
-    // Initialize m_defaultTexture to a 2x2 white image
-    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
-    m_defaultTexture         = CreateTextureFromImage(defaultImage);
-    m_defaultTexture->m_name = "Default";
-    m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
-    m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
-    // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-
-    BindShader(m_currentShader);
-    BindTexture(m_defaultTexture);
+    hr = CreateSampler();
+    if (FAILED(hr)) return;
 }
 
 
@@ -347,6 +297,7 @@ void RendererEx::BeginFrame() const
     // This code needs to run every frame and should be in your Render function.
     // m_config.m_window->m_renderTargetView[0] = m_renderTargetView;
     // m_config.m_window->m_renderTargetView[1] = m_renderTargetView;
+    // m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
     // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[0], m_depthStencilDSV);
     // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[1], m_depthStencilDSV);
@@ -425,12 +376,7 @@ void RendererEx::Shutdown()
         m_immediateVBO_PCU = nullptr;
     }
 
-    // Release all DirectX objects and check for memory leaks in your Shutdown function.
-    // Release all rasterizer states
-    for (int i = 0; i < static_cast<int>(eRasterizerMode::COUNT); ++i)
-    {
-        DX_SAFE_RELEASE(m_rasterizerStates[i])
-    }
+
 
     // Release all sampler states
     for (int i = 0; i < static_cast<int>(eSamplerMode::COUNT); ++i)
@@ -438,20 +384,10 @@ void RendererEx::Shutdown()
         DX_SAFE_RELEASE(m_samplerStates[i])
     }
 
-    // Release all depth states
-    for (int i = 0; i < static_cast<int>(eDepthMode::COUNT); ++i)
-    {
-        DX_SAFE_RELEASE(m_depthStencilStates[i])
-    }
 
     DX_SAFE_RELEASE(m_depthStencilDSV)
     DX_SAFE_RELEASE(m_depthStencilTexture)
 
-    // Release all blend states
-    for (int i = 0; i < static_cast<int>(eBlendMode::COUNT); ++i)
-    {
-        DX_SAFE_RELEASE(m_blendStates[i])
-    }
 
     DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
@@ -476,6 +412,23 @@ void RendererEx::Shutdown()
         m_dxgiDebugModule = nullptr;
     }
 #endif
+    if (m_wicFactory)
+    {
+        m_wicFactory->Release();
+        m_wicFactory = nullptr;
+    }
+
+    DX_SAFE_RELEASE(m_testShaderResourceView);
+    DX_SAFE_RELEASE(m_testTexture);
+    DX_SAFE_RELEASE(m_sceneTexture);
+    DX_SAFE_RELEASE(m_sceneShaderResourceView);
+    DX_SAFE_RELEASE(m_sceneRenderTargetView);
+    DX_SAFE_RELEASE(vertexShader);
+    DX_SAFE_RELEASE(pixelShader);
+    DX_SAFE_RELEASE(vertexBuffer);
+    DX_SAFE_RELEASE(indexBuffer);
+    DX_SAFE_RELEASE(inputLayout);
+    DX_SAFE_RELEASE(sampler);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -489,221 +442,12 @@ void RendererEx::ClearScreen(Rgba8 const& clearColor) const
 }
 
 //----------------------------------------------------------------------------------------------------
-void RendererEx::BeginCamera(Camera const& camera) const
-{
-    // Set viewport
-    D3D11_VIEWPORT viewport;
-    //Window const*  window       = m_config.m_window;
-    AABB2 const& viewportAABB = camera.GetViewPortUnnormalized(Vec2::ZERO);
-    viewport.TopLeftX         = viewportAABB.m_mins.x;
-    viewport.TopLeftY         = viewportAABB.m_mins.y;
-    // viewport.TopLeftX = 0.f;
-    // viewport.TopLeftY = 0.f;
-    viewport.Width  = viewportAABB.m_maxs.x - viewportAABB.m_mins.x;
-    viewport.Height = viewportAABB.m_maxs.y - viewportAABB.m_mins.y;
-
-    // viewport.Width    = static_cast<float>(window->GetClientDimensions().x);
-    // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
-    viewport.MinDepth = 0.f;
-    viewport.MaxDepth = 1.f;
-    DebuggerPrintf("DX11 Viewport (%f, %f)\n", viewport.Width, viewport.Height);
-
-    m_deviceContext->RSSetViewports(1, &viewport);
-
-
-    // Create a local CameraConstants structure
-    sCameraConstants cameraConstants;
-
-    cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
-    cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
-    cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
-
-    // Copy the data from the local structure to the constant buffer
-    CopyCPUToGPU(&cameraConstants, sizeof(sCameraConstants), m_cameraCBO);
-
-    // Bind the constant buffer
-    BindConstantBuffer(k_cameraConstantSlot, m_cameraCBO);
-
-    // LightConstants lightConstants;
-    //
-    // Vec3 const sunDirection = Vec3(2.f, 1.f, -1.f).GetNormalized();
-    //
-    // lightConstants.SunDirection[0]  = sunDirection.x;
-    // lightConstants.SunDirection[1]  = sunDirection.y;
-    // lightConstants.SunDirection[2]  = sunDirection.z;
-    // lightConstants.SunIntensity     = 0.85f;
-    // lightConstants.AmbientIntensity = 0.35f;
-    //
-    // CopyCPUToGPU(&lightConstants, sizeof(LightConstants), m_lightCBO);
-    // BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
-
-    // Set model constants to default
-    SetModelConstants();
-}
-
-//----------------------------------------------------------------------------------------------------
 void RendererEx::EndCamera(Camera const& camera)
 {
     UNUSED(camera)
 }
 
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(int const         numVertexes,
-                               Vertex_PCU const* vertexes)
-{
-    CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_PCU), m_immediateVBO_PCU);
-    DrawVertexBuffer(m_immediateVBO_PCU, numVertexes);
-}
 
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(int const            numVertexes,
-                               Vertex_PCUTBN const* vertexes)
-{
-    CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_PCUTBN), m_immediateVBO_PCUTBN);
-    DrawVertexBuffer(m_immediateVBO_PCUTBN, numVertexes);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(VertexList_PCU const& verts)
-{
-    DrawVertexArray(static_cast<int>(verts.size()), verts.data());
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(VertexList_PCUTBN const& verts)
-{
-    DrawVertexArray(static_cast<int>(verts.size()), verts.data());
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(VertexList_PCU const& verts,
-                               IndexList const&      indexes)
-{
-    CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCU), m_immediateVBO_PCU);
-    CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
-    DrawIndexedVertexBuffer(m_immediateVBO_PCU, m_immediateIBO, static_cast<int>(indexes.size()));
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexArray(VertexList_PCUTBN const& verts,
-                               IndexList const&         indexes)
-{
-    CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_immediateVBO_PCUTBN);
-    CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
-    DrawIndexedVertexBuffer(m_immediateVBO_PCUTBN, m_immediateIBO, static_cast<int>(indexes.size()));
-}
-
-//----------------------------------------------------------------------------------------------------
-// TODO: BindTexture(Texture const* texture, int slot=1);
-void RendererEx::BindTexture(Texture const* texture) const
-{
-    if (texture == nullptr)
-    {
-        texture = m_defaultTexture;
-    }
-
-    m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::BindShader(Shader const* shader) const
-{
-    if (shader == nullptr)
-    {
-        shader = m_defaultShader;
-    }
-
-    m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(shader->m_inputLayout);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawTexturedQuad(AABB2 const&   bounds,
-                                Texture const* texture,
-                                Rgba8 const&   tint,
-                                float const    uniformScaleXY,
-                                float const    rotationDegreesAboutZ)
-{
-    VertexList_PCU quadVerts;
-
-    AddVertsForAABB2D(quadVerts, bounds, tint);
-
-    TransformVertexArrayXY3D(static_cast<int>(quadVerts.size()), quadVerts.data(),
-                             uniformScaleXY, rotationDegreesAboutZ, Vec2(0, 0));
-
-    BindTexture(texture);
-    DrawVertexArray(static_cast<int>(quadVerts.size()), quadVerts.data());
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* RendererEx::CreateOrGetTextureFromFile(char const* imageFilePath)
-{
-    // See if we already have this texture previously loaded
-    if (Texture* existingTexture = GetTextureForFileName(imageFilePath))
-    {
-        return existingTexture;
-    }
-
-    // Never seen this texture before!  Let's load it.
-    Texture* newTexture = CreateTextureFromFile(imageFilePath);
-
-    return newTexture;
-}
-
-//----------------------------------------------------------------------------------------------------
-BitmapFont* RendererEx::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension)
-{
-    if (BitmapFont* existingBitMapFont = GetBitMapFontForFileName(bitmapFontFilePathWithNoExtension))
-    {
-        return existingBitMapFont;
-    }
-
-    String const   textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
-
-    if (!newTexture)
-    {
-        // Handle error: texture could not be created or retrieved
-        return nullptr;
-    }
-
-    // Consider using smart pointers for better memory management
-    BitmapFont* newBitMapFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *newTexture, IntVec2(16, 16));
-    m_loadedFonts.push_back(newBitMapFont);
-
-    return newBitMapFont;
-}
-
-Shader* RendererEx::CreateOrGetShaderFromFile(char const*       shaderFilePath,
-                                            eVertexType const vertexType)
-{
-    if (Shader* existingShader = GetShaderForFileName(shaderFilePath))
-    {
-        return existingShader;
-    }
-
-    // String const   textureFilePath = Stringf("%s.hlsl", shaderName);
-    // Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
-    //
-    // if (!newTexture)
-    // {
-    //     // Handle error: texture could not be created or retrieved
-    //     return nullptr;
-    // }
-
-    // Consider using smart pointers for better memory management
-    Shader* newShader = CreateShader(shaderFilePath, vertexType);
-    m_loadedShaders.push_back(newShader);
-
-    return newShader;
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetBlendMode(eBlendMode const mode)
-{
-    m_desiredBlendMode = mode;
-}
 
 //----------------------------------------------------------------------------------------------------
 void RendererEx::SetSamplerMode(eSamplerMode const mode)
@@ -711,577 +455,555 @@ void RendererEx::SetSamplerMode(eSamplerMode const mode)
     m_desiredSamplerMode = mode;
 }
 
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetRasterizerMode(eRasterizerMode const mode)
+void RendererEx::RenderViewportToWindow(WindowEx const& window) const
 {
-    m_desiredRasterizerMode = mode;
-}
+    if (!window.m_displayContext) return;
 
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetDepthMode(eDepthMode const mode)
-{
-    m_desiredDepthMode = mode;
-}
+    // Debug output to verify viewport values
+    // printf("Window viewport: x=%.3f, y=%.3f, w=%.3f, h=%.3f\n",
+    //        window.viewportX, window.viewportY, window.viewportWidth, window.viewportHeight);
 
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetModelConstants(Mat44 const& modelToWorldTransform,
-                                 Rgba8 const& modelColor) const
-{
-    sModelConstants modelConstants;
-    modelConstants.ModelToWorldTransform = modelToWorldTransform;
+    // Calculate source region in scene texture
+    int srcX      = (int)round(window.viewportX * sceneWidth);
+    int srcY      = (int)round(window.viewportY * sceneHeight);
+    int srcWidth  = (int)round(window.viewportWidth * sceneWidth);
+    int srcHeight = (int)round(window.viewportHeight * sceneHeight);
 
-    float colorAsFloat[4];
-    modelColor.GetAsFloats(colorAsFloat);
+    // Clamp to valid bounds
+    srcX      = max(0, min(srcX, (int)sceneWidth - 1));
+    srcY      = max(0, min(srcY, (int)sceneHeight - 1));
+    srcWidth  = min(srcWidth, (int)sceneWidth - srcX);
+    srcHeight = min(srcHeight, (int)sceneHeight - srcY);
 
-    modelConstants.ModelColor[0] = colorAsFloat[0];
-    modelConstants.ModelColor[1] = colorAsFloat[1];
-    modelConstants.ModelColor[2] = colorAsFloat[2];
-    modelConstants.ModelColor[3] = colorAsFloat[3];
-
-    CopyCPUToGPU(&modelConstants, sizeof(sModelConstants), m_modelCBO);
-    BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetLightConstants(Vec3 const& sunDirection,
-                                 float const sunIntensity,
-                                 float const ambientIntensity) const
-{
-    sLightConstants lightConstants;
-
-    Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
-
-    lightConstants.SunDirection[0]  = normalizedSunDirection.x;
-    lightConstants.SunDirection[1]  = normalizedSunDirection.y;
-    lightConstants.SunDirection[2]  = normalizedSunDirection.z;
-    lightConstants.SunIntensity     = sunIntensity;
-    lightConstants.AmbientIntensity = ambientIntensity;
-
-    CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
-    BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawVertexBuffer(VertexBuffer const* vbo,
-                                unsigned int const  vertexCount)
-{
-    BindVertexBuffer(vbo);
-    SetStatesIfChanged();
-
-    // Draw
-    m_deviceContext->Draw(vertexCount, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::DrawIndexedVertexBuffer(VertexBuffer const* vbo,
-                                       IndexBuffer const*  ibo,
-                                       unsigned int const  indexCount)
-{
-    BindVertexBuffer(vbo);
-    BindIndexBuffer(ibo);
-    SetStatesIfChanged();
-
-    // Draw
-    m_deviceContext->DrawIndexed(indexCount, 0, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* RendererEx::GetTextureForFileName(char const* imageFilePath) const
-{
-    for (Texture* texture : m_loadedTextures)
+    if (srcWidth <= 0 || srcHeight <= 0)
     {
-        if (texture && !strcmp(texture->m_name.c_str(), imageFilePath))
+        // Fill with debug color if viewport is invalid
+        RECT clientRect;
+        GetClientRect((HWND)window.GetWindowHandle(), &clientRect);
+        HBRUSH debugBrush = CreateSolidBrush(RGB(255, 0, 0)); // Red for debug
+        FillRect((HDC)window.m_displayContext, &clientRect, debugBrush);
+        DeleteObject(debugBrush);
+        return;
+    }
+
+    // Create window-specific pixel buffer
+    std::vector<BYTE> windowPixels(srcWidth * srcHeight * 4);
+
+    // Copy pixels from scene buffer with proper bounds checking
+    for (int y = 0; y < srcHeight; y++)
+    {
+        int srcRowStart = ((srcY + y) * sceneWidth + srcX) * 4;
+        int dstRowStart = (y * srcWidth) * 4;
+
+        // Additional bounds check
+        if (srcRowStart >= 0 && srcRowStart < (int)(pixelData.size() - srcWidth * 4))
         {
-            return texture;
+            memcpy(&windowPixels[dstRowStart], &pixelData[srcRowStart], srcWidth * 4);
         }
     }
 
-    return nullptr;
+    // Setup bitmap info for this window
+    BITMAPINFO localBitmapInfo         = bitmapInfo;
+    localBitmapInfo.bmiHeader.biWidth  = srcWidth;
+    localBitmapInfo.bmiHeader.biHeight = -srcHeight; // Negative for top-down DIB
+
+    // Render to window with scaling
+    int result = StretchDIBits(
+        (HDC)window.GetDisplayContext(),
+        0, 0,                          // Destination position
+        window.width, window.height,   // Destination size (scale to window)
+        0, 0,                          // Source position
+        srcWidth, srcHeight,           // Source size
+        windowPixels.data(),           // Pixel data
+        &localBitmapInfo,              // Bitmap info
+        DIB_RGB_COLORS,                // Color usage
+        SRCCOPY                        // Raster operation
+    );
+
+    // Debug: Check if StretchDIBits succeeded
+    if (result == GDI_ERROR)
+    {
+        DWORD error = GetLastError();
+        printf("StretchDIBits failed with error: %lu\n", error);
+    }
 }
 
-//----------------------------------------------------------------------------------------------------
-BitmapFont* RendererEx::GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const
+void RendererEx::RenderTestTexture()
 {
-    for (BitmapFont* font : m_loadedFonts)
+    // BindShader(m_defaultShader);
+    // BindTexture(m_testTexture);
+    // SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    // // m_deviceContext->PSSetShaderResources(0, 1, &m_testShaderResourceView);
+    // // m_deviceContext->PSSetSamplers(0, 1, &sampler);
+    //
+    // UINT stride = sizeof(Vertex_PCU);
+    // UINT offset = 0;
+    // m_deviceContext->IASetVertexBuffers(0, 1, &m_immediateVBO_PCU->m_buffer, &stride, &offset);
+    // m_deviceContext->IASetIndexBuffer(m_immediateIBO->m_buffer, DXGI_FORMAT_R32_UINT, 0);
+    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //
+    // m_deviceContext->DrawIndexed(6, 0, 0);
+    m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(inputLayout);
+
+    m_deviceContext->PSSetShaderResources(0, 1, &m_testShaderResourceView);
+    m_deviceContext->PSSetSamplers(0, 1, &sampler);
+
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
+    m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_deviceContext->DrawIndexed(6, 0, 0);
+}
+
+void RendererEx::RenderWindows(std::vector<WindowEx*> const& windows)
+{
+    if (!m_sceneRenderTargetView || !m_deviceContext) return;
+
+    // 更新窗口漂移
+    for (WindowEx* window : windows)
     {
-        if (font && !strcmp(font->m_fontFilePathNameWithNoExtension.c_str(), bitmapFontFilePathWithNoExtension))
+        // UpdateWindowDrift(window);
+        window->UpdateWindowPosition(sceneWidth, sceneHeight, virtualScreenWidth, virtualScreenHeight);
+    }
+
+    // 設置渲染目標為場景紋理
+    m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
+
+    D3D11_VIEWPORT viewport = {};
+    viewport.Width          = (FLOAT)sceneWidth;
+    viewport.Height         = (FLOAT)sceneHeight;
+    viewport.MinDepth       = 0.0f;
+    viewport.MaxDepth       = 1.0f;
+    m_deviceContext->RSSetViewports(1, &viewport);
+
+    float clearColor[4] = {0.2f, 0.3f, 0.4f, 1.0f};
+    m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
+
+    RenderTestTexture();
+    m_deviceContext->CopyResource(m_stagingTexture, m_sceneTexture);    // ID3D11DeviceContext::CopyResource(destination, source)
+    m_deviceContext->Flush();
+
+    UpdateWindows(windows);
+}
+
+void RendererEx::RenderWindows(WindowEx& windows)
+{
+    if (!m_sceneRenderTargetView || !m_deviceContext) return;
+
+    // 更新窗口漂移
+
+        // UpdateWindowDrift(window);
+        windows.UpdateWindowPosition(sceneWidth, sceneHeight, virtualScreenWidth, virtualScreenHeight);
+
+
+    // 設置渲染目標為場景紋理
+    m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
+
+    D3D11_VIEWPORT viewport = {};
+    viewport.Width          = (FLOAT)sceneWidth;
+    viewport.Height         = (FLOAT)sceneHeight;
+    viewport.MinDepth       = 0.0f;
+    viewport.MaxDepth       = 1.0f;
+    m_deviceContext->RSSetViewports(1, &viewport);
+
+    float clearColor[4] = {0.2f, 0.3f, 0.4f, 1.0f};
+    m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
+
+    RenderTestTexture();
+    m_deviceContext->CopyResource(m_stagingTexture, m_sceneTexture);    // ID3D11DeviceContext::CopyResource(destination, source)
+    m_deviceContext->Flush();
+
+    UpdateWindows(windows);
+}
+
+void RendererEx::UpdateWindows(std::vector<WindowEx*> const& windows)
+{
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT const            hr = m_deviceContext->Map(m_stagingTexture, 0, D3D11_MAP_READ, 0, &mappedResource);
+    if (FAILED(hr)) return;
+
+    BYTE const* sourceData = static_cast<BYTE*>(mappedResource.pData);
+    for (UINT y = 0; y < sceneHeight; y++)
+    {
+        memcpy(&pixelData[y * sceneWidth * 4],
+               &sourceData[y * mappedResource.RowPitch],
+               sceneWidth * 4);
+    }
+
+    m_deviceContext->Unmap(m_stagingTexture, 0);
+
+    for (WindowEx* window : windows)
+    {
+        if (window->needsUpdate)
         {
-            return font;
+            RenderViewportToWindow(*window);
+            window->needsUpdate = false;
+        }
+    }
+}
+
+void RendererEx::UpdateWindows(WindowEx& windows)
+{
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT const            hr = m_deviceContext->Map(m_stagingTexture, 0, D3D11_MAP_READ, 0, &mappedResource);
+    if (FAILED(hr)) return;
+
+    BYTE const* sourceData = static_cast<BYTE*>(mappedResource.pData);
+    for (UINT y = 0; y < sceneHeight; y++)
+    {
+        memcpy(&pixelData[y * sceneWidth * 4],
+               &sourceData[y * mappedResource.RowPitch],
+               sceneWidth * 4);
+    }
+
+    m_deviceContext->Unmap(m_stagingTexture, 0);
+
+
+    if (windows.needsUpdate)
+    {
+        RenderViewportToWindow(windows);
+        windows.needsUpdate = false;
+    }
+}
+
+HRESULT RendererEx::CreateSceneRenderTexture()
+{
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width                = sceneWidth;
+    texDesc.Height               = sceneHeight;
+    texDesc.MipLevels            = 1;
+    texDesc.ArraySize            = 1;
+    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count     = 1;
+    texDesc.Usage                = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags            = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+    HRESULT hr = m_device->CreateTexture2D(&texDesc, nullptr, &m_sceneTexture);
+    if (FAILED(hr)) return hr;
+
+    hr = m_device->CreateRenderTargetView(m_sceneTexture, nullptr, &m_sceneRenderTargetView);
+    if (FAILED(hr)) return hr;
+
+    hr = m_device->CreateShaderResourceView(m_sceneTexture, nullptr, &m_sceneShaderResourceView);
+    if (FAILED(hr)) return hr;
+
+    return S_OK;
+}
+
+HRESULT RendererEx::CreateStagingTexture()
+{
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width                = sceneWidth;
+    texDesc.Height               = sceneHeight;
+    texDesc.MipLevels            = 1;
+    texDesc.ArraySize            = 1;
+    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count     = 1;
+    texDesc.Usage                = D3D11_USAGE_STAGING;
+    texDesc.CPUAccessFlags       = D3D11_CPU_ACCESS_READ;
+    texDesc.BindFlags            = 0;
+
+    return m_device->CreateTexture2D(&texDesc, nullptr, &m_stagingTexture);
+}
+
+HRESULT RendererEx::CreateTestTexture(const wchar_t* imageFile)
+{
+    if (imageFile)
+    {
+        // 嘗試從檔案載入
+        HRESULT hr = LoadImageFromFile(imageFile, &m_testTexture, &m_testShaderResourceView);
+        if (SUCCEEDED(hr))
+        {
+            return hr;
+        }
+        // 如果載入失敗，回到程序生成紋理
+    }
+
+    const UINT texWidth  = 512;
+    const UINT texHeight = 512;
+    //
+    std::vector<UINT> textureData(texWidth * texHeight);
+    //
+    for (UINT y = 0; y < texHeight; y++)
+    {
+        for (UINT x = 0; x < texWidth; x++)
+        {
+            UINT index = y * texWidth + x;
+
+            float fx = (float)x / texWidth;
+            float fy = (float)y / texHeight;
+
+            UINT r = (UINT)(fx * 255);
+            UINT g = (UINT)(fy * 255);
+            UINT b = (UINT)((1.0f - fx) * 255);
+
+            if (((x / 32) + (y / 32)) % 2 == 0)
+            {
+                r = min(255, r + 50);
+                g = min(255, g + 50);
+                b = min(255, b + 50);
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                float centerX  = (i % 3) * texWidth / 3.0f + texWidth / 6.0f;
+                float centerY  = (i / 3) * texHeight / 3.0f + texHeight / 6.0f;
+                float distance = sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
+
+                if (distance < 30.0f)
+                {
+                    r = (i * 50) % 256;
+                    g = (i * 80) % 256;
+                    b = (i * 120) % 256;
+                }
+            }
+
+            textureData[index] = 0xFF000000 | (b << 16) | (g << 8) | r;
         }
     }
 
-    return nullptr;
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width                = texWidth;
+    texDesc.Height               = texHeight;
+    texDesc.MipLevels            = 1;
+    texDesc.ArraySize            = 1;
+    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count     = 1;
+    texDesc.Usage                = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem                = textureData.data();
+    initData.SysMemPitch            = texWidth * 4;
+
+    HRESULT hr = m_device->CreateTexture2D(&texDesc, &initData, &m_testTexture);
+    if (FAILED(hr)) return hr;
+
+    hr = m_device->CreateShaderResourceView(m_testTexture, nullptr, &m_testShaderResourceView);
+    return hr;
 }
 
-//----------------------------------------------------------------------------------------------------
-Shader* RendererEx::GetShaderForFileName(char const* shaderFilePath) const
+HRESULT RendererEx::CreateShaders()
 {
-    for (Shader* shader : m_loadedShaders)
+    const char* vsSource = R"(
+            struct VS_INPUT {
+                float3 pos : POSITION;
+                float2 tex : TEXCOORD0;
+            };
+
+            struct VS_OUTPUT {
+                float4 pos : SV_POSITION;
+                float2 tex : TEXCOORD0;
+            };
+
+            VS_OUTPUT main(VS_INPUT input) {
+                VS_OUTPUT output;
+                output.pos = float4(input.pos, 1.0f);
+                output.tex = input.tex;
+                return output;
+            }
+        )";
+
+    const char* psSource = R"(
+            Texture2D tex : register(t0);
+            SamplerState sam : register(s0);
+
+            struct PS_INPUT {
+                float4 pos : SV_POSITION;
+                float2 tex : TEXCOORD0;
+            };
+
+            float4 main(PS_INPUT input) : SV_TARGET {
+                return tex.Sample(sam, input.tex);
+            }
+        )";
+
+    ID3DBlob* vsBlob    = nullptr;
+    ID3DBlob* psBlob    = nullptr;
+    ID3DBlob* errorBlob = nullptr;
+
+    HRESULT hr = D3DCompile(vsSource, strlen(vsSource), nullptr, nullptr, nullptr,
+                            "main", "vs_4_0", 0, 0, &vsBlob, &errorBlob);
+    if (FAILED(hr))
     {
-        if (shader && !strcmp(shader->GetName().c_str(), shaderFilePath))
-        {
-            return shader;
-        }
+        if (errorBlob) errorBlob->Release();
+        return hr;
     }
 
-    return nullptr;
+    hr = m_device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
+                                      nullptr, &vertexShader);
+    if (FAILED(hr))
+    {
+        vsBlob->Release();
+        return hr;
+    }
+
+    D3D11_INPUT_ELEMENT_DESC layout[] = {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+    };
+
+    hr = m_device->CreateInputLayout(layout, 2, vsBlob->GetBufferPointer(),
+                                     vsBlob->GetBufferSize(), &inputLayout);
+    vsBlob->Release();
+    if (FAILED(hr)) return hr;
+
+    hr = D3DCompile(psSource, strlen(psSource), nullptr, nullptr, nullptr,
+                    "main", "ps_4_0", 0, 0, &psBlob, &errorBlob);
+    if (FAILED(hr))
+    {
+        if (errorBlob) errorBlob->Release();
+        return hr;
+    }
+
+    hr = m_device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
+                                     nullptr, &pixelShader);
+    psBlob->Release();
+
+    return hr;
 }
 
-//----------------------------------------------------------------------------------------------------
-Texture* RendererEx::CreateTextureFromFile(char const* imageFilePath)
+HRESULT RendererEx::CreateVertexBuffer()
 {
-    IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
-    int     bytesPerTexel = 0;
-    // This will be filled in for us to indicate how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
-    int constexpr numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
+    Vertex vertices[] = {
+        {XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f)},
+        {XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)},
+        {XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f)},
+        {XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f)}
+    };
 
-    // Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
-    stbi_set_flip_vertically_on_load(1); // We prefer uvTexCoords has origin (0,0) at BOTTOM LEFT
-    unsigned char* texelData = stbi_load(imageFilePath,
-                                         &dimensions.x,
-                                         &dimensions.y,
-                                         &bytesPerTexel,
-                                         numComponentsRequested);
+    D3D11_BUFFER_DESC bufferDesc = {};
+    bufferDesc.Usage             = D3D11_USAGE_DEFAULT;
+    bufferDesc.ByteWidth         = sizeof(vertices);
+    bufferDesc.BindFlags         = D3D11_BIND_VERTEX_BUFFER;
 
-    GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem                = vertices;
 
-    Image const fileImage(imageFilePath);
-    Texture*    newTexture = CreateTextureFromImage(fileImage);
+    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &vertexBuffer);
+    if (FAILED(hr)) return hr;
 
-    // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
-    stbi_image_free(texelData);
+    UINT indices[] = {0, 1, 2, 0, 2, 3};
 
-    //m_loadedTextures.push_back(newTexture);
-    return newTexture;
+    bufferDesc.ByteWidth = sizeof(indices);
+    bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    initData.pSysMem     = indices;
+
+    return m_device->CreateBuffer(&bufferDesc, &initData, &indexBuffer);
 }
 
-//----------------------------------------------------------------------------------------------------
-Texture* RendererEx::CreateTextureFromData(char const*    name,
-                                         IntVec2 const& dimensions,
-                                         int const      bytesPerTexel,
-                                         uint8_t const* texelData)
+HRESULT RendererEx::CreateSampler()
 {
-    // Check if the load was successful
-    GUARANTEE_OR_DIE(texelData,
-                     Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!",
-                         name))
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD             = 0;
+    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
 
-    GUARANTEE_OR_DIE(bytesPerTexel >= 3 && bytesPerTexel <= 4,
-                     Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)",
-                         name,
-                         bytesPerTexel))
-
-    GUARANTEE_OR_DIE(dimensions.x > 0 && dimensions.y > 0,
-                     Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)",
-                         name,
-                         dimensions.x, dimensions.y))
-
-    Texture* newTexture      = new Texture();
-    newTexture->m_name       = name;            // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
-    newTexture->m_dimensions = dimensions;
-
-    return newTexture;
+    return m_device->CreateSamplerState(&samplerDesc, &sampler);
 }
 
-//----------------------------------------------------------------------------------------------------
-Texture* RendererEx::CreateTextureFromImage(Image const& image)
+HRESULT RendererEx::LoadImageFromFile(const wchar_t*             filename,
+                                      ID3D11Texture2D**          texture,
+                                      ID3D11ShaderResourceView** srv) const
 {
-    Texture* newTexture      = new Texture();
-    newTexture->m_name       = image.GetImageFilePath();
-    newTexture->m_dimensions = image.GetDimensions();
+    if (!m_wicFactory) return E_FAIL;
 
-    D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width                = image.GetDimensions().x;
-    textureDesc.Height               = image.GetDimensions().y;
-    textureDesc.MipLevels            = 1;
-    textureDesc.ArraySize            = 1;
-    textureDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc.Count     = 1;
-    textureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
-    textureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+    IWICBitmapDecoder*     decoder   = nullptr;
+    IWICBitmapFrameDecode* frame     = nullptr;
+    IWICFormatConverter*   converter = nullptr;
 
-    D3D11_SUBRESOURCE_DATA textureData;
-    textureData.pSysMem     = image.GetRawData();
-    textureData.SysMemPitch = 4 * image.GetDimensions().x;
+    HRESULT hr = m_wicFactory->CreateDecoderFromFilename(
+        filename, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
+    if (FAILED(hr)) return hr;
 
-    HRESULT hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
-
-    if (!SUCCEEDED(hr))
+    hr = decoder->GetFrame(0, &frame);
+    if (FAILED(hr))
     {
-        ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+        decoder->Release();
+        return hr;
     }
 
-    hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
-
-    if (!SUCCEEDED(hr))
+    hr = m_wicFactory->CreateFormatConverter(&converter);
+    if (FAILED(hr))
     {
-        ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+        frame->Release();
+        decoder->Release();
+        return hr;
     }
 
-    m_loadedTextures.push_back(newTexture);
-    return newTexture;
-}
-
-//----------------------------------------------------------------------------------------------------
-Image RendererEx::CreateImageFromFile(char const* imageFilePath)
-{
-    return Image(imageFilePath);
-}
-
-//----------------------------------------------------------------------------------------------------
-Shader* RendererEx::CreateShader(char const*       shaderName,
-                               char const*       shaderSource,
-                               eVertexType const vertexType)
-{
-    ShaderConfig shaderConfig;
-    shaderConfig.m_name = shaderName;
-    Shader* shader      = new Shader(shaderConfig);
-
-    std::vector<uint8_t> vertexShaderByteCode;
-    std::vector<uint8_t> pixelShaderByteCode;
-
-    CompileShaderToByteCode(vertexShaderByteCode, shaderName, shaderSource, shader->m_config.m_vertexEntryPoint.c_str(), "vs_5_0");
-
-    // Create vertex shader
-    HRESULT hr = m_device->CreateVertexShader(
-        vertexShaderByteCode.data(),
-        vertexShaderByteCode.size(),
-        nullptr,
-        &shader->m_vertexShader);
-
-    if (!SUCCEEDED(hr))
+    hr = converter->Initialize(frame, GUID_WICPixelFormat32bppBGRA,
+                               WICBitmapDitherTypeNone, nullptr, 0.0,
+                               WICBitmapPaletteTypeCustom);
+    if (FAILED(hr))
     {
-        ERROR_AND_DIE(Stringf("Could not create vertex shader."))
+        converter->Release();
+        frame->Release();
+        decoder->Release();
+        return hr;
     }
 
-    CompileShaderToByteCode(pixelShaderByteCode, shaderName, shaderSource, shader->m_config.m_pixelEntryPoint.c_str(), "ps_5_0");
+    UINT width, height;
+    converter->GetSize(&width, &height);
 
-    // Create pixel shader
-    hr = m_device->CreatePixelShader(
-        pixelShaderByteCode.data(),
-        pixelShaderByteCode.size(),
-        nullptr,
-        &shader->m_pixelShader);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE(Stringf("Could not create pixel shader."))
-    }
-
-    // Create a local array of input element descriptions that defines the vertex layout.
-    D3D11_INPUT_ELEMENT_DESC inputElementDesc[6];
-    UINT                     numElements = 0;
-
-    if (vertexType == eVertexType::VERTEX_PCU)
-    {
-        inputElementDesc[0] = {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[1] = {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[2] = {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        numElements         = 3;
-    }
-    else if (vertexType == eVertexType::VERTEX_PCUTBN)
-    {
-        inputElementDesc[0] = {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[1] = {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[2] = {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[3] = {"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[4] = {"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        inputElementDesc[5] = {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-        numElements         = 6;
-    }
-
-    hr = m_device->CreateInputLayout(
-        inputElementDesc,
-        numElements,
-        vertexShaderByteCode.data(),
-        vertexShaderByteCode.size(),
-        &shader->m_inputLayout);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE(Stringf("Could not create input layout."))
-    }
-
-    return shader;
-}
-
-//----------------------------------------------------------------------------------------------------
-Shader* RendererEx::CreateShader(char const*       shaderName,
-                               eVertexType const vertexType)
-{
-    // Append the .hlsl extension to the shader name
-    String const shaderFileName = Stringf("%s.hlsl", shaderName);
-
-    String shaderSource;
-
-    if (!FileReadToString(shaderSource, shaderFileName))
-    {
-        ERROR_AND_DIE(Stringf("Failed to read shader file: %s", shaderFileName.c_str()))
-    }
-
-    // Create the shader using the file contents
-    return CreateShader(shaderName, shaderSource.c_str(), vertexType);
-}
-
-//----------------------------------------------------------------------------------------------------
-bool RendererEx::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
-                                       char const*                 name,
-                                       char const*                 source,
-                                       char const*                 entryPoint,
-                                       char const*                 target)
-{
-    // Compile vertex shader
-    DWORD shaderFlags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
-#if defined(ENGINE_DEBUG_RENDER)
-    shaderFlags = D3DCOMPILE_DEBUG;
-    shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-    shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
-#endif
-    ID3DBlob* shaderBlob = nullptr;
-    ID3DBlob* errorBlob  = nullptr;
-
-    HRESULT const hr = D3DCompile(source,
-                                  strlen(source),
-                                  name,
-                                  nullptr,
-                                  nullptr,
-                                  entryPoint,
-                                  target,
-                                  shaderFlags,
-                                  0,
-                                  &shaderBlob,
-                                  &errorBlob);
+    // 創建像素數據緩衝區
+    std::vector<BYTE> pixels(width * height * 4);
+    hr = converter->CopyPixels(nullptr, width * 4, pixels.size(), pixels.data());
 
     if (SUCCEEDED(hr))
     {
-        out_byteCode.resize(shaderBlob->GetBufferSize());
-        memcpy(
-            out_byteCode.data(),
-            shaderBlob->GetBufferPointer(),
-            shaderBlob->GetBufferSize());
-    }
-    else
-    {
-        if (errorBlob)
+        // 創建 D3D11 紋理
+        D3D11_TEXTURE2D_DESC texDesc = {};
+        texDesc.Width                = width;
+        texDesc.Height               = height;
+        texDesc.MipLevels            = 1;
+        texDesc.ArraySize            = 1;
+        texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texDesc.SampleDesc.Count     = 1;
+        texDesc.Usage                = D3D11_USAGE_DEFAULT;
+        texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+
+        D3D11_SUBRESOURCE_DATA initData = {};
+        initData.pSysMem                = pixels.data();
+        initData.SysMemPitch            = width * 4;
+
+        hr = m_device->CreateTexture2D(&texDesc, &initData, texture);
+        if (SUCCEEDED(hr))
         {
-            DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
+            hr = m_device->CreateShaderResourceView(*texture, nullptr, srv);
         }
-        ERROR_AND_DIE(Stringf("Could not compile shader."))
     }
 
-    shaderBlob->Release();
-
-    if (errorBlob)
-    {
-        errorBlob->Release();
-    }
-
-    return SUCCEEDED(hr);
-    // // Compile pixel shader
-    // hr = D3DCompile(
-    //     shaderSource,
-    //     strlen(shaderSource),
-    //     "PixelShader",
-    //     nullptr,
-    //     nullptr,
-    //     "PixelMain",
-    //     "ps_5_0",
-    //     shaderFlags,
-    //     0,
-    //     &shaderBlob,
-    //     &errorBlob);
-    //
-    // if (SUCCEEDED(hr))
-    // {
-    //     outByteCode.resize(shaderBlob->GetBufferSize());
-    //     memcpy(
-    //         outByteCode.data(),
-    //         shaderBlob->GetBufferPointer(),
-    //         shaderBlob->GetBufferSize());
-    // }
-    // else
-    // {
-    //     if (!errorBlob)
-    //     {
-    //         DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
-    //     }
-    //     ERROR_AND_DIE(Stringf("Could not compile pixel shader."))
-    // }
-    //
-    // shaderBlob->Release();
-    //
-    // if (errorBlob)
-    // {
-    //     errorBlob->Release();
-    // }
+    converter->Release();
+    frame->Release();
+    decoder->Release();
+    return hr;
 }
 
-//----------------------------------------------------------------------------------------------------
-VertexBuffer* RendererEx::CreateVertexBuffer(unsigned int const size,
-                                           unsigned int const stride) const
+void RendererEx::DebugSaveSceneTexture()
 {
-    VertexBuffer* vertexBuffer = new VertexBuffer(m_device, size, stride);
-
-    return vertexBuffer;
-}
-
-//----------------------------------------------------------------------------------------------------
-IndexBuffer* RendererEx::CreateIndexBuffer(unsigned int const size,
-                                         unsigned int const stride) const
-{
-    IndexBuffer* indexBuffer = new IndexBuffer(m_device, size, stride);
-
-    return indexBuffer;
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::CopyCPUToGPU(void const*        data,
-                            unsigned int const size,
-                            VertexBuffer*      vbo) const
-{
-    // Check if the vertex buffer is large enough to hold the data
-    if (vbo->GetSize() < size)
-    {
-        vbo->Resize(size);
-    }
-
-    // Map the buffer
+    // This method can help debug what's actually in your scene texture
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    HRESULT                  hr = m_deviceContext->Map(m_stagingTexture, 0, D3D11_MAP_READ, 0, &mappedResource);
 
-    if (!SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
     {
-        ERROR_AND_DIE("Failed to map vertex buffer.")
-    }
+        // Save first few pixels to debug output
+        BYTE* pixels = static_cast<BYTE*>(mappedResource.pData);
+        printf("Scene texture first pixels: ");
+        for (int i = 0; i < 16; i += 4)
+        {
+            printf("(%d,%d,%d,%d) ", pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]);
+        }
+        printf("\n");
 
-    // Copy the data
-    memcpy(mappedResource.pData, data, size);
-
-    // Unmap the buffer
-    m_deviceContext->Unmap(vbo->m_buffer, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::CopyCPUToGPU(void const*        data,
-                            unsigned int const size,
-                            IndexBuffer*       ibo) const
-{
-    // Check if the index buffer is large enough to hold the data
-    if (ibo->GetSize() < size)
-    {
-        ibo->Resize(size);
-    }
-
-    // Map the buffer
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(ibo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Failed to map index buffer.")
-    }
-
-    // Copy the data
-    memcpy(mappedResource.pData, data, size);
-
-    // Unmap the buffer
-    m_deviceContext->Unmap(ibo->m_buffer, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::BindVertexBuffer(VertexBuffer const* vbo) const
-{
-    // Bind the vertex buffer
-    UINT const     stride = vbo->GetStride();
-    UINT constexpr offset = 0;
-
-    m_deviceContext->IASetVertexBuffers(0,
-                                        1,
-                                        &vbo->m_buffer,
-                                        &stride,
-                                        &offset);
-
-    // Set the primitive topology
-    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::BindIndexBuffer(IndexBuffer const* ibo) const
-{
-    // Bind the vertex buffer
-    m_deviceContext->IASetIndexBuffer(ibo->m_buffer,
-                                      DXGI_FORMAT_R32_UINT,
-                                      0);
-}
-
-//----------------------------------------------------------------------------------------------------
-ConstantBuffer* RendererEx::CreateConstantBuffer(unsigned int const size) const
-{
-    ConstantBuffer* constantBuffer = new ConstantBuffer(m_device, size);
-
-    return constantBuffer;
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::CopyCPUToGPU(void const* data, unsigned int const size, ConstantBuffer* cbo) const
-{
-    // Check if the constant buffer is large enough to hold the data
-    if (cbo->GetSize() < size)
-    {
-        cbo->Resize(size);
-    }
-
-    // Map the buffer
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT const            hr = m_deviceContext->Map(cbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Failed to map constant buffer.")
-    }
-
-    // Copy the data
-    memcpy(mappedResource.pData, data, size);
-
-    // Unmap the buffer
-    m_deviceContext->Unmap(cbo->m_buffer, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::BindConstantBuffer(int const slot, ConstantBuffer const* cbo) const
-{
-    m_deviceContext->VSSetConstantBuffers(slot, 1, &cbo->m_buffer);
-    m_deviceContext->PSSetConstantBuffers(slot, 1, &cbo->m_buffer);
-}
-
-//----------------------------------------------------------------------------------------------------
-void RendererEx::SetStatesIfChanged()
-{
-    if (m_blendState != m_blendStates[static_cast<int>(m_desiredBlendMode)])
-    {
-        m_blendState                   = m_blendStates[static_cast<int>(m_desiredBlendMode)];
-        float constexpr blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
-        UINT constexpr  sampleMask     = 0xffffffff;
-
-        m_deviceContext->OMSetBlendState(m_blendState, blendFactor, sampleMask);
-    }
-
-    if (m_depthStencilState != m_depthStencilStates[static_cast<int>(m_desiredDepthMode)])
-    {
-        m_depthStencilState = m_depthStencilStates[static_cast<int>(m_desiredDepthMode)];
-
-        m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
-    }
-
-    if (m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)] != m_rasterizerState)
-    {
-        m_rasterizerState = m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)];
-        m_deviceContext->RSSetState(m_rasterizerStates[static_cast<int>(m_desiredRasterizerMode)]);
-    }
-
-    if (m_samplerStates[static_cast<int>(m_desiredSamplerMode)] != m_samplerState)
-    {
-        m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
-        m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+        m_deviceContext->Unmap(m_stagingTexture, 0);
     }
 }
