@@ -1,18 +1,20 @@
 //----------------------------------------------------------------------------------------------------
-// Window.hpp
+// WindowEx.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+#include <chrono>
+#include <random>
+
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Math/IntVec2.hpp"
-#include "Engine/Math/Vec2.hpp"
-#include "Engine/Renderer/RendererEx.hpp"
-// #include "Engine/Renderer/RendererEx.hpp"
+#include "Engine/Renderer/Renderer.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class InputSystem;
+// struct RECT;
+
 
 //----------------------------------------------------------------------------------------------------
 struct sWindowExConfig
@@ -24,65 +26,56 @@ struct sWindowExConfig
     wchar_t const* m_iconFilePath = nullptr;
 };
 
-// 漂移參數結構
+struct WinRect {
+    long left = 0;
+    long top = 0;
+    long right = 0;
+    long bottom = 0;
+};
+
+struct Point {
+    long x = 0;
+    long y = 0;
+};
+
 struct DriftParams
 {
-    float velocityX;            // X方向速度 (像素/秒)
-    float velocityY;            // Y方向速度 (像素/秒)
-    float acceleration;         // 加速度係數
-    float drag;                 // 阻力係數 (0.95-0.99)
-    float bounceEnergy;         // 反彈能量保留係數 (0.7-0.9)
-    float wanderStrength;       // 隨機漂移強度
-    float targetVelocity;       // 目標速度
-    bool  enableGravity;        // 是否啟用重力
-    bool  enableWander;         // 是否啟用隨機漂移
-
-    DriftParams();
+    float velocityX      = 0;            // X方向速度 (像素/秒)
+    float velocityY      = 0;            // Y方向速度 (像素/秒)
+    float acceleration   = 50.0f;         // 加速度係數
+    float drag           = 0.98f;                 // 阻力係數 (0.95-0.99)
+    float bounceEnergy   = 0.8f;         // 反彈能量保留係數 (0.7-0.9)
+    float wanderStrength = 2000.0f;       // 隨機漂移強度
+    float targetVelocity = 100.0f;       // 目標速度
+    bool  enableGravity  = true;        // 是否啟用重力
+    bool  enableWander   = true;         // 是否啟用隨機漂移
 };
 
-//----------------------------------------------------------------------------------------------------
 class WindowEx
 {
-    friend class RendererEx;
-
 public:
-    explicit WindowEx(sWindowExConfig const& config);
-    // WindowEx() = default;
-    ~WindowEx() = default;
-    void Startup();
-    void Shutdown();
+    WindowEx();
+    void*  m_windowHandle   = nullptr;
+    void*   m_displayContext = nullptr;
+    int   x                = 0, y         = 0, width         = 0, height         = 0;
+    float viewportX        = 0, viewportY = 0, viewportWidth = 0, viewportHeight = 0;
+    WinRect  lastRect{};
+    bool  needsUpdate = true;
 
-    void BeginFrame();
-    void EndFrame();
+    int virtualScreenWidth;
+    int virtualScreenHeight;
 
-    sWindowExConfig const& GetConfig() const;
-    void*                  GetDisplayContext() const;
-    void*                  GetWindowHandle() const;
-    Vec2                   GetNormalizedMouseUV() const;
-    IntVec2                GetClientDimensions() const;
-
-    // void      UpdateWindow();
-    void      UpdatePosition();
-    bool      IsWindowClassRegistered();
-    WindowEx* CreateChildWindow(wchar_t const* title, int x, int y, int width, int height);
-    void      UpdateWindowPosition(int sceneWidth, int sceneHeight, int virtualScreenWidth, int virtualScreenHeight);
-
-    // static WindowEx* s_mainWindowEx; // fancy way of advertising global variables (advertisement)
-
-private:
-    void CreateOSWindow();
-    void CreateConsole();
-    void RunMessagePump();
-
-    sWindowExConfig m_config;
-    void*           m_windowInstance   = nullptr;
-    void*           m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
-    void*           m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
-    IntVec2         m_clientDimensions = IntVec2::ZERO;
-    int             x,         y,         width,         height;
-    float           viewportX, viewportY, viewportWidth, viewportHeight;
-    RECT            lastRect{};
-    bool            needsUpdate = true;
+    // 漂移相關
+    DriftParams                           drift;
+    std::mt19937                          rng;
+    std::uniform_real_distribution<float> wanderDist{-1.0f, 1.0f};
+    // std::chrono::steady_clock::time_point lastUpdateTime;
+    bool                                  isDragging = false;          // 是否正在被拖拽
+    POINT                                 dragOffset{};         // 拖拽偏移
+    void                                  BeginFrame();
+    void                                  RunMessagePump();
+    void UpdateWindowDrift(float  deltaSeconds);
+    void UpdateWindowPosition( );
 };
 
-LRESULT CALLBACK WindowsExMessageHandlingProcedure(HWND windowHandle, UINT wmMessageCode, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

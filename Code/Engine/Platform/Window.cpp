@@ -75,17 +75,6 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     switch (wmMessageCode)
     {
-    case WM_SIZE:
-        {
-            UINT newWidth  = LOWORD(lParam);
-            UINT newHeight = HIWORD(lParam);
-            DebuggerPrintf("(%d, %d)\n", newWidth, newHeight);
-            EventArgs args;
-            args.SetValue("newWidth", Stringf("%d", static_cast<int>(newWidth)));
-            args.SetValue("newHeight", Stringf("%d", static_cast<int>(newHeight)));
-            FireEvent("OnWindowSizeChanged", args);
-            return 0;
-        }
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {

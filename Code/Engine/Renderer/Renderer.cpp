@@ -54,8 +54,6 @@ Renderer::Renderer(sRenderConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void Renderer::Startup()
 {
-
-
     // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
     unsigned int deviceFlags = 0;
 
@@ -479,7 +477,6 @@ void Renderer::Shutdown()
 //----------------------------------------------------------------------------------------------------
 void Renderer::ClearScreen(Rgba8 const& clearColor) const
 {
-    // Clear the screen
     float colorAsFloats[4];
     clearColor.GetAsFloats(colorAsFloats);
     m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
@@ -504,7 +501,6 @@ void Renderer::BeginCamera(Camera const& camera) const
     // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;
     viewport.MaxDepth = 1.f;
-    DebuggerPrintf("DX11 Viewport (%f, %f)\n", viewport.Width, viewport.Height);
 
     m_deviceContext->RSSetViewports(1, &viewport);
 

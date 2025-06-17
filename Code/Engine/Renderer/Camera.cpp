@@ -206,7 +206,10 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 // TODO: FIX this crap
 void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
 {
-    float x, y, x1, y1;
+    float x = 0.f;
+    float y = 0.f;
+	float x1 = 0.f;
+	float y1 = 0.f;
     // if (WindowEx::s_mainWindowEx != nullptr)
     // {
     //     x  = (float)WindowEx::s_mainWindowEx->GetClientDimensions().x * newViewPort.m_maxs.x;
