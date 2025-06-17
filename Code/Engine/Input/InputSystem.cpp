@@ -121,7 +121,7 @@ void InputSystem::BeginFrame()
 
     // Check if our hidden mode matches Windows cursor state
     static bool cursorHidden     = false;
-    bool const  shouldHideCursor = m_cursorState.m_cursorMode == CursorMode::FPS;
+    bool const  shouldHideCursor = m_cursorState.m_cursorMode == eCursorMode::FPS;
 
     if (shouldHideCursor != cursorHidden)
     {
@@ -145,7 +145,7 @@ void InputSystem::BeginFrame()
     m_cursorState.m_cursorClientPosition.y = currentCursorPosition.y;
 
     // If we are in relative mode
-    if (m_cursorState.m_cursorMode == CursorMode::FPS)
+    if (m_cursorState.m_cursorMode == eCursorMode::FPS)
     {
         // Calculate our cursor client delta
         m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorClientPosition;
@@ -225,7 +225,7 @@ XboxController const& InputSystem::GetController(int const controllerID)
 // locked to the window. In FPS mode, the cursor should be hidden, reset to the
 // center of the window each frame, and record the delta each frame.
 //
-void InputSystem::SetCursorMode(CursorMode const mode)
+void InputSystem::SetCursorMode(eCursorMode const mode)
 {
     m_cursorState.m_cursorMode = mode;
 }
@@ -239,8 +239,8 @@ Vec2 InputSystem::GetCursorClientDelta() const
 {
     switch (m_cursorState.m_cursorMode)
     {
-    case CursorMode::POINTER: return Vec2::ZERO;
-    case CursorMode::FPS: return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
+    case eCursorMode::POINTER: return Vec2::ZERO;
+    case eCursorMode::FPS: return static_cast<Vec2>(m_cursorState.m_cursorClientDelta);
     }
 
     return Vec2::ZERO;

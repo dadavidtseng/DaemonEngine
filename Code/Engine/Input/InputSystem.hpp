@@ -85,7 +85,7 @@ int constexpr NUM_KEYCODES         = 256;
 int constexpr NUM_XBOX_CONTROLLERS = 4;
 
 //----------------------------------------------------------------------------------------------------
-enum class CursorMode
+enum class eCursorMode : int8_t
 {
     POINTER,
     FPS
@@ -97,7 +97,7 @@ struct CursorState
     IntVec2 m_cursorClientDelta;
     IntVec2 m_cursorClientPosition;
 
-    CursorMode m_cursorMode = CursorMode::POINTER;
+    eCursorMode m_cursorMode = eCursorMode::POINTER;
 };
 
 struct sInputSystemConfig
@@ -121,7 +121,7 @@ public:
     void                  HandleKeyReleased(unsigned char keyCode);
     XboxController const& GetController(int controllerID);
 
-    void SetCursorMode(CursorMode mode);
+    void SetCursorMode(eCursorMode mode);
     Vec2 GetCursorClientDelta() const;
     Vec2 GetCursorClientPosition() const;
     Vec2 GetCursorNormalizedPosition() const;
