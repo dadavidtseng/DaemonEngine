@@ -72,3 +72,12 @@ struct sModelConstants
     Mat44 ModelToWorldTransform;
     float ModelColor[4];
 };
+
+//----------------------------------------------------------------------------------------------------
+struct sPerFrameConstants
+{
+    float c_time;
+    int   c_debugInt;
+    float c_debugFloat;
+    float padding;
+};

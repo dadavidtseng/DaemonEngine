@@ -57,6 +57,7 @@ class Renderer
 public:
     explicit Renderer(sRenderConfig const& config);
 
+    static int k_perFrameConstantSlot;
     static int k_lightConstantSlot;
     static int k_cameraConstantSlot;
     static int k_modelConstantsSlot;
@@ -78,7 +79,7 @@ public:
     void DrawVertexArray(VertexList_PCUTBN const& verts, std::vector<unsigned int> const& indexes);
 
     void BindShader(Shader const* shader) const;
-    void BindTexture(Texture const* texture) const;
+    void BindTexture(Texture const* texture, int slot = 0) const;
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
 
     Image       CreateImageFromFile(char const* imageFilePath);
@@ -92,6 +93,7 @@ public:
     void            SetRasterizerMode(eRasterizerMode mode);
     void            SetLightConstants(Vec3 const& sunDirection, float sunIntensity, float ambientIntensity) const;
     void            SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
+    void            SetPerFrameConstants(float time = 0.f, int debugInt = 1, float debugFloat = 0.f) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
     IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
@@ -164,7 +166,7 @@ protected:
     ConstantBuffer* m_cameraCBO           = nullptr;
     ConstantBuffer* m_lightCBO            = nullptr;
     ConstantBuffer* m_modelCBO            = nullptr;
-    // ConstantBuffer* m_perFrameConstantBuffer = nullptr;
+    ConstantBuffer* m_perFrameCBO         = nullptr;
 
     Texture* m_defaultTexture = nullptr;
     Shader*  m_defaultShader  = nullptr;

@@ -42,9 +42,10 @@
 #endif
 
 //----------------------------------------------------------------------------------------------------
-STATIC int Renderer::k_lightConstantSlot  = 1;
-STATIC int Renderer::k_cameraConstantSlot = 2;
-STATIC int Renderer::k_modelConstantsSlot = 3;
+STATIC int Renderer::k_perFrameConstantSlot = 1;
+STATIC int Renderer::k_lightConstantSlot    = 2;
+STATIC int Renderer::k_cameraConstantSlot   = 3;
+STATIC int Renderer::k_modelConstantsSlot   = 4;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRenderConfig const& config)
@@ -322,6 +323,7 @@ void Renderer::Startup()
     m_lightCBO            = CreateConstantBuffer(sizeof(sLightConstants));
     m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
     m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
+    m_perFrameCBO         = CreateConstantBuffer(sizeof(sPerFrameConstants));
 
     //------------------------------------------------------------------------------------------------
     // Initialize m_defaultTexture to a 2x2 white image
@@ -333,7 +335,7 @@ void Renderer::Startup()
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
 
     BindShader(m_currentShader);
-    BindTexture(m_defaultTexture);
+    BindTexture(m_defaultTexture, 0);
 }
 
 
@@ -534,6 +536,7 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     // Set model constants to default
     SetModelConstants();
+    // SetPerFrameConstants();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -590,14 +593,15 @@ void Renderer::DrawVertexArray(VertexList_PCUTBN const& verts,
 
 //----------------------------------------------------------------------------------------------------
 // TODO: BindTexture(Texture const* texture, int slot=1);
-void Renderer::BindTexture(Texture const* texture) const
+void Renderer::BindTexture(Texture const* texture,
+                           int const      slot) const
 {
     if (texture == nullptr)
     {
         texture = m_defaultTexture;
     }
 
-    m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
+    m_deviceContext->PSSetShaderResources(slot, 1, &texture->m_shaderResourceView);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -719,6 +723,25 @@ void Renderer::SetDepthMode(eDepthMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
+void Renderer::SetLightConstants(Vec3 const& sunDirection,
+                                 float const sunIntensity,
+                                 float const ambientIntensity) const
+{
+    sLightConstants lightConstants;
+
+    Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
+
+    lightConstants.SunDirection[0]  = normalizedSunDirection.x;
+    lightConstants.SunDirection[1]  = normalizedSunDirection.y;
+    lightConstants.SunDirection[2]  = normalizedSunDirection.z;
+    lightConstants.SunIntensity     = sunIntensity;
+    lightConstants.AmbientIntensity = ambientIntensity;
+
+    CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
+    BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
                                  Rgba8 const& modelColor) const
 {
@@ -738,23 +761,19 @@ void Renderer::SetModelConstants(Mat44 const& modelToWorldTransform,
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetLightConstants(Vec3 const& sunDirection,
-                                 float const sunIntensity,
-                                 float const ambientIntensity) const
+void Renderer::SetPerFrameConstants(float const time,
+                                    int const   debugInt,
+                                    float const debugFloat) const
 {
-    sLightConstants lightConstants;
+    sPerFrameConstants perFrameConstants;
+    perFrameConstants.c_time       = time;
+    perFrameConstants.c_debugInt   = debugInt;
+    perFrameConstants.c_debugFloat = debugFloat;
 
-    Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
-
-    lightConstants.SunDirection[0]  = normalizedSunDirection.x;
-    lightConstants.SunDirection[1]  = normalizedSunDirection.y;
-    lightConstants.SunDirection[2]  = normalizedSunDirection.z;
-    lightConstants.SunIntensity     = sunIntensity;
-    lightConstants.AmbientIntensity = ambientIntensity;
-
-    CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
-    BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
+    CopyCPUToGPU(&perFrameConstants, sizeof(sPerFrameConstants), m_perFrameCBO);
+    BindConstantBuffer(k_perFrameConstantSlot, m_perFrameCBO);
 }
+
 
 //----------------------------------------------------------------------------------------------------
 void Renderer::DrawVertexBuffer(VertexBuffer const* vbo,
@@ -1278,5 +1297,6 @@ void Renderer::SetStatesIfChanged()
     {
         m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
         m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+        m_deviceContext->PSSetSamplers(1, 1, &m_samplerState);
     }
 }
