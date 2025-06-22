@@ -18,12 +18,13 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
-#include "Engine/Platform/Window.hpp"
+#include "Engine/Renderer/RenderCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")

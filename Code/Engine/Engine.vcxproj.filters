@@ -223,6 +223,9 @@
     <ClCompile Include="Renderer\RendererEx.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\RenderCommon.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -442,6 +445,9 @@
       <Filter>Platform</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\RendererEx.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RenderCommon.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
