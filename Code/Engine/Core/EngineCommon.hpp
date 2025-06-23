@@ -22,3 +22,14 @@ extern InputSystem* g_theInput;
 //----------------------------------------------------------------------------------------------------
 #define UNUSED(x) (void)(x);
 #define STATIC
+
+//----------------------------------------------------------------------------------------------------
+template <typename T>
+void ENGINE_SAFE_RELEASE(T*& pointer)
+{
+    if (pointer != nullptr)
+    {
+        delete pointer;
+        pointer = nullptr;
+    }
+}

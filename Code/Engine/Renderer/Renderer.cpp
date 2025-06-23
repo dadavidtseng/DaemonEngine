@@ -368,61 +368,25 @@ void Renderer::Shutdown()
 {
     for (int i = 0; i < static_cast<int>(m_loadedShaders.size()); ++i)
     {
-        if (m_loadedShaders[i] != nullptr)
-        {
-            delete m_loadedShaders[i];
-            m_loadedShaders[i] = nullptr;
-        }
+        ENGINE_SAFE_RELEASE(m_loadedShaders[i]);
     }
 
     for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
     {
-        if (m_loadedTextures[i] != nullptr)
-        {
-            delete m_loadedTextures[i];
-            m_loadedTextures[i] = nullptr;
-        }
+        ENGINE_SAFE_RELEASE(m_loadedTextures[i]);
     }
 
     m_loadedFonts.clear();
     m_loadedShaders.clear();
     m_loadedTextures.clear();
 
-    if (m_modelCBO != nullptr)
-    {
-        delete m_modelCBO;
-        m_modelCBO = nullptr;
-    }
-
-    if (m_lightCBO != nullptr)
-    {
-        delete m_lightCBO;
-        m_lightCBO = nullptr;
-    }
-
-    if (m_cameraCBO != nullptr)
-    {
-        delete m_cameraCBO;
-        m_cameraCBO = nullptr;
-    }
-
-    if (m_immediateIBO != nullptr)
-    {
-        delete m_immediateIBO;
-        m_immediateIBO = nullptr;
-    }
-
-    if (m_immediateVBO_PCUTBN != nullptr)
-    {
-        delete m_immediateVBO_PCUTBN;
-        m_immediateVBO_PCUTBN = nullptr;
-    }
-
-    if (m_immediateVBO_PCU != nullptr)
-    {
-        delete m_immediateVBO_PCU;
-        m_immediateVBO_PCU = nullptr;
-    }
+    ENGINE_SAFE_RELEASE(m_perFrameCBO);
+    ENGINE_SAFE_RELEASE(m_modelCBO);
+    ENGINE_SAFE_RELEASE(m_lightCBO);
+    ENGINE_SAFE_RELEASE(m_cameraCBO);
+    ENGINE_SAFE_RELEASE(m_immediateIBO);
+    ENGINE_SAFE_RELEASE(m_immediateVBO_PCUTBN);
+    ENGINE_SAFE_RELEASE(m_immediateVBO_PCU);
 
     // Release all DirectX objects and check for memory leaks in your Shutdown function.
     // Release all rasterizer states
