@@ -166,3 +166,13 @@ IntVec2 const IntVec2::operator-(IntVec2 const& vecToSubtract) const
 {
     return IntVec2(x - vecToSubtract.x, y - vecToSubtract.y);
 }
+
+//----------------------------------------------------------------------------------------------------
+IntVec2 Interpolate(IntVec2 const& start, IntVec2 const& end, float const t)
+{
+    IntVec2 result;
+    result.x = static_cast<int>(std::round(Interpolate(static_cast<float>(start.x), static_cast<float>(end.x), t)));
+    result.y = static_cast<int>(std::round(Interpolate(static_cast<float>(start.y), static_cast<float>(end.y), t)));
+
+    return result;
+}

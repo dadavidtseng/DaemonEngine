@@ -6,6 +6,7 @@
 #pragma once
 
 struct Vec2;
+
 //----------------------------------------------------------------------------------------------------
 struct IntVec2
 {
@@ -46,3 +47,5 @@ struct IntVec2
     IntVec2 const operator+(IntVec2 const& vecToAdd) const;      // IntVec2 + IntVec2
     IntVec2 const operator-(IntVec2 const& vecToSubtract) const;      // IntVec2 - IntVec2
 };
+
+IntVec2 Interpolate(IntVec2 const& start, IntVec2 const& end, float t);

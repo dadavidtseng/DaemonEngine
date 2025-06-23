@@ -64,3 +64,5 @@ struct Vec3
     // Standalone "friend" functions that are conceptually, but not actually, part of Vec3::
     friend Vec3 const operator*(float uniformScale, Vec3 const& vecToScale); // float * vec3
 };
+
+Vec3 Interpolate(Vec3 const& start, Vec3 const& end, float t);

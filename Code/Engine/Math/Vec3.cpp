@@ -297,3 +297,16 @@ Vec3 const operator*(float const uniformScale, Vec3 const& vecToScale)
 {
     return Vec3(uniformScale * vecToScale.x, uniformScale * vecToScale.y, uniformScale * vecToScale.z);
 }
+
+//----------------------------------------------------------------------------------------------------
+Vec3 Interpolate(Vec3 const& start,
+                 Vec3 const& end,
+                 float const t)
+{
+    Vec3 result;
+    result.x = Interpolate(start.x, end.x, t);
+    result.y = Interpolate(start.y, end.y, t);
+    result.z = Interpolate(start.z, end.z, t);
+
+    return result;
+}
