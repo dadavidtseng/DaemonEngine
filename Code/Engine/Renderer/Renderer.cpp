@@ -478,6 +478,7 @@ void Renderer::BeginCamera(Camera const& camera) const
     cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
     cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
     cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
+    cameraConstants.CameraWorldPosition     = camera.GetPosition();
 
     // Copy the data from the local structure to the constant buffer
     CopyCPUToGPU(&cameraConstants, sizeof(sCameraConstants), m_cameraCBO);
@@ -687,19 +688,28 @@ void Renderer::SetDepthMode(eDepthMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetLightConstants(Vec3 const& sunDirection,
-                                 float const sunIntensity,
-                                 float const ambientIntensity) const
+void Renderer::SetLightConstants(Rgba8 const& lightColor,
+                                 Vec3 const&  sunDirection,
+                                 float const  ambientIntensity,
+                                 int const    numLights) const
 {
     sLightConstants lightConstants;
+
+    float colorAsFloat[4];
+    lightColor.GetAsFloats(colorAsFloat);
+
+    lightConstants.LightColor[0] = colorAsFloat[0];
+    lightConstants.LightColor[1] = colorAsFloat[1];
+    lightConstants.LightColor[2] = colorAsFloat[2];
+    lightConstants.LightColor[3] = colorAsFloat[3];
 
     Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
 
     lightConstants.SunDirection[0]  = normalizedSunDirection.x;
     lightConstants.SunDirection[1]  = normalizedSunDirection.y;
     lightConstants.SunDirection[2]  = normalizedSunDirection.z;
-    lightConstants.SunIntensity     = sunIntensity;
     lightConstants.AmbientIntensity = ambientIntensity;
+    lightConstants.NumLights        = numLights;
 
     CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
