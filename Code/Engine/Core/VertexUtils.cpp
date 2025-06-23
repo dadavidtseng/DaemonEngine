@@ -66,7 +66,7 @@ void TransformVertexArray3D(VertexList_PCU& verts,
 
 //----------------------------------------------------------------------------------------------------
 void TransformVertexArray3D(VertexList_PCUTBN& verts,
-                            Mat44 const&    transform)
+                            Mat44 const&       transform)
 {
     for (Vertex_PCUTBN& vert : verts)
     {
@@ -368,9 +368,9 @@ void AddVertsForOBB3D(VertexList_PCUTBN& verts,
                       AABB2 const&       UVs)
 {
     Vec3 center = obb3.m_center;
-    Vec3 i = obb3.m_iBasis * obb3.m_halfDimensions.x;
-    Vec3 j = obb3.m_jBasis * obb3.m_halfDimensions.y;
-    Vec3 k = obb3.m_kBasis * obb3.m_halfDimensions.z;
+    Vec3 i      = obb3.m_iBasis * obb3.m_halfDimensions.x;
+    Vec3 j      = obb3.m_jBasis * obb3.m_halfDimensions.y;
+    Vec3 k      = obb3.m_kBasis * obb3.m_halfDimensions.z;
 
     Vec3 corners[8] = {
         center - i - j - k, // 0
@@ -383,8 +383,9 @@ void AddVertsForOBB3D(VertexList_PCUTBN& verts,
         center + i + j + k  // 7
     };
 
-    struct Face {
-        int idx[4];
+    struct Face
+    {
+        int  idx[4];
         Vec3 normal;
         Vec3 tangent;
         Vec3 bitangent;
@@ -392,12 +393,12 @@ void AddVertsForOBB3D(VertexList_PCUTBN& verts,
 
     Face faces[6] = {
         // idx: TL, TR, BL, BR
-        {{4, 6, 5, 7},  i.GetNormalized(),  j.GetNormalized(),  k.GetNormalized()},  // +X
-        {{2, 0, 3, 1}, -i.GetNormalized(),  j.GetNormalized(), -k.GetNormalized()},  // -X
-        {{6,2, 7, 3},  j.GetNormalized(),  i.GetNormalized(),  k.GetNormalized()},  // +Y
-        {{0, 4, 1, 5}, -j.GetNormalized(),  i.GetNormalized(), -k.GetNormalized()},  // -Y
-        {{1, 5, 3, 7},  k.GetNormalized(),  i.GetNormalized(),  j.GetNormalized()},  // +Z
-        {{0, 2, 4, 6}, -k.GetNormalized(),  i.GetNormalized(), -j.GetNormalized()},  // -Z
+        {{4, 6, 5, 7}, i.GetNormalized(), j.GetNormalized(), k.GetNormalized()},  // +X
+        {{2, 0, 3, 1}, -i.GetNormalized(), j.GetNormalized(), -k.GetNormalized()},  // -X
+        {{6, 2, 7, 3}, j.GetNormalized(), i.GetNormalized(), k.GetNormalized()},  // +Y
+        {{0, 4, 1, 5}, -j.GetNormalized(), i.GetNormalized(), -k.GetNormalized()},  // -Y
+        {{1, 5, 3, 7}, k.GetNormalized(), i.GetNormalized(), j.GetNormalized()},  // +Z
+        {{0, 2, 4, 6}, -k.GetNormalized(), i.GetNormalized(), -j.GetNormalized()},  // -Z
     };
 
     unsigned int baseIndex = static_cast<unsigned int>(verts.size());
@@ -584,6 +585,7 @@ void AddVertsForQuad3D(VertexList_PCU& verts,
     verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y));
 }
 
+
 void AddVertsForQuad3D(VertexList_PCUTBN& verts,
                        Vec3 const&        bottomLeft,
                        Vec3 const&        bottomRight,
@@ -592,22 +594,34 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
                        Rgba8 const&       color,
                        AABB2 const&       UVs)
 {
-    Vec3 middleTop    = (topRight + topLeft) * 0.5f;
-    Vec3 middleBottom = (bottomRight + bottomLeft) * 0.5f;
-    Vec3 normal       = CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized();
+    // 1. Compute the tangent vector as the direction from bottom-left to bottom-right.
+    Vec3 const tangent = (bottomRight - bottomLeft).GetNormalized();
 
-    // Starting at BL, add triangle A with vertexes BL, BR, TR.
-    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
+    // 2. Compute the bitangent vector as the direction from bottom-left to top-left.
+    Vec3 const bitangent = (topLeft - bottomLeft).GetNormalized();
 
-    // Starting again at BL, add triangle B with vertexes BL, TR, TL.
-    verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
-    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, normal);
+    // 3. Compute the normal vector as the cross product of tangent and bitangent.
+    // This assumes right-handed coordinate system (T x B = N).
+    Vec3 const normal = CrossProduct3D(tangent, bitangent).GetNormalized();
+
+    // 4. Add the four vertices of the quad with position, color, UV, and TBN data.
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal);                                      // Bottom-left
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal);    // Bottom-right
+    verts.emplace_back(topRight, color, UVs.m_maxs, tangent, bitangent, normal);                                        // Top-right
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal);        // Top-left
 }
 
 //----------------------------------------------------------------------------------------------------
+/// @brief Adds a 3D quad to the provided vertex and index lists, with position, color, UVs, and TBN vectors.
+///
+/// @param verts       The output vertex list to which new vertices will be added.
+/// @param indexes     The output index list to which new triangle indices will be added.
+/// @param bottomLeft  The bottom-left corner of the quad in 3D space.
+/// @param bottomRight The bottom-right corner of the quad in 3D space.
+/// @param topLeft     The top-left corner of the quad in 3D space.
+/// @param topRight    The top-right corner of the quad in 3D space.
+/// @param color       The color to apply to all vertices of the quad.
+/// @param UVs         The UV coordinates (as a 2D bounding box) to map onto the quad.
 void AddVertsForQuad3D(VertexList_PCUTBN& verts,
                        IndexList&         indexes,
                        Vec3 const&        bottomLeft,
@@ -617,24 +631,33 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
                        Rgba8 const&       color,
                        AABB2 const&       UVs)
 {
+    // 1. Store the starting index of this quad's vertices in the vertex list.
     unsigned int const currentIndex = static_cast<unsigned int>(verts.size());
 
-    verts.emplace_back(bottomLeft, color, UVs.m_mins, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomRight - bottomLeft, topLeft - bottomLeft).GetNormalized());
-    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topRight - bottomRight, bottomLeft - bottomRight).GetNormalized());
-    verts.emplace_back(topRight, color, UVs.m_maxs, Vec3::ZERO, Vec3::ZERO, CrossProduct3D(topLeft - topRight, bottomRight - topRight).GetNormalized());
-    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), Vec3::ZERO, Vec3::ZERO, CrossProduct3D(bottomLeft - topLeft, topRight - topLeft).GetNormalized());
+    // 2. Compute the tangent vector as the direction from bottom-left to bottom-right.
+    Vec3 const tangent = (bottomRight - bottomLeft).GetNormalized();
 
-    // verts.emplace_back(bottomLeft, color, uv.m_mins, Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
-    // verts.emplace_back(bottomRight, color, Vec2(uv.m_maxs.x, uv.m_mins.y), Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
-    // verts.emplace_back(topRight, color, uv.m_maxs, Vec3::ZERO, Vec3::ZERO, Vec3::X_BASIS);
-    // verts.emplace_back(topLeft, color, Vec2(uv.m_mins.x, uv.m_maxs.y), Vec3::ZERO, Vec3::ZERO,Vec3::X_BASIS);
+    // 3. Compute the bitangent vector as the direction from bottom-left to top-left.
+    Vec3 const bitangent = (topLeft - bottomLeft).GetNormalized();
 
-    indexes.push_back(currentIndex);
-    indexes.push_back(currentIndex + 1);
-    indexes.push_back(currentIndex + 2);
-    indexes.push_back(currentIndex);
-    indexes.push_back(currentIndex + 2);
-    indexes.push_back(currentIndex + 3);
+    // 4. Compute the normal vector as the cross product of tangent and bitangent.
+    // This assumes right-handed coordinate system (T x B = N).
+    Vec3 const normal = CrossProduct3D(tangent, bitangent).GetNormalized();
+
+    // 5. Add the four vertices of the quad with position, color, UV, and TBN data.
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal);                                      // Bottom-left
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal);    // Bottom-right
+    verts.emplace_back(topRight, color, UVs.m_maxs, tangent, bitangent, normal);                                        // Top-right
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal);        // Top-left
+
+    // 6.Define two triangles using the four vertices, ordered counter-clockwise.
+    indexes.push_back(currentIndex);            // Triangle 1: bottom-left
+    indexes.push_back(currentIndex + 1);    //             bottom-right
+    indexes.push_back(currentIndex + 2);    //             top-right
+
+    indexes.push_back(currentIndex);            // Triangle 2: bottom-left
+    indexes.push_back(currentIndex + 2);    //             top-right
+    indexes.push_back(currentIndex + 3);    //             top-left
 }
 
 void AddVertsForRoundedQuad3D(VertexList_PCUTBN& verts,
@@ -737,12 +760,12 @@ void AddVertsForAABB3D(VertexList_PCUTBN& verts,
 
     AABB2 const uv(Vec2(UVs.m_mins.x, UVs.m_mins.y), Vec2(UVs.m_mins.x + uvWidth, UVs.m_mins.y + uvHeight));
 
-    AddVertsForQuad3D(verts, indexes, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, color, uv);        // Front
-    AddVertsForQuad3D(verts, indexes, backBottomLeft, backBottomRight, backTopLeft, backTopRight, color, uv);            // Back
-    AddVertsForQuad3D(verts, indexes, backBottomRight, frontBottomLeft, backTopRight, frontTopLeft, color, uv);          // Left
-    AddVertsForQuad3D(verts, indexes, frontBottomRight, backBottomLeft, frontTopRight, backTopLeft, color, uv);          // Right
-    AddVertsForQuad3D(verts, indexes, frontTopLeft, frontTopRight, backTopRight, backTopLeft, color, uv);                // Top
-    AddVertsForQuad3D(verts, indexes, backBottomRight, backBottomLeft, frontBottomLeft, frontBottomRight, color, uv);    // Bottom
+    AddVertsForQuad3D(verts, indexes, frontBottomRight, backBottomLeft, frontTopRight, backTopLeft, color, uv);         // Front
+    AddVertsForQuad3D(verts, indexes, backBottomRight, frontBottomLeft, backTopRight, frontTopLeft, color, uv);         // Back
+    AddVertsForQuad3D(verts, indexes, backBottomLeft, backBottomRight, backTopLeft, backTopRight, color, uv);           // Left
+    AddVertsForQuad3D(verts, indexes, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, color, uv);        // Right
+    AddVertsForQuad3D(verts, indexes, backTopRight, frontTopLeft, backTopLeft, frontTopRight, color, uv);               // Top
+    AddVertsForQuad3D(verts, indexes, backBottomLeft, frontBottomRight, backBottomRight, frontBottomLeft, color, uv);      // Bottom
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -851,8 +874,26 @@ void AddVertsForSphere3D(VertexList_PCUTBN& verts,
             Vec3 position = center + radius * normal;
             Vec2 uv       = Vec2(UVs.m_mins.x + uvWidth * u, UVs.m_mins.y + uvHeight * v);
 
+            // 計算 Tangent vector (沿 U 方向，即沿著緯線方向)
+            // dP/du = radius * sinf(phi) * (-sinf(theta), cosf(theta), 0)
+            Vec3 tangent = Vec3(-sinf(theta), cosf(theta), 0.0f).GetNormalized();
+
+            // 計算 Bitangent vector (沿 V 方向，即沿著經線方向)
+            // dP/dv = radius * (cosf(phi) * cosf(theta), cosf(phi) * sinf(theta), -sinf(phi))
+            Vec3 bitangent = Vec3(cosf(phi) * cosf(theta),
+                                  cosf(phi) * sinf(theta),
+                                  -sinf(phi)).GetNormalized();
+
+            // 驗證 TBN 是否形成右手坐標系 (可選的調試代碼)
+            // Vec3 crossProduct = CrossProduct3D(tangent, bitangent);
+            // float dotWithNormal = DotProduct3D(crossProduct, normal);
+            // if (dotWithNormal < 0.0f)
+            // {
+            //     bitangent = -bitangent; // 如果不是右手坐標系，翻轉 bitangent
+            // }
+
             vertIndexGrid[stack][slice] = static_cast<unsigned int>(verts.size());
-            verts.emplace_back(position, color, uv, Vec3::ZERO, Vec3::ZERO, normal);
+            verts.emplace_back(position, color, uv, tangent, bitangent, normal);
         }
     }
 
@@ -1010,8 +1051,8 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
 
         // ===== 上蓋 =====
         Vec3 topNormal    = iBasis;
-        Vec3 topBitangent = topNormal;
-        Vec3 topTangent   = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+        Vec3 topTangent   = Vec3::X_BASIS;
+        Vec3 topBitangent = Vec3::Y_BASIS;
 
         Vec2 uvTopLeft  = Vec2::MakeFromPolarDegrees(startDegrees, 0.5f) + Vec2::HALF;
         Vec2 uvTopRight = Vec2::MakeFromPolarDegrees(endDegrees, 0.5f) + Vec2::HALF;
@@ -1022,8 +1063,8 @@ void AddVertsForCylinder3D(VertexList_PCUTBN& verts,
 
         // ===== 下蓋 =====
         Vec3 bottomNormal    = -iBasis;
-        Vec3 bottomBitangent = bottomNormal;
-        Vec3 bottomTangent   = (-SinDegrees(startDegrees) * jBasis + CosDegrees(startDegrees) * kBasis).GetNormalized();
+        Vec3 bottomBitangent = jBasis;
+        Vec3 bottomTangent   = -kBasis;
 
         Vec2 uvBottomRight = Vec2::MakeFromPolarDegrees(-endDegrees, 0.5f) + Vec2::HALF;
         Vec2 uvBottomLeft  = Vec2::MakeFromPolarDegrees(-startDegrees, 0.5f) + Vec2::HALF;
