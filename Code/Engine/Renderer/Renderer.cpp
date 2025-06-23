@@ -1262,5 +1262,6 @@ void Renderer::SetStatesIfChanged()
         m_samplerState = m_samplerStates[static_cast<int>(m_desiredSamplerMode)];
         m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
         m_deviceContext->PSSetSamplers(1, 1, &m_samplerState);
+        m_deviceContext->PSSetSamplers(2, 1, &m_samplerState);
     }
 }
