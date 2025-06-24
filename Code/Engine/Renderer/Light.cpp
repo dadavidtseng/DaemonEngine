@@ -6,7 +6,7 @@
 #include "Engine/Renderer/Light.hpp"
 
 #include "Renderer.hpp"
-#include "Game/Framework/GameCommon.hpp"
+// #include "Game/Framework/GameCommon.hpp"
 
 Light::Light()
 {
@@ -93,7 +93,7 @@ Light* LightManager::GetLight(int index)
 void LightManager::UpdateLightConstants()
 {
     Light light = m_lights[0];
-    g_theRenderer->SetLightConstants(light.GetColor(), light.GetDirection(), light.GetIntensity(), m_lights.size());
+    // g_theRenderer->SetLightConstants(light.GetColor(), light.GetDirection(), light.GetIntensity(), m_lights.size());
 }
 
 void LightManager::BindLightConstants()

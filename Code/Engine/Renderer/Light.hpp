@@ -24,7 +24,8 @@ struct GPULightData
     float innerConeAngle;     // Inner cone angle
     float outerConeAngle;     // Outer cone angle
     int   lightType;          // Light type
-    float padding[3];         // 改為3個float以達到16字節對齊
+    float padding[5];         // 改為3個float以達到16字節對齊
+    // float extraPadding[3];
 };
 
 enum class LightType
