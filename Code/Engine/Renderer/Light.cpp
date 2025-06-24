@@ -8,59 +8,127 @@
 #include "Renderer.hpp"
 // #include "Game/Framework/GameCommon.hpp"
 
-Light::Light()
+Light& Light::SetType(eLightType const type)
 {
+    m_type = static_cast<int>(type);
+    return *this;
 }
 
-Light::Light(LightType type, Vec3 const& position, Rgba8 const& color, float intensity)
-    : m_type(type)
-      , m_position(position)
-      , m_color(color)
-      , m_intensity(intensity)
+Light& Light::SetWorldPosition(Vec3 const& worldPosition)
 {
+    m_worldPosition[0] = worldPosition.x;
+    m_worldPosition[1] = worldPosition.y;
+    m_worldPosition[2] = worldPosition.z;
+
+    return *this;
 }
 
-Light::~Light()
-{
-}
-
-void Light::SetRadii(float innerRadius, float outerRadius)
+Light& Light::SetRadius(float const innerRadius,
+                        float const outerRadius)
 {
     m_innerRadius = innerRadius;
     m_outerRadius = outerRadius;
+
+    return *this;
 }
 
-void Light::SetConeAngles(float innerAngleDegrees, float outerAngleDegrees)
+// Light& Light::SetColor(Rgba8 const& color)
+// {
+//     m_color[0] = color.r;
+//     m_color[1] = color.g;
+//     m_color[2] = color.b;
+//
+//     return *this;
+// }
+
+Light& Light::SetColorWithIntensity(Vec4 const& rgba8)
 {
-    m_innerConeAngle = CosDegrees(innerAngleDegrees);
-    m_outerConeAngle = CosDegrees(outerAngleDegrees);
+    m_color[0] = rgba8.x;
+    m_color[1] = rgba8.y;
+    m_color[2] = rgba8.z;
+    m_color[3] = rgba8.w;
+
+    return *this;
 }
+
+
+Light& Light::SetDirection(Vec3 const& direction)
+{
+    m_direction[0] = direction.x;
+    m_direction[1] = direction.y;
+    m_direction[2] = direction.z;
+
+    return *this;
+}
+
+Light& Light::SetConeAngles(float const innerAngleDegrees,
+                            float const outerAngleDegrees)
+{
+    m_innerConeAngle = innerAngleDegrees;
+    m_outerConeAngle = outerAngleDegrees;
+
+    return *this;
+}
+
+
+// eLightType Light::GetType() const
+// {
+//     return m_type;
+// }
+//
+// Vec3 const& Light::GetWorldPosition() const
+// {
+//     return m_worldPosition;
+// }
+//
+// float Light::GetInnerRadius() const
+// {
+//     return m_innerRadius;
+// }
+//
+// float Light::GetOuterRadius() const
+// {
+//     return m_outerRadius;
+// }
+//
+// Rgba8 const& Light::GetColor() const
+// {
+//     return m_color;
+// }
+//
+// unsigned char Light::GetIntensity() const
+// {
+//     return m_color.a;
+// }
+//
+// Vec3 const& Light::GetDirection() const
+// {
+//     return m_direction;
+// }
+//
+// float Light::GetInnerConeAngle() const
+// {
+//     return m_innerConeAngle;
+// }
+//
+// float Light::GetOuterConeAngle() const
+// {
+//     return m_outerConeAngle;
+// }
 
 //------------------------------------------------------------------------------------------------
-DirectionalLight::DirectionalLight()
-{
-}
-
-DirectionalLight::DirectionalLight(Vec3 const& direction, Rgba8 const& color, float intensity)
-    : m_direction(direction.GetNormalized()),
-      m_color(color),
-      m_intensity(intensity)
-{
-}
-
-//------------------------------------------------------------------------------------------------
-LightManager::LightManager()
+LightSubsystem::LightSubsystem()
 {
     // Initialize CBO - you'll need to adapt this to your engine's CBO creation method
     // m_lightCBO = renderer->CreateConstantBuffer(sizeof(LightConstants));
 }
 
-LightManager::~LightManager()
+LightSubsystem::~LightSubsystem()
 {
     // delete m_lightCBO; // Or however your engine handles CBO cleanup
 }
 
-void LightManager::AddLight(Light const& light)
+void LightSubsystem::AddLight(Light const& light)
 {
     if (m_lights.size() < MAX_LIGHTS)
     {
@@ -68,7 +136,7 @@ void LightManager::AddLight(Light const& light)
     }
 }
 
-void LightManager::RemoveLight(int index)
+void LightSubsystem::RemoveLight(int index)
 {
     if (index >= 0 && index < (int)m_lights.size())
     {
@@ -76,12 +144,12 @@ void LightManager::RemoveLight(int index)
     }
 }
 
-void LightManager::ClearLights()
+void LightSubsystem::ClearLights()
 {
     m_lights.clear();
 }
 
-Light* LightManager::GetLight(int index)
+Light* LightSubsystem::GetLight(int index)
 {
     if (index >= 0 && index < (int)m_lights.size())
     {
@@ -90,12 +158,12 @@ Light* LightManager::GetLight(int index)
     return nullptr;
 }
 
-void LightManager::UpdateLightConstants()
+void LightSubsystem::UpdateLightConstants()
 {
     Light light = m_lights[0];
     // g_theRenderer->SetLightConstants(light.GetColor(), light.GetDirection(), light.GetIntensity(), m_lights.size());
 }
 
-void LightManager::BindLightConstants()
+void LightSubsystem::BindLightConstants()
 {
 }

@@ -478,9 +478,9 @@ void Renderer::BeginCamera(Camera const& camera) const
     cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
     cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
     cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
-    cameraConstants.CameraWorldPosition[0]     = camera.GetPosition().x;
-    cameraConstants.CameraWorldPosition[1]     = camera.GetPosition().y;
-    cameraConstants.CameraWorldPosition[2]     = camera.GetPosition().z;
+    cameraConstants.CameraWorldPosition[0]  = camera.GetPosition().x;
+    cameraConstants.CameraWorldPosition[1]  = camera.GetPosition().y;
+    cameraConstants.CameraWorldPosition[2]  = camera.GetPosition().z;
 
     // Copy the data from the local structure to the constant buffer
     CopyCPUToGPU(&cameraConstants, sizeof(sCameraConstants), m_cameraCBO);
@@ -696,77 +696,41 @@ void Renderer::SetLightConstants(Rgba8 const& lightColor,
                                  float const  ambientIntensity,
                                  int const    numLights) const
 {
-    sLightConstants lightConstants = {}; // 初始化為 0
+    sLightConstants lightConstants = {};
 
-    // 設定太陽光
-    float colorAsFloat[4];
-    lightColor.GetAsFloats(colorAsFloat);
-    lightConstants.LightColor[0] = colorAsFloat[0];
-    lightConstants.LightColor[1] = colorAsFloat[1];
-    lightConstants.LightColor[2] = colorAsFloat[2];
-    lightConstants.LightColor[3] = colorAsFloat[3];
+    // // 設定太陽光
+    // float colorAsFloat[4];
+    // lightColor.GetAsFloats(colorAsFloat);
+    // lightConstants.LightColor[0] = colorAsFloat[0];
+    // lightConstants.LightColor[1] = colorAsFloat[1];
+    // lightConstants.LightColor[2] = colorAsFloat[2];
+    // lightConstants.LightColor[3] = colorAsFloat[3];
+    //
+    // Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
+    // lightConstants.SunDirection[0]    = normalizedSunDirection.x;
+    // lightConstants.SunDirection[1]    = normalizedSunDirection.y;
+    // lightConstants.SunDirection[2]    = normalizedSunDirection.z;
+    // lightConstants.AmbientIntensity   = ambientIntensity;
+    lightConstants.NumLights = 8;
 
-    Vec3 const normalizedSunDirection = sunDirection.GetNormalized();
-    lightConstants.SunDirection[0]  = normalizedSunDirection.x;
-    lightConstants.SunDirection[1]  = normalizedSunDirection.y;
-    lightConstants.SunDirection[2]  = normalizedSunDirection.z;
-    lightConstants.AmbientIntensity = ambientIntensity;
+    Light light1 = {};
+    light1.SetType(eLightType::SPOT)
+          .SetWorldPosition(Vec3(2, 2, 5))
+          .SetRadius(0.5f, 15.f)
+          .SetColorWithIntensity(Vec4(0.f, 1.f, 1.f, 8.f))
+          .SetDirection(Vec3(0.0f, 0.0f, -1.0f).GetNormalized())
+          .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
 
-    // 修正：明確設置燈光數量為 2
-    lightConstants.NumLights = 2;  // 強制設為 2，因為我們添加了 2 盞燈
+    Light light2 = {};
+    light2.SetType(eLightType::SPOT)
+          .SetWorldPosition(Vec3(4, 4, 5))
+          .SetRadius(0.5f, 15.f)
+          .SetColorWithIntensity(Vec4(1.f, 0.f, 1.f, 8.f))
+          .SetDirection(Vec3(0.0f, 0.0f, -1.0f).GetNormalized())
+          .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
 
-    // 設定第一盞 Spot Light
-    GPULightData spotLight = {};
-    spotLight.color[0] = 0.0f;  // Red
-    spotLight.color[1] = 1.0f;  // Green
-    spotLight.color[2] = 1.0f;  // Blue
-    spotLight.color[3] = 8.0f;  // Intensity
-
-    spotLight.worldPosition[0] = 2.0f;
-    spotLight.worldPosition[1] = 2.0f;
-    spotLight.worldPosition[2] = 5.0f;
-
-    Vec3 spotDirection = Vec3(0.0f, 0.0f, -1.0f).GetNormalized();
-    spotLight.direction[0] = spotDirection.x;
-    spotLight.direction[1] = spotDirection.y;
-    spotLight.direction[2] = spotDirection.z;
-
-    spotLight.innerRadius = 0.5f;
-    spotLight.outerRadius = 15.0f;
-    spotLight.innerConeAngle = CosDegrees(5.0f);
-    spotLight.outerConeAngle = CosDegrees(25.0f);
-    spotLight.lightType = 1;  // spot light
-
-    lightConstants.lightArray[0] = spotLight;
-
-    // 設定第二盞 Spot Light
-    GPULightData spotLight1 = {};
-    spotLight1.color[0] = 1.0f;  // Red
-    spotLight1.color[1] = 0.0f;  // Green
-    spotLight1.color[2] = 1.0f;  // Blue
-    spotLight1.color[3] = 8.0f;  // Intensity
-
-    spotLight1.worldPosition[0] = 4.0f;
-    spotLight1.worldPosition[1] = 4.0f;
-    spotLight1.worldPosition[2] = 5.0f;
-
-    Vec3 spotDirection2 = Vec3(0.0f, 0.0f, -1.0f).GetNormalized();
-    spotLight1.direction[0] = spotDirection2.x;
-    spotLight1.direction[1] = spotDirection2.y;
-    spotLight1.direction[2] = spotDirection2.z;
-
-    spotLight1.innerRadius = 0.5f;
-    spotLight1.outerRadius = 15.0f;
-    spotLight1.innerConeAngle = CosDegrees(5.0f);
-    spotLight1.outerConeAngle = CosDegrees(25.0f);
-    spotLight1.lightType = 1;  // spot light
-
-    lightConstants.lightArray[1] = spotLight1;
-
-    // 調試：打印燈光數量
-    #ifdef _DEBUG
-    DebuggerPrintf("Setting NumLights to: %d\n", lightConstants.NumLights);
-    #endif
+    lightConstants.lightArray[0] = light1;
+    lightConstants.lightArray[1] = light2;
 
     CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);

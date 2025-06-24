@@ -5,8 +5,8 @@
 #pragma once
 #include <cstdint>
 
-#include "Light.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Renderer/Light.hpp"
 
 #define DX_SAFE_RELEASE(dxObject) \
 if ((dxObject) != nullptr) {    \
@@ -56,21 +56,20 @@ struct sCameraConstants
     Mat44 WorldToCameraTransform;       // View transform
     Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
     Mat44 RenderToClipTransform;        // Projection transform
-    float  CameraWorldPosition[3];
+    float CameraWorldPosition[3];
     float _padding;
 };
 
+//----------------------------------------------------------------------------------------------------
+/// @brief Max light numbers for light array.
 int constexpr MAX_LIGHTS = 8;
 
 //----------------------------------------------------------------------------------------------------
 struct sLightConstants
 {
-    float        LightColor[4];
-    float        SunDirection[3];
-    float        AmbientIntensity;
-    int          NumLights;
-    float        padding[3];
-    GPULightData lightArray[MAX_LIGHTS];
+    int   NumLights;
+    float padding[3];
+    Light lightArray[MAX_LIGHTS];
 };
 
 //----------------------------------------------------------------------------------------------------
