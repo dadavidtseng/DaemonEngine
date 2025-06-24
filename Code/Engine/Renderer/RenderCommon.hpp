@@ -56,7 +56,8 @@ struct sCameraConstants
     Mat44 WorldToCameraTransform;       // View transform
     Mat44 CameraToRenderTransform;      // Non-standard transform from game to DirectX conventions;
     Mat44 RenderToClipTransform;        // Projection transform
-    Vec3  CameraWorldPosition;
+    float  CameraWorldPosition[3];
+    float _padding;
 };
 
 int constexpr MAX_LIGHTS = 8;

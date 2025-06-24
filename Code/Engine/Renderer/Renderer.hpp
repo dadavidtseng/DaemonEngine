@@ -91,7 +91,7 @@ public:
     void            SetDepthMode(eDepthMode mode);
     void            SetSamplerMode(eSamplerMode mode);
     void            SetRasterizerMode(eRasterizerMode mode);
-    void            SetLightConstants(Rgba8 const& lightColor, Vec3 const& sunDirection, float ambientIntensity, int numLights) const;
+    void            SetLightConstants(Rgba8 const& lightColor=Rgba8::WHITE, Vec3 const& sunDirection=Vec3::ZERO, float ambientIntensity=0.f, int numLights=8) const;
     void            SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
     void            SetPerFrameConstants(float time = 0.f, int debugInt = 1, float debugFloat = 0.f) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;

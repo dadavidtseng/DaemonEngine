@@ -478,7 +478,9 @@ void Renderer::BeginCamera(Camera const& camera) const
     cameraConstants.WorldToCameraTransform  = camera.GetWorldToCameraTransform();
     cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
     cameraConstants.RenderToClipTransform   = camera.GetRenderToClipTransform();
-    cameraConstants.CameraWorldPosition     = camera.GetPosition();
+    cameraConstants.CameraWorldPosition[0]     = camera.GetPosition().x;
+    cameraConstants.CameraWorldPosition[1]     = camera.GetPosition().y;
+    cameraConstants.CameraWorldPosition[2]     = camera.GetPosition().z;
 
     // Copy the data from the local structure to the constant buffer
     CopyCPUToGPU(&cameraConstants, sizeof(sCameraConstants), m_cameraCBO);
@@ -501,6 +503,7 @@ void Renderer::BeginCamera(Camera const& camera) const
 
     // Set model constants to default
     SetModelConstants();
+    SetLightConstants();
     // SetPerFrameConstants();
 }
 
@@ -710,6 +713,15 @@ void Renderer::SetLightConstants(Rgba8 const& lightColor,
     lightConstants.SunDirection[2]  = normalizedSunDirection.z;
     lightConstants.AmbientIntensity = ambientIntensity;
     lightConstants.NumLights        = numLights;
+    GPULightData data               = {};
+    lightConstants.lightArray[0]    = data;
+    lightConstants.lightArray[1]    = data;
+    lightConstants.lightArray[2]    = data;
+    lightConstants.lightArray[3]    = data;
+    lightConstants.lightArray[4]    = data;
+    lightConstants.lightArray[5]    = data;
+    lightConstants.lightArray[6]    = data;
+    lightConstants.lightArray[7]    = data;
 
     CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
@@ -1052,7 +1064,9 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
     {
         if (errorBlob)
         {
-            DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
+            const char* errorString = (const char*)errorBlob->GetBufferPointer();
+            printf("Shader compilation error: %s\n", errorString);
+            // DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
         }
         ERROR_AND_DIE(Stringf("Could not compile shader."))
     }
