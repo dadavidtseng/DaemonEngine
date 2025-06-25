@@ -16,7 +16,7 @@ Rgba8 Rgba8::TRANSLUCENT_BLACK = Rgba8(0, 0, 0, 200);
 Rgba8 Rgba8::DARK_GREY         = Rgba8(100, 100, 100);
 Rgba8 Rgba8::GREY              = Rgba8(50, 50, 50);
 Rgba8 Rgba8::RED               = Rgba8(255, 0, 0);
-Rgba8 Rgba8::DARK_RED = Rgba8(139, 0, 0);
+Rgba8 Rgba8::DARK_RED          = Rgba8(139, 0, 0);
 Rgba8 Rgba8::GREEN             = Rgba8(0, 255, 0);
 Rgba8 Rgba8::MAGENTA           = Rgba8(255, 0, 255);
 Rgba8 Rgba8::CYAN              = Rgba8(0, 255, 255);
@@ -70,6 +70,31 @@ void Rgba8::GetAsFloats(float* colorAsFloats) const
     colorAsFloats[1] = NormalizeByte(g);    // Green
     colorAsFloats[2] = NormalizeByte(b);    // Blue
     colorAsFloats[3] = NormalizeByte(a);    // Alpha
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec3 Rgba8::GetAsVec3() const
+{
+    Vec3 result;
+
+    result.x = NormalizeByte(r);
+    result.y = NormalizeByte(g);
+    result.z = NormalizeByte(b);
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+Vec4 Rgba8::GetAsVec4() const
+{
+    Vec4 result;
+
+    result.x = NormalizeByte(r);
+    result.y = NormalizeByte(g);
+    result.z = NormalizeByte(b);
+    result.w = NormalizeByte(a);
+
+    return result;
 }
 
 //----------------------------------------------------------------------------------------------------

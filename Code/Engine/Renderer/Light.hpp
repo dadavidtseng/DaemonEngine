@@ -45,7 +45,8 @@ struct Light
     Light& SetType(eLightType type);
     Light& SetWorldPosition(Vec3 const& worldPosition);
     Light& SetRadius(float innerRadius, float outerRadius);
-    Light& SetColor();
+    Light& SetColor(Vec3 const& color);
+    Light& SetIntensity(float intensity);
     Light& SetColorWithIntensity(Vec4 const& rgba8);
     Light& SetDirection(Vec3 const& direction);
     Light& SetConeAngles(float innerAngleDegrees, float outerAngleDegrees);

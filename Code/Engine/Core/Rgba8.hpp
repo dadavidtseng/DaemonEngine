@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec4.hpp"
 
 //----------------------------------------------------------------------------------------------------
 struct Rgba8
@@ -35,6 +37,8 @@ struct Rgba8
 
     void SetFromText(char const* text);
     void GetAsFloats(float* colorAsFloats) const;
+    Vec3 GetAsVec3() const;
+    Vec4 GetAsVec4() const;
     bool operator==(Rgba8 const& compare) const;
 };
 

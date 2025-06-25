@@ -715,18 +715,19 @@ void Renderer::SetLightConstants(Rgba8 const& lightColor,
 
     Light light1 = {};
     light1.SetType(eLightType::SPOT)
-          .SetWorldPosition(Vec3(2, 2, 5))
+          .SetWorldPosition(Vec3(2.f, 2.f, 5.f))
           .SetRadius(0.5f, 15.f)
-          .SetColorWithIntensity(Vec4(0.f, 1.f, 1.f, 8.f))
-          .SetDirection(Vec3(0.0f, 0.0f, -1.0f).GetNormalized())
-          .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
+               .SetColor(Rgba8::CYAN.GetAsVec3())
+               .SetIntensity(8.f)
+               .SetDirection(-Vec3::Z_BASIS)
+               .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
 
     Light light2 = {};
     light2.SetType(eLightType::SPOT)
           .SetWorldPosition(Vec3(4, 4, 5))
           .SetRadius(0.5f, 15.f)
           .SetColorWithIntensity(Vec4(1.f, 0.f, 1.f, 8.f))
-          .SetDirection(Vec3(0.0f, 0.0f, -1.0f).GetNormalized())
+          .SetDirection(-Vec3::Z_BASIS)
           .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
 
     lightConstants.lightArray[0] = light1;

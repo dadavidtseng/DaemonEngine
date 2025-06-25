@@ -32,14 +32,22 @@ Light& Light::SetRadius(float const innerRadius,
     return *this;
 }
 
-// Light& Light::SetColor(Rgba8 const& color)
-// {
-//     m_color[0] = color.r;
-//     m_color[1] = color.g;
-//     m_color[2] = color.b;
-//
-//     return *this;
-// }
+Light& Light::SetColor(Vec3 const& color)
+{
+    m_color[0] = color.x;
+    m_color[1] = color.y;
+    m_color[2] = color.z;
+
+    return *this;
+}
+
+
+Light& Light::SetIntensity(float const intensity)
+{
+    m_color[3] = intensity;
+
+    return *this;
+}
 
 Light& Light::SetColorWithIntensity(Vec4 const& rgba8)
 {
