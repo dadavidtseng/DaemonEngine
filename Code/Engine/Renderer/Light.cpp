@@ -6,7 +6,6 @@
 #include "Engine/Renderer/Light.hpp"
 
 #include "Renderer.hpp"
-// #include "Game/Framework/GameCommon.hpp"
 
 Light& Light::SetType(eLightType const type)
 {
@@ -124,54 +123,4 @@ Light& Light::SetConeAngles(float const innerAngleDegrees,
 //     return m_outerConeAngle;
 // }
 
-//------------------------------------------------------------------------------------------------
-LightSubsystem::LightSubsystem()
-{
-    // Initialize CBO - you'll need to adapt this to your engine's CBO creation method
-    // m_lightCBO = renderer->CreateConstantBuffer(sizeof(LightConstants));
-}
 
-LightSubsystem::~LightSubsystem()
-{
-    // delete m_lightCBO; // Or however your engine handles CBO cleanup
-}
-
-void LightSubsystem::AddLight(Light const& light)
-{
-    if (m_lights.size() < MAX_LIGHTS)
-    {
-        m_lights.push_back(light);
-    }
-}
-
-void LightSubsystem::RemoveLight(int index)
-{
-    if (index >= 0 && index < (int)m_lights.size())
-    {
-        m_lights.erase(m_lights.begin() + index);
-    }
-}
-
-void LightSubsystem::ClearLights()
-{
-    m_lights.clear();
-}
-
-Light* LightSubsystem::GetLight(int index)
-{
-    if (index >= 0 && index < (int)m_lights.size())
-    {
-        return &m_lights[index];
-    }
-    return nullptr;
-}
-
-void LightSubsystem::UpdateLightConstants()
-{
-    Light light = m_lights[0];
-    // g_theRenderer->SetLightConstants(light.GetColor(), light.GetDirection(), light.GetIntensity(), m_lights.size());
-}
-
-void LightSubsystem::BindLightConstants()
-{
-}

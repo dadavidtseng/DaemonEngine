@@ -502,8 +502,8 @@ void Renderer::BeginCamera(Camera const& camera) const
     // BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
 
     // Set model constants to default
-    SetModelConstants();
-    SetLightConstants();
+    // SetModelConstants();
+    // SetLightConstants();
     // SetPerFrameConstants();
 }
 
@@ -691,10 +691,8 @@ void Renderer::SetDepthMode(eDepthMode const mode)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::SetLightConstants(Rgba8 const& lightColor,
-                                 Vec3 const&  sunDirection,
-                                 float const  ambientIntensity,
-                                 int const    numLights) const
+void Renderer::SetLightConstants(std::vector<Light*> const& lights,
+                                 int const                  numLights) const
 {
     sLightConstants lightConstants = {};
 
@@ -711,27 +709,20 @@ void Renderer::SetLightConstants(Rgba8 const& lightColor,
     // lightConstants.SunDirection[1]    = normalizedSunDirection.y;
     // lightConstants.SunDirection[2]    = normalizedSunDirection.z;
     // lightConstants.AmbientIntensity   = ambientIntensity;
-    lightConstants.NumLights = 8;
 
-    Light light1 = {};
-    light1.SetType(eLightType::SPOT)
-          .SetWorldPosition(Vec3(2.f, 2.f, 5.f))
-          .SetRadius(0.5f, 15.f)
-               .SetColor(Rgba8::CYAN.GetAsVec3())
-               .SetIntensity(8.f)
-               .SetDirection(-Vec3::Z_BASIS)
-               .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
+    lightConstants.NumLights = numLights;
 
-    Light light2 = {};
-    light2.SetType(eLightType::SPOT)
-          .SetWorldPosition(Vec3(4, 4, 5))
-          .SetRadius(0.5f, 15.f)
-          .SetColorWithIntensity(Vec4(1.f, 0.f, 1.f, 8.f))
-          .SetDirection(-Vec3::Z_BASIS)
-          .SetConeAngles(CosDegrees(5.f), CosDegrees(25.f));
+    for (int i = 0; i < numLights && i < MAX_LIGHTS; ++i)
+    {
+        if (lights[i] != nullptr)
+        {
+            lightConstants.lightArray[i] = *lights[i];  // 複製 Light 實例的值
+        }
+    }
 
-    lightConstants.lightArray[0] = light1;
-    lightConstants.lightArray[1] = light2;
+
+    // lightConstants.lightArray[0] = light1;
+    // lightConstants.lightArray[1] = light2;
 
     CopyCPUToGPU(&lightConstants, sizeof(sLightConstants), m_lightCBO);
     BindConstantBuffer(k_lightConstantSlot, m_lightCBO);

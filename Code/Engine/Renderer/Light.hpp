@@ -51,7 +51,6 @@ struct Light
     Light& SetDirection(Vec3 const& direction);
     Light& SetConeAngles(float innerAngleDegrees, float outerAngleDegrees);
 
-
     /// Getters
     // eLightType    GetType() const;
     // Vec3 const&   GetWorldPosition() const;
@@ -73,47 +72,11 @@ private:
     float m_innerRadius      = 1.0f;
     float m_direction[3]     = {}; // Default pointing down
     float m_outerRadius      = 10.0f;
-    // float      m_intensity      = 1.0f;
-    float m_innerConeAngle = CosDegrees(15.0f);  // Cosine of 15 degrees
-    float m_outerConeAngle = CosDegrees(30.0f);  // Cosine of 30 degrees
-    int   m_type           = (int)eLightType::INVALID;
-    float padding          = 0.f;
+    float m_innerConeAngle   = CosDegrees(15.0f);  // Cosine of 15 degrees
+    float m_outerConeAngle   = CosDegrees(30.0f);  // Cosine of 30 degrees
+    int   m_type             = static_cast<int>(eLightType::INVALID);
+    float padding            = 0.f;
     // bool  m_isEnabled      = true;
 };
 
-//------------------------------------------------------------------------------------------------
-// Light Manager class
-//------------------------------------------------------------------------------------------------
-class LightSubsystem
-{
-public:
-    LightSubsystem();
-    ~LightSubsystem();
 
-    // Light management
-    void   AddLight(Light const& light);
-    void   RemoveLight(int index);
-    void   ClearLights();
-    Light* GetLight(int index);
-    int    GetLightCount() const { return (int)m_lights.size(); }
-
-    // Directional light
-    // void              SetDirectionalLight(DirectionalLight const& light) { m_directionalLight = light; }
-    // DirectionalLight& GetDirectionalLight() { return m_directionalLight; }
-
-    // Ambient lighting
-    void  SetAmbientIntensity(float intensity) { m_ambientIntensity = intensity; }
-    float GetAmbientIntensity() const { return m_ambientIntensity; }
-
-    // Update and bind
-    void UpdateLightConstants();
-    void BindLightConstants();
-
-private:
-    std::vector<Light> m_lights;
-    // DirectionalLight   m_directionalLight;
-    float m_ambientIntensity = 0.2f;
-
-    // LightConstants* m_lightConstants = nullptr;
-    // ConstantBuffer* m_lightCBO = nullptr;
-};
