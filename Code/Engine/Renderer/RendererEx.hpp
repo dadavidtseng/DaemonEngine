@@ -40,7 +40,7 @@ public:
     ~RendererEx();
     void    Startup();
     HRESULT Initialize();
-    HRESULT LoadImageFromFile(const wchar_t* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
+    HRESULT LoadImageFromFile(wchar_t const* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
     void    SetWindowDriftParams(HWND const hwnd, DriftParams const& params);
     void    StartDragging(HWND const hwnd, POINT const& mousePos);
     void    StopDragging(HWND hwnd);
@@ -57,8 +57,8 @@ public:
     HRESULT CreateVertexBuffer();
     HRESULT CreateSampler();
 
-    int GetSceneWidth();
-    int GetSceneHeight();
+    float GetSceneWidth();
+    float GetSceneHeight();
 
 private:
     void                    RenderTestTexture() const;
@@ -87,10 +87,10 @@ private:
     ID3D11SamplerState* sampler      = nullptr;
 
 
-    int  sceneWidth = 1920, sceneHeight = 1080;
-    HWND mainWindow = nullptr;
+    float sceneWidth = 1920, sceneHeight = 1080;
+    HWND  mainWindow = nullptr;
 
-    BITMAPINFO        bitmapInfo;
+    BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
     std::vector<BYTE> pixelData;
 
 

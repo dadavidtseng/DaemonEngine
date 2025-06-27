@@ -1065,8 +1065,6 @@ bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode,
     {
         if (errorBlob)
         {
-            // const char* errorString = (const char*)errorBlob->GetBufferPointer();
-            // printf("Shader compilation error: %s\n", errorString);
             DebuggerPrintf(static_cast<char*>(errorBlob->GetBufferPointer()));
         }
         ERROR_AND_DIE(Stringf("Could not compile shader."))

@@ -18,24 +18,23 @@
 #pragma comment(lib, "windowscodecs.lib")
 using namespace DirectX;
 
-// 簡單的頂點結構
+
 struct Vertex
 {
     XMFLOAT3 m_position;
+    XMFLOAT4 m_color;
     XMFLOAT2 m_texCoord;
 };
 
 RendererEx::RendererEx()
 {
-
-
-    // ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
-    bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    bitmapInfo.bmiHeader.biWidth       = sceneWidth;
-    bitmapInfo.bmiHeader.biHeight      = -static_cast<LONG>(sceneHeight);
-    bitmapInfo.bmiHeader.biPlanes      = 1;
-    bitmapInfo.bmiHeader.biBitCount    = 32;
-    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+    ZeroMemory(&m_bitmapInfo, sizeof(BITMAPINFO));
+    m_bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+    m_bitmapInfo.bmiHeader.biWidth       = sceneWidth;
+    m_bitmapInfo.bmiHeader.biHeight      = static_cast<LONG>(sceneHeight);
+    m_bitmapInfo.bmiHeader.biPlanes      = 1;
+    m_bitmapInfo.bmiHeader.biBitCount    = 32;
+    m_bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
     pixelData.resize(sceneWidth * sceneHeight * 4);
 }
@@ -71,6 +70,7 @@ HRESULT RendererEx::Initialize()
         IID_IWICImagingFactory,
         reinterpret_cast<void**>(&m_wicFactory)
     );
+
     if (FAILED(hr))
     {
         // WIC 初始化失敗，但繼續執行（使用程序生成紋理）
@@ -392,7 +392,7 @@ void RendererEx::UpdateWindowPosition(WindowEx& window) const
     // }
 }
 
-void RendererEx::Render(std::vector<WindowEx>  windows)
+void RendererEx::Render(std::vector<WindowEx> windows)
 {
     if (!m_sceneRenderTargetView || !m_deviceContext) return;
 
@@ -579,36 +579,46 @@ HRESULT RendererEx::CreateTestTexture(const wchar_t* imageFile)
 HRESULT RendererEx::CreateShaders()
 {
     const char* vsSource = R"(
-            struct VS_INPUT {
-                float3 pos : POSITION;
-                float2 tex : TEXCOORD0;
-            };
+            struct VS_INPUT
+        {
+            float3 pos : VERTEX_POSITION;
+            float4 a_color : VERTEX_COLOR;
+            float2 tex : VERTEX_UVTEXCOORDS;
+        };
 
-            struct VS_OUTPUT {
-                float4 pos : SV_POSITION;
-                float2 tex : TEXCOORD0;
-            };
+        struct VS_OUTPUT
+        {
+            float4 pos : SV_POSITION;
+            float4 color : COLOR0;        // 新增顏色輸出
+            float2 tex : TEXCOORD0;
+        };
 
-            VS_OUTPUT main(VS_INPUT input) {
-                VS_OUTPUT output;
-                output.pos = float4(input.pos, 1.0f);
-                output.tex = input.tex;
-                return output;
-            }
+        VS_OUTPUT main(VS_INPUT input) {
+            VS_OUTPUT output;
+            output.pos = float4(input.pos, 1.0f);
+            output.color = input.a_color;   // 傳遞顏色
+            output.tex = input.tex;
+            return output;
+        }
         )";
 
     const char* psSource = R"(
             Texture2D tex : register(t0);
-            SamplerState sam : register(s0);
+        SamplerState sam : register(s0);
 
-            struct PS_INPUT {
-                float4 pos : SV_POSITION;
-                float2 tex : TEXCOORD0;
-            };
+        struct PS_INPUT {
+            float4 pos : SV_POSITION;
+            float4 color : COLOR0;        // 新增顏色輸入
+            float2 tex : TEXCOORD0;
+        };
 
-            float4 main(PS_INPUT input) : SV_TARGET {
-                return tex.Sample(sam, input.tex);
-            }
+        float4 main(PS_INPUT input) : SV_TARGET {
+            float4 texColor = tex.Sample(sam, input.tex);
+             return texColor * input.color;  // 紋理顏色與頂點顏色相乘
+            // 或者你可以選擇其他混合方式，例如：
+            // return texColor + input.color;  // 相加
+            // return input.color;             // 只用頂點顏色
+        }
         )";
 
     ID3DBlob* vsBlob    = nullptr;
@@ -616,7 +626,7 @@ HRESULT RendererEx::CreateShaders()
     ID3DBlob* errorBlob = nullptr;
 
     HRESULT hr = D3DCompile(vsSource, strlen(vsSource), nullptr, nullptr, nullptr,
-                            "main", "vs_4_0", 0, 0, &vsBlob, &errorBlob);
+                            "main", "vs_5_0", 0, 0, &vsBlob, &errorBlob);
     if (FAILED(hr))
     {
         if (errorBlob) errorBlob->Release();
@@ -631,18 +641,22 @@ HRESULT RendererEx::CreateShaders()
         return hr;
     }
 
-    D3D11_INPUT_ELEMENT_DESC layout[] = {
-        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
-    };
+    // Create a local array of input element descriptions that defines the vertex layout.
+    D3D11_INPUT_ELEMENT_DESC inputElementDesc[3];
+    UINT                     numElements = 3;
 
-    hr = m_device->CreateInputLayout(layout, 2, vsBlob->GetBufferPointer(),
+    inputElementDesc[0] = {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
+    inputElementDesc[1] = {"VERTEX_COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+    inputElementDesc[2] = {"VERTEX_UVTEXCOORDS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+
+
+    hr = m_device->CreateInputLayout(inputElementDesc, numElements, vsBlob->GetBufferPointer(),
                                      vsBlob->GetBufferSize(), &inputLayout);
     vsBlob->Release();
     if (FAILED(hr)) return hr;
 
     hr = D3DCompile(psSource, strlen(psSource), nullptr, nullptr, nullptr,
-                    "main", "ps_4_0", 0, 0, &psBlob, &errorBlob);
+                    "main", "ps_5_0", 0, 0, &psBlob, &errorBlob);
     if (FAILED(hr))
     {
         if (errorBlob) errorBlob->Release();
@@ -659,10 +673,10 @@ HRESULT RendererEx::CreateShaders()
 HRESULT RendererEx::CreateVertexBuffer()
 {
     Vertex vertices[] = {
-        {XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f)},
-        {XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)},
-        {XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f)},
-        {XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f)}
+        {XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f)},
+        {XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f)},
+        {XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f)},
+        {XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f)}
     };
 
     D3D11_BUFFER_DESC bufferDesc = {};
@@ -699,12 +713,12 @@ HRESULT RendererEx::CreateSampler()
     return m_device->CreateSamplerState(&samplerDesc, &sampler);
 }
 
-int RendererEx::GetSceneWidth()
+float RendererEx::GetSceneWidth()
 {
     return sceneWidth;
 }
 
-int RendererEx::GetSceneHeight()
+float RendererEx::GetSceneHeight()
 {
     return sceneHeight;
 }
@@ -727,7 +741,7 @@ void RendererEx::RenderTestTexture() const
     m_deviceContext->DrawIndexed(6, 0, 0);
 }
 
-void RendererEx::UpdateWindows(std::vector<WindowEx> & windows)
+void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
 {
     // bool needsUpdate = false;
     // for (const auto& window : windows)
@@ -797,7 +811,7 @@ void RendererEx::RenderViewportToWindow(WindowEx const& window) const
     }
 
     // 設置 DIB 信息
-    BITMAPINFO localBitmapInfo         = bitmapInfo;
+    BITMAPINFO localBitmapInfo         = m_bitmapInfo;
     localBitmapInfo.bmiHeader.biWidth  = srcWidth;
     localBitmapInfo.bmiHeader.biHeight = -srcHeight;
 
