@@ -317,16 +317,16 @@ void Window::CreateOSWindow()
     // Calculate client rect bounds by centering the client area
     float const clientMarginX = 0.5f * (desktopWidth - clientWidth);
     float const clientMarginY = 0.5f * (desktopHeight - clientHeight);
-    RECT        clientRect;
-    clientRect.left   = static_cast<int>(clientMarginX);
-    clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
-    clientRect.top    = static_cast<int>(clientMarginY);
-    clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
-    // RECT clientRect;
-    // clientRect.left   = 0;
-    // clientRect.top    = 0;
-    // clientRect.right  = static_cast<LONG>(desktopWidth );
-    // clientRect.bottom = static_cast<LONG>(desktopHeight);
+    // RECT        clientRect;
+    // clientRect.left   = static_cast<int>(clientMarginX);
+    // clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
+    // clientRect.top    = static_cast<int>(clientMarginY);
+    // clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
+    RECT clientRect;
+    clientRect.left   = 0;
+    clientRect.top    = 0;
+    clientRect.right  = static_cast<LONG>(desktopWidth );
+    clientRect.bottom = static_cast<LONG>(desktopHeight);
 
     // Calculate the outer dimensions of the physical window, including frame et al.
     RECT windowRect = clientRect;

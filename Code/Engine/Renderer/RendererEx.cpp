@@ -29,7 +29,7 @@ RendererEx::RendererEx()
 {
 
 
-    ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
+    // ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
     bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
     bitmapInfo.bmiHeader.biWidth       = sceneWidth;
     bitmapInfo.bmiHeader.biHeight      = -static_cast<LONG>(sceneHeight);

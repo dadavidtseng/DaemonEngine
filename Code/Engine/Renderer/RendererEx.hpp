@@ -32,25 +32,23 @@ dxObject = nullptr;       \
 #endif
 
 
-
-
 //----------------------------------------------------------------------------------------------------
 class RendererEx
 {
 public:
-RendererEx();
+    RendererEx();
     ~RendererEx();
-void Startup();
+    void    Startup();
     HRESULT Initialize();
     HRESULT LoadImageFromFile(const wchar_t* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
-    void    SetWindowDriftParams(HWND const hwnd, DriftParams const & params);
+    void    SetWindowDriftParams(HWND const hwnd, DriftParams const& params);
     void    StartDragging(HWND const hwnd, POINT const& mousePos);
     void    StopDragging(HWND hwnd);
     void    UpdateDragging(HWND const hwnd, POINT const& mousePos) const;
     void    UpdateWindowDrift(WindowEx& window) const;
     // HRESULT AddWindow(HWND const& hwnd);
     void    UpdateWindowPosition(WindowEx& window) const;
-    void    Render(std::vector<WindowEx>  windows);
+    void    Render(std::vector<WindowEx> windows);
     HRESULT CreateDeviceAndSwapChain();
     HRESULT CreateSceneRenderTexture();
     HRESULT CreateStagingTexture();
@@ -63,10 +61,10 @@ void Startup();
     int GetSceneHeight();
 
 private:
-    void RenderTestTexture() const;
-    void UpdateWindows(std::vector<WindowEx> & windows);
-    void RenderViewportToWindow(WindowEx const& window) const;
-    void Cleanup();
+    void                    RenderTestTexture() const;
+    void                    UpdateWindows(std::vector<WindowEx>& windows);
+    void                    RenderViewportToWindow(WindowEx const& window) const;
+    void                    Cleanup();
     ID3D11Device*           m_device                         = nullptr;
     ID3D11DeviceContext*    m_deviceContext                  = nullptr;
     IDXGISwapChain*         m_mainSwapChain                  = nullptr;
@@ -89,12 +87,11 @@ private:
     ID3D11SamplerState* sampler      = nullptr;
 
 
-    int                  sceneWidth = 1920, sceneHeight = 1080;
-    HWND                  mainWindow = nullptr;
+    int  sceneWidth = 1920, sceneHeight = 1080;
+    HWND mainWindow = nullptr;
 
     BITMAPINFO        bitmapInfo;
     std::vector<BYTE> pixelData;
-
 
 
     IWICImagingFactory* m_wicFactory = nullptr;
