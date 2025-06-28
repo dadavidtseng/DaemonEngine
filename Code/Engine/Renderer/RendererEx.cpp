@@ -8,7 +8,7 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#include <DirectXMath.h>
+// #include <DirectXMath.h>
 #include <wincodec.h>
 #include <vector>
 
@@ -16,15 +16,20 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "windowscodecs.lib")
-using namespace DirectX;
+// using namespace DirectX;
 
 
-struct Vertex
-{
-    XMFLOAT3 m_position;
-    XMFLOAT4 m_color;
-    XMFLOAT2 m_texCoord;
-};
+// struct Vertex
+// {
+//     XMFLOAT3 m_position;
+//     uint32_t    m_color;
+//     XMFLOAT2 m_texCoord;
+// };
+
+// uint32_t MakeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+// {
+//     return (a << 24) | (b << 16) | (g << 8) | r;  // ABGR格式
+// }
 
 RendererEx::RendererEx()
 {
@@ -579,7 +584,7 @@ HRESULT RendererEx::CreateTestTexture(const wchar_t* imageFile)
 HRESULT RendererEx::CreateShaders()
 {
     const char* vsSource = R"(
-            struct VS_INPUT
+        struct VS_INPUT
         {
             float3 pos : VERTEX_POSITION;
             float4 a_color : VERTEX_COLOR;
@@ -589,35 +594,35 @@ HRESULT RendererEx::CreateShaders()
         struct VS_OUTPUT
         {
             float4 pos : SV_POSITION;
-            float4 color : COLOR0;        // 新增顏色輸出
+            float4 color : COLOR0;
             float2 tex : TEXCOORD0;
         };
 
-        VS_OUTPUT main(VS_INPUT input) {
+        VS_OUTPUT main(VS_INPUT input)
+        {
             VS_OUTPUT output;
             output.pos = float4(input.pos, 1.0f);
-            output.color = input.a_color;   // 傳遞顏色
+            output.color = input.a_color;
             output.tex = input.tex;
             return output;
         }
         )";
 
     const char* psSource = R"(
-            Texture2D tex : register(t0);
+        Texture2D tex : register(t0);
         SamplerState sam : register(s0);
 
-        struct PS_INPUT {
+        struct PS_INPUT
+        {
             float4 pos : SV_POSITION;
-            float4 color : COLOR0;        // 新增顏色輸入
+            float4 color : COLOR0;
             float2 tex : TEXCOORD0;
         };
 
-        float4 main(PS_INPUT input) : SV_TARGET {
+        float4 main(PS_INPUT input) : SV_TARGET
+        {
             float4 texColor = tex.Sample(sam, input.tex);
-             return texColor * input.color;  // 紋理顏色與頂點顏色相乘
-            // 或者你可以選擇其他混合方式，例如：
-            // return texColor + input.color;  // 相加
-            // return input.color;             // 只用頂點顏色
+             return texColor * input.color;
         }
         )";
 
@@ -646,7 +651,7 @@ HRESULT RendererEx::CreateShaders()
     UINT                     numElements = 3;
 
     inputElementDesc[0] = {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
-    inputElementDesc[1] = {"VERTEX_COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+    inputElementDesc[1] = {"VERTEX_COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
     inputElementDesc[2] = {"VERTEX_UVTEXCOORDS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
 
 
@@ -672,20 +677,28 @@ HRESULT RendererEx::CreateShaders()
 
 HRESULT RendererEx::CreateVertexBuffer()
 {
-    Vertex vertices[] = {
-        {XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f)},
-        {XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f)},
-        {XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f)},
-        {XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f)}
-    };
+    // Vertex vertices[] = {
+    //     {XMFLOAT3(-1.0f, -1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(0.0f, 1.0f)},
+    // {XMFLOAT3(-1.0f, 1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(0.0f, 0.0f)},
+    // {XMFLOAT3(1.0f, 1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(1.0f, 0.0f)},
+    // {XMFLOAT3(1.0f, -1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(1.0f, 1.0f)}
+    // };
+
+
+    m_vertexList.emplace_back(Vec3(-1.f,-1.f, 0.f), Rgba8(255,255,255,255), Vec2(0,1));
+    m_vertexList.emplace_back(Vec3(-1.f,1.f, 0.f), Rgba8(255,255,255,255), Vec2(0,0));
+    m_vertexList.emplace_back(Vec3(1.f,1.f, 0.f), Rgba8(255,255,255,255), Vec2(1,0));
+    m_vertexList.emplace_back(Vec3(1.f,-1.f, 0.f), Rgba8(255,255,255,255), Vec2(1,1));
+
 
     D3D11_BUFFER_DESC bufferDesc = {};
     bufferDesc.Usage             = D3D11_USAGE_DEFAULT;
-    bufferDesc.ByteWidth         = sizeof(vertices);
+    bufferDesc.ByteWidth         = m_vertexList.size() * sizeof(Vertex_PCU);
     bufferDesc.BindFlags         = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem                = vertices;
+    // initData.pSysMem                = vertices;
+    initData.pSysMem                = m_vertexList.data();
 
     HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &vertexBuffer);
     if (FAILED(hr)) return hr;
@@ -732,7 +745,7 @@ void RendererEx::RenderTestTexture() const
     m_deviceContext->PSSetShaderResources(0, 1, &m_testShaderResourceView);
     m_deviceContext->PSSetSamplers(0, 1, &sampler);
 
-    UINT stride = sizeof(Vertex);
+    UINT stride = sizeof(Vertex_PCU);
     UINT offset = 0;
     m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
     m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);

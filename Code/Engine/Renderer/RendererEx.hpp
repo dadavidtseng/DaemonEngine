@@ -95,4 +95,6 @@ private:
 
 
     IWICImagingFactory* m_wicFactory = nullptr;
+
+    VertexList_PCU m_vertexList;
 };
