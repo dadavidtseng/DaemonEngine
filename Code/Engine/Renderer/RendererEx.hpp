@@ -39,12 +39,13 @@ public:
     RendererEx();
     ~RendererEx();
     void    Startup();
+    void RenderSceneTextureToMainWindow();
+    void    EndFrame();
     HRESULT Initialize();
-    // HRESULT LoadImageFromFile(wchar_t const* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
-    void    SetWindowDriftParams(HWND const hwnd, DriftParams const& params);
-    void    StartDragging(HWND const hwnd, POINT const& mousePos);
+    void    SetWindowDriftParams(HWND hwnd, DriftParams const& params);
+    void    StartDragging(HWND hwnd, POINT const& mousePos);
     void    StopDragging(HWND hwnd);
-    void    UpdateDragging(HWND const hwnd, POINT const& mousePos) const;
+    void    UpdateDragging(HWND hwnd, POINT const& mousePos) const;
     void    UpdateWindowDrift(WindowEx& window) const;
     // HRESULT AddWindow(HWND const& hwnd);
     void    UpdateWindowPosition(WindowEx& window) const;
@@ -52,8 +53,6 @@ public:
     HRESULT CreateDeviceAndSwapChain();
     HRESULT CreateSceneRenderTexture();
     HRESULT CreateStagingTexture();
-    // HRESULT CreateTestTexture(const wchar_t* imageFile = nullptr);
-    // HRESULT CreateTestTexture2(const wchar_t* imageFile = nullptr);
     HRESULT CreateShaders();
     HRESULT CreateVertexBuffer();
     HRESULT CreateSampler();
@@ -96,7 +95,7 @@ private:
     HWND  mainWindow = nullptr;
 
     BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
-    std::vector<BYTE> pixelData;
+    std::vector<BYTE> m_pixelData;
 
 
     // IWICImagingFactory* m_wicFactory = nullptr;
