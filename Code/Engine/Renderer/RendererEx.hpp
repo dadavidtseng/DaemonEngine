@@ -40,7 +40,7 @@ public:
     ~RendererEx();
     void    Startup();
     HRESULT Initialize();
-    HRESULT LoadImageFromFile(wchar_t const* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
+    // HRESULT LoadImageFromFile(wchar_t const* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const;
     void    SetWindowDriftParams(HWND const hwnd, DriftParams const& params);
     void    StartDragging(HWND const hwnd, POINT const& mousePos);
     void    StopDragging(HWND hwnd);
@@ -52,7 +52,8 @@ public:
     HRESULT CreateDeviceAndSwapChain();
     HRESULT CreateSceneRenderTexture();
     HRESULT CreateStagingTexture();
-    HRESULT CreateTestTexture(const wchar_t* imageFile = nullptr);
+    // HRESULT CreateTestTexture(const wchar_t* imageFile = nullptr);
+    // HRESULT CreateTestTexture2(const wchar_t* imageFile = nullptr);
     HRESULT CreateShaders();
     HRESULT CreateVertexBuffer();
     HRESULT CreateSampler();
@@ -65,6 +66,10 @@ private:
     void                    UpdateWindows(std::vector<WindowEx>& windows);
     void                    RenderViewportToWindow(WindowEx const& window) const;
     void                    Cleanup();
+    Texture*                CreateOrGetTextureFromFile(char const* imageFilePath);
+    Texture*                GetTextureForFileName(char const* imageFilePath) const;
+    Texture*                CreateTextureFromFile(char const* imageFilePath);
+    Texture*                CreateTextureFromImage(Image const& image);
     ID3D11Device*           m_device                         = nullptr;
     ID3D11DeviceContext*    m_deviceContext                  = nullptr;
     IDXGISwapChain*         m_mainSwapChain                  = nullptr;
@@ -76,8 +81,8 @@ private:
 
     ID3D11Texture2D* m_stagingTexture = nullptr;
 
-    ID3D11Texture2D*          m_testTexture            = nullptr;
-    ID3D11ShaderResourceView* m_testShaderResourceView = nullptr;
+    // ID3D11Texture2D*          m_testTexture            = nullptr;
+    // ID3D11ShaderResourceView* m_testShaderResourceView = nullptr;
 
     ID3D11VertexShader* vertexShader = nullptr;
     ID3D11PixelShader*  pixelShader  = nullptr;
@@ -94,7 +99,9 @@ private:
     std::vector<BYTE> pixelData;
 
 
-    IWICImagingFactory* m_wicFactory = nullptr;
+    // IWICImagingFactory* m_wicFactory = nullptr;
 
-    VertexList_PCU m_vertexList;
+    VertexList_PCU        m_vertexList;
+    std::vector<Texture*> m_loadedTextures;
+    Texture*              m_defaultTexture = nullptr;
 };

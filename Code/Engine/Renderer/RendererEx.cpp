@@ -8,28 +8,17 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
-// #include <DirectXMath.h>
-#include <wincodec.h>
+// #include <wincodec.h>
 #include <vector>
+
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/Image.hpp"
+#include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "windowscodecs.lib")
-// using namespace DirectX;
-
-
-// struct Vertex
-// {
-//     XMFLOAT3 m_position;
-//     uint32_t    m_color;
-//     XMFLOAT2 m_texCoord;
-// };
-
-// uint32_t MakeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
-// {
-//     return (a << 24) | (b << 16) | (g << 8) | r;  // ABGR格式
-// }
+// #pragma comment(lib, "windowscodecs.lib")
 
 RendererEx::RendererEx()
 {
@@ -67,22 +56,22 @@ HRESULT RendererEx::Initialize()
         GetModuleHandle(nullptr),
         nullptr
     );
-    // 初始化 WIC 工廠
-    HRESULT hr = CoCreateInstance(
-        CLSID_WICImagingFactory,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        IID_IWICImagingFactory,
-        reinterpret_cast<void**>(&m_wicFactory)
-    );
+    // // 初始化 WIC 工廠
+    // HRESULT hr = CoCreateInstance(
+    //     CLSID_WICImagingFactory,
+    //     nullptr,
+    //     CLSCTX_INPROC_SERVER,
+    //     IID_IWICImagingFactory,
+    //     reinterpret_cast<void**>(&m_wicFactory)
+    // );
 
-    if (FAILED(hr))
-    {
-        // WIC 初始化失敗，但繼續執行（使用程序生成紋理）
-        m_wicFactory = nullptr;
-    }
+    // if (FAILED(hr))
+    // {
+    //     // WIC 初始化失敗，但繼續執行（使用程序生成紋理）
+    //     m_wicFactory = nullptr;
+    // }
 
-    hr = CreateDeviceAndSwapChain();
+    HRESULT hr = CreateDeviceAndSwapChain();
     if (FAILED(hr)) return hr;
 
     hr = CreateSceneRenderTexture();
@@ -91,9 +80,16 @@ HRESULT RendererEx::Initialize()
     hr = CreateStagingTexture();
     if (FAILED(hr)) return hr;
 
-    hr = CreateTestTexture(L"Data/Images/Windowkill.png");
-    if (FAILED(hr)) return hr;
+    // hr = CreateTestTexture(L"Data/Images/Windowkill.png");
+    // if (FAILED(hr)) return hr;
 
+    // Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+    m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/Butler.png");
+    m_defaultTexture->m_name = "Default";
+
+    // hr = CreateTestTexture2(L"Data/Images/Butler.png");
+    // if (FAILED(hr)) return hr;
+    //
     hr = CreateShaders();
     if (FAILED(hr)) return hr;
 
@@ -106,80 +102,80 @@ HRESULT RendererEx::Initialize()
     return S_OK;
 }
 
-HRESULT RendererEx::LoadImageFromFile(const wchar_t* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const
-{
-    if (!m_wicFactory) return E_FAIL;
-
-    IWICBitmapDecoder*     decoder   = nullptr;
-    IWICBitmapFrameDecode* frame     = nullptr;
-    IWICFormatConverter*   converter = nullptr;
-
-    HRESULT hr = m_wicFactory->CreateDecoderFromFilename(
-        filename, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
-    if (FAILED(hr)) return hr;
-
-    hr = decoder->GetFrame(0, &frame);
-    if (FAILED(hr))
-    {
-        decoder->Release();
-        return hr;
-    }
-
-    hr = m_wicFactory->CreateFormatConverter(&converter);
-    if (FAILED(hr))
-    {
-        frame->Release();
-        decoder->Release();
-        return hr;
-    }
-
-    hr = converter->Initialize(frame, GUID_WICPixelFormat32bppBGRA,
-                               WICBitmapDitherTypeNone, nullptr, 0.0,
-                               WICBitmapPaletteTypeCustom);
-    if (FAILED(hr))
-    {
-        converter->Release();
-        frame->Release();
-        decoder->Release();
-        return hr;
-    }
-
-    UINT width, height;
-    converter->GetSize(&width, &height);
-
-    // 創建像素數據緩衝區
-    std::vector<BYTE> pixels(width * height * 4);
-    hr = converter->CopyPixels(nullptr, width * 4, (UINT)pixels.size(), pixels.data());
-
-    if (SUCCEEDED(hr))
-    {
-        // 創建 D3D11 紋理
-        D3D11_TEXTURE2D_DESC texDesc = {};
-        texDesc.Width                = width;
-        texDesc.Height               = height;
-        texDesc.MipLevels            = 1;
-        texDesc.ArraySize            = 1;
-        texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-        texDesc.SampleDesc.Count     = 1;
-        texDesc.Usage                = D3D11_USAGE_DEFAULT;
-        texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
-
-        D3D11_SUBRESOURCE_DATA initData = {};
-        initData.pSysMem                = pixels.data();
-        initData.SysMemPitch            = width * 4;
-
-        hr = m_device->CreateTexture2D(&texDesc, &initData, texture);
-        if (SUCCEEDED(hr))
-        {
-            hr = m_device->CreateShaderResourceView(*texture, nullptr, srv);
-        }
-    }
-
-    converter->Release();
-    frame->Release();
-    decoder->Release();
-    return hr;
-}
+// HRESULT RendererEx::LoadImageFromFile(const wchar_t* filename, ID3D11Texture2D** texture, ID3D11ShaderResourceView** srv) const
+// {
+//     if (!m_wicFactory) return E_FAIL;
+//
+//     IWICBitmapDecoder*     decoder   = nullptr;
+//     IWICBitmapFrameDecode* frame     = nullptr;
+//     IWICFormatConverter*   converter = nullptr;
+//
+//     HRESULT hr = m_wicFactory->CreateDecoderFromFilename(
+//         filename, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
+//     if (FAILED(hr)) return hr;
+//
+//     hr = decoder->GetFrame(0, &frame);
+//     if (FAILED(hr))
+//     {
+//         decoder->Release();
+//         return hr;
+//     }
+//
+//     hr = m_wicFactory->CreateFormatConverter(&converter);
+//     if (FAILED(hr))
+//     {
+//         frame->Release();
+//         decoder->Release();
+//         return hr;
+//     }
+//
+//     hr = converter->Initialize(frame, GUID_WICPixelFormat32bppBGRA,
+//                                WICBitmapDitherTypeNone, nullptr, 0.0,
+//                                WICBitmapPaletteTypeCustom);
+//     if (FAILED(hr))
+//     {
+//         converter->Release();
+//         frame->Release();
+//         decoder->Release();
+//         return hr;
+//     }
+//
+//     UINT width, height;
+//     converter->GetSize(&width, &height);
+//
+//     // 創建像素數據緩衝區
+//     std::vector<BYTE> pixels(width * height * 4);
+//     hr = converter->CopyPixels(nullptr, width * 4, (UINT)pixels.size(), pixels.data());
+//
+//     if (SUCCEEDED(hr))
+//     {
+//         // 創建 D3D11 紋理
+//         D3D11_TEXTURE2D_DESC texDesc = {};
+//         texDesc.Width                = width;
+//         texDesc.Height               = height;
+//         texDesc.MipLevels            = 1;
+//         texDesc.ArraySize            = 1;
+//         texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+//         texDesc.SampleDesc.Count     = 1;
+//         texDesc.Usage                = D3D11_USAGE_DEFAULT;
+//         texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+//
+//         D3D11_SUBRESOURCE_DATA initData = {};
+//         initData.pSysMem                = pixels.data();
+//         initData.SysMemPitch            = width * 4;
+//
+//         hr = m_device->CreateTexture2D(&texDesc, &initData, texture);
+//         if (SUCCEEDED(hr))
+//         {
+//             hr = m_device->CreateShaderResourceView(*texture, nullptr, srv);
+//         }
+//     }
+//
+//     converter->Release();
+//     frame->Release();
+//     decoder->Release();
+//     return hr;
+// }
 
 void RendererEx::SetWindowDriftParams(HWND const hwnd, const DriftParams& params)
 {
@@ -472,7 +468,7 @@ HRESULT RendererEx::CreateSceneRenderTexture()
     texDesc.Height               = sceneHeight;
     texDesc.MipLevels            = 1;
     texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.Format               = DXGI_FORMAT_B8G8R8A8_UNORM;
     texDesc.SampleDesc.Count     = 1;
     texDesc.Usage                = D3D11_USAGE_DEFAULT;
     texDesc.BindFlags            = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -496,7 +492,7 @@ HRESULT RendererEx::CreateStagingTexture()
     texDesc.Height               = sceneHeight;
     texDesc.MipLevels            = 1;
     texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.Format               = DXGI_FORMAT_B8G8R8A8_UNORM;
     texDesc.SampleDesc.Count     = 1;
     texDesc.Usage                = D3D11_USAGE_STAGING;
     texDesc.CPUAccessFlags       = D3D11_CPU_ACCESS_READ;
@@ -504,82 +500,104 @@ HRESULT RendererEx::CreateStagingTexture()
     return m_device->CreateTexture2D(&texDesc, nullptr, &m_stagingTexture);
 }
 
-HRESULT RendererEx::CreateTestTexture(const wchar_t* imageFile)
-{
-    if (imageFile)
-    {
-        // 嘗試從檔案載入
-        HRESULT hr = LoadImageFromFile(imageFile, &m_testTexture, &m_testShaderResourceView);
-        if (SUCCEEDED(hr))
-        {
-            return hr;
-        }
-        // 如果載入失敗，回到程序生成紋理
-    }
+// HRESULT RendererEx::CreateTestTexture(const wchar_t* imageFile)
+// {
+//     if (imageFile)
+//     {
+//         // 嘗試從檔案載入
+//         HRESULT hr = LoadImageFromFile(imageFile, &m_testTexture, &m_testShaderResourceView);
+//         if (SUCCEEDED(hr))
+//         {
+//             return hr;
+//         }
+//         // 如果載入失敗，回到程序生成紋理
+//     }
+//
+//     const UINT texWidth  = 512;
+//     const UINT texHeight = 512;
+//     //
+//     std::vector<UINT> textureData(texWidth * texHeight);
+//
+//     for (UINT y = 0; y < texHeight; y++)
+//     {
+//         for (UINT x = 0; x < texWidth; x++)
+//         {
+//             UINT index = y * texWidth + x;
+//
+//             float fx = (float)x / texWidth;
+//             float fy = (float)y / texHeight;
+//
+//             UINT r = (UINT)(fx * 255);
+//             UINT g = (UINT)(fy * 255);
+//             UINT b = (UINT)((1.0f - fx) * 255);
+//
+//             if (((x / 32) + (y / 32)) % 2 == 0)
+//             {
+//                 r = min(255, r + 50);
+//                 g = min(255, g + 50);
+//                 b = min(255, b + 50);
+//             }
+//
+//             for (int i = 0; i < 5; i++)
+//             {
+//                 float centerX  = (i % 3) * texWidth / 3.0f + texWidth / 6.0f;
+//                 float centerY  = (i / 3) * texHeight / 3.0f + texHeight / 6.0f;
+//                 float distance = sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
+//
+//                 if (distance < 30.0f)
+//                 {
+//                     r = (i * 50) % 256;
+//                     g = (i * 80) % 256;
+//                     b = (i * 120) % 256;
+//                 }
+//             }
+//
+//             textureData[index] = 0xFF000000 | (b << 16) | (g << 8) | r;
+//         }
+//     }
+//
+//     D3D11_TEXTURE2D_DESC texDesc = {};
+//     texDesc.Width                = texWidth;
+//     texDesc.Height               = texHeight;
+//     texDesc.MipLevels            = 1;
+//     texDesc.ArraySize            = 1;
+//     texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+//     texDesc.SampleDesc.Count     = 1;
+//     texDesc.Usage                = D3D11_USAGE_DEFAULT;
+//     texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+//
+//     D3D11_SUBRESOURCE_DATA initData = {};
+//     initData.pSysMem                = textureData.data();
+//     initData.SysMemPitch            = texWidth * 4;
+//
+//     HRESULT hr = m_device->CreateTexture2D(&texDesc, &initData, &m_testTexture);
+//     if (FAILED(hr)) return hr;
+//
+//     hr = m_device->CreateShaderResourceView(m_testTexture, nullptr, &m_testShaderResourceView);
+//     return hr;
+// }
 
-    const UINT texWidth  = 512;
-    const UINT texHeight = 512;
-    //
-    std::vector<UINT> textureData(texWidth * texHeight);
-
-    for (UINT y = 0; y < texHeight; y++)
-    {
-        for (UINT x = 0; x < texWidth; x++)
-        {
-            UINT index = y * texWidth + x;
-
-            float fx = (float)x / texWidth;
-            float fy = (float)y / texHeight;
-
-            UINT r = (UINT)(fx * 255);
-            UINT g = (UINT)(fy * 255);
-            UINT b = (UINT)((1.0f - fx) * 255);
-
-            if (((x / 32) + (y / 32)) % 2 == 0)
-            {
-                r = min(255, r + 50);
-                g = min(255, g + 50);
-                b = min(255, b + 50);
-            }
-
-            for (int i = 0; i < 5; i++)
-            {
-                float centerX  = (i % 3) * texWidth / 3.0f + texWidth / 6.0f;
-                float centerY  = (i / 3) * texHeight / 3.0f + texHeight / 6.0f;
-                float distance = sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
-
-                if (distance < 30.0f)
-                {
-                    r = (i * 50) % 256;
-                    g = (i * 80) % 256;
-                    b = (i * 120) % 256;
-                }
-            }
-
-            textureData[index] = 0xFF000000 | (b << 16) | (g << 8) | r;
-        }
-    }
-
-    D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width                = texWidth;
-    texDesc.Height               = texHeight;
-    texDesc.MipLevels            = 1;
-    texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texDesc.SampleDesc.Count     = 1;
-    texDesc.Usage                = D3D11_USAGE_DEFAULT;
-    texDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
-
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem                = textureData.data();
-    initData.SysMemPitch            = texWidth * 4;
-
-    HRESULT hr = m_device->CreateTexture2D(&texDesc, &initData, &m_testTexture);
-    if (FAILED(hr)) return hr;
-
-    hr = m_device->CreateShaderResourceView(m_testTexture, nullptr, &m_testShaderResourceView);
-    return hr;
-}
+// HRESULT RendererEx::CreateTestTexture2(const wchar_t* imageFile)
+// {
+//     if (imageFile)
+//     {
+//         // 嘗試從檔案載入
+//         HRESULT hr = LoadImageFromFile(imageFile, &m_defaultTexture->m_texture, &m_testShaderResourceView);
+//         if (SUCCEEDED(hr))
+//         {
+//             return hr;
+//         }
+//     }
+//
+//     D3D11_TEXTURE2D_DESC   texDesc;
+//     D3D11_SUBRESOURCE_DATA initData;
+//
+//     HRESULT hr = m_device->CreateTexture2D(&texDesc, &initData, &m_defaultTexture->m_texture);
+//     if (FAILED(hr)) return hr;
+//
+//     hr = m_device->CreateShaderResourceView(m_defaultTexture->m_texture, nullptr, &m_testShaderResourceView);
+//     return hr;
+// }
 
 HRESULT RendererEx::CreateShaders()
 {
@@ -622,7 +640,7 @@ HRESULT RendererEx::CreateShaders()
         float4 main(PS_INPUT input) : SV_TARGET
         {
             float4 texColor = tex.Sample(sam, input.tex);
-             return texColor * input.color;
+    return texColor * input.color;     // 紋理顏色 × 頂點顏色
         }
         )";
 
@@ -677,18 +695,10 @@ HRESULT RendererEx::CreateShaders()
 
 HRESULT RendererEx::CreateVertexBuffer()
 {
-    // Vertex vertices[] = {
-    //     {XMFLOAT3(-1.0f, -1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(0.0f, 1.0f)},
-    // {XMFLOAT3(-1.0f, 1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(0.0f, 0.0f)},
-    // {XMFLOAT3(1.0f, 1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(1.0f, 0.0f)},
-    // {XMFLOAT3(1.0f, -1.0f, 0.0f), MakeColor(255, 255, 255, 255), XMFLOAT2(1.0f, 1.0f)}
-    // };
-
-
-    m_vertexList.emplace_back(Vec3(-1.f,-1.f, 0.f), Rgba8(255,255,255,255), Vec2(0,1));
-    m_vertexList.emplace_back(Vec3(-1.f,1.f, 0.f), Rgba8(255,255,255,255), Vec2(0,0));
-    m_vertexList.emplace_back(Vec3(1.f,1.f, 0.f), Rgba8(255,255,255,255), Vec2(1,0));
-    m_vertexList.emplace_back(Vec3(1.f,-1.f, 0.f), Rgba8(255,255,255,255), Vec2(1,1));
+    m_vertexList.emplace_back(Vec3(-1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(1, 0));
+    m_vertexList.emplace_back(Vec3(-1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(1, 1));
+    m_vertexList.emplace_back(Vec3(1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(0, 1));
+    m_vertexList.emplace_back(Vec3(1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(0, 0));
 
 
     D3D11_BUFFER_DESC bufferDesc = {};
@@ -697,7 +707,6 @@ HRESULT RendererEx::CreateVertexBuffer()
     bufferDesc.BindFlags         = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA initData = {};
-    // initData.pSysMem                = vertices;
     initData.pSysMem                = m_vertexList.data();
 
     HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &vertexBuffer);
@@ -742,7 +751,7 @@ void RendererEx::RenderTestTexture() const
     m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
     m_deviceContext->IASetInputLayout(inputLayout);
 
-    m_deviceContext->PSSetShaderResources(0, 1, &m_testShaderResourceView);
+    m_deviceContext->PSSetShaderResources(0, 1, &m_defaultTexture->m_shaderResourceView);
     m_deviceContext->PSSetSamplers(0, 1, &sampler);
 
     UINT stride = sizeof(Vertex_PCU);
@@ -880,16 +889,16 @@ void RendererEx::Cleanup()
         vertexShader->Release();
         vertexShader = nullptr;
     }
-    if (m_testShaderResourceView)
-    {
-        m_testShaderResourceView->Release();
-        m_testShaderResourceView = nullptr;
-    }
-    if (m_testTexture)
-    {
-        m_testTexture->Release();
-        m_testTexture = nullptr;
-    }
+    // if (m_testShaderResourceView)
+    // {
+    //     m_testShaderResourceView->Release();
+    //     m_testShaderResourceView = nullptr;
+    // }
+    // if (m_testTexture)
+    // {
+    //     m_testTexture->Release();
+    //     m_testTexture = nullptr;
+    // }
     if (m_stagingTexture)
     {
         m_stagingTexture->Release();
@@ -931,12 +940,12 @@ void RendererEx::Cleanup()
         m_mainSwapChain = nullptr;
     }
 
-    // **這個是你缺少的：釋放 WIC 工廠**
-    if (m_wicFactory)
-    {
-        m_wicFactory->Release();
-        m_wicFactory = nullptr;
-    }
+    // // **這個是你缺少的：釋放 WIC 工廠**
+    // if (m_wicFactory)
+    // {
+    //     m_wicFactory->Release();
+    //     m_wicFactory = nullptr;
+    // }
 
     // 最後釋放 device
     if (m_device)
@@ -944,4 +953,100 @@ void RendererEx::Cleanup()
         m_device->Release();
         m_device = nullptr;
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+Texture* RendererEx::CreateOrGetTextureFromFile(char const* imageFilePath)
+{
+    // See if we already have this texture previously loaded
+    if (Texture* existingTexture = GetTextureForFileName(imageFilePath))
+    {
+        return existingTexture;
+    }
+
+    // Never seen this texture before!  Let's load it.
+    Texture* newTexture = CreateTextureFromFile(imageFilePath);
+
+    return newTexture;
+}
+
+//----------------------------------------------------------------------------------------------------
+Texture* RendererEx::GetTextureForFileName(char const* imageFilePath) const
+{
+    for (Texture* texture : m_loadedTextures)
+    {
+        if (texture && !strcmp(texture->m_name.c_str(), imageFilePath))
+        {
+            return texture;
+        }
+    }
+
+    return nullptr;
+}
+
+//----------------------------------------------------------------------------------------------------
+Texture* RendererEx::CreateTextureFromFile(char const* imageFilePath)
+{
+    IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
+    int     bytesPerTexel = 0;
+    // This will be filled in for us to indicate how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
+    int constexpr numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
+
+    // Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
+    stbi_set_flip_vertically_on_load(1); // We prefer uvTexCoords has origin (0,0) at BOTTOM LEFT
+    unsigned char* texelData = stbi_load(imageFilePath,
+                                         &dimensions.x,
+                                         &dimensions.y,
+                                         &bytesPerTexel,
+                                         numComponentsRequested);
+
+    GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
+
+    Image const fileImage(imageFilePath);
+    Texture*    newTexture = CreateTextureFromImage(fileImage);
+
+    // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
+    stbi_image_free(texelData);
+
+    //m_loadedTextures.push_back(newTexture);
+    return newTexture;
+}
+
+//----------------------------------------------------------------------------------------------------
+Texture* RendererEx::CreateTextureFromImage(Image const& image)
+{
+    Texture* newTexture      = new Texture();
+    newTexture->m_name       = image.GetImageFilePath();
+    newTexture->m_dimensions = image.GetDimensions();
+
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width                = image.GetDimensions().x;
+    textureDesc.Height               = image.GetDimensions().y;
+    textureDesc.MipLevels            = 1;
+    textureDesc.ArraySize            = 1;
+    textureDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.SampleDesc.Count     = 1;
+    textureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
+    textureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA textureData;
+    textureData.pSysMem     = image.GetRawData();
+    textureData.SysMemPitch = 4 * image.GetDimensions().x;
+
+    HRESULT hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+    }
+
+    hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
+
+    if (!SUCCEEDED(hr))
+    {
+        ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
+    }
+
+    m_loadedTextures.push_back(newTexture);
+    return newTexture;
 }
