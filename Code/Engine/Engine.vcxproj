@@ -218,6 +218,7 @@
     <ClCompile Include="Math\Vec3.cpp" />
     <ClCompile Include="Math\Vec4.cpp" />
     <ClCompile Include="Platform\Window.cpp" />
+    <ClCompile Include="Platform\WindowCommon.cpp" />
     <ClCompile Include="Platform\WindowEx.cpp" />
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
@@ -294,6 +295,7 @@
     <ClInclude Include="Math\Vec3.hpp" />
     <ClInclude Include="Math\Vec4.hpp" />
     <ClInclude Include="Platform\Window.hpp" />
+    <ClInclude Include="Platform\WindowCommon.hpp" />
     <ClInclude Include="Platform\WindowEx.hpp" />
     <ClInclude Include="Renderer\BitmapFont.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />

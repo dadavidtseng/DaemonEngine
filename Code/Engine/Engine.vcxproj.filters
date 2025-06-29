@@ -229,6 +229,9 @@
     <ClCompile Include="Renderer\Light.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Platform\WindowCommon.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -455,6 +458,9 @@
     </ClInclude>
     <ClInclude Include="Renderer\Light.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\WindowCommon.hpp">
+      <Filter>Platform</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
