@@ -39,17 +39,11 @@ public:
     RendererEx();
     ~RendererEx();
     void    Startup();
-    void RenderSceneTextureToMainWindow();
+    void    RenderSceneTextureToMainWindow();
+    HRESULT CheckDeviceStatus();
     void    EndFrame();
     HRESULT Initialize();
-    void    SetWindowDriftParams(HWND hwnd, DriftParams const& params);
-    void    StartDragging(HWND hwnd, POINT const& mousePos);
-    void    StopDragging(HWND hwnd);
-    void    UpdateDragging(HWND hwnd, POINT const& mousePos) const;
-    void    UpdateWindowDrift(WindowEx& window) const;
-    // HRESULT AddWindow(HWND const& hwnd);
-    void    UpdateWindowPosition(WindowEx& window) const;
-    void    Render(std::vector<WindowEx> windows);
+    void    Render();
     HRESULT CreateDeviceAndSwapChain();
     HRESULT CreateSceneRenderTexture();
     HRESULT CreateStagingTexture();
@@ -59,26 +53,34 @@ public:
 
     float GetSceneWidth();
     float GetSceneHeight();
-
+    void  RenderTexture(Texture* texture);
+    HRESULT                 CreateWindowSwapChain(WindowEx& window);
+    void     UpdateWindows(std::vector<WindowEx>& windows);
 private:
-    void                    RenderTestTexture() const;
-    void                    UpdateWindows(std::vector<WindowEx>& windows);
-    void                    RenderViewportToWindow(WindowEx const& window) const;
-    void                    Cleanup();
-    Texture*                CreateOrGetTextureFromFile(char const* imageFilePath);
-    Texture*                GetTextureForFileName(char const* imageFilePath) const;
-    Texture*                CreateTextureFromFile(char const* imageFilePath);
-    Texture*                CreateTextureFromImage(Image const& image);
+
+    void     RenderViewportToWindow(WindowEx const& window) const;
+    void     RenderViewportToWindowDX11(const WindowEx& window) const;
+    void     Cleanup();
+    Texture* CreateOrGetTextureFromFile(char const* imageFilePath);
+    Texture* GetTextureForFileName(char const* imageFilePath) const;
+    Texture* CreateTextureFromFile(char const* imageFilePath);
+    Texture* CreateTextureFromImage(Image const& image);
+
+    HRESULT                 CreateFullscreenShaders();
+    HRESULT                 AddWindowDX11(HWND hwnd);
+    void                    CleanupWindowResources(WindowEx& window);
+    HRESULT                 ResizeWindowSwapChain(WindowEx& window);
     ID3D11Device*           m_device                         = nullptr;
     ID3D11DeviceContext*    m_deviceContext                  = nullptr;
     IDXGISwapChain*         m_mainSwapChain                  = nullptr;
     ID3D11RenderTargetView* m_mainBackBufferRenderTargetView = nullptr;
 
-    ID3D11Texture2D*          m_sceneTexture            = nullptr;
-    ID3D11RenderTargetView*   m_sceneRenderTargetView   = nullptr;
-    ID3D11ShaderResourceView* m_sceneShaderResourceView = nullptr;
-
-    ID3D11Texture2D* m_stagingTexture = nullptr;
+    // ID3D11Texture2D*          m_sceneTexture            = nullptr;
+    Texture*                m_sceneTexture          = nullptr;
+    Texture*                m_stagingTexture        = nullptr;
+    ID3D11RenderTargetView* m_sceneRenderTargetView = nullptr;
+    // ID3D11ShaderResourceView* m_sceneShaderResourceView = nullptr;
+    // ID3D11Texture2D* m_stagingTexture = nullptr;
 
     // ID3D11Texture2D*          m_testTexture            = nullptr;
     // ID3D11ShaderResourceView* m_testShaderResourceView = nullptr;
@@ -91,8 +93,8 @@ private:
     ID3D11SamplerState* sampler      = nullptr;
 
 
-    float sceneWidth = 1920, sceneHeight = 1080;
-    HWND  mainWindow = nullptr;
+    int  sceneWidth = 1920, sceneHeight = 1080;
+    HWND mainWindow = nullptr;
 
     BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
     std::vector<BYTE> m_pixelData;
@@ -103,4 +105,9 @@ private:
     VertexList_PCU        m_vertexList;
     std::vector<Texture*> m_loadedTextures;
     Texture*              m_defaultTexture = nullptr;
+
+    ID3D11VertexShader* m_fullscreenVS = nullptr;
+    ID3D11PixelShader* m_fullscreenPS = nullptr;
+    ID3D11Buffer* m_fullscreenVertexBuffer = nullptr;
+    ID3D11InputLayout* m_fullscreenInputLayout = nullptr;
 };

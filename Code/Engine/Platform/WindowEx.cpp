@@ -165,6 +165,7 @@ void WindowEx::UpdateWindowPosition()
     RECT windowRect;
     GetWindowRect((HWND)m_windowHandle, &windowRect);
 
+    // 检查窗口位置或大小是否改变
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
         lastRect.left   = windowRect.left;
@@ -175,18 +176,27 @@ void WindowEx::UpdateWindowPosition()
 
         RECT clientRect;
         GetClientRect((HWND)m_windowHandle, &clientRect);
-        width  = clientRect.right - clientRect.left;
-        height = clientRect.bottom - clientRect.top;
+        int newWidth  = clientRect.right - clientRect.left;
+        int newHeight = clientRect.bottom - clientRect.top;
 
+        // 检查客户区大小是否改变（需要重新创建SwapChain）
+        if (newWidth != width || newHeight != height)
+        {
+            width  = newWidth;
+            height = newHeight;
+            needsResize = true; // 添加这个标志
+        }
+
+        // 重新计算viewport参数
         viewportX      = (float)windowRect.left / (float)virtualScreenWidth;
         viewportY      = (float)windowRect.top / (float)virtualScreenHeight;
         viewportWidth  = (float)width / (float)virtualScreenWidth;
         viewportHeight = (float)height / (float)virtualScreenHeight;
 
-        float sceneWidth  = 1920;
-        float sceneHeight = 1080;
+float sceneWidth = 1920.f;
+        float sceneHeight = 1080.f;
 
-        // 確保座標對齊到像素邊界
+        // 确保座标对齐到像素边界
         float pixelAlignX = 1.0f / (float)sceneWidth;
         float pixelAlignY = 1.0f / (float)sceneHeight;
 
@@ -195,10 +205,11 @@ void WindowEx::UpdateWindowPosition()
         viewportWidth  = ceil(viewportWidth / pixelAlignX) * pixelAlignX;
         viewportHeight = ceil(viewportHeight / pixelAlignY) * pixelAlignY;
 
-        viewportX      = max(0.0f, min(1.0f, viewportX));
-        viewportY      = max(0.0f, min(1.0f, viewportY));
-        viewportWidth  = max(0.0f, min(1.0f - viewportX, viewportWidth));
-        viewportHeight = max(0.0f, min(1.0f - viewportY, viewportHeight));
+        // 边界检查
+        viewportX      = max(0.0f, min(1.0f,viewportX));
+        viewportY      = max(0.0f, min(1.0f,viewportY));
+        viewportWidth  = max(0.0f, min(1.0f -viewportX, viewportWidth));
+        viewportHeight = max(0.0f, min(1.0f -viewportY, viewportHeight));
     }
 }
 
