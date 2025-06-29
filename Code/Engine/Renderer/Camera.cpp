@@ -253,20 +253,33 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
             float const cropRight = renderWidth * newViewPort.m_maxs.x;
             float const cropBottom = renderHeight * newViewPort.m_maxs.y;
 
+            // 計算裁剪區域的尺寸
+            float const cropWidth = cropRight - cropLeft;
+            float const cropHeight = cropBottom - cropTop;
+
             // 映射到實際螢幕座標
             float const screenWidth = static_cast<float>(clientDimensions.x);
             float const screenHeight = static_cast<float>(clientDimensions.y);
 
-            // 計算縮放和偏移
+            // 計算縮放比例（保持長寬比或填滿螢幕，依需求而定）
             float const scaleX = screenWidth / renderWidth;
             float const scaleY = screenHeight / renderHeight;
-            float const offsetX = static_cast<float>(renderOffset.x);
-            float const offsetY = static_cast<float>(renderOffset.y);
 
-            viewportLeft = cropLeft * scaleX + offsetX;
-            viewportTop = cropTop * scaleY + offsetY;
-            viewportRight = cropRight * scaleX + offsetX;
-            viewportBottom = cropBottom * scaleY + offsetY;
+            // 如果要保持長寬比，使用統一縮放
+            // float const scale = std::min(scaleX, scaleY);
+            // scaleX = scaleY = scale;
+
+            // 計算置中偏移
+            float const scaledRenderWidth = renderWidth * scaleX;
+            float const scaledRenderHeight = renderHeight * scaleY;
+            float const centerOffsetX = (screenWidth - scaledRenderWidth) * 0.5f;
+            float const centerOffsetY = (screenHeight - scaledRenderHeight) * 0.5f;
+
+            // 應用縮放和置中偏移
+            viewportLeft = cropLeft * scaleX + centerOffsetX;
+            viewportTop = cropTop * scaleY + centerOffsetY;
+            viewportRight = cropRight * scaleX + centerOffsetX;
+            viewportBottom = cropBottom * scaleY + centerOffsetY;
         }
         break;
 
