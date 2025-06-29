@@ -160,7 +160,7 @@ HRESULT RendererEx::CreateDeviceAndSwapChain()
     swapChainDesc.BufferDesc.Height    = 1080;
     swapChainDesc.BufferDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.OutputWindow         = (HWND)WindowEx::s_mainWindowEx->m_windowHandle;
+    swapChainDesc.OutputWindow         = (HWND)Window::s_mainWindow->GetWindowHandle();
     swapChainDesc.SampleDesc.Count     = 1;
     swapChainDesc.Windowed             = TRUE;
 
@@ -450,7 +450,7 @@ void RendererEx::RenderSceneTextureToMainWindow()
     m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
 }
 
-void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
+void RendererEx::UpdateWindows(std::vector<Window>& windows)
 {
     for (int i = 0; i < windows.size(); ++i)
     {
@@ -476,14 +476,14 @@ void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
         if (windows[i].needsUpdate)
         {
             // 使用 DirectX 11 版本渲染
-            RenderViewportToWindowDX11(windows[i]);
-            // RenderViewportToWindow(windows[i]);
+            // RenderViewportToWindowDX11(windows[i]);
+            RenderViewportToWindow(windows[i]);
             // window.needsUpdate = false; // 保持注释状态用于调试
         }
     }
 }
 
-void RendererEx::RenderViewportToWindow(WindowEx const& window) const
+void RendererEx::RenderViewportToWindow(Window const& window) const
 {
     if (!window.m_displayContext) return;
 
@@ -718,7 +718,7 @@ Texture* RendererEx::CreateTextureFromImage(Image const& image)
     return newTexture;
 }
 
-HRESULT RendererEx::CreateWindowSwapChain(WindowEx& window)
+HRESULT RendererEx::CreateWindowSwapChain(Window& window)
 {
     RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);
@@ -784,7 +784,7 @@ HRESULT RendererEx::CreateWindowSwapChain(WindowEx& window)
 }
 
 // DirectX 11 版本的視窗渲染
-void RendererEx::RenderViewportToWindowDX11(const WindowEx& window) const
+void RendererEx::RenderViewportToWindowDX11(const Window& window) const
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
@@ -880,7 +880,7 @@ void RendererEx::RenderViewportToWindowDX11(const WindowEx& window) const
 }
 
 // 添加重新创建SwapChain的方法
-HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
+HRESULT RendererEx::ResizeWindowSwapChain(Window& window)
 {
     if (!window.m_swapChain) return E_FAIL;
 

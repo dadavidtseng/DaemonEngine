@@ -4,7 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Platform/WindowEx.hpp"
+#include "Renderer.hpp"
+#include "Engine/Platform/Window.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct ID3D11Texture2D;
@@ -53,19 +54,19 @@ public:
     void ReadStagingTextureToPixelData();
 
     void    RenderTexture(Texture* texture);
-    HRESULT CreateWindowSwapChain(WindowEx& window);
-    void    UpdateWindows(std::vector<WindowEx>& windows);
+    HRESULT CreateWindowSwapChain(Window& window);
+    void    UpdateWindows(std::vector<Window>& windows);
 
 private:
-    void     RenderViewportToWindow(WindowEx const& window) const;
-    void     RenderViewportToWindowDX11(const WindowEx& window) const;
+    void     RenderViewportToWindow(Window const& window) const;
+    void     RenderViewportToWindowDX11(const Window& window) const;
     void     Cleanup();
     Texture* CreateOrGetTextureFromFile(char const* imageFilePath);
     Texture* GetTextureForFileName(char const* imageFilePath) const;
     Texture* CreateTextureFromFile(char const* imageFilePath);
     Texture* CreateTextureFromImage(Image const& image);
 
-    HRESULT ResizeWindowSwapChain(WindowEx& window);
+    HRESULT ResizeWindowSwapChain(Window& window);
 
     ID3D11Device*           m_device                         = nullptr;
     ID3D11DeviceContext*    m_deviceContext                  = nullptr;

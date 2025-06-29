@@ -6,7 +6,6 @@
 #include "Engine/Renderer/Camera.hpp"
 
 #include "Engine/Platform/Window.hpp"
-#include "Engine/Platform/WindowEx.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include <Engine/Core/EngineCommon.hpp>
 
@@ -206,15 +205,15 @@ AABB2 Camera::GetViewPortUnnormalized(Vec2 const& space) const
 // TODO: FIX this crap
 void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
 {
-   if (Window::s_mainWindow == nullptr)
+    if (Window::s_mainWindow == nullptr)
     {
         return;
     }
 
-    Window const* window = Window::s_mainWindow;
+    Window const* window           = Window::s_mainWindow;
     IntVec2 const clientDimensions = window->GetClientDimensions();
     IntVec2 const renderDimensions = window->GetRenderDimensions();
-    IntVec2 const renderOffset = window->GetRenderOffset();
+    IntVec2 const renderOffset     = window->GetRenderOffset();
 
     float viewportLeft, viewportTop, viewportRight, viewportBottom;
 
@@ -224,19 +223,19 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
     case eWindowType::FULLSCREEN_LETTERBOX:
         {
             // Letterbox 模式：視口相對於渲染區域，但需要考慮偏移
-            float const renderWidth = static_cast<float>(renderDimensions.x);
+            float const renderWidth  = static_cast<float>(renderDimensions.x);
             float const renderHeight = static_cast<float>(renderDimensions.y);
 
             // 計算相對於渲染區域的絕對座標
-            float const relativeLeft = renderWidth * newViewPort.m_mins.x;
-            float const relativeTop = renderHeight * newViewPort.m_mins.y;
-            float const relativeRight = renderWidth * newViewPort.m_maxs.x;
+            float const relativeLeft   = renderWidth * newViewPort.m_mins.x;
+            float const relativeTop    = renderHeight * newViewPort.m_mins.y;
+            float const relativeRight  = renderWidth * newViewPort.m_maxs.x;
             float const relativeBottom = renderHeight * newViewPort.m_maxs.y;
 
             // 加上渲染偏移，得到相對於整個視窗的絕對座標
-            viewportLeft = relativeLeft + static_cast<float>(renderOffset.x);
-            viewportTop = relativeTop + static_cast<float>(renderOffset.y);
-            viewportRight = relativeRight + static_cast<float>(renderOffset.x);
+            viewportLeft   = relativeLeft + static_cast<float>(renderOffset.x);
+            viewportTop    = relativeTop + static_cast<float>(renderOffset.y);
+            viewportRight  = relativeRight + static_cast<float>(renderOffset.x);
             viewportBottom = relativeBottom + static_cast<float>(renderOffset.y);
         }
         break;
@@ -244,21 +243,21 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
     case eWindowType::FULLSCREEN_CROP:
         {
             // Crop 模式：使用整個螢幕，但視口計算基於渲染尺寸
-            float const renderWidth = static_cast<float>(renderDimensions.x);
+            float const renderWidth  = static_cast<float>(renderDimensions.x);
             float const renderHeight = static_cast<float>(renderDimensions.y);
 
             // 計算裁剪區域內的視口
-            float const cropLeft = renderWidth * newViewPort.m_mins.x;
-            float const cropTop = renderHeight * newViewPort.m_mins.y;
-            float const cropRight = renderWidth * newViewPort.m_maxs.x;
+            float const cropLeft   = renderWidth * newViewPort.m_mins.x;
+            float const cropTop    = renderHeight * newViewPort.m_mins.y;
+            float const cropRight  = renderWidth * newViewPort.m_maxs.x;
             float const cropBottom = renderHeight * newViewPort.m_maxs.y;
 
             // 計算裁剪區域的尺寸
-            float const cropWidth = cropRight - cropLeft;
+            float const cropWidth  = cropRight - cropLeft;
             float const cropHeight = cropBottom - cropTop;
 
             // 映射到實際螢幕座標
-            float const screenWidth = static_cast<float>(clientDimensions.x);
+            float const screenWidth  = static_cast<float>(clientDimensions.x);
             float const screenHeight = static_cast<float>(clientDimensions.y);
 
             // 計算縮放比例（保持長寬比或填滿螢幕，依需求而定）
@@ -270,15 +269,15 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
             // scaleX = scaleY = scale;
 
             // 計算置中偏移
-            float const scaledRenderWidth = renderWidth * scaleX;
+            float const scaledRenderWidth  = renderWidth * scaleX;
             float const scaledRenderHeight = renderHeight * scaleY;
-            float const centerOffsetX = (screenWidth - scaledRenderWidth) * 0.5f;
-            float const centerOffsetY = (screenHeight - scaledRenderHeight) * 0.5f;
+            float const centerOffsetX      = (screenWidth - scaledRenderWidth) * 0.5f;
+            float const centerOffsetY      = (screenHeight - scaledRenderHeight) * 0.5f;
 
             // 應用縮放和置中偏移
-            viewportLeft = cropLeft * scaleX + centerOffsetX;
-            viewportTop = cropTop * scaleY + centerOffsetY;
-            viewportRight = cropRight * scaleX + centerOffsetX;
+            viewportLeft   = cropLeft * scaleX + centerOffsetX;
+            viewportTop    = cropTop * scaleY + centerOffsetY;
+            viewportRight  = cropRight * scaleX + centerOffsetX;
             viewportBottom = cropBottom * scaleY + centerOffsetY;
         }
         break;
@@ -289,12 +288,12 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
     default:
         {
             // 標準模式：直接使用客戶端尺寸
-            float const clientWidth = static_cast<float>(clientDimensions.x);
+            float const clientWidth  = static_cast<float>(clientDimensions.x);
             float const clientHeight = static_cast<float>(clientDimensions.y);
 
-            viewportLeft = clientWidth * newViewPort.m_mins.x;
-            viewportTop = clientHeight * newViewPort.m_mins.y;
-            viewportRight = clientWidth * newViewPort.m_maxs.x;
+            viewportLeft   = clientWidth * newViewPort.m_mins.x;
+            viewportTop    = clientHeight * newViewPort.m_mins.y;
+            viewportRight  = clientWidth * newViewPort.m_maxs.x;
             viewportBottom = clientHeight * newViewPort.m_maxs.y;
         }
         break;

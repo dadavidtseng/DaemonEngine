@@ -17,6 +17,14 @@
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Platform/Window.hpp"
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 //----------------------------------------------------------------------------------------------------
 AABB2 GetVertexBounds2D(VertexList_PCU const& verts)
 {
