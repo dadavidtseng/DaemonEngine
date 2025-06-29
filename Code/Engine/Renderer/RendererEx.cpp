@@ -42,7 +42,7 @@ void RendererEx::Startup()
 
 void RendererEx::EndFrame()
 {
-    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
     m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
     // 切換到主窗口的後緩衝區
     m_deviceContext->OMSetRenderTargets(1, &m_mainBackBufferRenderTargetView, nullptr);
@@ -108,12 +108,53 @@ HRESULT RendererEx::Initialize()
     return S_OK;
 }
 
+void RendererEx::ReadStagingTextureToPixelData()
+{
+    if (!m_stagingTexture || !m_stagingTexture->m_texture) return;
+
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    HRESULT                  hr = m_deviceContext->Map(m_stagingTexture->m_texture, 0, D3D11_MAP_READ, 0, &mappedResource);
+
+    if (FAILED(hr))
+    {
+        DebuggerPrintf("Failed to map staging texture: 0x%08X\n", hr);
+        return;
+    }
+
+    // 复制数据到m_pixelData
+    BYTE* srcData  = (BYTE*)mappedResource.pData;
+    UINT  srcPitch = mappedResource.RowPitch;
+
+    for (UINT row = 0; row < sceneHeight; ++row)
+    {
+        BYTE* srcRow = srcData + row * srcPitch;
+        BYTE* dstRow = &m_pixelData[row * sceneWidth * 4];
+
+        // 复制一行数据（注意格式可能是BGRA，需要转换为RGBA）
+        for (UINT col = 0; col < sceneWidth; ++col)
+        {
+            BYTE r = srcRow[col * 4 + 0];  // Red
+            BYTE g = srcRow[col * 4 + 1];  // Green
+            BYTE b = srcRow[col * 4 + 2];  // Blue
+            BYTE a = srcRow[col * 4 + 3];  // Alpha
+
+            // 转换为RGBA格式存储到m_pixelData
+            dstRow[col * 4 + 0] = r;  // Red
+            dstRow[col * 4 + 1] = g;  // Green
+            dstRow[col * 4 + 2] = b;  // Blue
+            dstRow[col * 4 + 3] = a;  // Alpha
+        }
+    }
+
+    m_deviceContext->Unmap(m_stagingTexture->m_texture, 0);
+}
+
 void RendererEx::Render()
 {
     if (!m_sceneRenderTargetView || !m_deviceContext) return;
 
     // CRITICAL: Unbind scene texture from shader resources before using as render target
-    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
     m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
     m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
 
@@ -129,7 +170,7 @@ void RendererEx::Render()
 
     RenderTexture(m_defaultTexture);
     m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_sceneTexture->m_texture);
-
+    ReadStagingTextureToPixelData();
     // 更新和渲染窗口
     // UpdateWindows(windows);
 }
@@ -458,19 +499,12 @@ HRESULT RendererEx::CheckDeviceStatus()
 
 void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
 {
-    // 检查设备状态
-    if (FAILED(CheckDeviceStatus()))
-    {
-        DebuggerPrintf("Device is in invalid state, skipping window updates\n");
-        return;
-    }
-
     for (int i = 0; i < windows.size(); ++i)
     {
         // 先检查是否需要调整SwapChain大小
         if (windows[i].needsResize)
         {
-            HRESULT hr = ResizeWindowSwapChain(windows[i]);
+            HRESULT hr             = ResizeWindowSwapChain(windows[i]);
             windows[i].needsResize = false;
             if (FAILED(hr))
             {
@@ -490,6 +524,7 @@ void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
         {
             // 使用 DirectX 11 版本渲染
             RenderViewportToWindowDX11(windows[i]);
+            // RenderViewportToWindow(windows[i]);
             // window.needsUpdate = false; // 保持注释状态用于调试
         }
     }
@@ -946,7 +981,7 @@ void RendererEx::RenderViewportToWindowDX11(const WindowEx& window) const
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
     // CRITICAL: Unbind scene texture from shader resources before using window render target
-    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
     m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
 
     // Set window render target
@@ -1064,7 +1099,7 @@ void RendererEx::CleanupWindowResources(WindowEx& window)
 // 添加重新创建SwapChain的方法
 HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
 {
-     if (!window.m_swapChain) return E_FAIL;
+    if (!window.m_swapChain) return E_FAIL;
 
     // 1. 超徹底的資源解綁
     // m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
@@ -1080,9 +1115,9 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
     m_deviceContext->Flush();
 
     // 2. 強制等待 GPU 完成所有操作
-    ID3D11Query* query = nullptr;
+    ID3D11Query*     query     = nullptr;
     D3D11_QUERY_DESC queryDesc = {};
-    queryDesc.Query = D3D11_QUERY_EVENT;
+    queryDesc.Query            = D3D11_QUERY_EVENT;
     m_device->CreateQuery(&queryDesc, &query);
     m_deviceContext->End(query);
 
@@ -1100,7 +1135,6 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
         DebuggerPrintf("RTV released, ref count: %lu\n", refCount);
 
         window.m_renderTargetView = nullptr;
-
     }
 
 
@@ -1111,7 +1145,7 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
         return E_FAIL;
     }
 
-    UINT newWidth = clientRect.right - clientRect.left;
+    UINT newWidth  = clientRect.right - clientRect.left;
     UINT newHeight = clientRect.bottom - clientRect.top;
 
     if (newWidth == 0 || newHeight == 0)
@@ -1136,7 +1170,7 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
 
     // 5. Recreate RenderTargetView
     ID3D11Texture2D* backBuffer = nullptr;
-    hr = window.m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
+    hr                          = window.m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
     if (FAILED(hr))
     {
         DebuggerPrintf("Failed to get back buffer: 0x%08X\n", hr);
@@ -1153,22 +1187,22 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
     }
 
     // 6. Update window info
-    window.width = newWidth;
+    window.width  = newWidth;
     window.height = newHeight;
 
     // 7. Recalculate viewport parameters
     RECT windowRect;
     if (GetWindowRect((HWND)window.m_windowHandle, &windowRect))
     {
-        window.viewportX = (float)windowRect.left / (float)window.virtualScreenWidth;
-        window.viewportY = (float)windowRect.top / (float)window.virtualScreenHeight;
-        window.viewportWidth = (float)window.width / (float)window.virtualScreenWidth;
+        window.viewportX      = (float)windowRect.left / (float)window.virtualScreenWidth;
+        window.viewportY      = (float)windowRect.top / (float)window.virtualScreenHeight;
+        window.viewportWidth  = (float)window.width / (float)window.virtualScreenWidth;
         window.viewportHeight = (float)window.height / (float)window.virtualScreenHeight;
 
         // Clamp to valid range
-        window.viewportX = max(0.0f, min(1.0f, window.viewportX));
-        window.viewportY = max(0.0f, min(1.0f, window.viewportY));
-        window.viewportWidth = max(0.0f, min(1.0f - window.viewportX, window.viewportWidth));
+        window.viewportX      = max(0.0f, min(1.0f, window.viewportX));
+        window.viewportY      = max(0.0f, min(1.0f, window.viewportY));
+        window.viewportWidth  = max(0.0f, min(1.0f - window.viewportX, window.viewportWidth));
         window.viewportHeight = max(0.0f, min(1.0f - window.viewportY, window.viewportHeight));
     }
 

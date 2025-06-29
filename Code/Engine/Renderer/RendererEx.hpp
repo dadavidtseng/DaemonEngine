@@ -43,6 +43,7 @@ public:
     HRESULT CheckDeviceStatus();
     void    EndFrame();
     HRESULT Initialize();
+    void    ReadStagingTextureToPixelData();
     void    Render();
     HRESULT CreateDeviceAndSwapChain();
     HRESULT CreateSceneRenderTexture();
@@ -51,13 +52,13 @@ public:
     HRESULT CreateVertexBuffer();
     HRESULT CreateSampler();
 
-    float GetSceneWidth();
-    float GetSceneHeight();
-    void  RenderTexture(Texture* texture);
-    HRESULT                 CreateWindowSwapChain(WindowEx& window);
-    void     UpdateWindows(std::vector<WindowEx>& windows);
-private:
+    float   GetSceneWidth();
+    float   GetSceneHeight();
+    void    RenderTexture(Texture* texture);
+    HRESULT CreateWindowSwapChain(WindowEx& window);
+    void    UpdateWindows(std::vector<WindowEx>& windows);
 
+private:
     void     RenderViewportToWindow(WindowEx const& window) const;
     void     RenderViewportToWindowDX11(const WindowEx& window) const;
     void     Cleanup();
@@ -106,8 +107,8 @@ private:
     std::vector<Texture*> m_loadedTextures;
     Texture*              m_defaultTexture = nullptr;
 
-    ID3D11VertexShader* m_fullscreenVS = nullptr;
-    ID3D11PixelShader* m_fullscreenPS = nullptr;
-    ID3D11Buffer* m_fullscreenVertexBuffer = nullptr;
-    ID3D11InputLayout* m_fullscreenInputLayout = nullptr;
+    ID3D11VertexShader* m_fullscreenVS           = nullptr;
+    ID3D11PixelShader*  m_fullscreenPS           = nullptr;
+    ID3D11Buffer*       m_fullscreenVertexBuffer = nullptr;
+    ID3D11InputLayout*  m_fullscreenInputLayout  = nullptr;
 };
