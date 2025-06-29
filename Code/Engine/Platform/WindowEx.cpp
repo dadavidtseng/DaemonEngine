@@ -14,6 +14,7 @@
 #include <Engine/Core/EngineCommon.hpp>
 
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Input/InputSystem.hpp"
 
 
 //----------------------------------------------------------------------------------------------------
@@ -215,10 +216,23 @@ float sceneWidth = 1920.f;
 
 // 窗口程序
 LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+{InputSystem* input = nullptr;
     switch (uMsg)
     {
-        // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
+    // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
+    case WM_CLOSE:
+        {
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
+
+            g_theEventSystem->FireEvent("OnCloseButtonClicked");
+
+            return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+        }
+
+    // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
             // if (g_theDevConsole == nullptr)
@@ -232,23 +246,81 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND hwnd, UINT uMsg, WPARAM wP
 
             return 0;
         }
-    case WM_PAINT:
+
+    // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
+    case WM_KEYUP:
         {
-            PAINTSTRUCT ps;
-            HDC         hdc = BeginPaint(hwnd, &ps);
-            UNUSED(hdc)
-            // 渲染由 WindowKillRenderer 處理
-            EndPaint(hwnd, &ps);
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
+
+            EventArgs args;
+            args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("OnWindowKeyReleased", args);
+
             return 0;
         }
-    case WM_MOVE:
-    case WM_SIZE:
-        // 窗口移動或大小改變時，標記需要更新
 
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
+    case WM_CHAR:
+        {
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
+
+            EventArgs args;
+            args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
+            FireEvent("OnWindowCharInput", args);
+
+            return 0;
+        }
+
+    // Mouse left & right button down and up events; treat as a fake keyboard key
+    case WM_LBUTTONDOWN:
+        {
+            if (input != nullptr)
+            {
+                input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
+            }
+
+            return 0;
+        }
+
+    case WM_LBUTTONUP:
+        {
+            if (input != nullptr)
+            {
+                input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
+            }
+
+            return 0;
+        }
+
+    case WM_RBUTTONDOWN:
+        {
+            if (input != nullptr)
+            {
+                input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
+            }
+
+            return 0;
+        }
+
+    case WM_RBUTTONUP:
+        {
+            if (input != nullptr)
+            {
+                input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
+            }
+
+            return 0;
+        }
+
+    default: ;
     }
+
+
+    // Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }

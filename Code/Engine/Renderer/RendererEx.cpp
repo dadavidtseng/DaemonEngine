@@ -90,7 +90,7 @@ HRESULT RendererEx::Initialize()
     if (FAILED(hr)) return hr;
 
     // Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
-    m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/test.png");
+    m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/WindowKill.png");
     m_defaultTexture->m_name = "Default";
 
     hr = CreateShaders();
