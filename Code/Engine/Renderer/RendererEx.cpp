@@ -35,11 +35,6 @@ RendererEx::~RendererEx()
     Cleanup();
 }
 
-void RendererEx::Startup()
-{
-}
-
-
 void RendererEx::EndFrame()
 {
     ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
@@ -64,21 +59,8 @@ void RendererEx::EndFrame()
     m_mainSwapChain->Present(1, 0);
 }
 
-HRESULT RendererEx::Initialize()
+HRESULT RendererEx::Startup()
 {
-    // CoInitialize(nullptr);
-    mainWindow = CreateWindowEx(
-        NULL,
-        L"STATIC",
-        L"Hidden",
-        WS_POPUP,
-        0, 0, 1920, 1080,
-        nullptr,
-        nullptr,
-        GetModuleHandle(nullptr),
-        nullptr
-    );
-    ShowWindow(mainWindow, SW_SHOW);
     HRESULT hr = CreateDeviceAndSwapChain();
     if (FAILED(hr)) return hr;
 
@@ -100,9 +82,6 @@ HRESULT RendererEx::Initialize()
     if (FAILED(hr)) return hr;
 
     hr = CreateSampler();
-    if (FAILED(hr)) return hr;
-
-    hr = CreateFullscreenShaders();
     if (FAILED(hr)) return hr;
 
     return S_OK;
@@ -171,8 +150,6 @@ void RendererEx::Render()
     RenderTexture(m_defaultTexture);
     m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_sceneTexture->m_texture);
     ReadStagingTextureToPixelData();
-    // 更新和渲染窗口
-    // UpdateWindows(windows);
 }
 
 HRESULT RendererEx::CreateDeviceAndSwapChain()
@@ -183,7 +160,7 @@ HRESULT RendererEx::CreateDeviceAndSwapChain()
     swapChainDesc.BufferDesc.Height    = 1080;
     swapChainDesc.BufferDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.OutputWindow         = mainWindow;
+    swapChainDesc.OutputWindow         = (HWND)WindowEx::s_mainWindowEx->m_windowHandle;
     swapChainDesc.SampleDesc.Count     = 1;
     swapChainDesc.Windowed             = TRUE;
 
@@ -425,15 +402,6 @@ HRESULT RendererEx::CreateSampler()
     return m_device->CreateSamplerState(&samplerDesc, &sampler);
 }
 
-float RendererEx::GetSceneWidth()
-{
-    return sceneWidth;
-}
-
-float RendererEx::GetSceneHeight()
-{
-    return sceneHeight;
-}
 
 void RendererEx::RenderTexture(Texture* texture)
 {
@@ -480,21 +448,6 @@ void RendererEx::RenderSceneTextureToMainWindow()
 
     // Draw AABB quad (6 indices, starting from index 6)
     m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
-}
-
-// 额外添加一个辅助函数来检查设备状态
-HRESULT RendererEx::CheckDeviceStatus()
-{
-    if (!m_device) return E_FAIL;
-
-    HRESULT hr = m_device->GetDeviceRemovedReason();
-    if (hr != S_OK)
-    {
-        DebuggerPrintf("Device removed/reset detected: 0x%08X\n", hr);
-        return hr;
-    }
-
-    return S_OK;
 }
 
 void RendererEx::UpdateWindows(std::vector<WindowEx>& windows)
@@ -582,10 +535,27 @@ void RendererEx::RenderViewportToWindow(WindowEx const& window) const
 
 void RendererEx::Cleanup()
 {
-    // for (WindowEx& window : windows)
-    // {
-    //     if (window.m_displayContext) ReleaseDC((HWND)window.m_windowHandle, (HDC)window.m_displayContext);
-    // }
+    if (m_sceneTexture)
+    {
+        delete m_sceneTexture;
+        m_sceneTexture = nullptr;
+    }
+
+    if (m_stagingTexture)
+    {
+        delete m_stagingTexture;
+        m_stagingTexture = nullptr;
+    }
+
+    for (Texture* texture : m_loadedTextures)
+    {
+        if (texture)
+        {
+            delete texture;
+            texture = nullptr;
+        }
+    }
+    m_loadedTextures.clear();
 
     // 釋放所有 D3D11 和相關對象
     if (sampler)
@@ -618,36 +588,12 @@ void RendererEx::Cleanup()
         vertexShader->Release();
         vertexShader = nullptr;
     }
-    // if (m_testShaderResourceView)
-    // {
-    //     m_testShaderResourceView->Release();
-    //     m_testShaderResourceView = nullptr;
-    // }
-    // if (m_testTexture)
-    // {
-    //     m_testTexture->Release();
-    //     m_testTexture = nullptr;
-    // }
-    // if (m_stagingTexture)
-    // {
-    //     m_stagingTexture->Release();
-    //     m_stagingTexture = nullptr;
-    // }
-    // if (m_sceneShaderResourceView)
-    // {
-    //     m_sceneShaderResourceView->Release();
-    //     m_sceneShaderResourceView = nullptr;
-    // }
     if (m_sceneRenderTargetView)
     {
         m_sceneRenderTargetView->Release();
         m_sceneRenderTargetView = nullptr;
     }
-    // if (m_sceneTexture)
-    // {
-    //     m_sceneTexture->Release();
-    //     m_sceneTexture = nullptr;
-    // }
+
     if (m_mainBackBufferRenderTargetView)
     {
         m_mainBackBufferRenderTargetView->Release();
@@ -668,14 +614,6 @@ void RendererEx::Cleanup()
         m_mainSwapChain->Release();
         m_mainSwapChain = nullptr;
     }
-
-    // // **這個是你缺少的：釋放 WIC 工廠**
-    // if (m_wicFactory)
-    // {
-    //     m_wicFactory->Release();
-    //     m_wicFactory = nullptr;
-    // }
-
     // 最後釋放 device
     if (m_device)
     {
@@ -845,136 +783,6 @@ HRESULT RendererEx::CreateWindowSwapChain(WindowEx& window)
     return hr;
 }
 
-// 創建全屏四邊形渲染用的著色器
-HRESULT RendererEx::CreateFullscreenShaders()
-{
-    // 全屏四邊形頂點著色器
-    const char* fullscreenVS = R"(
-        struct VS_INPUT
-        {
-            float2 pos : POSITION;
-            float2 tex : TEXCOORD0;
-        };
-
-        struct VS_OUTPUT
-        {
-            float4 pos : SV_POSITION;
-            float2 tex : TEXCOORD0;
-        };
-
-        VS_OUTPUT main(VS_INPUT input)
-        {
-            VS_OUTPUT output;
-            output.pos = float4(input.pos, 0.0f, 1.0f);
-            output.tex = input.tex;
-            return output;
-        }
-    )";
-
-    // 全屏四邊形像素著色器（支援視窗區域裁切）
-    const char* fullscreenPS = R"(
-        Texture2D sceneTexture : register(t0);
-        SamplerState sceneSampler : register(s0);
-
-        cbuffer ViewportParams : register(b0)
-        {
-            float2 viewportOffset;  // 視窗在場景中的起始位置 (0-1)
-            float2 viewportSize;    // 視窗在場景中的大小 (0-1)
-        };
-
-        struct PS_INPUT
-        {
-            float4 pos : SV_POSITION;
-            float2 tex : TEXCOORD0;
-        };
-
-        float4 main(PS_INPUT input) : SV_TARGET
-        {
-            // 將螢幕空間的 UV 座標轉換為場景紋理中的對應區域
-            float2 sceneUV = viewportOffset + input.tex * viewportSize;
-
-            // 確保 UV 座標在有效範圍內
-            if (sceneUV.x < 0.0 || sceneUV.x > 1.0 || sceneUV.y < 0.0 || sceneUV.y > 1.0)
-            {
-                return float4(0.0, 0.0, 0.0, 1.0); // 黑色背景
-            }
-
-            return sceneTexture.Sample(sceneSampler, sceneUV);
-        }
-    )";
-
-    // 編譯頂點著色器
-    ID3DBlob* vsBlob    = nullptr;
-    ID3DBlob* errorBlob = nullptr;
-    HRESULT   hr        = D3DCompile(fullscreenVS, strlen(fullscreenVS), nullptr, nullptr, nullptr,
-                                     "main", "vs_5_0", 0, 0, &vsBlob, &errorBlob);
-    if (FAILED(hr))
-    {
-        if (errorBlob) errorBlob->Release();
-        return hr;
-    }
-
-    hr = m_device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-                                      nullptr, &m_fullscreenVS);
-    if (FAILED(hr))
-    {
-        vsBlob->Release();
-        return hr;
-    }
-
-    // 創建輸入佈局
-    D3D11_INPUT_ELEMENT_DESC inputElements[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0}
-    };
-
-    hr = m_device->CreateInputLayout(inputElements, 2, vsBlob->GetBufferPointer(),
-                                     vsBlob->GetBufferSize(), &m_fullscreenInputLayout);
-    vsBlob->Release();
-    if (FAILED(hr)) return hr;
-
-    // 編譯像素著色器
-    ID3DBlob* psBlob = nullptr;
-    hr               = D3DCompile(fullscreenPS, strlen(fullscreenPS), nullptr, nullptr, nullptr,
-                                  "main", "ps_5_0", 0, 0, &psBlob, &errorBlob);
-    if (FAILED(hr))
-    {
-        if (errorBlob) errorBlob->Release();
-        return hr;
-    }
-
-    hr = m_device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
-                                     nullptr, &m_fullscreenPS);
-    psBlob->Release();
-    if (FAILED(hr)) return hr;
-
-    // 創建全屏四邊形頂點緩衝區
-    struct FullscreenVertex
-    {
-        float x, y;    // 位置
-        float u, v;    // UV 座標
-    };
-
-    FullscreenVertex vertices[] =
-    {
-        {-1.0f, -1.0f, 0.0f, 1.0f},  // 左下
-        {-1.0f, 1.0f, 0.0f, 0.0f},  // 左上
-        {1.0f, -1.0f, 1.0f, 1.0f},  // 右下
-        {1.0f, 1.0f, 1.0f, 0.0f}   // 右上
-    };
-
-    D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.Usage             = D3D11_USAGE_DEFAULT;
-    bufferDesc.ByteWidth         = sizeof(vertices);
-    bufferDesc.BindFlags         = D3D11_BIND_VERTEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem                = vertices;
-
-    return m_device->CreateBuffer(&bufferDesc, &initData, &m_fullscreenVertexBuffer);
-}
-
 // DirectX 11 版本的視窗渲染
 void RendererEx::RenderViewportToWindowDX11(const WindowEx& window) const
 {
@@ -999,101 +807,76 @@ void RendererEx::RenderViewportToWindowDX11(const WindowEx& window) const
     float clearColor[4] = {0.1f, 0.1f, 0.2f, 1.0f};
     m_deviceContext->ClearRenderTargetView(window.m_renderTargetView, clearColor);
 
-    // Set shaders and resources
-    m_deviceContext->VSSetShader(m_fullscreenVS, nullptr, 0);
-    m_deviceContext->PSSetShader(m_fullscreenPS, nullptr, 0);
-    m_deviceContext->IASetInputLayout(m_fullscreenInputLayout);
+    // 使用主要的 shader 而不是全屏專用的 shader
+    m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(inputLayout);
 
     // Bind scene texture
     m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
     m_deviceContext->PSSetSamplers(0, 1, &sampler);
 
-    // Set viewport parameters constant buffer
-    struct ViewportParams
-    {
-        float viewportOffset[2];
-        float viewportSize[2];
-    };
+    // 創建視窗專用的頂點數據 (使用 Vertex_PCU 格式)
+    std::vector<Vertex_PCU> windowVertices;
 
-    ViewportParams params;
-    params.viewportOffset[0] = window.viewportX;
-    params.viewportOffset[1] = window.viewportY;
-    params.viewportSize[0]   = window.viewportWidth;
-    params.viewportSize[1]   = window.viewportHeight;
+    // 計算視窗在場景中的 UV 座標
+    float minU = window.viewportX;
+    float maxU = window.viewportX + window.viewportWidth;
+    float minV = window.viewportY;
+    float maxV = window.viewportY + window.viewportHeight;
 
-    // Create constant buffer
-    D3D11_BUFFER_DESC cbDesc = {};
-    cbDesc.Usage             = D3D11_USAGE_DEFAULT;
-    cbDesc.ByteWidth         = sizeof(ViewportParams);
-    cbDesc.BindFlags         = D3D11_BIND_CONSTANT_BUFFER;
+    // 全屏四邊形 (使用與主 shader 相同的 Vertex_PCU 格式)
+    windowVertices.emplace_back(Vec3(-1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, maxV)); // 左下
+    windowVertices.emplace_back(Vec3(-1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, minV));  // 左上
+    windowVertices.emplace_back(Vec3(1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, minV));   // 右上
+    windowVertices.emplace_back(Vec3(1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, maxV));  // 右下
 
-    D3D11_SUBRESOURCE_DATA cbData = {};
-    cbData.pSysMem                = &params;
+    // 創建臨時頂點緩衝區
+    ID3D11Buffer*     tempVertexBuffer = nullptr;
+    D3D11_BUFFER_DESC bufferDesc       = {};
+    bufferDesc.Usage                   = D3D11_USAGE_DEFAULT;
+    bufferDesc.ByteWidth               = windowVertices.size() * sizeof(Vertex_PCU);
+    bufferDesc.BindFlags               = D3D11_BIND_VERTEX_BUFFER;
 
-    ID3D11Buffer* constantBuffer = nullptr;
-    HRESULT       hr             = m_device->CreateBuffer(&cbDesc, &cbData, &constantBuffer);
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem                = windowVertices.data();
+
+    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempVertexBuffer);
     if (SUCCEEDED(hr))
     {
-        m_deviceContext->PSSetConstantBuffers(0, 1, &constantBuffer);
+        // 創建臨時索引緩衝區
+        UINT indices[] = {
+            0, 1, 2,  // First triangle
+            0, 2, 3   // Second triangle
+        };
 
-        // Set vertex buffer
-        UINT stride = sizeof(float) * 4; // 2 for position + 2 for UV
-        UINT offset = 0;
-        m_deviceContext->IASetVertexBuffers(0, 1, &m_fullscreenVertexBuffer, &stride, &offset);
-        m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        ID3D11Buffer* tempIndexBuffer = nullptr;
+        bufferDesc.ByteWidth          = sizeof(indices);
+        bufferDesc.BindFlags          = D3D11_BIND_INDEX_BUFFER;
+        initData.pSysMem              = indices;
 
-        // Render fullscreen quad
-        m_deviceContext->Draw(4, 0);
+        hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempIndexBuffer);
+        if (SUCCEEDED(hr))
+        {
+            // Set vertex and index buffers
+            UINT stride = sizeof(Vertex_PCU);
+            UINT offset = 0;
+            m_deviceContext->IASetVertexBuffers(0, 1, &tempVertexBuffer, &stride, &offset);
+            m_deviceContext->IASetIndexBuffer(tempIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+            m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        // Cleanup
-        constantBuffer->Release();
+            // Render window quad
+            m_deviceContext->DrawIndexed(6, 0, 0);
+
+            // Cleanup
+            tempIndexBuffer->Release();
+        }
+
+        tempVertexBuffer->Release();
     }
 
     // Present to window
     window.m_swapChain->Present(0, 0);
-}
-
-// 添加視窗（DirectX 11 版本）
-HRESULT RendererEx::AddWindowDX11(HWND hwnd)
-{
-    // windows.emplace_back();
-    // WindowEx& window = windows.back();
-    //
-    // window.m_windowHandle = hwnd;
-    // window.m_displayContext = GetDC(hwnd); // 保留作為後備
-    // window.needsUpdate = true;
-    //
-    // // 創建 DirectX 11 資源
-    // HRESULT hr = CreateWindowSwapChain(window);
-    // if (FAILED(hr))
-    // {
-    //     windows.pop_back();
-    //     return hr;
-    // }
-
-    return S_OK;
-}
-
-// 清理視窗資源
-void RendererEx::CleanupWindowResources(WindowEx& window)
-{
-    if (window.m_renderTargetView)
-    {
-        window.m_renderTargetView->Release();
-        window.m_renderTargetView = nullptr;
-    }
-
-    if (window.m_swapChain)
-    {
-        window.m_swapChain->Release();
-        window.m_swapChain = nullptr;
-    }
-
-    if (window.m_displayContext)
-    {
-        ReleaseDC((HWND)window.m_windowHandle, (HDC)window.m_displayContext);
-        window.m_displayContext = nullptr;
-    }
 }
 
 // 添加重新创建SwapChain的方法
@@ -1101,32 +884,23 @@ HRESULT RendererEx::ResizeWindowSwapChain(WindowEx& window)
 {
     if (!window.m_swapChain) return E_FAIL;
 
-    // 1. 超徹底的資源解綁
-    // m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-    // m_deviceContext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
-    // m_deviceContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
-    // m_deviceContext->VSSetShader(nullptr, nullptr, 0);
-    // m_deviceContext->PSSetShader(nullptr, nullptr, 0);
-    // m_deviceContext->PSSetShaderResources(0, 1, nullptr);
-    // m_deviceContext->PSSetSamplers(0, 1, nullptr);
-    // m_deviceContext->PSSetConstantBuffers(0, 1, nullptr);
 
     m_deviceContext->ClearState();
     m_deviceContext->Flush();
 
-    // 2. 強制等待 GPU 完成所有操作
-    ID3D11Query*     query     = nullptr;
-    D3D11_QUERY_DESC queryDesc = {};
-    queryDesc.Query            = D3D11_QUERY_EVENT;
-    m_device->CreateQuery(&queryDesc, &query);
-    m_deviceContext->End(query);
-
-    BOOL queryData = FALSE;
-    while (m_deviceContext->GetData(query, &queryData, sizeof(BOOL), 0) == S_FALSE)
-    {
-        Sleep(1); // 等待 GPU 完成
-    }
-    query->Release();
+    // // 2. 強制等待 GPU 完成所有操作
+    // ID3D11Query*     query     = nullptr;
+    // D3D11_QUERY_DESC queryDesc = {};
+    // queryDesc.Query            = D3D11_QUERY_EVENT;
+    // m_device->CreateQuery(&queryDesc, &query);
+    // m_deviceContext->End(query);
+    //
+    // BOOL queryData = FALSE;
+    // while (m_deviceContext->GetData(query, &queryData, sizeof(BOOL), 0) == S_FALSE)
+    // {
+    //     Sleep(1); // 等待 GPU 完成
+    // }
+    // query->Release();
 
     // 3. 釋放 RenderTargetView
     if (window.m_renderTargetView)

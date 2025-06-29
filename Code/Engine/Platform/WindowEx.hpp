@@ -56,7 +56,10 @@ struct DriftParams
 class WindowEx
 {
 public:
-    WindowEx();
+    WindowEx(sWindowExConfig config);
+    ~WindowEx();
+    void Startup();
+    sWindowExConfig m_config;
     void*   m_windowHandle   = nullptr;
     void*   m_displayContext = nullptr;
     int     x                = 0, y         = 0, width         = 0, height         = 0;
@@ -79,7 +82,7 @@ public:
     void  RunMessagePump();
     void  UpdateWindowDrift(float deltaSeconds);
     void  UpdateWindowPosition();
-
+static WindowEx* s_mainWindowEx;
     IDXGISwapChain*         m_swapChain        = nullptr;
     ID3D11RenderTargetView* m_renderTargetView = nullptr;
 };

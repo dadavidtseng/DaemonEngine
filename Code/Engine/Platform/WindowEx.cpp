@@ -13,15 +13,17 @@
 #include <windows.h>
 #include <Engine/Core/EngineCommon.hpp>
 
+#include "Window.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 
 
-//----------------------------------------------------------------------------------------------------
-// STATIC WindowEx* WindowEx::s_mainWindowEx = nullptr;
+// ----------------------------------------------------------------------------------------------------
+STATIC WindowEx* WindowEx::s_mainWindowEx = nullptr;
 
 
-WindowEx::WindowEx()
+WindowEx::WindowEx(sWindowExConfig config)
+    : m_config(config)
 {
     virtualScreenWidth  = GetSystemMetrics(SM_CXSCREEN);
     virtualScreenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -33,7 +35,44 @@ WindowEx::WindowEx()
     std::uniform_real_distribution<float> velDist(-50.0f, 50.0f);
     drift.velocityX = velDist(rng);
     drift.velocityY = velDist(rng);
+
+    if (s_mainWindowEx == nullptr)
+    {
+        s_mainWindowEx = this;
+    }
 }
+
+WindowEx::~WindowEx()
+{
+    // if (m_renderTargetView)
+    // {
+    //     m_renderTargetView->Release();
+    //     m_renderTargetView = nullptr;
+    // }
+    // if (m_swapChain)
+    // {
+    //     m_swapChain->Release();
+    //     m_swapChain = nullptr;
+    // }
+}
+
+void WindowEx::Startup()
+{
+    m_windowHandle = CreateWindowEx(
+        NULL,
+        L"STATIC",
+        L"Hidden",
+        WS_POPUP,
+        0, 0, 1920, 1080,
+        nullptr,
+        nullptr,
+        GetModuleHandle(nullptr),
+        nullptr
+    );
+    ShowWindow((HWND)m_windowHandle,SW_SHOW);
+}
+
+
 
 void WindowEx::BeginFrame()
 {
@@ -183,8 +222,8 @@ void WindowEx::UpdateWindowPosition()
         // 检查客户区大小是否改变（需要重新创建SwapChain）
         if (newWidth != width || newHeight != height)
         {
-            width  = newWidth;
-            height = newHeight;
+            width       = newWidth;
+            height      = newHeight;
             needsResize = true; // 添加这个标志
         }
 
@@ -194,7 +233,7 @@ void WindowEx::UpdateWindowPosition()
         viewportWidth  = (float)width / (float)virtualScreenWidth;
         viewportHeight = (float)height / (float)virtualScreenHeight;
 
-float sceneWidth = 1920.f;
+        float sceneWidth  = 1920.f;
         float sceneHeight = 1080.f;
 
         // 确保座标对齐到像素边界
@@ -216,7 +255,8 @@ float sceneWidth = 1920.f;
 
 // 窗口程序
 LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{InputSystem* input = nullptr;
+{
+    InputSystem* input = nullptr;
     switch (uMsg)
     {
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
