@@ -62,6 +62,7 @@ public:
     static int k_cameraConstantSlot;
     static int k_modelConstantsSlot;
 
+
     void Startup();
     void BeginFrame() const;
     void EndFrame() const;
@@ -91,7 +92,7 @@ public:
     void            SetDepthMode(eDepthMode mode);
     void            SetSamplerMode(eSamplerMode mode);
     void            SetRasterizerMode(eRasterizerMode mode);
-    void            SetLightConstants(std::vector<Light*> const& lights,    int  numLights) const;
+    void            SetLightConstants(std::vector<Light*> const& lights, int numLights) const;
     void            SetModelConstants(Mat44 const& modelToWorldTransform = Mat44(), Rgba8 const& modelColor = Rgba8::WHITE) const;
     void            SetPerFrameConstants(float time = 0.f, int debugInt = 1, float debugFloat = 0.f) const;
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
@@ -104,6 +105,11 @@ public:
     void CopyCPUToGPU(void const* data, unsigned int size, ConstantBuffer* cbo) const;
     void CopyCPUToGPU(void const* data, unsigned int size, IndexBuffer* ibo) const;
     void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
+
+    // RendererEx
+    void    Render();
+    void    UpdateWindows(std::vector<Window>& windows);
+    HRESULT CreateWindowSwapChain(Window& window);
 
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
@@ -135,7 +141,7 @@ protected:
     /// The ID3D11DeviceContext interface represents a device context which generates rendering commands.
     ID3D11DeviceContext* m_deviceContext = nullptr;
     /// A render-target-view interface identifies the render-target subresources that can be accessed during rendering.
-    ID3D11RenderTargetView* m_renderTargetView = nullptr;
+    ID3D11RenderTargetView* m_mainRenderTargetView = nullptr;
 
     eBlendMode m_desiredBlendMode = eBlendMode::ALPHA;
     /// The blend-state interface holds a description for blending state that you can bind to the output-merger stage.
@@ -180,4 +186,31 @@ protected:
     void* m_dxgiDebug       = nullptr;
     void* m_dxgiDebugModule = nullptr;
 #endif
+
+    // RenderEx
+    Texture*                m_sceneTexture          = nullptr;
+    Texture*                m_stagingTexture        = nullptr;
+    ID3D11RenderTargetView* m_sceneRenderTargetView = nullptr;
+    ID3D11VertexShader*     vertexShader            = nullptr;
+    ID3D11PixelShader*      pixelShader             = nullptr;
+    ID3D11Buffer*           vertexBuffer            = nullptr;
+    ID3D11Buffer*           indexBuffer             = nullptr;
+    ID3D11InputLayout*      inputLayout             = nullptr;
+    ID3D11SamplerState*     sampler                 = nullptr;
+    int                     sceneWidth              = 1920, sceneHeight = 1080;
+    BITMAPINFO              m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
+    std::vector<BYTE>       m_pixelData;
+    void                    ReadStagingTextureToPixelData();
+    void                    RenderTexture(Texture* texture);
+    void                    RenderViewportToWindow(Window const& window) const;
+    void                    RenderViewportToWindowDX11(const Window& window) const;
+    HRESULT                 ResizeWindowSwapChain(Window& window);
+    HRESULT                 CreateSceneRenderTexture();
+    HRESULT                 CreateStagingTexture();
+    HRESULT                 CreateShaders();
+    HRESULT                 CreateVertexBuffer();
+    HRESULT                 CreateSampler();
+    void                    RenderSceneTextureToMainWindow() const;
+
+    VertexList_PCU m_vertexList;
 };

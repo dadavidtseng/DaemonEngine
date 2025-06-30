@@ -94,10 +94,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             g_theEventSystem->FireEvent("OnCloseButtonClicked");
 
@@ -107,10 +107,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -122,10 +122,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
-            if (g_theDevConsole == nullptr)
-            {
-                return 0;
-            }
+            // if (g_theDevConsole == nullptr)
+            // {
+            //     return 0;
+            // }
 
             EventArgs args;
             args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));

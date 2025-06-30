@@ -217,9 +217,6 @@
     <ClCompile Include="Platform\Window.cpp">
       <Filter>Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Platform\WindowEx.cpp">
-      <Filter>Platform</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\RendererEx.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -445,9 +442,6 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Platform\Window.hpp">
-      <Filter>Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform\WindowEx.hpp">
       <Filter>Platform</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\RendererEx.hpp">
