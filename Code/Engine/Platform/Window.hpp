@@ -92,6 +92,7 @@ public:
 
     // WindowEx
     void       UpdateWindowDrift(float deltaSeconds);
+    void       UpdateWindowPosition(Vec2 const& newPosition);
     void       UpdateWindowPosition();
     int        x         = 0, y         = 0, width         = 0, height         = 0;
     float      viewportX = 0, viewportY = 0, viewportWidth = 0, viewportHeight = 0;

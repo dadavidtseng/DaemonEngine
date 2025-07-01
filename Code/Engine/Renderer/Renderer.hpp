@@ -76,8 +76,8 @@ public:
     void DrawVertexArray(int numVertexes, Vertex_PCUTBN const* vertexes);
     void DrawVertexArray(VertexList_PCU const& verts);
     void DrawVertexArray(VertexList_PCUTBN const& verts);
-    void DrawVertexArray(VertexList_PCU const& verts, std::vector<unsigned int> const& indexes);
-    void DrawVertexArray(VertexList_PCUTBN const& verts, std::vector<unsigned int> const& indexes);
+    void DrawVertexArray(VertexList_PCU const& verts, IndexList const& indexes);
+    void DrawVertexArray(VertexList_PCUTBN const& verts, IndexList const& indexes);
 
     void BindShader(Shader const* shader) const;
     void BindTexture(Texture const* texture, int slot = 0) const;
@@ -107,9 +107,16 @@ public:
     void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
 
     // RendererEx
-    void    Render();
-    void    UpdateWindows(std::vector<Window>& windows);
-    HRESULT CreateWindowSwapChain(Window& window);
+    void     Render(VertexList_PCU& verts);
+    void     UpdateWindows(std::vector<Window>& windows);
+    HRESULT  CreateWindowSwapChain(Window& window);
+    HRESULT  ResizeWindowSwapChain(Window& window);
+    void     RenderViewportToWindow(Window const& window) const;
+    void     RenderViewportToWindowDX11(const Window& window) ;
+    HRESULT  CopyRenderTargetToStaging();
+    void     ReadVertexBufferToPixelData();
+    Texture* m_sceneTexture   = nullptr;
+    Texture* m_stagingTexture = nullptr;
 
 private:
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
@@ -142,6 +149,7 @@ protected:
     ID3D11DeviceContext* m_deviceContext = nullptr;
     /// A render-target-view interface identifies the render-target subresources that can be accessed during rendering.
     ID3D11RenderTargetView* m_mainRenderTargetView = nullptr;
+    Texture* m_mainRenderTargetTexture = nullptr;
 
     eBlendMode m_desiredBlendMode = eBlendMode::ALPHA;
     /// The blend-state interface holds a description for blending state that you can bind to the output-merger stage.
@@ -188,29 +196,28 @@ protected:
 #endif
 
     // RenderEx
-    Texture*                m_sceneTexture          = nullptr;
-    Texture*                m_stagingTexture        = nullptr;
+
+
     ID3D11RenderTargetView* m_sceneRenderTargetView = nullptr;
-    ID3D11VertexShader*     vertexShader            = nullptr;
-    ID3D11PixelShader*      pixelShader             = nullptr;
-    ID3D11Buffer*           vertexBuffer            = nullptr;
-    ID3D11Buffer*           indexBuffer             = nullptr;
-    ID3D11InputLayout*      inputLayout             = nullptr;
-    ID3D11SamplerState*     sampler                 = nullptr;
-    int                     sceneWidth              = 1920, sceneHeight = 1080;
-    BITMAPINFO              m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
-    std::vector<BYTE>       m_pixelData;
-    void                    ReadStagingTextureToPixelData();
-    void                    RenderTexture(Texture* texture);
-    void                    RenderViewportToWindow(Window const& window) const;
-    void                    RenderViewportToWindowDX11(const Window& window) const;
-    HRESULT                 ResizeWindowSwapChain(Window& window);
-    HRESULT                 CreateSceneRenderTexture();
-    HRESULT                 CreateStagingTexture();
-    HRESULT                 CreateShaders();
-    HRESULT                 CreateVertexBuffer();
-    HRESULT                 CreateSampler();
-    void                    RenderSceneTextureToMainWindow() const;
+    // ID3D11VertexShader*     vertexShader            = nullptr;
+    // ID3D11PixelShader*      pixelShader             = nullptr;
+    // ID3D11Buffer*           vertexBuffer            = nullptr;
+    // ID3D11Buffer*           indexBuffer             = nullptr;
+    // ID3D11InputLayout*      inputLayout             = nullptr;
+    // ID3D11SamplerState*     sampler                 = nullptr;
+    int               sceneWidth = 1920, sceneHeight = 1080;
+    BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
+    std::vector<BYTE> m_pixelData;
+    void              ReadStagingTextureToPixelData();
+    void              RenderTexture(Texture* texture);
+
+
+    HRESULT CreateSceneRenderTexture();
+    HRESULT CreateStagingTexture();
+    HRESULT CreateShaders();
+    HRESULT CreateVertexBuffer();
+    HRESULT CreateSampler();
+    void    RenderSceneTextureToMainWindow() const;
 
     VertexList_PCU m_vertexList;
 };

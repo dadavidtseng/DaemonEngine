@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include <d3d11.h>
 
 struct ID3D11Buffer;
 struct ID3D11Device;
@@ -19,8 +20,9 @@ public:
     VertexBuffer(VertexBuffer const& copy) = delete;
     virtual ~VertexBuffer();
 
-    void Create();
-    void Resize(unsigned int size);
+    void          Create();
+    VertexBuffer* CreateStagingCopy(ID3D11DeviceContext* context);
+    void          Resize(unsigned int size);
 
     unsigned int GetSize() const;
     unsigned int GetStride() const;

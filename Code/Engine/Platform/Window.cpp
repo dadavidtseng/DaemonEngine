@@ -548,7 +548,8 @@ void Window::CreateOSWindow()
     case eWindowType::FULLSCREEN_CROP:
         {
             windowStyleFlags   = WS_POPUP;
-            windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+            windowStyleExFlags = WS_EX_APPWINDOW;
+            // windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
 
             // Fill screen and crop to maintain aspect ratio
             float const targetAspect = m_config.m_aspectRatio;
@@ -905,7 +906,49 @@ void Window::UpdateWindowDrift(float deltaSeconds)
                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 }
+void Window::UpdateWindowPosition(Vec2 const& newPosition)
+{
+    // 假設 newPosition 是以像素為單位的左上角座標
+    // 並且 width / height 是已知（可在其他地方更新）
 
+    // 紀錄舊位置檢查是否真的有更新
+    // if (newPosition.x != lastRect.left || newPosition.y != lastRect.top)
+    // {
+    //     lastRect.left   = static_cast<LONG>(newPosition.x);
+    //     lastRect.top    = static_cast<LONG>(newPosition.y);
+    //     lastRect.right  = lastRect.left + width;
+    //     lastRect.bottom = lastRect.top + height;
+    //
+    //     needsUpdate = true;
+    //
+    //     // 虛擬螢幕大小（例如主視窗邏輯大小）
+    //     float sceneWidth  = 1920.f;
+    //     float sceneHeight = 1080.f;
+    //
+    //     // 計算 viewport 相對座標（0～1）
+    //     viewportX      = newPosition.x / sceneWidth;
+    //     viewportY      = newPosition.y / sceneHeight;
+    //     viewportWidth  = (float)width / sceneWidth;
+    //     viewportHeight = (float)height / sceneHeight;
+    //
+    //     // pixel 對齊
+    //     float pixelAlignX = 1.0f / sceneWidth;
+    //     float pixelAlignY = 1.0f / sceneHeight;
+    //
+    //     viewportX      = floor(viewportX / pixelAlignX) * pixelAlignX;
+    //     viewportY      = floor(viewportY / pixelAlignY) * pixelAlignY;
+    //     viewportWidth  = ceil(viewportWidth / pixelAlignX) * pixelAlignX;
+    //     viewportHeight = ceil(viewportHeight / pixelAlignY) * pixelAlignY;
+    //
+    //     // 限制在合法範圍
+    //     viewportX      = std::clamp(viewportX, 0.0f, 1.0f);
+    //     viewportY      = std::clamp(viewportY, 0.0f, 1.0f);
+    //     viewportWidth  = std::clamp(viewportWidth, 0.0f, 1.0f - viewportX);
+    //     viewportHeight = std::clamp(viewportHeight, 0.0f, 1.0f - viewportY);
+    // }
+    SetWindowPos((HWND)m_windowHandle, nullptr, newPosition.x, -newPosition.y, 0, 0,
+                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
 void Window::UpdateWindowPosition()
 {
     RECT windowRect;

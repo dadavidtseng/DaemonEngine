@@ -25,6 +25,9 @@
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/RenderCommon.hpp"
+#include "Game/App.hpp"
+#include "Game/Game.hpp"
+#include "Game/GameCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
@@ -127,22 +130,24 @@ void Renderer::Startup()
     //-Create device and swap chain-------------------------------------------------------------------
 
     //-Get back buffer texture------------------------------------------------------------------------
-    ID3D11Texture2D* backBuffer;
-    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+    // ID3D11Texture2D* backBuffer;
+    m_mainRenderTargetTexture = new Texture();
+
+    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_mainRenderTargetTexture->m_texture));
 
     if (FAILED(hr))
     {
         ERROR_AND_DIE("Could not get swap chain buffer.")
     }
 
-    hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_mainRenderTargetView);
+    hr = m_device->CreateRenderTargetView(m_mainRenderTargetTexture->m_texture, nullptr, &m_mainRenderTargetView);
 
     if (FAILED(hr))
     {
         ERROR_AND_DIE("Could create render target view for swap chain buffer.")
     }
 
-    backBuffer->Release();
+    // backBuffer->Release();
     //-Get back buffer texture------------------------------------------------------------------------
 
     //-Create blend states and store the state in m_blendState----------------------------------------
@@ -348,7 +353,6 @@ void Renderer::Startup()
     BindShader(m_currentShader);
     BindTexture(m_defaultTexture, 0);
 
-
     // RendererEx
     hr = CreateSceneRenderTexture();
     // if (FAILED(hr)) return hr;
@@ -356,59 +360,52 @@ void Renderer::Startup()
     hr = CreateStagingTexture();
     // if (FAILED(hr)) return hr;
 
-    hr = CreateShaders();
+    // hr = CreateShaders();
     // if (FAILED(hr)) return hr;
 
-    hr = CreateVertexBuffer();
+    // hr = CreateVertexBuffer();
     // if (FAILED(hr)) return hr;
 
-    hr = CreateSampler();
+    // hr = CreateSampler();
     // if (FAILED(hr)) return hr;
 
-    m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/test.png");
-    m_defaultTexture->m_name = "Default";
+    // m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/WindowKill.png");
+    // m_defaultTexture->m_name = "Default";
 }
 
 
 //----------------------------------------------------------------------------------------------------
 void Renderer::BeginFrame() const
 {
-    // TODO: BindDefaultRenderTarget();
-    // This code needs to run every frame and should be in your Render function.
-    // m_config.m_window->m_renderTargetView[0] = m_renderTargetView;
-    // m_config.m_window->m_renderTargetView[1] = m_renderTargetView;
     m_deviceContext->OMSetRenderTargets(1, &m_mainRenderTargetView, m_depthStencilDSV);
-    // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[0], m_depthStencilDSV);
-    // m_deviceContext->OMSetRenderTargets(1, &m_config.m_window->m_renderTargetView[1], m_depthStencilDSV);
-
-    // RendererEx
-    ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-    m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
-    // 切換到主窗口的後緩衝區
-    m_deviceContext->OMSetRenderTargets(1, &m_mainRenderTargetView, nullptr);
-
-    // 設置主窗口的視口
-    D3D11_VIEWPORT viewport = {};
-    viewport.Width          = 1920.0f;  // 或使用您的主窗口寬度
-    viewport.Height         = 1080.0f; // 或使用您的主窗口高度
-    viewport.MinDepth       = 0.0f;
-    viewport.MaxDepth       = 1.0f;
-    m_deviceContext->RSSetViewports(1, &viewport);
-
-    // 清除主窗口背景（可選）
-    float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-    m_deviceContext->ClearRenderTargetView(m_mainRenderTargetView, clearColor);
-
-    // 將場景紋理渲染到主窗口
-    RenderSceneTextureToMainWindow();
-    // m_swapChain->Present(1, 0);
 }
 
 //----------------------------------------------------------------------------------------------------
 // ERROR: Original Present Call
 void Renderer::EndFrame() const
 {
-    HRESULT const hr = m_swapChain->Present(1, 0);
+    // RendererEx
+    // ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
+    // m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
+    // // 切換到主窗口的後緩衝區
+    // m_deviceContext->OMSetRenderTargets(1, &m_mainRenderTargetView, nullptr);
+    //
+    // // 設置主窗口的視口
+    // D3D11_VIEWPORT viewport = {};
+    // viewport.Width          = 1920.0f;  // 或使用您的主窗口寬度
+    // viewport.Height         = 1080.0f; // 或使用您的主窗口高度
+    // viewport.MinDepth       = 0.0f;
+    // viewport.MaxDepth       = 1.0f;
+    // m_deviceContext->RSSetViewports(1, &viewport);
+    //
+    // // 清除主窗口背景（可選）
+    // ClearScreen(Rgba8::MAGENTA);
+
+    // 將場景紋理渲染到主窗口
+    // RenderSceneTextureToMainWindow();
+    // m_swapChain->Present(1, 0);
+
+    HRESULT const hr = m_swapChain->Present(0, 0);
 
     if (hr == DXGI_ERROR_DEVICE_REMOVED ||
         hr == DXGI_ERROR_DEVICE_RESET)
@@ -495,7 +492,7 @@ void Renderer::Shutdown()
 #endif
 }
 
-void Renderer::Render()
+void Renderer::Render(VertexList_PCU& verts)
 {
     if (!m_sceneRenderTargetView || !m_deviceContext) return;
 
@@ -514,7 +511,15 @@ void Renderer::Render()
     float clearColor[4] = {0.1f, 0.1f, 0.2f, 1.0f};
     m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
 
-    RenderTexture(m_defaultTexture);
+    // RenderTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
+
+    AddVertsForAABB2D(verts, AABB2(Vec2(0, 0), Vec2(1920, 1080)));
+    BindTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
+
+
+    // UpdateWindows(g_theApp->windows);
+
+    DrawVertexArray(verts);
     m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_sceneTexture->m_texture);
     ReadStagingTextureToPixelData();
 }
@@ -536,7 +541,6 @@ void Renderer::UpdateWindows(std::vector<Window>& windows)
                 if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
                 {
                     DebuggerPrintf("Device lost, may need to recreate device and resources\n");
-                    // TODO: 实现设备重新创建逻辑
                 }
                 continue; // 跳过这个窗口的更新
             }
@@ -613,7 +617,7 @@ void Renderer::BeginCamera(Camera const& camera) const
     // BindConstantBuffer(k_lightConstantSlot, m_lightCBO);
 
     // Set model constants to default
-    // SetModelConstants();
+    SetModelConstants();
     // SetLightConstants();
     // SetPerFrameConstants();
 }
@@ -1402,65 +1406,100 @@ void Renderer::SetStatesIfChanged()
 
 void Renderer::ReadStagingTextureToPixelData()
 {
-    if (!m_stagingTexture || !m_stagingTexture->m_texture) return;
+    if (!m_mainRenderTargetTexture || !m_mainRenderTargetTexture->m_texture) return;
 
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT                  hr = m_deviceContext->Map(m_stagingTexture->m_texture, 0, D3D11_MAP_READ, 0, &mappedResource);
+    // 1. 取得主 Render Target 的描述
+    ID3D11Texture2D*     renderTargetTex = m_mainRenderTargetTexture->m_texture;
+    D3D11_TEXTURE2D_DESC desc            = {};
+    renderTargetTex->GetDesc(&desc);
 
+    // 2. 建立 staging texture（CPU 可讀）
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    desc.Usage          = D3D11_USAGE_STAGING;
+    desc.BindFlags      = 0;
+    desc.MiscFlags      = 0;
+
+    ID3D11Texture2D* stagingTex = nullptr;
+    HRESULT          hr         = m_device->CreateTexture2D(&desc, nullptr, &stagingTex);
     if (FAILED(hr))
     {
-        DebuggerPrintf("Failed to map staging texture: 0x%08X\n", hr);
+        DebuggerPrintf("Failed to create staging texture: 0x%08X\n", hr);
         return;
     }
 
-    // 复制数据到m_pixelData
-    BYTE* srcData  = (BYTE*)mappedResource.pData;
+    // 3. 複製 render target 資料到 staging texture
+    m_deviceContext->CopyResource(stagingTex, renderTargetTex);
+
+    // 4. Map staging texture
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    hr = m_deviceContext->Map(stagingTex, 0, D3D11_MAP_READ, 0, &mappedResource);
+    if (FAILED(hr))
+    {
+        DebuggerPrintf("Failed to map staging texture: 0x%08X\n", hr);
+        stagingTex->Release();
+        return;
+    }
+
+    // 5. 讀取像素資料
+    BYTE* srcData  = static_cast<BYTE*>(mappedResource.pData);
     UINT  srcPitch = mappedResource.RowPitch;
 
-    for (UINT row = 0; row < sceneHeight; ++row)
+    m_pixelData.resize(desc.Width * desc.Height * 4); // RGBA 每個像素 4 bytes
+
+    for (UINT row = 0; row < desc.Height; ++row)
     {
         BYTE* srcRow = srcData + row * srcPitch;
-        BYTE* dstRow = &m_pixelData[row * sceneWidth * 4];
+        BYTE* dstRow = &m_pixelData[row * desc.Width * 4];
 
-        // 复制一行数据（注意格式可能是BGRA，需要转换为RGBA）
-        for (UINT col = 0; col < sceneWidth; ++col)
+        for (UINT col = 0; col < desc.Width; ++col)
         {
-            BYTE r = srcRow[col * 4 + 0];  // Red
-            BYTE g = srcRow[col * 4 + 1];  // Green
-            BYTE b = srcRow[col * 4 + 2];  // Blue
-            BYTE a = srcRow[col * 4 + 3];  // Alpha
+            // 注意格式根據你的 render target 設定，這裡假設是 DXGI_FORMAT_R8G8B8A8_UNORM
+            BYTE b = srcRow[col * 4 + 0];
+            BYTE g = srcRow[col * 4 + 1];
+            BYTE r = srcRow[col * 4 + 2];
+            BYTE a = srcRow[col * 4 + 3];
 
-            // 转换为RGBA格式存储到m_pixelData
-            dstRow[col * 4 + 0] = r;  // Red
-            dstRow[col * 4 + 1] = g;  // Green
-            dstRow[col * 4 + 2] = b;  // Blue
-            dstRow[col * 4 + 3] = a;  // Alpha
+            dstRow[col * 4 + 0] = r;
+            dstRow[col * 4 + 1] = g;
+            dstRow[col * 4 + 2] = b;
+            dstRow[col * 4 + 3] = a;
         }
     }
 
-    m_deviceContext->Unmap(m_stagingTexture->m_texture, 0);
+    // 6. Unmap + release
+    m_deviceContext->Unmap(stagingTex, 0);
+    stagingTex->Release();
 }
 
 void Renderer::RenderTexture(Texture* texture)
 {
-    m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(inputLayout);
+    m_deviceContext->VSSetShader(m_currentShader->m_vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(m_currentShader->m_pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(m_currentShader->m_inputLayout);
+
+    // m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
+    // m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
+    // m_deviceContext->IASetInputLayout(inputLayout);
 
     m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
     m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 
     UINT stride = sizeof(Vertex_PCU);
     UINT offset = 0;
-    m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-    m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    m_deviceContext->IASetVertexBuffers(0, 1, &m_immediateVBO_PCU->m_buffer, &stride, &offset);
+    m_deviceContext->IASetIndexBuffer(m_immediateIBO->m_buffer, DXGI_FORMAT_R32_UINT, 0);
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    // m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // Draw fullscreen quad (6 indices)
     m_deviceContext->DrawIndexed(6, 0, 0);
 
     // Draw AABB quad (6 indices, starting from index 6)
-    m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
+    m_deviceContext->DrawIndexed(12, 6, 0);  // FIXED: was 8 indices, now 6
 }
 
 void Renderer::RenderViewportToWindow(Window const& window) const
@@ -1513,7 +1552,7 @@ void Renderer::RenderViewportToWindow(Window const& window) const
     );
 }
 
-void Renderer::RenderViewportToWindowDX11(const Window& window) const
+void Renderer::RenderViewportToWindowDX11(const Window& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
@@ -1537,16 +1576,17 @@ void Renderer::RenderViewportToWindowDX11(const Window& window) const
     m_deviceContext->ClearRenderTargetView(window.m_renderTargetView, clearColor);
 
     // 使用主要的 shader 而不是全屏專用的 shader
-    m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(inputLayout);
+    m_deviceContext->VSSetShader(m_currentShader->m_vertexShader, nullptr, 0);
+    m_deviceContext->PSSetShader(m_currentShader->m_pixelShader, nullptr, 0);
+    m_deviceContext->IASetInputLayout(m_currentShader->m_inputLayout);
 
     // Bind scene texture
-    m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+    // m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
+    // m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+    // BindTexture(m_sceneTexture);
 
     // 創建視窗專用的頂點數據 (使用 Vertex_PCU 格式)
-    std::vector<Vertex_PCU> windowVertices;
+    VertexList_PCU windowVertices;
 
     // 計算視窗在場景中的 UV 座標
     float minU = window.viewportX;
@@ -1555,57 +1595,139 @@ void Renderer::RenderViewportToWindowDX11(const Window& window) const
     float maxV = window.viewportY + window.viewportHeight;
 
     // 全屏四邊形 (使用與主 shader 相同的 Vertex_PCU 格式)
-    windowVertices.emplace_back(Vec3(-1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, maxV)); // 左下
-    windowVertices.emplace_back(Vec3(-1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, minV));  // 左上
-    windowVertices.emplace_back(Vec3(1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, minV));   // 右上
-    windowVertices.emplace_back(Vec3(1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, maxV));  // 右下
+    windowVertices.emplace_back(Vec3(0.f, 0.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, maxV)); // 左下
+    windowVertices.emplace_back(Vec3(1920.f, 0.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, maxV));  // 右下
+    windowVertices.emplace_back(Vec3(1920.f, 1080.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, minV));   // 右上
+    windowVertices.emplace_back(Vec3(0.f, 0.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, maxV)); // 左下
+    windowVertices.emplace_back(Vec3(1920.f, 1080.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(maxU, minV));   // 右上
+    windowVertices.emplace_back(Vec3(0.f, 1080.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(minU, minV));  // 左上
 
-    // 創建臨時頂點緩衝區
-    ID3D11Buffer*     tempVertexBuffer = nullptr;
-    D3D11_BUFFER_DESC bufferDesc       = {};
-    bufferDesc.Usage                   = D3D11_USAGE_DEFAULT;
-    bufferDesc.ByteWidth               = windowVertices.size() * sizeof(Vertex_PCU);
-    bufferDesc.BindFlags               = D3D11_BIND_VERTEX_BUFFER;
+    DrawVertexArray(windowVertices);
 
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem                = windowVertices.data();
-
-    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempVertexBuffer);
-    if (SUCCEEDED(hr))
-    {
-        // 創建臨時索引緩衝區
-        UINT indices[] = {
-            0, 1, 2,  // First triangle
-            0, 2, 3   // Second triangle
-        };
-
-        ID3D11Buffer* tempIndexBuffer = nullptr;
-        bufferDesc.ByteWidth          = sizeof(indices);
-        bufferDesc.BindFlags          = D3D11_BIND_INDEX_BUFFER;
-        initData.pSysMem              = indices;
-
-        hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempIndexBuffer);
-        if (SUCCEEDED(hr))
-        {
-            // Set vertex and index buffers
-            UINT stride = sizeof(Vertex_PCU);
-            UINT offset = 0;
-            m_deviceContext->IASetVertexBuffers(0, 1, &tempVertexBuffer, &stride, &offset);
-            m_deviceContext->IASetIndexBuffer(tempIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-            m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-            // Render window quad
-            m_deviceContext->DrawIndexed(6, 0, 0);
-
-            // Cleanup
-            tempIndexBuffer->Release();
-        }
-
-        tempVertexBuffer->Release();
-    }
-
+    // // 創建臨時頂點緩衝區
+    // ID3D11Buffer*     tempVertexBuffer = nullptr;
+    // D3D11_BUFFER_DESC bufferDesc       = {};
+    // bufferDesc.Usage                   = D3D11_USAGE_DEFAULT;
+    // bufferDesc.ByteWidth               = windowVertices.size() * sizeof(Vertex_PCU);
+    // bufferDesc.BindFlags               = D3D11_BIND_VERTEX_BUFFER;
+    //
+    // D3D11_SUBRESOURCE_DATA initData = {};
+    // initData.pSysMem                = windowVertices.data();
+    //
+    // HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempVertexBuffer);
+    // if (SUCCEEDED(hr))
+    // {
+    //     // 創建臨時索引緩衝區
+    //     UINT indices[] = {
+    //         0, 1, 2,  // First triangle
+    //         0, 2, 3   // Second triangle
+    //     };
+    //
+    //     ID3D11Buffer* tempIndexBuffer = nullptr;
+    //     bufferDesc.ByteWidth          = sizeof(indices);
+    //     bufferDesc.BindFlags          = D3D11_BIND_INDEX_BUFFER;
+    //     initData.pSysMem              = indices;
+    //
+    //     hr = m_device->CreateBuffer(&bufferDesc, &initData, &tempIndexBuffer);
+    //     if (SUCCEEDED(hr))
+    //     {
+    //         // Set vertex and index buffers
+    //         UINT stride = sizeof(Vertex_PCU);
+    //         UINT offset = 0;
+    //         m_deviceContext->IASetVertexBuffers(0, 1, &tempVertexBuffer, &stride, &offset);
+    //         m_deviceContext->IASetIndexBuffer(tempIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    //         m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //
+    //         // Render window quad
+    //         m_deviceContext->DrawIndexed(6, 0, 0);
+    //
+    //         // Cleanup
+    //         tempIndexBuffer->Release();
+    //     }
+    //
+    //     tempVertexBuffer->Release();
+    // }
+    // DebugDrawRing(Vec2(960.f + g_theGame->m_position.x, 540.f + g_theGame->m_position.y), 100.f, 20.f, Rgba8(0, 255, 255, 255));
+    // ReadVertexBufferToPixelData();
+    // CopyRenderTargetToStaging();
+    // BindTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
+    BindTexture(m_sceneTexture);
+    DrawVertexArray(windowVertices);
+    // DebugDrawLine(Vec2::ZERO, Vec2(1920.f, 1080.f), 10.f, Rgba8::BLUE);
     // Present to window
     window.m_swapChain->Present(0, 0);
+}
+
+HRESULT Renderer::CopyRenderTargetToStaging()
+{
+    if (!m_mainRenderTargetTexture || !m_mainRenderTargetTexture->m_texture) return E_FAIL;
+
+    // 建立 staging texture（若尚未建立）
+    if (!m_sceneTexture)
+    {
+        D3D11_TEXTURE2D_DESC desc = {};
+        m_mainRenderTargetTexture->m_texture->GetDesc(&desc);
+
+        desc.Usage          = D3D11_USAGE_STAGING;
+        desc.BindFlags      = 0;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        desc.MiscFlags      = 0;
+
+        HRESULT hr = m_device->CreateTexture2D(&desc, nullptr, &m_sceneTexture->m_texture);
+        if (FAILED(hr)) return hr;
+    }
+
+    // 複製 render target 到 staging texture
+    m_deviceContext->CopyResource(m_sceneTexture->m_texture, m_mainRenderTargetTexture->m_texture);
+
+    // // 將 staging texture 映射給 CPU 存取
+    // D3D11_MAPPED_SUBRESOURCE mapped = {};
+    // HRESULT hr = m_deviceContext->Map(m_sceneTexture->m_texture, 0, D3D11_MAP_READ, 0, &mapped);
+    // if (FAILED(hr)) return hr;
+    //
+    // // 範例：讀取第一行像素資料（RGBA 每像素 4 bytes）
+    // BYTE* pixelData = reinterpret_cast<BYTE*>(mapped.pData);
+    // UINT rowPitch = mapped.RowPitch;
+    //
+    // // TODO：你可以在這裡使用 pixelData，例如複製到自己的 buffer
+    //
+    //
+    //
+    // // 解鎖
+    // m_deviceContext->Unmap(m_sceneTexture->m_texture, 0);
+
+    return S_OK;
+}
+
+void Renderer::ReadVertexBufferToPixelData()
+{
+    if (!m_immediateVBO_PCU) return;
+
+    // 建立 staging buffer（可讀）
+    VertexBuffer* stagingVB = m_immediateVBO_PCU->CreateStagingCopy(m_deviceContext);
+    if (!stagingVB || !stagingVB->m_buffer) return;
+
+    // Map 可讀 staging buffer
+    D3D11_MAPPED_SUBRESOURCE mappedResource = {};
+    HRESULT                  hr             = m_deviceContext->Map(stagingVB->m_buffer, 0, D3D11_MAP_READ, 0, &mappedResource);
+    if (FAILED(hr))
+    {
+        DebuggerPrintf("Failed to map staging vertex buffer: 0x%08X\n", hr);
+        delete stagingVB;
+        return;
+    }
+
+    // 取得 vertex 資料與數量
+    Vertex_PCU* vertexData  = reinterpret_cast<Vertex_PCU*>(mappedResource.pData);
+    size_t      vertexCount = stagingVB->GetSize() / stagingVB->GetStride();
+
+    // 複製頂點資料到 m_vertexList
+    m_vertexList.resize(vertexCount);
+    std::memcpy(m_vertexList.data(), vertexData, vertexCount * sizeof(Vertex_PCU));
+
+    // 清理
+    m_deviceContext->Unmap(stagingVB->m_buffer, 0);
+    delete stagingVB;
 }
 
 HRESULT Renderer::ResizeWindowSwapChain(Window& window)
@@ -1715,6 +1837,11 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window)
     return S_OK;
 }
 
+//----------------------------------------------------------------------------------------------------
+/// @brief
+/// CreateTexture
+/// CreateRenderTargetView
+/// CreateShaderResourceView
 HRESULT Renderer::CreateSceneRenderTexture()
 {
     m_sceneTexture = new Texture();
@@ -1750,7 +1877,7 @@ HRESULT Renderer::CreateStagingTexture()
     texDesc.Height               = sceneHeight;
     texDesc.MipLevels            = 1;
     texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.SampleDesc.Count     = 1;
     texDesc.Usage                = D3D11_USAGE_STAGING;
     texDesc.CPUAccessFlags       = D3D11_CPU_ACCESS_READ;
@@ -1826,7 +1953,7 @@ HRESULT Renderer::CreateShaders()
     }
 
     hr = m_device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-                                      nullptr, &vertexShader);
+                                      nullptr, &m_currentShader->m_vertexShader);
     if (FAILED(hr))
     {
         vsBlob->Release();
@@ -1843,7 +1970,7 @@ HRESULT Renderer::CreateShaders()
 
 
     hr = m_device->CreateInputLayout(inputElementDesc, numElements, vsBlob->GetBufferPointer(),
-                                     vsBlob->GetBufferSize(), &inputLayout);
+                                     vsBlob->GetBufferSize(), &m_currentShader->m_inputLayout);
     vsBlob->Release();
     if (FAILED(hr)) return hr;
 
@@ -1856,7 +1983,7 @@ HRESULT Renderer::CreateShaders()
     }
 
     hr = m_device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
-                                     nullptr, &pixelShader);
+                                     nullptr, &m_currentShader->m_pixelShader);
     psBlob->Release();
 
     return hr;
@@ -1891,7 +2018,7 @@ HRESULT Renderer::CreateVertexBuffer()
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem                = m_vertexList.data();
 
-    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &vertexBuffer);
+    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &m_immediateVBO_PCU->m_buffer);
     if (FAILED(hr)) return hr;
 
     // FIX: Increase index buffer size to accommodate all draw calls
@@ -1902,53 +2029,57 @@ HRESULT Renderer::CreateVertexBuffer()
 
         // AABB2D (triangles) - FIXED: was trying to draw 8 indices but only had 6
         4, 5, 6,  // First triangle
-        4, 6, 7   // Second triangle
+        4, 6, 7,   // Second triangle
+
+        8, 9, 10,
+        11, 12, 13
     };
 
     bufferDesc.ByteWidth = sizeof(indices);
     bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     initData.pSysMem     = indices;
 
-    return m_device->CreateBuffer(&bufferDesc, &initData, &indexBuffer);
+    return m_device->CreateBuffer(&bufferDesc, &initData, &m_immediateIBO->m_buffer);
 }
 
 HRESULT Renderer::CreateSampler()
 {
-    D3D11_SAMPLER_DESC samplerDesc = {};
-    samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
-    samplerDesc.MinLOD             = 0;
-    samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
-
-    return m_device->CreateSamplerState(&samplerDesc, &sampler);
+    // D3D11_SAMPLER_DESC samplerDesc = {};
+    // samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    // samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_WRAP;
+    // samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_WRAP;
+    // samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_WRAP;
+    // samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
+    // samplerDesc.MinLOD             = 0;
+    // samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
+    //
+    // return m_device->CreateSamplerState(&samplerDesc, &sampler);
+    return S_OK;
 }
 
 void Renderer::RenderSceneTextureToMainWindow() const
 {
-    // 設置著色器
-    m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(inputLayout);
-
-    // 使用場景紋理作為輸入
-    m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
-
-    // 設置頂點和索引緩衝區
-    UINT stride = sizeof(Vertex_PCU);
-    UINT offset = 0;
-    m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-    m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // 渲染全螢幕四邊形 (6 indices)
-    m_deviceContext->DrawIndexed(6, 0, 0);
-
-    // Draw AABB quad (6 indices, starting from index 6)
-    m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
+    // // 設置著色器
+    // m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
+    // m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
+    // m_deviceContext->IASetInputLayout(inputLayout);
+    //
+    // // 使用場景紋理作為輸入
+    // m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
+    // m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+    //
+    // // 設置頂點和索引緩衝區
+    // UINT stride = sizeof(Vertex_PCU);
+    // UINT offset = 0;
+    // m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    // m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //
+    // // 渲染全螢幕四邊形 (6 indices)
+    // m_deviceContext->DrawIndexed(6, 0, 0);
+    //
+    // // Draw AABB quad (6 indices, starting from index 6)
+    // m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
 }
 
 HRESULT Renderer::CreateWindowSwapChain(Window& window)
