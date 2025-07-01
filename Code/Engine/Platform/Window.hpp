@@ -118,7 +118,7 @@ private:
 
 
     IntVec2 m_clientDimensions = IntVec2::ZERO;
-    IntVec2 m_renderDimensions = IntVec2::ZERO;  // For letterbox/crop modes - actual render area size
+    IntVec2 m_renderDimensions = IntVec2::ZERO;      // For letterbox/crop modes - actual render area size
     IntVec2 m_renderOffset     = IntVec2::ZERO;      // For letterbox/crop modes - offset of render area
 };
 

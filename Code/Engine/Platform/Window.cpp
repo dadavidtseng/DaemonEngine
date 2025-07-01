@@ -10,7 +10,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Math/AABB2.hpp"
 
 // #define CONSOLE_HANDLER
 #define WIN32_LEAN_AND_MEAN
@@ -28,8 +27,13 @@ STATIC Window* Window::s_mainWindow = nullptr;
 Window::Window(sWindowConfig const& config)
     : m_config(config)
 {
-    virtualScreenWidth  = GetSystemMetrics(SM_CXSCREEN);
-    virtualScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+    virtualScreenWidth  = GetSystemMetrics(SM_CXSCREEN);    // 1920
+    virtualScreenHeight = GetSystemMetrics(SM_CYSCREEN);    // 1080
+    RECT       desktopRect;
+    HWND const desktopWindowHandle = GetDesktopWindow();
+    GetClientRect(desktopWindowHandle, &desktopRect);
+    int const desktopWidth  = desktopRect.right - desktopRect.left;
+    int const desktopHeight = desktopRect.bottom - desktopRect.top;
     // 初始化隨機數生成器
     rng.seed((unsigned int)std::chrono::steady_clock::now().time_since_epoch().count());
     // lastUpdateTime = std::chrono::steady_clock::now();
@@ -53,7 +57,6 @@ void Window::Startup()
 #endif
 
     CreateOSWindow();
-    // CreateOSWindow();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -94,10 +97,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
-            // if (g_theDevConsole == nullptr)
-            // {
-            //     return 0;
-            // }
+            if (g_theDevConsole == nullptr)
+            {
+                return 0;
+            }
 
             g_theEventSystem->FireEvent("OnCloseButtonClicked");
 
@@ -107,10 +110,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
-            // if (g_theDevConsole == nullptr)
-            // {
-            //     return 0;
-            // }
+            if (g_theDevConsole == nullptr)
+            {
+                return 0;
+            }
 
             EventArgs args;
             args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -122,10 +125,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
-            // if (g_theDevConsole == nullptr)
-            // {
-            //     return 0;
-            // }
+            if (g_theDevConsole == nullptr)
+            {
+                return 0;
+            }
 
             EventArgs args;
             args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
@@ -906,6 +909,7 @@ void Window::UpdateWindowDrift(float deltaSeconds)
                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 }
+
 void Window::UpdateWindowPosition(Vec2 const& newPosition)
 {
     // 假設 newPosition 是以像素為單位的左上角座標
@@ -947,8 +951,9 @@ void Window::UpdateWindowPosition(Vec2 const& newPosition)
     //     viewportHeight = std::clamp(viewportHeight, 0.0f, 1.0f - viewportY);
     // }
     SetWindowPos((HWND)m_windowHandle, nullptr, newPosition.x, -newPosition.y, 0, 0,
-                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
+
 void Window::UpdateWindowPosition()
 {
     RECT windowRect;
@@ -983,7 +988,7 @@ void Window::UpdateWindowPosition()
         viewportHeight = (float)height / (float)virtualScreenHeight;
 
         float sceneWidth  = 1920.f;
-        float sceneHeight = 1080.f;
+        float sceneHeight = 1200.f;
 
         // 确保座标对齐到像素边界
         float pixelAlignX = 1.0f / (float)sceneWidth;

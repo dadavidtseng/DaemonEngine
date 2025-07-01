@@ -25,9 +25,6 @@
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/RenderCommon.hpp"
-#include "Game/App.hpp"
-#include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
@@ -54,6 +51,10 @@ STATIC int Renderer::k_modelConstantsSlot   = 4;
 Renderer::Renderer(sRenderConfig const& config)
 {
     m_config = config;
+    // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
+    // sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
+    sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
+    sceneHeight = GetSystemMetrics(SM_CYSCREEN);
 
     // RendererEx
     ZeroMemory(&m_bitmapInfo, sizeof(BITMAPINFO));
@@ -358,19 +359,6 @@ void Renderer::Startup()
     // if (FAILED(hr)) return hr;
 
     hr = CreateStagingTexture();
-    // if (FAILED(hr)) return hr;
-
-    // hr = CreateShaders();
-    // if (FAILED(hr)) return hr;
-
-    // hr = CreateVertexBuffer();
-    // if (FAILED(hr)) return hr;
-
-    // hr = CreateSampler();
-    // if (FAILED(hr)) return hr;
-
-    // m_defaultTexture         = CreateOrGetTextureFromFile("Data/Images/WindowKill.png");
-    // m_defaultTexture->m_name = "Default";
 }
 
 
@@ -492,36 +480,36 @@ void Renderer::Shutdown()
 #endif
 }
 
-void Renderer::Render(VertexList_PCU& verts)
+void Renderer::Render()
 {
-    if (!m_sceneRenderTargetView || !m_deviceContext) return;
-
-    // CRITICAL: Unbind scene texture from shader resources before using as render target
-    ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-    m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
-    m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
-
-    D3D11_VIEWPORT viewport = {};
-    viewport.Width          = (FLOAT)sceneWidth;
-    viewport.Height         = (FLOAT)sceneHeight;
-    viewport.MinDepth       = 0.0f;
-    viewport.MaxDepth       = 1.0f;
-    m_deviceContext->RSSetViewports(1, &viewport);
-
-    float clearColor[4] = {0.1f, 0.1f, 0.2f, 1.0f};
-    m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
+    // if (!m_sceneRenderTargetView || !m_deviceContext) return;
+    //
+    // // CRITICAL: Unbind scene texture from shader resources before using as render target
+    // ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
+    // m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
+    // m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
+    //
+    // D3D11_VIEWPORT viewport = {};
+    // viewport.Width          = (FLOAT)sceneWidth;
+    // viewport.Height         = (FLOAT)sceneHeight;
+    // viewport.MinDepth       = 0.0f;
+    // viewport.MaxDepth       = 1.0f;
+    // m_deviceContext->RSSetViewports(1, &viewport);
+    //
+    // float clearColor[4] = {0.1f, 0.1f, 0.2f, 1.0f};
+    // m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
 
     // RenderTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
 
-    AddVertsForAABB2D(verts, AABB2(Vec2(0, 0), Vec2(1920, 1080)));
-    BindTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
+    // AddVertsForAABB2D(verts, AABB2(Vec2(0, 0), Vec2(1920, 1080)));
+    // BindTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
     // BindTexture(m_sceneTexture);
 
 
     // UpdateWindows(g_theApp->windows);
 
-    DrawVertexArray(verts);
-    m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_sceneTexture->m_texture);
+    // DrawVertexArray(verts);
+    m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_mainRenderTargetTexture->m_texture);
     ReadStagingTextureToPixelData();
 }
 
@@ -1466,58 +1454,48 @@ void Renderer::ReadStagingTextureToPixelData()
     stagingTex->Release();
 }
 
-void Renderer::RenderTexture(Texture* texture)
-{
-    m_deviceContext->VSSetShader(m_currentShader->m_vertexShader, nullptr, 0);
-    m_deviceContext->PSSetShader(m_currentShader->m_pixelShader, nullptr, 0);
-    m_deviceContext->IASetInputLayout(m_currentShader->m_inputLayout);
-
-    // m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    // m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
-    // m_deviceContext->IASetInputLayout(inputLayout);
-
-    m_deviceContext->PSSetShaderResources(0, 1, &texture->m_shaderResourceView);
-    m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
-
-    UINT stride = sizeof(Vertex_PCU);
-    UINT offset = 0;
-
-    m_deviceContext->IASetVertexBuffers(0, 1, &m_immediateVBO_PCU->m_buffer, &stride, &offset);
-    m_deviceContext->IASetIndexBuffer(m_immediateIBO->m_buffer, DXGI_FORMAT_R32_UINT, 0);
-    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-    // m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // Draw fullscreen quad (6 indices)
-    m_deviceContext->DrawIndexed(6, 0, 0);
-
-    // Draw AABB quad (6 indices, starting from index 6)
-    m_deviceContext->DrawIndexed(12, 6, 0);  // FIXED: was 8 indices, now 6
-}
-
 void Renderer::RenderViewportToWindow(Window const& window) const
 {
     if (!window.m_displayContext) return;
 
-    // 計算在場景紋理中的區域
-    int srcX      = (int)round(window.viewportX * sceneWidth);
-    int srcY      = (int)round(window.viewportY * sceneHeight);
-    int srcWidth  = (int)round(window.viewportWidth * sceneWidth);
-    int srcHeight = (int)round(window.viewportHeight * sceneHeight);
+    // 取得子視窗在螢幕上的實際客戶區域位置
+    RECT windowRect, clientRect;
+    GetWindowRect((HWND)window.m_windowHandle, &windowRect);
+    GetClientRect((HWND)window.m_windowHandle, &clientRect);
 
-    // 確保不超出邊界
-    srcX      = max(0, min(srcX, (int)sceneWidth - 1));
-    srcY      = max(0, min(srcY, (int)sceneHeight - 1));
-    srcWidth  = min(srcWidth, (int)sceneWidth - srcX);
-    srcHeight = min(srcHeight, (int)sceneHeight - srcY);
+    // 將客戶區域的左上角轉換為螢幕座標
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen((HWND)window.m_windowHandle, &clientTopLeft);
 
+    // 計算客戶區域相對於視窗左上角的偏移
+    int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
+    int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
+
+    // 取得主視窗的位置（假設您有主視窗的控制代碼）
+    RECT mainWindowRect;
+    GetWindowRect((HWND)Window::s_mainWindow->m_windowHandle, &mainWindowRect);
+
+    // 計算子視窗客戶區域在主視窗中的相對位置
+    int relativeX = clientTopLeft.x - mainWindowRect.left;
+    int relativeY = clientTopLeft.y - mainWindowRect.top;
+
+    // 取得子視窗客戶區域大小
+    int clientWidth  = clientRect.right - clientRect.left;
+    int clientHeight = clientRect.bottom - clientRect.top;
+
+    // 計算在場景紋理中的區域（使用實際的相對位置）
+    int srcX      = max(0, min(relativeX, (int)sceneWidth - 1));
+    int srcY      = max(0, min(relativeY, (int)sceneHeight - 1));
+    int srcWidth  = min(clientWidth, (int)sceneWidth - srcX);
+    int srcHeight = min(clientHeight, (int)sceneHeight - srcY);
+
+    // 確保有效的複製區域
     if (srcWidth <= 0 || srcHeight <= 0) return;
 
     // 創建臨時的 DIB 數據
     std::vector<BYTE> windowPixels(srcWidth * srcHeight * 4);
 
+    // 從場景數據複製指定區域
     for (int y = 0; y < srcHeight; y++)
     {
         int srcRowIndex = (srcY + y) * sceneWidth + srcX;
@@ -1533,11 +1511,11 @@ void Renderer::RenderViewportToWindow(Window const& window) const
     localBitmapInfo.bmiHeader.biWidth  = srcWidth;
     localBitmapInfo.bmiHeader.biHeight = -srcHeight;
 
-    // 使用 StretchDIBits 來縮放顯示
+    // 使用 StretchDIBits 來縮放顯示到整個客戶區域
     StretchDIBits(
         (HDC)window.m_displayContext,
-        0, 0,                          // 目標位置
-        window.width, window.height,   // 目標大小 (縮放到窗口大小)
+        0, 0,                          // 目標位置（客戶區域左上角）
+        clientWidth, clientHeight,     // 目標大小（客戶區域大小）
         0, 0,                          // 源起始位置
         srcWidth, srcHeight,           // 源大小
         windowPixels.data(),           // 像素數據
@@ -1551,25 +1529,48 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
+    // 取得子視窗在螢幕上的實際客戶區域位置
+    RECT windowRect, clientRect;
+    GetWindowRect((HWND)window.m_windowHandle, &windowRect);
+    GetClientRect((HWND)window.m_windowHandle, &clientRect);
+
+    // 將客戶區域的左上角轉換為螢幕座標
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen((HWND)window.m_windowHandle, &clientTopLeft);
+
+    // 計算客戶區域相對於視窗左上角的偏移
+    int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
+    int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
+
+    // 取得主視窗的位置（假設您有主視窗的控制代碼）
+    RECT mainWindowRect;
+    GetWindowRect((HWND)Window::s_mainWindow->m_windowHandle, &mainWindowRect);  // 需要主視窗控制代碼
+
+    // 計算子視窗客戶區域在主視窗中的相對位置
+    int relativeX = clientTopLeft.x - mainWindowRect.left;
+    int relativeY = clientTopLeft.y - mainWindowRect.top;
+
     // 1. 從主視窗 RenderTarget 複製指定區域到子視窗
     D3D11_BOX sourceBox = {};
-    sourceBox.left   = (UINT)(window.viewportX * sceneWidth);
-    sourceBox.top    = (UINT)(window.viewportY * sceneHeight);
-    sourceBox.right  = (UINT)((window.viewportX + window.viewportWidth) * sceneWidth);
-    sourceBox.bottom = (UINT)((window.viewportY + window.viewportHeight) * sceneHeight);
-    sourceBox.front  = 0;
-    sourceBox.back   = 1;
+    sourceBox.left      = (UINT)relativeX;
+    sourceBox.top       = (UINT)relativeY;
+    sourceBox.right     = (UINT)(relativeX + clientRect.right);
+    sourceBox.bottom    = (UINT)(relativeY + clientRect.bottom);
+    sourceBox.front     = 0;
+    sourceBox.back      = 1;
 
     // 獲取子視窗的 texture
     ID3D11Texture2D* windowTexture = nullptr;
     window.m_renderTargetView->GetResource((ID3D11Resource**)&windowTexture);
+    ID3D11Texture2D* mainRenderTargetTexture = nullptr;
+    m_mainRenderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
 
     // 從主 RenderTarget 複製到子視窗
     m_deviceContext->CopySubresourceRegion(
         windowTexture,          // 目標
         0,                      // 目標子資源
         0, 0, 0,               // 目標位置
-        m_mainRenderTargetTexture->m_texture, // 來源（主視窗的 texture）
+        mainRenderTargetTexture, // 來源（主視窗的 texture）
         0,                      // 來源子資源
         &sourceBox             // 來源區域
     );
@@ -1578,78 +1579,6 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
 
     // 2. Present 子視窗
     window.m_swapChain->Present(0, 0);
-}
-
-HRESULT Renderer::CopyRenderTargetToStaging()
-{
-    if (!m_mainRenderTargetTexture || !m_mainRenderTargetTexture->m_texture) return E_FAIL;
-
-    // 建立 staging texture（若尚未建立）
-    if (!m_sceneTexture)
-    {
-        D3D11_TEXTURE2D_DESC desc = {};
-        m_mainRenderTargetTexture->m_texture->GetDesc(&desc);
-
-        desc.Usage          = D3D11_USAGE_STAGING;
-        desc.BindFlags      = 0;
-        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        desc.MiscFlags      = 0;
-
-        HRESULT hr = m_device->CreateTexture2D(&desc, nullptr, &m_sceneTexture->m_texture);
-        if (FAILED(hr)) return hr;
-    }
-
-    // 複製 render target 到 staging texture
-    m_deviceContext->CopyResource(m_sceneTexture->m_texture, m_mainRenderTargetTexture->m_texture);
-
-    // // 將 staging texture 映射給 CPU 存取
-    // D3D11_MAPPED_SUBRESOURCE mapped = {};
-    // HRESULT hr = m_deviceContext->Map(m_sceneTexture->m_texture, 0, D3D11_MAP_READ, 0, &mapped);
-    // if (FAILED(hr)) return hr;
-    //
-    // // 範例：讀取第一行像素資料（RGBA 每像素 4 bytes）
-    // BYTE* pixelData = reinterpret_cast<BYTE*>(mapped.pData);
-    // UINT rowPitch = mapped.RowPitch;
-    //
-    // // TODO：你可以在這裡使用 pixelData，例如複製到自己的 buffer
-    //
-    //
-    //
-    // // 解鎖
-    // m_deviceContext->Unmap(m_sceneTexture->m_texture, 0);
-
-    return S_OK;
-}
-
-void Renderer::ReadVertexBufferToPixelData()
-{
-    if (!m_immediateVBO_PCU) return;
-
-    // 建立 staging buffer（可讀）
-    VertexBuffer* stagingVB = m_immediateVBO_PCU->CreateStagingCopy(m_deviceContext);
-    if (!stagingVB || !stagingVB->m_buffer) return;
-
-    // Map 可讀 staging buffer
-    D3D11_MAPPED_SUBRESOURCE mappedResource = {};
-    HRESULT                  hr             = m_deviceContext->Map(stagingVB->m_buffer, 0, D3D11_MAP_READ, 0, &mappedResource);
-    if (FAILED(hr))
-    {
-        DebuggerPrintf("Failed to map staging vertex buffer: 0x%08X\n", hr);
-        delete stagingVB;
-        return;
-    }
-
-    // 取得 vertex 資料與數量
-    Vertex_PCU* vertexData  = reinterpret_cast<Vertex_PCU*>(mappedResource.pData);
-    size_t      vertexCount = stagingVB->GetSize() / stagingVB->GetStride();
-
-    // 複製頂點資料到 m_vertexList
-    m_vertexList.resize(vertexCount);
-    std::memcpy(m_vertexList.data(), vertexData, vertexCount * sizeof(Vertex_PCU));
-
-    // 清理
-    m_deviceContext->Unmap(stagingVB->m_buffer, 0);
-    delete stagingVB;
 }
 
 HRESULT Renderer::ResizeWindowSwapChain(Window& window)
@@ -1805,203 +1734,6 @@ HRESULT Renderer::CreateStagingTexture()
     texDesc.CPUAccessFlags       = D3D11_CPU_ACCESS_READ;
 
     return m_device->CreateTexture2D(&texDesc, nullptr, &m_stagingTexture->m_texture);
-}
-
-HRESULT Renderer::CreateShaders()
-{
-    const char* vsSource = R"(
-        struct VS_INPUT
-        {
-            float3 pos : VERTEX_POSITION;
-            float4 a_color : VERTEX_COLOR;
-            float2 tex : VERTEX_UVTEXCOORDS;
-        };
-
-        struct VS_OUTPUT
-        {
-            float4 pos : SV_POSITION;
-            float4 color : COLOR0;
-            float2 tex : TEXCOORD0;
-        };
-
-        VS_OUTPUT main(VS_INPUT input)
-        {
-            VS_OUTPUT output;
-            output.pos = float4(input.pos, 1.0f);
-            output.color = input.a_color;
-            output.tex = input.tex;
-            return output;
-        }
-        )";
-
-    const char* psSource = R"(
-        Texture2D tex : register(t0);
-        SamplerState sam : register(s0);
-
-        struct PS_INPUT
-        {
-            float4 pos : SV_POSITION;
-            float4 color : COLOR0;
-            float2 tex : TEXCOORD0;
-        };
-
-        float4 main(PS_INPUT input) : SV_TARGET
-        {
-            // 檢查是否有有效的 UV 坐標（用於區分是否使用紋理）
-        if (input.tex.x > 0.001 || input.tex.y > 0.001)
-        {
-            // 有紋理座標，使用紋理
-            float4 texColor = tex.Sample(sam, input.tex);
-            return texColor * input.color;
-        }
-        else
-        {
-            // 沒有紋理座標，直接使用頂點顏色
-            return input.color;
-        }
-        }
-        )";
-
-    ID3DBlob* vsBlob    = nullptr;
-    ID3DBlob* psBlob    = nullptr;
-    ID3DBlob* errorBlob = nullptr;
-
-    HRESULT hr = D3DCompile(vsSource, strlen(vsSource), nullptr, nullptr, nullptr,
-                            "main", "vs_5_0", 0, 0, &vsBlob, &errorBlob);
-    if (FAILED(hr))
-    {
-        if (errorBlob) errorBlob->Release();
-        return hr;
-    }
-
-    hr = m_device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
-                                      nullptr, &m_currentShader->m_vertexShader);
-    if (FAILED(hr))
-    {
-        vsBlob->Release();
-        return hr;
-    }
-
-    // Create a local array of input element descriptions that defines the vertex layout.
-    D3D11_INPUT_ELEMENT_DESC inputElementDesc[3];
-    UINT                     numElements = 3;
-
-    inputElementDesc[0] = {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
-    inputElementDesc[1] = {"VERTEX_COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-    inputElementDesc[2] = {"VERTEX_UVTEXCOORDS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
-
-
-    hr = m_device->CreateInputLayout(inputElementDesc, numElements, vsBlob->GetBufferPointer(),
-                                     vsBlob->GetBufferSize(), &m_currentShader->m_inputLayout);
-    vsBlob->Release();
-    if (FAILED(hr)) return hr;
-
-    hr = D3DCompile(psSource, strlen(psSource), nullptr, nullptr, nullptr,
-                    "main", "ps_5_0", 0, 0, &psBlob, &errorBlob);
-    if (FAILED(hr))
-    {
-        if (errorBlob) errorBlob->Release();
-        return hr;
-    }
-
-    hr = m_device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
-                                     nullptr, &m_currentShader->m_pixelShader);
-    psBlob->Release();
-
-    return hr;
-}
-
-HRESULT Renderer::CreateVertexBuffer()
-{
-    m_vertexList.clear();
-
-    // Fullscreen quad vertices
-    m_vertexList.emplace_back(Vec3(-1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(0, 0)); // 左下
-    m_vertexList.emplace_back(Vec3(-1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(0, 1)); // 左上
-    m_vertexList.emplace_back(Vec3(1.f, 1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(1, 1)); // 右上
-    m_vertexList.emplace_back(Vec3(1.f, -1.f, 0.f), Rgba8(255, 255, 255, 255), Vec2(1, 0)); // 右下
-
-    // AABB2D vertices
-    float aabbLeft   = -0.5f;
-    float aabbRight  = 0.5f;
-    float aabbBottom = -0.3f;
-    float aabbTop    = 0.3f;
-
-    m_vertexList.emplace_back(Vec3(aabbLeft, aabbBottom, 0.f), Rgba8(255, 255, 0, 255), Vec2(0, 0));   // 左下
-    m_vertexList.emplace_back(Vec3(aabbLeft, aabbTop, 0.f), Rgba8(255, 255, 0, 255), Vec2(0, 0));      // 左上
-    m_vertexList.emplace_back(Vec3(aabbRight, aabbTop, 0.f), Rgba8(255, 255, 0, 255), Vec2(0, 0));     // 右上
-    m_vertexList.emplace_back(Vec3(aabbRight, aabbBottom, 0.f), Rgba8(255, 255, 0, 255), Vec2(0, 0));  // 右下
-
-    D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.Usage             = D3D11_USAGE_DEFAULT;
-    bufferDesc.ByteWidth         = m_vertexList.size() * sizeof(Vertex_PCU);
-    bufferDesc.BindFlags         = D3D11_BIND_VERTEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem                = m_vertexList.data();
-
-    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &initData, &m_immediateVBO_PCU->m_buffer);
-    if (FAILED(hr)) return hr;
-
-    // FIX: Increase index buffer size to accommodate all draw calls
-    UINT indices[] = {
-        // Fullscreen quad (triangles)
-        0, 1, 2,  // First triangle
-        0, 2, 3,  // Second triangle
-
-        // AABB2D (triangles) - FIXED: was trying to draw 8 indices but only had 6
-        4, 5, 6,  // First triangle
-        4, 6, 7,   // Second triangle
-
-        8, 9, 10,
-        11, 12, 13
-    };
-
-    bufferDesc.ByteWidth = sizeof(indices);
-    bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    initData.pSysMem     = indices;
-
-    return m_device->CreateBuffer(&bufferDesc, &initData, &m_immediateIBO->m_buffer);
-}
-
-HRESULT Renderer::CreateSampler()
-{
-    // D3D11_SAMPLER_DESC samplerDesc = {};
-    // samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    // samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_WRAP;
-    // samplerDesc.AddressV           = D3D11_TEXTURE_ADDRESS_WRAP;
-    // samplerDesc.AddressW           = D3D11_TEXTURE_ADDRESS_WRAP;
-    // samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
-    // samplerDesc.MinLOD             = 0;
-    // samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
-    //
-    // return m_device->CreateSamplerState(&samplerDesc, &sampler);
-    return S_OK;
-}
-
-void Renderer::RenderSceneTextureToMainWindow() const
-{
-    // // 設置著色器
-    // m_deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    // m_deviceContext->PSSetShader(pixelShader, nullptr, 0);
-    // m_deviceContext->IASetInputLayout(inputLayout);
-    //
-    // // 使用場景紋理作為輸入
-    // m_deviceContext->PSSetShaderResources(0, 1, &m_sceneTexture->m_shaderResourceView);
-    // m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
-    //
-    // // 設置頂點和索引緩衝區
-    // UINT stride = sizeof(Vertex_PCU);
-    // UINT offset = 0;
-    // m_deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-    // m_deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    // m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //
-    // // 渲染全螢幕四邊形 (6 indices)
-    // m_deviceContext->DrawIndexed(6, 0, 0);
-    //
-    // // Draw AABB quad (6 indices, starting from index 6)
-    // m_deviceContext->DrawIndexed(6, 6, 0);  // FIXED: was 8 indices, now 6
 }
 
 HRESULT Renderer::CreateWindowSwapChain(Window& window)
