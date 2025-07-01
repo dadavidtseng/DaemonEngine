@@ -108,7 +108,7 @@ public:
 
     // RendererEx
     void     Render(VertexList_PCU& verts);
-    void     UpdateWindows(std::vector<Window>& windows);
+    void     UpdateWindows(std::vector<Window>& windows) ;
     HRESULT  CreateWindowSwapChain(Window& window);
     HRESULT  ResizeWindowSwapChain(Window& window);
     void     RenderViewportToWindow(Window const& window) const;
