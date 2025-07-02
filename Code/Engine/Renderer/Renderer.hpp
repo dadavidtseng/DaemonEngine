@@ -62,7 +62,6 @@ public:
     static int k_cameraConstantSlot;
     static int k_modelConstantsSlot;
 
-
     void Startup();
     void BeginFrame() const;
     void EndFrame() const;
@@ -108,17 +107,20 @@ public:
 
     // RendererEx
     void     Render();
-    void     UpdateWindows(std::vector<Window>& windows);
     HRESULT  CreateWindowSwapChain(Window& window);
     HRESULT  ResizeWindowSwapChain(Window& window) const;
     void     RenderViewportToWindow(Window const& window) const;
     void     RenderViewportToWindowDX11(const Window& window);
-    HRESULT  CopyRenderTargetToStaging();
-    void     ReadVertexBufferToPixelData();
-    Texture* m_sceneTexture   = nullptr;
-    Texture* m_stagingTexture = nullptr;
 
 private:
+    void     CreateDeviceAndSwapChain(unsigned int deviceFlags);
+    void     CreateRenderTargetView();
+    void     CreateBlendStates();
+    void     CreateDepthStencilTextureAndView();
+    void     CreateDepthStencilState();
+    void     CreateSamplerState();
+    void     CreateRasterizerState();
+
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
     Shader*     GetShaderForFileName(char const* shaderFilePath) const;
@@ -130,7 +132,6 @@ private:
     Shader* CreateShader(char const* shaderName, char const* shaderSource, eVertexType vertexType = eVertexType::VERTEX_PCU);
     Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
-
 
     void BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
     void BindIndexBuffer(IndexBuffer const* ibo) const;
@@ -148,8 +149,7 @@ protected:
     /// The ID3D11DeviceContext interface represents a device context which generates rendering commands.
     ID3D11DeviceContext* m_deviceContext = nullptr;
     /// A render-target-view interface identifies the render-target subresources that can be accessed during rendering.
-    ID3D11RenderTargetView* m_mainRenderTargetView    = nullptr;
-    Texture*                m_mainRenderTargetTexture = nullptr;
+    ID3D11RenderTargetView* m_renderTargetView = nullptr;
 
     eBlendMode m_desiredBlendMode = eBlendMode::ALPHA;
     /// The blend-state interface holds a description for blending state that you can bind to the output-merger stage.
@@ -196,21 +196,10 @@ protected:
 #endif
 
     // RenderEx
-    ID3D11RenderTargetView* m_sceneRenderTargetView = nullptr;
+
     int                     sceneWidth              = 0;
     int                     sceneHeight             = 0;
     BITMAPINFO              m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
     std::vector<BYTE>       m_pixelData;
     void                    ReadStagingTextureToPixelData();
-    void                    RenderTexture(Texture* texture);
-
-
-    HRESULT CreateSceneRenderTexture();
-    HRESULT CreateStagingTexture();
-    HRESULT CreateShaders();
-    HRESULT CreateVertexBuffer();
-    HRESULT CreateSampler();
-    void    RenderSceneTextureToMainWindow() const;
-
-    VertexList_PCU m_vertexList;
 };

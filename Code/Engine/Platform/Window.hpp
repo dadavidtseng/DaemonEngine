@@ -7,16 +7,15 @@
 
 #include <random>
 
-#include "WindowCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Platform/WindowCommon.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-// #include "Engine/Renderer/Renderer.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class InputSystem;
-struct IDXGISwapChain;
+struct IDXGISwapChain1;
 struct ID3D11RenderTargetView;
 
 //----------------------------------------------------------------------------------------------------
@@ -86,7 +85,7 @@ public:
     float                   GetRenderAspectRatio() const { return static_cast<float>(GetRenderDimensions().x) / static_cast<float>(GetRenderDimensions().y); }
     void*                   m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
     void*                   m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
-    IDXGISwapChain*         m_swapChain        = nullptr;
+    IDXGISwapChain1*        m_swapChain        = nullptr;
     ID3D11RenderTargetView* m_renderTargetView = nullptr;
 
 
@@ -116,10 +115,7 @@ private:
 
     sWindowConfig m_config;
 
-
-    IntVec2 m_clientDimensions = IntVec2::ZERO;
+    IntVec2 m_clientDimensions = IntVec2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     IntVec2 m_renderDimensions = IntVec2::ZERO;      // For letterbox/crop modes - actual render area size
     IntVec2 m_renderOffset     = IntVec2::ZERO;      // For letterbox/crop modes - offset of render area
 };
-
-LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

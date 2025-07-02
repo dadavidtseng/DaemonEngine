@@ -5,9 +5,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Renderer.hpp"
 
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <d3dcompiler.h>
-#include <dxgi.h>
+#include <dxgi1_2.h>
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -21,10 +21,10 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
+#include "Engine/Renderer/RenderCommon.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
-#include "Engine/Renderer/RenderCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
@@ -51,10 +51,10 @@ STATIC int Renderer::k_modelConstantsSlot   = 4;
 Renderer::Renderer(sRenderConfig const& config)
 {
     m_config = config;
-    // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
-    // sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
-    sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
-    sceneHeight = GetSystemMetrics(SM_CYSCREEN);
+    sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
+    sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
+    // sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
+    // sceneHeight = GetSystemMetrics(SM_CYSCREEN);
 
     // RendererEx
     ZeroMemory(&m_bitmapInfo, sizeof(BITMAPINFO));
@@ -68,36 +68,8 @@ Renderer::Renderer(sRenderConfig const& config)
     m_pixelData.resize(sceneWidth * sceneHeight * 4);
 }
 
-//----------------------------------------------------------------------------------------------------
-void Renderer::Startup()
+void Renderer::CreateDeviceAndSwapChain(unsigned int deviceFlags)
 {
-    // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
-    unsigned int deviceFlags = 0;
-
-#if defined(ENGINE_DEBUG_RENDER)
-    deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-    // Create the DXGI debug module in Startup, before creating the device and swap chain.
-#if defined(ENGINE_DEBUG_RENDER)
-    m_dxgiDebugModule = static_cast<void*>(LoadLibraryA("dxgidebug.dll"));
-
-    if (!m_dxgiDebugModule)
-    {
-        ERROR_AND_DIE("Could not load dxgidebug.dll.")
-    }
-
-    typedef HRESULT (WINAPI*GetDebugModuleCB)(REFIID, void**);
-    ((GetDebugModuleCB)GetProcAddress(static_cast<HMODULE>(m_dxgiDebugModule), "DXGIGetDebugInterface"))
-        (__uuidof(IDXGIDebug), &m_dxgiDebug);
-
-    if (!m_dxgiDebug)
-    {
-        ERROR_AND_DIE("Could not load debug module.")
-    }
-#endif
-
-    //-Create device and swap chain-------------------------------------------------------------------
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     Window const*        window        = m_config.m_window;
 
@@ -128,30 +100,31 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("Could not create D3D 11 device and swap chain.")
     }
-    //-Create device and swap chain-------------------------------------------------------------------
+}
 
-    //-Get back buffer texture------------------------------------------------------------------------
-    // ID3D11Texture2D* backBuffer;
-    m_mainRenderTargetTexture = new Texture();
+void Renderer::CreateRenderTargetView()
+{
+    ID3D11Texture2D* backBuffer;
 
-    hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_mainRenderTargetTexture->m_texture));
+    HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 
     if (FAILED(hr))
     {
         ERROR_AND_DIE("Could not get swap chain buffer.")
     }
 
-    hr = m_device->CreateRenderTargetView(m_mainRenderTargetTexture->m_texture, nullptr, &m_mainRenderTargetView);
+    hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
 
     if (FAILED(hr))
     {
         ERROR_AND_DIE("Could create render target view for swap chain buffer.")
     }
 
-    // backBuffer->Release();
-    //-Get back buffer texture------------------------------------------------------------------------
+    backBuffer->Release();
+}
 
-    //-Create blend states and store the state in m_blendState----------------------------------------
+void Renderer::CreateBlendStates()
+{
     D3D11_BLEND_DESC blendDesc                      = {};
     blendDesc.RenderTarget[0].BlendEnable           = TRUE;
     blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
@@ -162,7 +135,7 @@ void Renderer::Startup()
     blendDesc.RenderTarget[0].BlendOpAlpha          = blendDesc.RenderTarget[0].BlendOp;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-    hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(eBlendMode::OPAQUE)]);
+    HRESULT hr = m_device->CreateBlendState(&blendDesc, &m_blendStates[static_cast<int>(eBlendMode::OPAQUE)]);
     if (!SUCCEEDED(hr))
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::OPAQUE failed.")
@@ -185,9 +158,10 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("CreateBlendState for BlendMode::ADDITIVE failed.")
     }
-    //-Create blend states and store the state in m_blendState----------------------------------------
+}
 
-    //-Create depth stencil texture and view----------------------------------------------------------
+void Renderer::CreateDepthStencilTextureAndView()
+{
     D3D11_TEXTURE2D_DESC depthTextureDesc = {};
     depthTextureDesc.Width                = m_config.m_window->GetClientDimensions().x;
     depthTextureDesc.Height               = m_config.m_window->GetClientDimensions().y;
@@ -198,7 +172,7 @@ void Renderer::Startup()
     depthTextureDesc.BindFlags            = D3D11_BIND_DEPTH_STENCIL;
     depthTextureDesc.SampleDesc.Count     = 1;
 
-    hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
+    HRESULT hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
 
     if (!SUCCEEDED(hr))
     {
@@ -211,12 +185,13 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("Could not create depth stencil view.")
     }
-    //-Create depth stencil texture and view----------------------------------------------------------
+}
 
-    //-Create depth stencil state---------------------------------------------------------------------
+void Renderer::CreateDepthStencilState()
+{
     D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 
-    hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::DISABLED)]);
+    HRESULT hr = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilStates[static_cast<int>(eDepthMode::DISABLED)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -256,9 +231,10 @@ void Renderer::Startup()
     }
 
     SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-    //-Create depth stencil state---------------------------------------------------------------------
+}
 
-    //-Create sampler states--------------------------------------------------------------------------
+void Renderer::CreateSamplerState()
+{
     D3D11_SAMPLER_DESC samplerDesc = {};
     samplerDesc.Filter             = D3D11_FILTER_MIN_MAG_MIP_POINT;
     samplerDesc.AddressU           = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -267,7 +243,7 @@ void Renderer::Startup()
     samplerDesc.ComparisonFunc     = D3D11_COMPARISON_NEVER;
     samplerDesc.MaxLOD             = D3D11_FLOAT32_MAX;
 
-    hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
+    HRESULT hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerStates[static_cast<int>(eSamplerMode::POINT_CLAMP)]);
 
     if (!SUCCEEDED(hr))
     {
@@ -287,9 +263,10 @@ void Renderer::Startup()
 
     // Default the sampler state to point clamp
     SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    //-Create sampler states--------------------------------------------------------------------------
+}
 
-    //-Set rasterizer state---------------------------------------------------------------------------
+void Renderer::CreateRasterizerState()
+{
     D3D11_RASTERIZER_DESC rasterizerDesc;
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.CullMode              = D3D11_CULL_NONE;
@@ -302,7 +279,7 @@ void Renderer::Startup()
     rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+    HRESULT hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
     if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
@@ -332,7 +309,46 @@ void Renderer::Startup()
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::WIREFRAME_CULL_BACK failed.")
     }
-    //-Set rasterizer state---------------------------------------------------------------------------
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::Startup()
+{
+    // Create a local DXGI_SWAP_CHAIN_DESC variable and set its values as follows.
+    unsigned int deviceFlags = 0;
+
+#if defined(ENGINE_DEBUG_RENDER)
+    deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    // Create the DXGI debug module in Startup, before creating the device and swap chain.
+#if defined(ENGINE_DEBUG_RENDER)
+    m_dxgiDebugModule = static_cast<void*>(LoadLibraryA("dxgidebug.dll"));
+
+    if (!m_dxgiDebugModule)
+    {
+        ERROR_AND_DIE("Could not load dxgidebug.dll.")
+    }
+
+    typedef HRESULT (WINAPI*GetDebugModuleCB)(REFIID, void**);
+    ((GetDebugModuleCB)GetProcAddress(static_cast<HMODULE>(m_dxgiDebugModule), "DXGIGetDebugInterface"))
+        (__uuidof(IDXGIDebug), &m_dxgiDebug);
+
+    if (!m_dxgiDebug)
+    {
+        ERROR_AND_DIE("Could not load debug module.")
+    }
+#endif
+
+
+    CreateDeviceAndSwapChain(deviceFlags);
+    CreateRenderTargetView();
+    CreateBlendStates();
+    CreateDepthStencilTextureAndView();
+    CreateDepthStencilState();
+    CreateSamplerState();
+    CreateRasterizerState();
+
 
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
@@ -351,49 +367,21 @@ void Renderer::Startup()
     m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
 
-    BindShader(m_currentShader);
+    BindShader(m_defaultShader);
     BindTexture(m_defaultTexture, 0);
-
-    // RendererEx
-    hr = CreateSceneRenderTexture();
-    // if (FAILED(hr)) return hr;
-
-    hr = CreateStagingTexture();
 }
-
 
 //----------------------------------------------------------------------------------------------------
 void Renderer::BeginFrame() const
 {
-    m_deviceContext->OMSetRenderTargets(1, &m_mainRenderTargetView, m_depthStencilDSV);
+    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
 }
 
 //----------------------------------------------------------------------------------------------------
-// ERROR: Original Present Call
 void Renderer::EndFrame() const
 {
-    // RendererEx
-    // ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-    // m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
-    // // 切換到主窗口的後緩衝區
-    // m_deviceContext->OMSetRenderTargets(1, &m_mainRenderTargetView, nullptr);
-    //
-    // // 設置主窗口的視口
-    // D3D11_VIEWPORT viewport = {};
-    // viewport.Width          = 1920.0f;  // 或使用您的主窗口寬度
-    // viewport.Height         = 1080.0f; // 或使用您的主窗口高度
-    // viewport.MinDepth       = 0.0f;
-    // viewport.MaxDepth       = 1.0f;
-    // m_deviceContext->RSSetViewports(1, &viewport);
-    //
-    // // 清除主窗口背景（可選）
-    // ClearScreen(Rgba8::MAGENTA);
-
-    // 將場景紋理渲染到主窗口
-    // RenderSceneTextureToMainWindow();
-    // m_swapChain->Present(1, 0);
-
-    HRESULT const hr = m_swapChain->Present(0, 0);
+    bool constexpr isVSync = false;
+    HRESULT const  hr      = m_swapChain->Present(isVSync, 0);
 
     if (hr == DXGI_ERROR_DEVICE_REMOVED ||
         hr == DXGI_ERROR_DEVICE_RESET)
@@ -455,7 +443,7 @@ void Renderer::Shutdown()
         DX_SAFE_RELEASE(m_blendStates[i])
     }
 
-    DX_SAFE_RELEASE(m_mainRenderTargetView)
+    DX_SAFE_RELEASE(m_renderTargetView)
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
@@ -482,61 +470,7 @@ void Renderer::Shutdown()
 
 void Renderer::Render()
 {
-    // if (!m_sceneRenderTargetView || !m_deviceContext) return;
-    //
-    // // CRITICAL: Unbind scene texture from shader resources before using as render target
-    // ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-    // m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
-    // m_deviceContext->OMSetRenderTargets(1, &m_sceneRenderTargetView, nullptr);
-    //
-    // D3D11_VIEWPORT viewport = {};
-    // viewport.Width          = (FLOAT)sceneWidth;
-    // viewport.Height         = (FLOAT)sceneHeight;
-    // viewport.MinDepth       = 0.0f;
-    // viewport.MaxDepth       = 1.0f;
-    // m_deviceContext->RSSetViewports(1, &viewport);
-    //
-    // float clearColor[4] = {0.1f, 0.1f, 0.2f, 1.0f};
-    // m_deviceContext->ClearRenderTargetView(m_sceneRenderTargetView, clearColor);
-
-    // RenderTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
-
-    // AddVertsForAABB2D(verts, AABB2(Vec2(0, 0), Vec2(1920, 1080)));
-    // BindTexture(CreateOrGetTextureFromFile("Data/Images/WindowKill.png"));
-    // BindTexture(m_sceneTexture);
-
-
-    // UpdateWindows(g_theApp->windows);
-
-    // DrawVertexArray(verts);
-    m_deviceContext->CopyResource(m_stagingTexture->m_texture, m_mainRenderTargetTexture->m_texture);
     ReadStagingTextureToPixelData();
-}
-
-void Renderer::UpdateWindows(std::vector<Window>& windows)
-{
-    for (int i = 0; i < windows.size(); ++i)
-    {
-        // 先检查是否需要调整SwapChain大小
-        if (windows[i].needsResize)
-        {
-            HRESULT hr             = ResizeWindowSwapChain(windows[i]);
-            windows[i].needsResize = false;
-            if (FAILED(hr))
-            {
-                DebuggerPrintf("Failed to resize window swap chain: 0x%08X\n", hr);
-                continue;
-            }
-        }
-
-        if (windows[i].needsUpdate)
-        {
-            // 使用 DirectX 11 版本渲染
-            RenderViewportToWindowDX11(windows[i]);
-            // g_theRenderer->RenderViewportToWindow(windows[i]);
-            // window.needsUpdate = false;
-        }
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -544,7 +478,7 @@ void Renderer::ClearScreen(Rgba8 const& clearColor) const
 {
     float colorAsFloats[4];
     clearColor.GetAsFloats(colorAsFloats);
-    m_deviceContext->ClearRenderTargetView(m_mainRenderTargetView, colorAsFloats);
+    m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
     m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
@@ -1389,12 +1323,11 @@ void Renderer::SetStatesIfChanged()
 
 void Renderer::ReadStagingTextureToPixelData()
 {
-    if (!m_mainRenderTargetTexture || !m_mainRenderTargetTexture->m_texture) return;
-
     // 1. 取得主 Render Target 的描述
-    ID3D11Texture2D*     renderTargetTex = m_mainRenderTargetTexture->m_texture;
-    D3D11_TEXTURE2D_DESC desc            = {};
-    renderTargetTex->GetDesc(&desc);
+    ID3D11Texture2D* mainRenderTargetTexture = nullptr;
+    m_renderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
+    D3D11_TEXTURE2D_DESC desc = {};
+    mainRenderTargetTexture->GetDesc(&desc);
 
     // 2. 建立 staging texture（CPU 可讀）
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
@@ -1411,7 +1344,7 @@ void Renderer::ReadStagingTextureToPixelData()
     }
 
     // 3. 複製 render target 資料到 staging texture
-    m_deviceContext->CopyResource(stagingTex, renderTargetTex);
+    m_deviceContext->CopyResource(stagingTex, mainRenderTargetTexture);
 
     // 4. Map staging texture
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -1563,7 +1496,7 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
     ID3D11Texture2D* windowTexture = nullptr;
     window.m_renderTargetView->GetResource((ID3D11Resource**)&windowTexture);
     ID3D11Texture2D* mainRenderTargetTexture = nullptr;
-    m_mainRenderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
+    m_renderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
 
     // 從主 RenderTarget 複製到子視窗
     m_deviceContext->CopySubresourceRegion(
@@ -1585,24 +1518,6 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 {
     if (!window.m_swapChain) return E_FAIL;
 
-
-    // m_deviceContext->ClearState();
-    // m_deviceContext->Flush();
-
-    // // 2. 強制等待 GPU 完成所有操作
-    // ID3D11Query*     query     = nullptr;
-    // D3D11_QUERY_DESC queryDesc = {};
-    // queryDesc.Query            = D3D11_QUERY_EVENT;
-    // m_device->CreateQuery(&queryDesc, &query);
-    // m_deviceContext->End(query);
-    //
-    // BOOL queryData = FALSE;
-    // while (m_deviceContext->GetData(query, &queryData, sizeof(BOOL), 0) == S_FALSE)
-    // {
-    //     Sleep(1); // 等待 GPU 完成
-    // }
-    // query->Release();
-
     // 3. 釋放 RenderTargetView
     if (window.m_renderTargetView)
     {
@@ -1611,7 +1526,6 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 
         window.m_renderTargetView = nullptr;
     }
-
 
     // 2. Get new window dimensions
     RECT clientRect;
@@ -1688,79 +1602,31 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     return S_OK;
 }
 
-//----------------------------------------------------------------------------------------------------
-/// @brief
-/// CreateTexture
-/// CreateRenderTargetView
-/// CreateShaderResourceView
-HRESULT Renderer::CreateSceneRenderTexture()
-{
-    m_sceneTexture = new Texture();
-
-    D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width                = sceneWidth;
-    texDesc.Height               = sceneHeight;
-    texDesc.MipLevels            = 1;
-    texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_B8G8R8A8_UNORM;
-    texDesc.SampleDesc.Count     = 1;
-    texDesc.Usage                = D3D11_USAGE_DEFAULT;
-    texDesc.BindFlags            = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-
-    HRESULT hr = m_device->CreateTexture2D(&texDesc, nullptr, &m_sceneTexture->m_texture);
-    if (FAILED(hr)) return hr;
-
-    hr = m_device->CreateRenderTargetView(m_sceneTexture->m_texture, nullptr, &m_sceneRenderTargetView);
-    if (FAILED(hr)) return hr;
-
-    hr = m_device->CreateShaderResourceView(m_sceneTexture->m_texture, nullptr, &m_sceneTexture->m_shaderResourceView);
-    if (FAILED(hr)) return hr;
-
-    return S_OK;
-}
-
-HRESULT Renderer::CreateStagingTexture()
-{
-    m_stagingTexture = new Texture();
-
-    D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width                = sceneWidth;
-    texDesc.Height               = sceneHeight;
-    texDesc.MipLevels            = 1;
-    texDesc.ArraySize            = 1;
-    texDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texDesc.SampleDesc.Count     = 1;
-    texDesc.Usage                = D3D11_USAGE_STAGING;
-    texDesc.CPUAccessFlags       = D3D11_CPU_ACCESS_READ;
-
-    return m_device->CreateTexture2D(&texDesc, nullptr, &m_stagingTexture->m_texture);
-}
-
 HRESULT Renderer::CreateWindowSwapChain(Window& window)
 {
+    if (window.m_renderTargetView)
+    {
+        window.m_renderTargetView->Release();
+        window.m_renderTargetView = nullptr;
+    }
+    if (window.m_swapChain)
+    {
+        window.m_swapChain->Release();
+        window.m_swapChain = nullptr;
+    }
+
+    // 強制釋放 deferred 資源
+    m_deviceContext->ClearState();
+    m_deviceContext->Flush();
+
     RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);
     window.width  = clientRect.right - clientRect.left;
     window.height = clientRect.bottom - clientRect.top;
 
-    // 創建 swap chain 描述
-    DXGI_SWAP_CHAIN_DESC swapChainDesc               = {};
-    swapChainDesc.BufferCount                        = 1;
-    swapChainDesc.BufferDesc.Width                   = window.width;
-    swapChainDesc.BufferDesc.Height                  = window.height;
-    swapChainDesc.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;
-    swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-    swapChainDesc.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.OutputWindow                       = (HWND)window.m_windowHandle;
-    swapChainDesc.SampleDesc.Count                   = 1;
-    swapChainDesc.SampleDesc.Quality                 = 0;
-    swapChainDesc.Windowed                           = TRUE;
-    swapChainDesc.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
-
-    // 獲取 DXGI Factory
+    // 獲取 DXGI Factory2（注意這裡會用到 IDXGIFactory2 而非舊的 IDXGIFactory）
     IDXGIDevice* dxgiDevice = nullptr;
-    HRESULT      hr         = m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    HRESULT      hr         = m_device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice));
     if (FAILED(hr)) return hr;
 
     IDXGIAdapter* adapter = nullptr;
@@ -1771,26 +1637,43 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
         return hr;
     }
 
-    IDXGIFactory* factory = nullptr;
-    hr                    = adapter->GetParent(__uuidof(IDXGIFactory), (void**)&factory);
-    if (FAILED(hr))
-    {
-        adapter->Release();
-        dxgiDevice->Release();
-        return hr;
-    }
-
-    // 創建 swap chain
-    hr = factory->CreateSwapChain(m_device, &swapChainDesc, &window.m_swapChain);
-
-    // 清理臨時物件
-    factory->Release();
+    IDXGIFactory2* factory2 = nullptr;
+    hr                      = adapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(&factory2));
     adapter->Release();
     dxgiDevice->Release();
-
     if (FAILED(hr)) return hr;
 
-    // 創建 render target view
+    // 使用 DXGI_SWAP_CHAIN_DESC1（新版描述）
+    DXGI_SWAP_CHAIN_DESC1 scDesc = {};
+    scDesc.Width                 = window.width;
+    scDesc.Height                = window.height;
+    scDesc.Format                = DXGI_FORMAT_R8G8B8A8_UNORM;
+    scDesc.SampleDesc.Count      = 1;
+    scDesc.SampleDesc.Quality    = 0;
+    scDesc.BufferUsage           = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scDesc.BufferCount           = 2;  // Flip 模式需要至少 2
+    scDesc.Scaling               = DXGI_SCALING_STRETCH;
+    scDesc.SwapEffect            = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    scDesc.AlphaMode             = DXGI_ALPHA_MODE_UNSPECIFIED;
+    scDesc.Stereo                = FALSE;
+
+    // fullscreen 描述（我們通常使用 Windowed 模式，設為 nullptr 即可）
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsDesc = {};
+    fsDesc.Windowed                        = TRUE;
+
+    // 建立 swap chain
+    hr = factory2->CreateSwapChainForHwnd(
+        m_device,
+        (HWND)window.m_windowHandle,
+        &scDesc,
+        &fsDesc,
+        nullptr,
+        &window.m_swapChain
+    );
+    factory2->Release();
+    if (FAILED(hr)) return hr;
+
+    // render target view
     ID3D11Texture2D* backBuffer = nullptr;
     hr                          = window.m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
     if (FAILED(hr)) return hr;
