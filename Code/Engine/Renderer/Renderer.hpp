@@ -110,7 +110,7 @@ public:
     void     Render();
     void     UpdateWindows(std::vector<Window>& windows);
     HRESULT  CreateWindowSwapChain(Window& window);
-    HRESULT  ResizeWindowSwapChain(Window& window);
+    HRESULT  ResizeWindowSwapChain(Window& window) const;
     void     RenderViewportToWindow(Window const& window) const;
     void     RenderViewportToWindowDX11(const Window& window);
     HRESULT  CopyRenderTargetToStaging();

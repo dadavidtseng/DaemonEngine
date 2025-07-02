@@ -1581,13 +1581,13 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
     window.m_swapChain->Present(0, 0);
 }
 
-HRESULT Renderer::ResizeWindowSwapChain(Window& window)
+HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 {
     if (!window.m_swapChain) return E_FAIL;
 
 
-    m_deviceContext->ClearState();
-    m_deviceContext->Flush();
+    // m_deviceContext->ClearState();
+    // m_deviceContext->Flush();
 
     // // 2. 強制等待 GPU 完成所有操作
     // ID3D11Query*     query     = nullptr;
