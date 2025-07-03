@@ -1,4 +1,6 @@
-// ResourceCache.hpp - 資源快取
+
+
+
 #pragma once
 #include <unordered_map>
 #include <memory>

@@ -1,8 +1,13 @@
-// ResourceManager.cpp - 實現範例
-#include "ResourceSubsystem.hpp"
+//----------------------------------------------------------------------------------------------------
+// ResourceSubsystem.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Resource/ResourceSubsystem.hpp"
+
 #include <filesystem>
 
-#include "IResource.hpp"
+#include "Engine/Resource/IResource.hpp"
 
 void ResourceSubsystem::Initialize(size_t numThreads)
 {

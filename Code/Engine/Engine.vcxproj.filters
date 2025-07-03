@@ -235,9 +235,6 @@
     <ClCompile Include="Resource\IResourceLoader.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\Resourcecache.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Resource\ResourceHandle.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
@@ -248,6 +245,9 @@
       <Filter>Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource\ObjModelLoader.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ResourceCache.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
@@ -480,9 +480,6 @@
     <ClInclude Include="Resource\IResourceLoader.hpp">
       <Filter>Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\Resourcecache.hpp">
-      <Filter>Resource</Filter>
-    </ClInclude>
     <ClInclude Include="Resource\ResourceHandle.hpp">
       <Filter>Resource</Filter>
     </ClInclude>
@@ -493,6 +490,9 @@
       <Filter>Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource\ObjModelLoader.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ResourceCache.hpp">
       <Filter>Resource</Filter>
     </ClInclude>
   </ItemGroup>

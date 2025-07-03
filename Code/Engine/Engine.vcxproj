@@ -236,7 +236,7 @@
     <ClCompile Include="Resource\IResource.cpp" />
     <ClCompile Include="Resource\IResourceLoader.cpp" />
     <ClCompile Include="Resource\ObjModelLoader.cpp" />
-    <ClCompile Include="Resource\Resourcecache.cpp" />
+    <ClCompile Include="Resource\ResourceCache.cpp" />
     <ClCompile Include="Resource\ResourceCommon.cpp" />
     <ClCompile Include="Resource\ResourceHandle.cpp" />
     <ClCompile Include="Resource\ResourceSubsystem.cpp" />
@@ -319,7 +319,7 @@
     <ClInclude Include="Resource\IResource.hpp" />
     <ClInclude Include="Resource\IResourceLoader.hpp" />
     <ClInclude Include="Resource\ObjModelLoader.hpp" />
-    <ClInclude Include="Resource\Resourcecache.hpp" />
+    <ClInclude Include="Resource\ResourceCache.hpp" />
     <ClInclude Include="Resource\ResourceCommon.hpp" />
     <ClInclude Include="Resource\ResourceHandle.hpp" />
     <ClInclude Include="Resource\ResourceSubsystem.hpp" />

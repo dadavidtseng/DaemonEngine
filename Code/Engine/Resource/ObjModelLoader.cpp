@@ -1,29 +1,28 @@
 //----------------------------------------------------------------------------------------------------
-// OBJLoader.cpp
+// ObjModelLoader.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Resource/ObjModelLoader.hpp"
 #include <filesystem>
-#include <map>
 #include <sstream>
-
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
-#include "Engine/Core/Vertex_PCUTBN.hpp"
-
+//----------------------------------------------------------------------------------------------------
 bool ObjModelLoader::Load(String const&      fileName,
-                     VertexList_PCUTBN& out_vertexes,
-                     IndexList&         out_indexes,
-                     bool&              out_hasNormals,
-                     bool&              out_hasUVs,
-                     Mat44 const&       transform /*= Mat44() */) noexcept
+                          VertexList_PCUTBN& out_vertexes,
+                          IndexList&         out_indexes,
+                          bool&              out_hasNormals,
+                          bool&              out_hasUVs,
+                          Mat44 const&       transform /*= Mat44() */) noexcept
 {
     double loadStartTime = GetCurrentTimeSeconds();
+
     out_vertexes.clear();
     out_indexes.clear();
     out_hasNormals = false;
@@ -36,19 +35,19 @@ bool ObjModelLoader::Load(String const&      fileName,
     out_vertexes.reserve(10000);
     out_indexes.reserve(30000);
 
-    std::vector<Vec3> vertPositions;
-    std::vector<Vec3> normals;
-    std::vector<Vec2> textureCoords;
-    std::unordered_map<std::string, Rgba8> materialMap;  // 改為 unordered_map
+    std::vector<Vec3>                 vertPositions;
+    std::vector<Vec3>                 normals;
+    std::vector<Vec2>                 textureCoords;
+    std::unordered_map<String, Rgba8> materialMap;
 
     // 預先分配空間
     vertPositions.reserve(5000);
     normals.reserve(5000);
     textureCoords.reserve(5000);
-    materialMap.reserve(50);  // 現在可以使用 reserve()
+    materialMap.reserve(50);
 
-    Rgba8* curRgba8 = nullptr;
-    int numOfFaces = 0;
+    Rgba8* curRgba8   = nullptr;
+    int    numOfFaces = 0;
 
     DebuggerPrintf("-------------------------------------\n");
     DebuggerPrintf("Loaded .obj file %s\n", fileName.c_str());
@@ -56,36 +55,42 @@ bool ObjModelLoader::Load(String const&      fileName,
 
     // 使用string_view來避免不必要的字串複製
     std::istringstream stream(rawObjFile);
-    std::string line;
+    std::string        line;
 
-    while (std::getline(stream, line)) {
+    while (std::getline(stream, line))
+    {
         if (line.empty() || line[0] == '#') continue;
 
         std::istringstream lineStream(line);
-        std::string prefix;
+        std::string        prefix;
         lineStream >> prefix;
 
-        if (prefix == "v") {
+        if (prefix == "v")
+        {
             float x, y, z;
             lineStream >> x >> y >> z;
             vertPositions.emplace_back(x, y, z);
         }
-        else if (prefix == "vn") {
+        else if (prefix == "vn")
+        {
             float x, y, z;
             lineStream >> x >> y >> z;
             normals.emplace_back(x, y, z);
         }
-        else if (prefix == "vt") {
+        else if (prefix == "vt")
+        {
             float u, v;
             lineStream >> u >> v;
             textureCoords.emplace_back(u, v);
         }
-        else if (prefix == "f") {
+        else if (prefix == "f")
+        {
             numOfFaces++;
             std::vector<std::string> faceVertices;
-            std::string vertex;
+            std::string              vertex;
 
-            while (lineStream >> vertex) {
+            while (lineStream >> vertex)
+            {
                 faceVertices.push_back(vertex);
             }
 
@@ -93,30 +98,32 @@ bool ObjModelLoader::Load(String const&      fileName,
 
             // 解析第一個頂點
             auto parseVertex = [&](const std::string& vertexStr) -> Vertex_PCUTBN {
-                Vertex_PCUTBN vert;
+                Vertex_PCUTBN      vert;
                 std::istringstream vertStream(vertexStr);
-                std::string posIdx, uvIdx, normalIdx;
+                std::string        posIdx, uvIdx, normalIdx;
 
                 std::getline(vertStream, posIdx, '/');
                 std::getline(vertStream, uvIdx, '/');
                 std::getline(vertStream, normalIdx);
 
                 // 位置索引
-                int pos = std::stoi(posIdx) - 1;
+                int pos         = std::stoi(posIdx) - 1;
                 vert.m_position = vertPositions[pos];
 
                 // UV座標
-                if (!uvIdx.empty()) {
-                    out_hasUVs = true;
-                    int uv = std::stoi(uvIdx) - 1;
+                if (!uvIdx.empty())
+                {
+                    out_hasUVs         = true;
+                    int uv             = std::stoi(uvIdx) - 1;
                     vert.m_uvTexCoords = textureCoords[uv];
                 }
 
                 // 法線
-                if (!normalIdx.empty()) {
+                if (!normalIdx.empty())
+                {
                     out_hasNormals = true;
-                    int normal = std::stoi(normalIdx) - 1;
-                    vert.m_normal = normals[normal];
+                    int normal     = std::stoi(normalIdx) - 1;
+                    vert.m_normal  = normals[normal];
                 }
 
                 // 顏色
@@ -128,7 +135,8 @@ bool ObjModelLoader::Load(String const&      fileName,
             // 三角化多邊形（扇形三角化）
             Vertex_PCUTBN firstVert = parseVertex(faceVertices[0]);
 
-            for (size_t i = 1; i < faceVertices.size() - 1; ++i) {
+            for (size_t i = 1; i < faceVertices.size() - 1; ++i)
+            {
                 Vertex_PCUTBN vert1 = parseVertex(faceVertices[i]);
                 Vertex_PCUTBN vert2 = parseVertex(faceVertices[i + 1]);
 
@@ -141,7 +149,8 @@ bool ObjModelLoader::Load(String const&      fileName,
                 out_vertexes.push_back(vert2);
             }
         }
-        else if (prefix == "mtllib") {
+        else if (prefix == "mtllib")
+        {
             std::string mtlFile;
             lineStream >> mtlFile;
 
@@ -149,22 +158,26 @@ bool ObjModelLoader::Load(String const&      fileName,
             _splitpath_s(fileName.c_str(), drive, 300, dir, 300, fname, 300, ext, 300);
             std::string materialPath = std::string(drive) + dir + mtlFile;
 
-            if (!ObjModelLoader::LoadMaterial(materialPath, materialMap)) {
+            if (!ObjModelLoader::LoadMaterial(materialPath, materialMap))
+            {
                 return false;
             }
         }
-        else if (prefix == "usemtl") {
+        else if (prefix == "usemtl")
+        {
             std::string materialName;
             lineStream >> materialName;
 
             auto iter = materialMap.find(materialName);
-            curRgba8 = (iter != materialMap.end()) ? &iter->second : nullptr;
+            curRgba8  = (iter != materialMap.end()) ? &iter->second : nullptr;
         }
     }
 
     // 應用變換矩陣
-    if (transform != Mat44()) {
-        for (auto& vertex : out_vertexes) {
+    if (transform != Mat44())
+    {
+        for (auto& vertex : out_vertexes)
+        {
             vertex.m_position = transform.TransformPosition3D(vertex.m_position);
         }
     }
