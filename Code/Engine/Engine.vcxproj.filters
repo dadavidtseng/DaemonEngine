@@ -32,6 +32,9 @@
     <Filter Include="Platform">
       <UniqueIdentifier>{cc0452f8-e2b1-4605-afa8-3f8971c3d115}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{6e8b6a7d-9cba-4bbc-8802-7b8083eb0ec6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -217,9 +220,6 @@
     <ClCompile Include="Platform\Window.cpp">
       <Filter>Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\RendererEx.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\RenderCommon.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -228,6 +228,27 @@
     </ClCompile>
     <ClCompile Include="Platform\WindowCommon.cpp">
       <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\IResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\IResourceLoader.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\Resourcecache.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ResourceHandle.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ResourceSubsystem.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ResourceCommon.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ObjModelLoader.cpp">
+      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -444,9 +465,6 @@
     <ClInclude Include="Platform\Window.hpp">
       <Filter>Platform</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\RendererEx.hpp">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\RenderCommon.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
@@ -455,6 +473,27 @@
     </ClInclude>
     <ClInclude Include="Platform\WindowCommon.hpp">
       <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\IResource.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\IResourceLoader.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\Resourcecache.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ResourceHandle.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ResourceSubsystem.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ResourceCommon.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ObjModelLoader.hpp">
+      <Filter>Resource</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

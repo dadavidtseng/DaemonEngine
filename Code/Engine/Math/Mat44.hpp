@@ -79,4 +79,8 @@ struct Mat44
     void AppendScaleUniform3D(float uniformScaleXYZ);       // translation should remain unaffected
     void AppendScaleNonUniform2D(Vec2 const& nonUniformScaleXY);  // K and T bases should remain unaffected
     void AppendScaleNonUniform3D(Vec3 const& nonUniformScaleXYZ); // translation should remain unaffected
+
+    // Operators (const)
+    bool operator==( Mat44 const& mat44) const;
+    bool operator!=( Mat44 const& mat44) const;
 };

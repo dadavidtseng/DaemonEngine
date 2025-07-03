@@ -24,6 +24,7 @@ struct Mat44;
 float constexpr PI        = 3.14159265358979323846f;
 float constexpr FLOAT_MIN = 1.175494351e-38F;
 float constexpr FLOAT_MAX = 3.402823466e+38F;
+float constexpr EPSILON   = 1e-6f;
 
 //----------------------------------------------------------------------------------------------------
 enum class eBillboardType : int8_t

@@ -788,3 +788,23 @@ void Mat44::AppendScaleNonUniform3D(Vec3 const& nonUniformScaleXYZ)
     Mat44 const scaleMatrix = MakeNonUniformScale3D(nonUniformScaleXYZ);
     Append(scaleMatrix);
 }
+
+//----------------------------------------------------------------------------------------------------
+bool Mat44::operator==(Mat44 const& mat44) const
+{
+    for (int i = 0; i < 16; ++i)
+    {
+        if (std::abs(m_values[i] - mat44.m_values[i]) > EPSILON)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Mat44::operator!=(Mat44 const& mat44) const
+{
+    return !(*this == mat44);
+}

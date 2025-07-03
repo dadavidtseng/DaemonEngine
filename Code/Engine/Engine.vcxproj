@@ -227,13 +227,19 @@
     <ClCompile Include="Renderer\Light.cpp" />
     <ClCompile Include="Renderer\RenderCommon.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
-    <ClCompile Include="Renderer\RendererEx.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
     <ClCompile Include="Renderer\SpriteAnimDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteSheet.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
     <ClCompile Include="Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="Resource\IResource.cpp" />
+    <ClCompile Include="Resource\IResourceLoader.cpp" />
+    <ClCompile Include="Resource\ObjModelLoader.cpp" />
+    <ClCompile Include="Resource\Resourcecache.cpp" />
+    <ClCompile Include="Resource\ResourceCommon.cpp" />
+    <ClCompile Include="Resource\ResourceHandle.cpp" />
+    <ClCompile Include="Resource\ResourceSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
@@ -304,13 +310,19 @@
     <ClInclude Include="Renderer\Light.hpp" />
     <ClInclude Include="Renderer\RenderCommon.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
-    <ClInclude Include="Renderer\RendererEx.hpp" />
     <ClInclude Include="Renderer\Shader.hpp" />
     <ClInclude Include="Renderer\SpriteAnimDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteSheet.hpp" />
     <ClInclude Include="Renderer\Texture.hpp" />
     <ClInclude Include="Renderer\VertexBuffer.hpp" />
+    <ClInclude Include="Resource\IResource.hpp" />
+    <ClInclude Include="Resource\IResourceLoader.hpp" />
+    <ClInclude Include="Resource\ObjModelLoader.hpp" />
+    <ClInclude Include="Resource\Resourcecache.hpp" />
+    <ClInclude Include="Resource\ResourceCommon.hpp" />
+    <ClInclude Include="Resource\ResourceHandle.hpp" />
+    <ClInclude Include="Resource\ResourceSubsystem.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
