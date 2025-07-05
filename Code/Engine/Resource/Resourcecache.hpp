@@ -1,62 +1,44 @@
-
-
-
+// ============================================
+// ResourceCache.hpp - 資源快取系統
+// ============================================
 #pragma once
 #include <unordered_map>
 #include <memory>
 #include <mutex>
-
-#include "IResource.hpp"
+#include <string>
 
 class IResource;
 
 class ResourceCache
 {
 public:
-    template<typename T>
-    std::shared_ptr<T> Get(const std::string& path)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        auto it = m_resources.find(path);
-        if (it != m_resources.end())
-        {
-            return std::static_pointer_cast<T>(it->second);
-        }
-
-        return nullptr;
-    }
-
-    void Add(const std::string& path, std::shared_ptr<IResource> resource)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_resources[path] = resource;
-    }
-
-    void Remove(const std::string& path)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_resources.erase(path);
-    }
-
-    void Clear()
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_resources.clear();
-    }
-
-    size_t GetMemoryUsage() const
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        size_t totalSize = 0;
-        for (const auto& pair : m_resources)
-        {
-            totalSize += pair.second->GetMemorySize();
-        }
-        return totalSize;
-    }
-
+    using ResourcePtr = std::shared_ptr<IResource>;
+    
+    // 添加資源到快取
+    void Add(const std::string& path, ResourcePtr resource);
+    
+    // 從快取取得資源
+    ResourcePtr Get(const std::string& path) const;
+    
+    // 檢查資源是否在快取中
+    bool Contains(const std::string& path) const;
+    
+    // 移除資源
+    void Remove(const std::string& path);
+    
+    // 清空快取
+    void Clear();
+    
+    // 取得快取大小
+    size_t GetSize() const;
+    
+    // 取得總記憶體使用量
+    size_t GetMemoryUsage() const;
+    
+    // 移除未使用的資源
+    void RemoveUnused();
+    
 private:
     mutable std::mutex m_mutex;
-    std::unordered_map<std::string, std::shared_ptr<IResource>> m_resources;
+    std::unordered_map<std::string, ResourcePtr> m_resources;
 };

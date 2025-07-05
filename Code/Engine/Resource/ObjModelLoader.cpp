@@ -6,6 +6,8 @@
 #include "Engine/Resource/ObjModelLoader.hpp"
 #include <filesystem>
 #include <sstream>
+
+#include "ModelResource.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -260,4 +262,29 @@ bool ObjModelLoader::LoadMaterial(std::string const& path, std::unordered_map<st
     }
 
     return true;
+}
+
+bool ObjModelLoader::CanLoad(const std::string& extension) const
+{
+    std::string ext = extension;
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    return ext == ".obj";
+}
+
+std::vector<std::string> ObjModelLoader::GetSupportedExtensions() const
+{
+    return { ".obj", ".OBJ" };
+}
+
+std::shared_ptr<IResource> ObjModelLoader::Load(const std::string& path)
+{
+    auto modelResource = std::make_shared<ModelResource>(path);
+
+    // 直接呼叫 Load，它會使用靜態的 Load 方法
+    if (modelResource->Load())
+    {
+        return modelResource;
+    }
+
+    return nullptr;
 }

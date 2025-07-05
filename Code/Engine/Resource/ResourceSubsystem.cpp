@@ -1,51 +1,39 @@
-//----------------------------------------------------------------------------------------------------
+// ============================================
 // ResourceSubsystem.cpp
-//----------------------------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------------------------
+// ============================================
 #include "Engine/Resource/ResourceSubsystem.hpp"
-
+#include "Engine/Resource/ObjModelLoader.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include <filesystem>
 
-#include "Engine/Resource/IResource.hpp"
-
-void ResourceSubsystem::Initialize(size_t numThreads)
+void ResourceSubsystem::Initialize(size_t threadCount)
 {
     m_running = true;
 
-    // 註冊預設載入器
-    // RegisterLoader(std::make_unique<ObjModelLoader>());
+    // 註冊預設的載入器
+    RegisterLoader(std::make_unique<ObjModelLoader>());
+    // 未來可以加入更多載入器
     // RegisterLoader(std::make_unique<TextureLoader>());
-    // RegisterLoader(std::make_unique<MaterialLoader>());
-    // RegisterLoader(std::make_unique<SoundLoader>());
+    // RegisterLoader(std::make_unique<ShaderLoader>());
 
     // 創建工作執行緒
-    for (size_t i = 0; i < numThreads; ++i)
+    for (size_t i = 0; i < threadCount; ++i)
     {
-        m_loadingThreads.emplace_back([this]() {
-            while (m_running)
-            {
-                std::unique_lock<std::mutex> lock(m_queueMutex);
-                m_cv.wait(lock, [this]() { return !m_loadingQueue.empty() || !m_running; });
-
-                if (!m_running) break;
-
-                auto task = m_loadingQueue.front();
-                m_loadingQueue.pop();
-                lock.unlock();
-
-                task();
-            }
-        });
+        m_workerThreads.emplace_back(&ResourceSubsystem::WorkerThread, this);
     }
 }
 
 void ResourceSubsystem::Shutdown()
 {
-    m_running = false;
-    m_cv.notify_all();
+    // 停止工作執行緒
+    {
+        std::unique_lock<std::mutex> lock(m_queueMutex);
+        m_running = false;
+    }
+    m_condition.notify_all();
 
-    for (auto& thread : m_loadingThreads)
+    // 等待所有執行緒結束
+    for (auto& thread : m_workerThreads)
     {
         if (thread.joinable())
         {
@@ -53,48 +41,90 @@ void ResourceSubsystem::Shutdown()
         }
     }
 
+    // 清理資源
     m_cache.Clear();
+    m_loaders.clear();
 }
 
-std::shared_ptr<IResource> ResourceSubsystem::LoadResource(const std::string& path)
+void ResourceSubsystem::RegisterLoader(std::unique_ptr<IResourceLoader> loader)
 {
-    std::string ext = GetFileExtension(path);
+    m_loaders.push_back(std::move(loader));
+}
 
+std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(const std::string& path)
+{
+    std::string extension = GetFileExtension(path);
+
+    // 尋找適合的載入器
     for (const auto& loader : m_loaders)
     {
-        if (loader->CanLoad(ext))
+        if (loader->CanLoad(extension))
         {
             return loader->Load(path);
         }
     }
 
-    // return nullptr;
+    ERROR_RECOVERABLE(Stringf("No loader found for file: %s", path.c_str()));
+    return nullptr;
 }
 
-// 使用範例
-void Example()
+std::string ResourceSubsystem::GetFileExtension(const std::string& path) const
 {
-    auto& rm = ResourceSubsystem::GetInstance();
-    rm.Initialize(4);
+    std::filesystem::path filePath(path);
+    return filePath.extension().string();
+}
 
-    // // 同步載入
-    // auto modelHandle = rm.Load<ModelResource>("assets/models/character.obj");
-    // if (modelHandle.IsValid())
-    // {
-    //     auto model = modelHandle.Get();
-    //     // 使用模型...
-    // }
-    //
-    // // 異步載入
-    // auto futureTexture = rm.LoadAsync<TextureResource>("assets/textures/wall.png");
-    // // 做其他事情...
-    // auto textureHandle = futureTexture.get();
-    //
-    // // 批量載入
-    // std::vector<std::string> modelPaths = {
-    //     "assets/models/tree.obj",
-    //     "assets/models/rock.obj",
-    //     "assets/models/house.obj"
-    // };
-    // auto models = rm.LoadBatch<ModelResource>(modelPaths);
+void ResourceSubsystem::WorkerThread()
+{
+    while (m_running)
+    {
+        std::function<void()> task;
+
+        {
+            std::unique_lock<std::mutex> lock(m_queueMutex);
+            m_condition.wait(lock, [this] { return !m_taskQueue.empty() || !m_running; });
+
+            if (!m_running)
+                break;
+
+            if (!m_taskQueue.empty())
+            {
+                task = std::move(m_taskQueue.front());
+                m_taskQueue.pop();
+            }
+        }
+
+        if (task)
+        {
+            task();
+        }
+    }
+}
+
+void ResourceSubsystem::PreloadResources(const std::vector<std::string>& paths)
+{
+    for (const auto& path : paths)
+    {
+        // 將載入任務加入佇列
+        {
+            std::lock_guard<std::mutex> lock(m_queueMutex);
+            m_taskQueue.push([this, path]() {
+                LoadResourceInternal(path);
+            });
+        }
+        m_condition.notify_one();
+    }
+}
+
+void ResourceSubsystem::UnloadUnusedResources()
+{
+    m_cache.RemoveUnused();
+
+    // 檢查記憶體限制
+    if (m_memoryLimit > 0 && GetMemoryUsage() > m_memoryLimit)
+    {
+        // 實作 LRU 或其他策略來釋放資源
+        // 這裡簡單地移除所有未使用的資源
+        m_cache.RemoveUnused();
+    }
 }

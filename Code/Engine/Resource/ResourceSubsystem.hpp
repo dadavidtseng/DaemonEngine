@@ -1,20 +1,17 @@
-//----------------------------------------------------------------------------------------------------
-// ResourceSubsystem.hpp
-//----------------------------------------------------------------------------------------------------
 
-//----------------------------------------------------------------------------------------------------
+
 #pragma once
-#include <filesystem>
-
-#include "ResourceCache.hpp"
-#include "IResourceLoader.hpp"
+#include "Engine/Resource/ResourceHandle.hpp"
+#include "Engine/Resource/ResourceCache.hpp"
+#include "Engine/Resource/IResourceLoader.hpp"
+#include <vector>
+#include <memory>
 #include <thread>
 #include <queue>
 #include <future>
+#include <functional>
+#include <condition_variable>
 
-#include "ResourceHandle.hpp"
-
-//----------------------------------------------------------------------------------------------------
 class ResourceSubsystem
 {
 public:
@@ -24,95 +21,83 @@ public:
         return instance;
     }
 
-    // 初始化
-    void Initialize(size_t numThreads = 4);
+    // 初始化與關閉
+    void Initialize(size_t threadCount = 4);
     void Shutdown();
 
     // 註冊載入器
     void RegisterLoader(std::unique_ptr<IResourceLoader> loader);
 
-    // 同步載入
+    // 同步載入資源
     template <typename T>
-    ResourceHandle<T> Load(const std::string& path)
+    ResourceHandle<T> LoadResource(const std::string& path)
     {
-        // 先檢查快取
-        auto cached = m_cache.Get<T>(path);
+        // 檢查快取
+        auto cached = m_cache.Get(path);
         if (cached)
         {
-            cached->AddRef();
-            return ResourceHandle<T>(cached);
+            return ResourceHandle<T>(std::static_pointer_cast<T>(cached));
         }
 
         // 載入新資源
-        auto resource = LoadResource(path);
+        auto resource = LoadResourceInternal(path);
         if (resource)
         {
-            auto typedResource = std::static_pointer_cast<T>(resource);
-            typedResource->AddRef();
             m_cache.Add(path, resource);
-            return ResourceHandle<T>(typedResource);
+            return ResourceHandle<T>(std::static_pointer_cast<T>(resource));
         }
 
         return ResourceHandle<T>();
     }
 
-    // 異步載入
+    // 異步載入資源
     template <typename T>
-    std::future<ResourceHandle<T>> LoadAsync(const std::string& path)
+    std::future<ResourceHandle<T>> LoadResourceAsync(const std::string& path)
     {
         return std::async(std::launch::async, [this, path]() {
-            return Load<T>(path);
+            return LoadResource<T>(path);
         });
     }
 
-    // 批量載入
-    template <typename T>
-    std::vector<ResourceHandle<T>> LoadBatch(const std::vector<std::string>& paths)
-    {
-        std::vector<std::future<ResourceHandle<T>>> futures;
+    // 預載入資源列表
+    void PreloadResources(const std::vector<std::string>& paths);
 
-        for (const auto& path : paths)
-        {
-            futures.push_back(LoadAsync<T>(path));
-        }
+    // 卸載未使用的資源
+    void UnloadUnusedResources();
 
-        std::vector<ResourceHandle<T>> results;
-        for (auto& future : futures)
-        {
-            results.push_back(future.get());
-        }
-
-        return results;
-    }
-
-    // 資源管理
-    void   UnloadUnused();
-    void   SetMemoryLimit(size_t limitInBytes) { m_memoryLimit = limitInBytes; }
+    // 取得記憶體使用情況
     size_t GetMemoryUsage() const { return m_cache.GetMemoryUsage(); }
+    size_t GetResourceCount() const { return m_cache.GetSize(); }
 
-    // 熱重載支援
-    void EnableHotReload(bool enable) { m_hotReloadEnabled = enable; }
-    void CheckForModifiedResources();
+    // 設定記憶體限制
+    void SetMemoryLimit(size_t bytes) { m_memoryLimit = bytes; }
 
 private:
     ResourceSubsystem() = default;
     ~ResourceSubsystem() { Shutdown(); }
 
+    // 禁止複製
     ResourceSubsystem(const ResourceSubsystem&)            = delete;
     ResourceSubsystem& operator=(const ResourceSubsystem&) = delete;
 
-    std::shared_ptr<IResource> LoadResource(const std::string& path);
-    std::string                GetFileExtension(const std::string& path);
+    // 內部載入方法
+    std::shared_ptr<IResource> LoadResourceInternal(const std::string& path);
+    std::string                GetFileExtension(const std::string& path) const;
+
+    // 工作執行緒
+    void WorkerThread();
 
 private:
-    ResourceCache                                                    m_cache;
-    std::vector<std::unique_ptr<IResourceLoader>>                    m_loaders;
-    std::vector<std::thread>                                         m_loadingThreads;
-    std::queue<std::function<void()>>                                m_loadingQueue;
-    std::mutex                                                       m_queueMutex;
-    std::condition_variable                                          m_cv;
-    bool                                                             m_running          = false;
-    size_t                                                           m_memoryLimit      = 0;
-    bool                                                             m_hotReloadEnabled = false;
-    std::unordered_map<std::string, std::filesystem::file_time_type> m_fileTimestamps;
+    ResourceCache                                 m_cache;
+    std::vector<std::unique_ptr<IResourceLoader>> m_loaders;
+
+    // 多執行緒支援
+    std::vector<std::thread>          m_workerThreads;
+    std::queue<std::function<void()>> m_taskQueue;
+    std::mutex                        m_queueMutex;
+    std::condition_variable           m_condition;
+    bool                              m_running = false;
+
+    // 記憶體管理
+    size_t m_memoryLimit = 0;
 };

@@ -1,27 +1,40 @@
-// ResourceTypes.hpp - 資源類型定義
+// ============================================
+// ResourceCommon.hpp - 共用類型定義
+// ============================================
 #pragma once
 #include <string>
 #include <memory>
-#include <typeindex>
+#include <atomic>
 
+// 資源類型枚舉
 enum class ResourceType
 {
+    Unknown,
     Model,
     Texture,
-    Material,
     Shader,
-    Sound,
-    Light,
+    Material,
+    Audio,
+    Font,
     Animation,
-    Particle,
-    Unknown
+    Particle
 };
 
 // 資源狀態
 enum class ResourceState
 {
-    Unloaded,
-    Loading,
-    Loaded,
-    Failed
+    Unloaded,    // 未載入
+    Loading,     // 載入中
+    Loaded,      // 已載入
+    Failed,      // 載入失敗
+    Unloading    // 卸載中
+};
+
+// 資源載入優先級
+enum class ResourcePriority
+{
+    Low,
+    Normal,
+    High,
+    Critical
 };

@@ -250,6 +250,9 @@
     <ClCompile Include="Resource\ResourceCache.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
+    <ClCompile Include="Resource\ModelResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -493,6 +496,9 @@
       <Filter>Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource\ResourceCache.hpp">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ModelResource.hpp">
       <Filter>Resource</Filter>
     </ClInclude>
   </ItemGroup>
