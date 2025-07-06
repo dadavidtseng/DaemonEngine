@@ -1,14 +1,21 @@
-// ============================================
+//----------------------------------------------------------------------------------------------------
 // ModelResource.cpp
-// ============================================
-#include "Engine/Resource/ModelResource.hpp"
-#include "Engine/Resource/ObjModelLoader.hpp"
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Resource/Resource/ModelResource.hpp"
+#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
+ModelResource::ModelResource(const std::string& path)
+    : IResource(path, ResourceType::Model)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
 bool ModelResource::Load()
 {
-    if (m_state == ResourceState::Loaded)
-        return true;
+    if (m_state == ResourceState::Loaded) return true;
 
     m_state = ResourceState::Loading;
 
@@ -19,15 +26,15 @@ bool ModelResource::Load()
     {
         // 創建單一 SubMesh（為了未來擴展性）
         SubMesh mainMesh;
-        mainMesh.name = "main";
-        mainMesh.vertices = m_vertices;
-        mainMesh.indices = m_indices;
+        mainMesh.name       = "main";
+        mainMesh.vertices   = m_vertices;
+        mainMesh.indices    = m_indices;
         mainMesh.hasNormals = m_hasNormals;
-        mainMesh.hasUVs = m_hasUVs;
+        mainMesh.hasUVs     = m_hasUVs;
         m_subMeshes.push_back(mainMesh);
 
         m_memorySize = CalculateMemorySize();
-        m_state = ResourceState::Loaded;
+        m_state      = ResourceState::Loaded;
     }
     else
     {
@@ -63,8 +70,7 @@ const ModelResource::SubMesh* ModelResource::GetSubMesh(const std::string& name)
 {
     for (const auto& subMesh : m_subMeshes)
     {
-        if (subMesh.name == name)
-            return &subMesh;
+        if (subMesh.name == name) return &subMesh;
     }
     return nullptr;
 }

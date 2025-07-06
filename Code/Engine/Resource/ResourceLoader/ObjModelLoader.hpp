@@ -2,7 +2,7 @@
 // 更新後的 ObjModelLoader.hpp
 // ============================================
 #pragma once
-#include "Engine/Resource/IResourceLoader.hpp"
+#include "Engine/Resource/ResourceLoader/IResourceLoader.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/Mat44.hpp"

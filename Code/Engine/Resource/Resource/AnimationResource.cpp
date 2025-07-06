@@ -1,6 +1,11 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// AnimationResource.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#include "Engine/Resource/Resource/AnimationResource.hpp"
+
+AnimationResource::AnimationResource(String const& path, ResourceType type)
+    : IResource(path, type)
+{
+}

@@ -1,6 +1,11 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// ShaderResource.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#include "Engine/Resource/Resource/ShaderResource.hpp"
+
+ShaderResource::ShaderResource(String const& path, ResourceType type)
+    : IResource(path, type)
+{
+}

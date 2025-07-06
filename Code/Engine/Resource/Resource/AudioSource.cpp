@@ -1,6 +1,10 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// AudioSource.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#include "Engine/Resource/Resource/AudioSource.hpp"
+
+AudioSource::AudioSource(String const& path, ResourceType type): IResource(path, type)
+{
+}

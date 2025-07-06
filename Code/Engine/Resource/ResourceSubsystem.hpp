@@ -1,25 +1,27 @@
+//----------------------------------------------------------------------------------------------------
+// ResourceSubsystem.hpp
+//----------------------------------------------------------------------------------------------------
 
-
+//----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Resource/ResourceHandle.hpp"
-#include "Engine/Resource/ResourceCache.hpp"
-#include "Engine/Resource/IResourceLoader.hpp"
-#include <vector>
-#include <memory>
-#include <thread>
-#include <queue>
-#include <future>
-#include <functional>
 #include <condition_variable>
+#include <functional>
+#include <future>
+#include <memory>
+#include <queue>
+#include <thread>
+#include <vector>
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Resource/ResourceLoader/IResourceLoader.hpp"
+#include "Engine/Resource/ResourceCache.hpp"
+#include "Engine/Resource/ResourceHandle.hpp"
 
+
+//----------------------------------------------------------------------------------------------------
 class ResourceSubsystem
 {
 public:
-    static ResourceSubsystem& GetInstance()
-    {
-        static ResourceSubsystem instance;
-        return instance;
-    }
+    static ResourceSubsystem& GetInstance();
 
     // 初始化與關閉
     void Initialize(size_t threadCount = 4);
@@ -30,18 +32,16 @@ public:
 
     // 同步載入資源
     template <typename T>
-    ResourceHandle<T> LoadResource(const std::string& path)
+    ResourceHandle<T> LoadResource(String const& path)
     {
         // 檢查快取
-        auto cached = m_cache.Get(path);
-        if (cached)
+        if (std::shared_ptr<IResource> const cached = m_cache.Get(path))
         {
             return ResourceHandle<T>(std::static_pointer_cast<T>(cached));
         }
 
         // 載入新資源
-        auto resource = LoadResourceInternal(path);
-        if (resource)
+        if (std::shared_ptr<IResource> const resource = LoadResourceInternal(path))
         {
             m_cache.Add(path, resource);
             return ResourceHandle<T>(std::static_pointer_cast<T>(resource));
@@ -52,7 +52,7 @@ public:
 
     // 異步載入資源
     template <typename T>
-    std::future<ResourceHandle<T>> LoadResourceAsync(const std::string& path)
+    std::future<ResourceHandle<T>> LoadResourceAsync(String const& path)
     {
         return std::async(std::launch::async, [this, path]() {
             return LoadResource<T>(path);
@@ -66,8 +66,8 @@ public:
     void UnloadUnusedResources();
 
     // 取得記憶體使用情況
-    size_t GetMemoryUsage() const { return m_cache.GetMemoryUsage(); }
-    size_t GetResourceCount() const { return m_cache.GetSize(); }
+    size_t GetMemoryUsage() const;
+    size_t GetResourceCount() const;
 
     // 設定記憶體限制
     void SetMemoryLimit(size_t bytes) { m_memoryLimit = bytes; }
@@ -87,7 +87,6 @@ private:
     // 工作執行緒
     void WorkerThread();
 
-private:
     ResourceCache                                 m_cache;
     std::vector<std::unique_ptr<IResourceLoader>> m_loaders;
 

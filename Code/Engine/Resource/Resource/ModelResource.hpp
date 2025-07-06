@@ -1,8 +1,10 @@
-// ============================================
-// ModelResource.hpp - 模型資源類
-// ============================================
+//----------------------------------------------------------------------------------------------------
+// ModelResource.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Resource/IResource.hpp"
+#include "Engine/Resource/Resource/IResource.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include <vector>
@@ -21,10 +23,7 @@ public:
         bool hasUVs = false;
     };
 
-    ModelResource(const std::string& path)
-        : IResource(path, ResourceType::Model)
-    {
-    }
+    explicit ModelResource(const std::string& path);
 
     ~ModelResource() override
     {

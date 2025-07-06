@@ -1,6 +1,14 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// AudioSource.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#pragma once
+#include "Engine/Resource/Resource/IResource.hpp"
+
+//----------------------------------------------------------------------------------------------------
+class AudioSource : public IResource
+{
+public:
+    AudioSource(String const& path, ResourceType type);
+};

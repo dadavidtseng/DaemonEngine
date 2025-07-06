@@ -2,9 +2,15 @@
 // ResourceSubsystem.cpp
 // ============================================
 #include "Engine/Resource/ResourceSubsystem.hpp"
-#include "Engine/Resource/ObjModelLoader.hpp"
+#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include <filesystem>
+
+ResourceSubsystem& ResourceSubsystem::GetInstance()
+{
+    static ResourceSubsystem instance;
+    return instance;
+}
 
 void ResourceSubsystem::Initialize(size_t threadCount)
 {
@@ -27,7 +33,7 @@ void ResourceSubsystem::Shutdown()
 {
     // 停止工作執行緒
     {
-        std::unique_lock<std::mutex> lock(m_queueMutex);
+        std::unique_lock lock(m_queueMutex);
         m_running = false;
     }
     m_condition.notify_all();
@@ -51,12 +57,12 @@ void ResourceSubsystem::RegisterLoader(std::unique_ptr<IResourceLoader> loader)
     m_loaders.push_back(std::move(loader));
 }
 
-std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(const std::string& path)
+std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(String const& path)
 {
     std::string extension = GetFileExtension(path);
 
     // 尋找適合的載入器
-    for (const auto& loader : m_loaders)
+    for (std::unique_ptr<IResourceLoader> const& loader : m_loaders)
     {
         if (loader->CanLoad(extension))
         {
@@ -64,11 +70,11 @@ std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(const std::st
         }
     }
 
-    ERROR_RECOVERABLE(Stringf("No loader found for file: %s", path.c_str()));
+    ERROR_RECOVERABLE(Stringf("No loader found for file: %s", path.c_str()))
     return nullptr;
 }
 
-std::string ResourceSubsystem::GetFileExtension(const std::string& path) const
+std::string ResourceSubsystem::GetFileExtension(String const& path) const
 {
     std::filesystem::path filePath(path);
     return filePath.extension().string();
@@ -84,8 +90,7 @@ void ResourceSubsystem::WorkerThread()
             std::unique_lock<std::mutex> lock(m_queueMutex);
             m_condition.wait(lock, [this] { return !m_taskQueue.empty() || !m_running; });
 
-            if (!m_running)
-                break;
+            if (!m_running) break;
 
             if (!m_taskQueue.empty())
             {
@@ -127,4 +132,14 @@ void ResourceSubsystem::UnloadUnusedResources()
         // 這裡簡單地移除所有未使用的資源
         m_cache.RemoveUnused();
     }
+}
+
+size_t ResourceSubsystem::GetMemoryUsage() const
+{
+    return m_cache.GetMemoryUsage();
+}
+
+size_t ResourceSubsystem::GetResourceCount() const
+{
+    return m_cache.GetSize();
 }

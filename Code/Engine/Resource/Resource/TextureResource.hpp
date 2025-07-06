@@ -1,6 +1,14 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// TextureResource.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#pragma once
+#include "Engine/Resource/Resource/IResource.hpp"
+
+//----------------------------------------------------------------------------------------------------
+class TextureResource : public IResource
+{
+public:
+    TextureResource(String const& path, ResourceType type);
+};

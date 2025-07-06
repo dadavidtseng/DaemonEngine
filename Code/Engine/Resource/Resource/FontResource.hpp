@@ -1,6 +1,14 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// FontResource.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#pragma once
+#include "Engine/Resource/Resource/IResource.hpp"
+
+//----------------------------------------------------------------------------------------------------
+class FontResource : public IResource
+{
+public:
+    FontResource(String const& path, ResourceType type);
+};

@@ -1,6 +1,12 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// ShaderLoader.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#pragma once
+
+#include "Engine/Resource/ResourceLoader/IResourceLoader.hpp"
+
+class ShaderLoader : public IResourceLoader
+{
+};

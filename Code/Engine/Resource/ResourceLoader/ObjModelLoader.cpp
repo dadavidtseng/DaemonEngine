@@ -3,15 +3,18 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ObjModelLoader.hpp"
+#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
 #include <filesystem>
 #include <sstream>
+
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Resource/Resource/IResource.hpp"
+#include "Engine/Resource/Resource/ModelResource.hpp"
 
 //----------------------------------------------------------------------------------------------------
 bool ObjModelLoader::Load(String const&      fileName,
@@ -151,21 +154,21 @@ bool ObjModelLoader::Load(String const&      fileName,
         }
         else if (prefix == "mtllib")
         {
-            String mtlFile;
+            std::string mtlFile;
             lineStream >> mtlFile;
 
             char drive[300], dir[300], fname[300], ext[300];
             _splitpath_s(fileName.c_str(), drive, 300, dir, 300, fname, 300, ext, 300);
-            String materialPath = std::string(drive) + dir + mtlFile;
+            std::string materialPath = std::string(drive) + dir + mtlFile;
 
-            if (!LoadMaterial(materialPath, materialMap))
+            if (!ObjModelLoader::LoadMaterial(materialPath, materialMap))
             {
                 return false;
             }
         }
         else if (prefix == "usemtl")
         {
-            String materialName;
+            std::string materialName;
             lineStream >> materialName;
 
             auto iter = materialMap.find(materialName);
@@ -189,7 +192,6 @@ bool ObjModelLoader::Load(String const&      fileName,
     DebuggerPrintf("                            vertexes: %d triangles: %d time: %fs\n",
                    out_vertexes.size(), out_indexes.size() / 3, startTime - loadStartTime);
     DebuggerPrintf("Created CPU mesh            time: %fs\n", endTime - startTime);
-    DebuggerPrintf("(Start time: %fs) / (End time: %fs) \n", startTime,endTime);
 
     return true;
 }
@@ -261,4 +263,29 @@ bool ObjModelLoader::LoadMaterial(std::string const& path, std::unordered_map<st
     }
 
     return true;
+}
+
+bool ObjModelLoader::CanLoad(const std::string& extension) const
+{
+    std::string ext = extension;
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    return ext == ".obj";
+}
+
+std::vector<std::string> ObjModelLoader::GetSupportedExtensions() const
+{
+    return { ".obj", ".OBJ" };
+}
+
+std::shared_ptr<IResource> ObjModelLoader::Load(const std::string& path)
+{
+    auto modelResource = std::make_shared<ModelResource>(path);
+
+    // 直接呼叫 Load，它會使用靜態的 Load 方法
+    if (modelResource->Load())
+    {
+        return modelResource;
+    }
+
+    return nullptr;
 }

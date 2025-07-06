@@ -1,6 +1,10 @@
 //----------------------------------------------------------------------------------------------------
-// ResourceCommon.cpp
+// FontResource.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/ResourceCommon.hpp"
+#include "Engine/Resource/Resource/FontResource.hpp"
+
+FontResource::FontResource(String const& path, ResourceType type): IResource(path, type)
+{
+}
