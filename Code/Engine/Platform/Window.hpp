@@ -54,7 +54,7 @@ public:
     void*                GetDisplayContext() const;
     void*                GetWindowHandle() const;
     Vec2                 GetNormalizedMouseUV() const;
-    // Vec2 GetCursorPositionOnScreen()
+    Vec2 GetCursorPositionOnScreen()const;
 
     static Window* s_mainWindow; // fancy way of advertising global variables (advertisement)
 
@@ -64,6 +64,8 @@ public:
 
     // Render information getters (useful for letterbox/crop modes)
     Vec2 GetClientDimensions() const;
+    void SetWindowDimensions(Vec2 const& newDimensions);
+    void SetWindowPosition(Vec2 const& newPosition);
     Vec2 GetViewportDimensions() const;
     Vec2 GetViewportOffset() const;
     Vec2 GetScreenDimensions() const;

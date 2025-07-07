@@ -1391,10 +1391,12 @@ void Renderer::ReadStagingTextureToPixelData()
     mainRenderTargetTexture->Release();
 }
 
-void Renderer::RenderViewportToWindow(Window const& window) const
+void Renderer::RenderViewportToWindow(Window const& window)
 {
-    if (!window.m_displayContext) return;
 
+
+    if (!window.m_displayContext) return;
+    // ReadStagingTextureToPixelData();
     // 取得子視窗在螢幕上的實際客戶區域位置
     RECT windowRect, clientRect;
     GetWindowRect((HWND)window.m_windowHandle, &windowRect);
@@ -1517,7 +1519,7 @@ void Renderer::RenderViewportToWindowDX11( Window& window)
 
     windowTexture->Release();
     mainRenderTargetTexture->Release();
-
+    window.m_shouldUpdatePosition = false;
     // 2. Present 子視窗
     window.m_swapChain->Present(0, 0);
 
@@ -1606,7 +1608,6 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
         window.m_viewportDimensions.y = max(0.0f, min(1.0f - window.m_viewportPosition.y, window.m_viewportDimensions.y));
     }
 
-    // window.m_shouldUpdatePosition = true;
     window.m_shouldUpdateDimension = false;
 
     DebuggerPrintf("Window resized successfully to %dx%d\n", newWidth, newHeight);

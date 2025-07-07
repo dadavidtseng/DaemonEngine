@@ -264,6 +264,17 @@ Vec2 Window::GetClientDimensions() const
     return m_clientDimensions;
 }
 
+void Window::SetWindowDimensions(Vec2 const& newDimensions)
+{
+
+     m_windowDimensions = newDimensions;
+}
+
+void Window::SetWindowPosition(Vec2 const& newPosition)
+{
+    m_windowPosition = newPosition;
+}
+
 //----------------------------------------------------------------------------------------------------
 // void Window::CreateOSWindow()
 // {
@@ -914,8 +925,9 @@ Vec2 Window::GetNormalizedMouseUV() const
     GetClientRect(windowHandle, &clientRect);
 
     // For letterbox/crop modes, adjust mouse coordinates to render area
-    if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX ||
-        m_config.m_windowType == eWindowType::FULLSCREEN_CROP)
+    // if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX ||
+    //     m_config.m_windowType == eWindowType::FULLSCREEN_CROP)
+        if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX)
     {
         // Adjust cursor position relative to render area
         float const adjustedX = cursorCoords.x - m_renderOffset.x;
@@ -926,7 +938,7 @@ Vec2 Window::GetNormalizedMouseUV() const
         GetClampedZeroToOne(normalizedX);
         GetClampedZeroToOne(normalizedY);
         // Clamp to [0,1] range and flip Y
-        return Vec2(normalizedX, 1.0f - normalizedY);
+        return Vec2(normalizedX, 1.f - normalizedY);
     }
 
     // Standard mouse UV calculation
@@ -934,6 +946,15 @@ Vec2 Window::GetNormalizedMouseUV() const
     float const cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
 
     return Vec2(cursorX, 1.f - cursorY);
+}
+
+Vec2 Window::GetCursorPositionOnScreen() const
+{
+    POINT      cursorCoords;
+
+    GetCursorPos(&cursorCoords);
+
+    return Vec2((int)cursorCoords.x,(int) cursorCoords.y);
 }
 
 
