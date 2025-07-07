@@ -110,7 +110,7 @@ public:
     HRESULT  CreateWindowSwapChain(Window& window);
     HRESULT  ResizeWindowSwapChain(Window& window) const;
     void     RenderViewportToWindow(Window const& window) const;
-    void     RenderViewportToWindowDX11(const Window& window);
+    void     RenderViewportToWindowDX11( Window& window);
 
 private:
     void     CreateDeviceAndSwapChain(unsigned int deviceFlags);
@@ -197,8 +197,8 @@ protected:
 
     // RenderEx
 
-    int                     sceneWidth              = 0;
-    int                     sceneHeight             = 0;
+    // int                     sceneWidth              = 0;
+    // int                     sceneHeight             = 0;
     BITMAPINFO              m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
     std::vector<BYTE>       m_pixelData;
     void                    ReadStagingTextureToPixelData();

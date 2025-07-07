@@ -15,6 +15,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <chrono>
+#include <dxgi1_2.h>
 #include <windows.h>
 
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -27,22 +28,6 @@ STATIC Window* Window::s_mainWindow = nullptr;
 Window::Window(sWindowConfig const& config)
     : m_config(config)
 {
-    virtualScreenWidth  = GetSystemMetrics(SM_CXSCREEN);    // 1920
-    virtualScreenHeight = GetSystemMetrics(SM_CYSCREEN);    // 1080
-    RECT       desktopRect;
-    HWND const desktopWindowHandle = GetDesktopWindow();
-    GetClientRect(desktopWindowHandle, &desktopRect);
-    int const desktopWidth  = desktopRect.right - desktopRect.left;
-    int const desktopHeight = desktopRect.bottom - desktopRect.top;
-    // 初始化隨機數生成器
-    rng.seed((unsigned int)std::chrono::steady_clock::now().time_since_epoch().count());
-    // lastUpdateTime = std::chrono::steady_clock::now();
-
-    // 隨機初始速度
-    std::uniform_real_distribution<float> velDist(-50.0f, 50.0f);
-    drift.velocityX = velDist(rng);
-    drift.velocityY = velDist(rng);
-
     if (s_mainWindow == nullptr)
     {
         s_mainWindow = this;
@@ -62,6 +47,8 @@ void Window::Startup()
 //----------------------------------------------------------------------------------------------------
 void Window::Shutdown()
 {
+    DX_SAFE_RELEASE(m_swapChain)
+    DX_SAFE_RELEASE(m_renderTargetView)
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -265,7 +252,7 @@ void* Window::GetWindowHandle() const
 // }
 
 //----------------------------------------------------------------------------------------------------
-IntVec2 Window::GetClientDimensions() const
+Vec2 Window::GetClientDimensions() const
 {
     // RECT       desktopRect;
     // HWND const desktopWindowHandle = GetDesktopWindow();
@@ -417,7 +404,7 @@ void Window::CreateOSWindow()
     windowClassEx.lpszClassName = TEXT("Simple Window Class");
     RegisterClassEx(&windowClassEx);
 
-    // Get desktop dimensions
+    // Get desktop dimensions (screen size)
     RECT       desktopRect;
     HWND const desktopWindowHandle = GetDesktopWindow();
     GetClientRect(desktopWindowHandle, &desktopRect);
@@ -460,7 +447,7 @@ void Window::CreateOSWindow()
             clientRect.top    = static_cast<int>(clientMarginY);
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
-            m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
         }
         break;
 
@@ -491,7 +478,7 @@ void Window::CreateOSWindow()
             clientRect.top    = static_cast<int>(clientMarginY);
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
-            m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
         }
         break;
 
@@ -506,7 +493,7 @@ void Window::CreateOSWindow()
             clientRect.right  = desktopWidth;
             clientRect.bottom = desktopHeight;
 
-            m_clientDimensions = IntVec2(desktopWidth, desktopHeight);
+            m_clientDimensions = Vec2(desktopWidth, desktopHeight);
         }
         break;
 
@@ -542,9 +529,9 @@ void Window::CreateOSWindow()
             clientRect.bottom = offsetY + clientHeight;
 
             // Store the actual screen dimensions for rendering
-            m_clientDimensions = IntVec2(desktopWidth, desktopHeight);
-            m_renderDimensions = IntVec2(clientWidth, clientHeight);
-            m_renderOffset     = IntVec2(offsetX, offsetY);
+            m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
+            m_viewportDimensions = Vec2(clientWidth, clientHeight);
+            m_renderOffset       = Vec2(offsetX, offsetY);
         }
         break;
 
@@ -552,7 +539,6 @@ void Window::CreateOSWindow()
         {
             windowStyleFlags   = WS_POPUP;
             windowStyleExFlags = WS_EX_APPWINDOW;
-            // windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
 
             // Fill screen and crop to maintain aspect ratio
             float const targetAspect = m_config.m_aspectRatio;
@@ -570,7 +556,7 @@ void Window::CreateOSWindow()
                 clientWidth  = desktopWidth;
                 clientHeight = static_cast<int>(static_cast<float>(desktopWidth) / targetAspect);
             }
-
+            DebuggerPrintf(Stringf("ClientWidth = %d | ClientHeight = %d", clientWidth, clientHeight).c_str());
             // Center the viewport
             int const offsetX = (desktopWidth - clientWidth) / 2;
             int const offsetY = (desktopHeight - clientHeight) / 2;
@@ -581,9 +567,9 @@ void Window::CreateOSWindow()
             clientRect.bottom = desktopHeight;
 
             // Store rendering information
-            m_clientDimensions = IntVec2(desktopWidth, desktopHeight);
-            m_renderDimensions = IntVec2(clientWidth, clientHeight);
-            m_renderOffset     = IntVec2(offsetX, offsetY);
+            m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
+            m_viewportDimensions = Vec2(clientWidth, clientHeight);
+            m_renderOffset       = Vec2(offsetX, offsetY);
         }
         break;
 
@@ -600,7 +586,7 @@ void Window::CreateOSWindow()
             clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
-            m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
         }
         break;
 
@@ -617,7 +603,7 @@ void Window::CreateOSWindow()
             clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
-            m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
         }
         break;
 
@@ -634,7 +620,7 @@ void Window::CreateOSWindow()
         clientRect.right  = clientRect.left + static_cast<int>(clientWidth);
         clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
-        m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+        m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
         break;
     }
 
@@ -741,7 +727,7 @@ void Window::ReconfigureWindow()
             newRect.top        = (desktopHeight - height) / 2;
             newRect.right      = newRect.left + width;
             newRect.bottom     = newRect.top + height;
-            m_clientDimensions = IntVec2(width, height);
+            m_clientDimensions = Vec2(width, height);
         }
         break;
 
@@ -749,7 +735,7 @@ void Window::ReconfigureWindow()
         windowStyleFlags = WS_POPUP;
         windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
         newRect            = {0, 0, desktopWidth, desktopHeight};
-        m_clientDimensions = IntVec2(desktopWidth, desktopHeight);
+        m_clientDimensions = Vec2(desktopWidth, desktopHeight);
         break;
 
     case eWindowType::MINIMIZED:
@@ -783,20 +769,25 @@ void Window::ReconfigureWindow()
 
 //----------------------------------------------------------------------------------------------------
 // Add getter methods for render information (useful for letterbox/crop modes)
-IntVec2 Window::GetRenderDimensions() const
+Vec2 Window::GetViewportDimensions() const
 {
     // Check if render dimensions are set (non-zero)
-    if (m_renderDimensions.x > 0 && m_renderDimensions.y > 0)
+    if (m_viewportDimensions.x > 0 && m_viewportDimensions.y > 0)
     {
-        return m_renderDimensions;
+        return m_viewportDimensions;
     }
     return m_clientDimensions;
 }
 
 //----------------------------------------------------------------------------------------------------
-IntVec2 Window::GetRenderOffset() const
+Vec2 Window::GetViewportOffset() const
 {
     return m_renderOffset;
+}
+
+Vec2 Window::GetScreenDimensions() const
+{
+    return m_screenDimensions;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -807,107 +798,9 @@ bool Window::IsFullscreen() const
         m_config.m_windowType == eWindowType::FULLSCREEN_CROP);
 }
 
-void Window::UpdateWindowDrift(float deltaSeconds)
-
+float Window::GetViewportAspectRatio() const
 {
-    if (isDragging) return; // 拖拽時不漂移
-
-    // auto  currentTime     = std::chrono::steady_clock::now();
-    // float deltaTime       = std::chrono::duration<float>(currentTime - window.lastUpdateTime).count();
-    // window.lastUpdateTime = currentTime;
-    //
-    // // if (deltaTime > 0.1f) deltaTime = 0.1f; // 限制最大 delta time
-    // // 更嚴格的 delta time 控制
-    // if (deltaTime > 0.016f) deltaTime = 0.016f; // 限制為 60fps
-    // if (deltaTime < 0.001f) return; // 太小的變化直接忽略
-
-    RECT windowRect;
-    GetWindowRect((HWND)m_windowHandle, &windowRect);
-
-    int currentX = windowRect.left;
-    int currentY = windowRect.top;
-
-    // 重力效果
-    if (drift.enableGravity)
-    {
-        drift.velocityY += drift.acceleration * deltaSeconds;
-    }
-
-    // 隨機漂移
-    if (drift.enableWander)
-    {
-        drift.velocityX += wanderDist(rng) * drift.wanderStrength * deltaSeconds;
-        drift.velocityY += wanderDist(rng) * drift.wanderStrength * deltaSeconds;
-    }
-
-    // 速度限制
-    float const currentSpeed = sqrt(drift.velocityX * drift.velocityX +
-        drift.velocityY * drift.velocityY);
-    if (currentSpeed > drift.targetVelocity)
-    {
-        float const scale = drift.targetVelocity / currentSpeed;
-        drift.velocityX *= scale;
-        drift.velocityY *= scale;
-    }
-
-    // 阻力
-    drift.velocityX *= drift.drag;
-    drift.velocityY *= drift.drag;
-
-    // 計算新位置
-    int newX = currentX + static_cast<int>(drift.velocityX * deltaSeconds);
-    int newY = currentY + static_cast<int>(drift.velocityY * deltaSeconds);
-
-    // 邊界碰撞檢測和反彈
-    RECT clientRect;
-    GetClientRect((HWND)m_windowHandle, &clientRect);
-    int const windowWidth  = clientRect.right - clientRect.left;
-    int const windowHeight = clientRect.bottom - clientRect.top;
-
-    bool bounced = false;
-
-    // 左右邊界
-    if (newX < 0)
-    {
-        newX            = 0;
-        drift.velocityX = -drift.velocityX * drift.bounceEnergy;
-        bounced         = true;
-    }
-    else if (newX + windowWidth > virtualScreenWidth)
-    {
-        newX            = virtualScreenWidth - windowWidth;
-        drift.velocityX = -drift.velocityX * drift.bounceEnergy;
-        bounced         = true;
-    }
-
-    // 上下邊界
-    if (newY < 0)
-    {
-        newY            = 0;
-        drift.velocityY = -drift.velocityY * drift.bounceEnergy;
-        bounced         = true;
-    }
-    else if (newY + windowHeight > virtualScreenHeight)
-    {
-        newY            = virtualScreenHeight - windowHeight;
-        drift.velocityY = -drift.velocityY * drift.bounceEnergy;
-        bounced         = true;
-    }
-
-    // 反彈時添加一些隨機性
-    if (bounced)
-    {
-        std::uniform_real_distribution<float> bounceDist(-30.0f, 30.0f);
-        drift.velocityX += bounceDist(rng);
-        drift.velocityY += bounceDist(rng);
-    }
-
-    // 移動窗口
-    if (newX != currentX || newY != currentY)
-    {
-        SetWindowPos((HWND)m_windowHandle, nullptr, newX, newY, 0, 0,
-                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-    }
+    return m_viewportDimensions.x / m_viewportDimensions.y;
 }
 
 void Window::UpdateWindowPosition(Vec2 const& newPosition)
@@ -954,56 +847,57 @@ void Window::UpdateWindowPosition(Vec2 const& newPosition)
                  SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-void Window::UpdateWindowPosition()
+void Window::UpdatePosition()
 {
     RECT windowRect;
     GetWindowRect((HWND)m_windowHandle, &windowRect);
 
-    // 检查窗口位置或大小是否改变
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
         lastRect.left   = windowRect.left;
         lastRect.top    = windowRect.top;
         lastRect.right  = windowRect.right;
         lastRect.bottom = windowRect.bottom;
-        needsUpdate     = true;
-
-        RECT clientRect;
-        GetClientRect((HWND)m_windowHandle, &clientRect);
-        int newWidth  = clientRect.right - clientRect.left;
-        int newHeight = clientRect.bottom - clientRect.top;
-
-        // 检查客户区大小是否改变（需要重新创建SwapChain）
-        if (newWidth != width || newHeight != height)
-        {
-            width       = newWidth;
-            height      = newHeight;
-            needsResize = true; // 添加这个标志
-        }
+        m_shouldUpdatePosition     = true;
 
         // 重新计算viewport参数
-        viewportX      = (float)windowRect.left / (float)virtualScreenWidth;
-        viewportY      = (float)windowRect.top / (float)virtualScreenHeight;
-        viewportWidth  = (float)width / (float)virtualScreenWidth;
-        viewportHeight = (float)height / (float)virtualScreenHeight;
+        m_viewportPosition.x   = (float)windowRect.left / m_screenDimensions.x;
+        m_viewportPosition.y   = (float)windowRect.top / m_screenDimensions.y;
+        // m_viewportDimensions.x = (float)m_windowDimensions.x / m_screenDimensions.x;
+        // m_viewportDimensions.y = (float)m_windowDimensions.y / m_screenDimensions.y;
 
-        float sceneWidth  = 1920.f;
-        float sceneHeight = 1200.f;
+        // float sceneWidth  = 1920.f;
+        // float sceneHeight = 1200.f;
+        //
+        // // 确保座标对齐到像素边界
+        // float pixelAlignX = 1.0f / (float)sceneWidth;
+        // float pixelAlignY = 1.0f / (float)sceneHeight;
+        //
+        // m_viewportPosition.x   = floor(m_viewportPosition.x / pixelAlignX) * pixelAlignX;
+        // m_viewportPosition.y   = floor(m_viewportPosition.y / pixelAlignY) * pixelAlignY;
+        // m_viewportDimensions.x = ceil(m_viewportDimensions.x / pixelAlignX) * pixelAlignX;
+        // m_viewportDimensions.y = ceil(m_viewportDimensions.y / pixelAlignY) * pixelAlignY;
+        //
+        // // 边界检查
+        // m_viewportPosition.x   = max(0.0f, min(1.0f,m_viewportPosition.x));
+        // m_viewportPosition.y   = max(0.0f, min(1.0f,m_viewportPosition.y));
+        // m_viewportDimensions.x = max(0.0f, min(1.0f -m_viewportPosition.x,m_viewportDimensions.x));
+        // m_viewportDimensions.y = max(0.0f, min(1.0f -m_viewportPosition.y, m_viewportDimensions.y));
+    }
+}
 
-        // 确保座标对齐到像素边界
-        float pixelAlignX = 1.0f / (float)sceneWidth;
-        float pixelAlignY = 1.0f / (float)sceneHeight;
+void Window::UpdateDimension()
+{
+    RECT clientRect;
+    GetClientRect((HWND)m_windowHandle, &clientRect);
+    int newWidth  = clientRect.right - clientRect.left;
+    int newHeight = clientRect.bottom - clientRect.top;
 
-        viewportX      = floor(viewportX / pixelAlignX) * pixelAlignX;
-        viewportY      = floor(viewportY / pixelAlignY) * pixelAlignY;
-        viewportWidth  = ceil(viewportWidth / pixelAlignX) * pixelAlignX;
-        viewportHeight = ceil(viewportHeight / pixelAlignY) * pixelAlignY;
-
-        // 边界检查
-        viewportX      = max(0.0f, min(1.0f,viewportX));
-        viewportY      = max(0.0f, min(1.0f,viewportY));
-        viewportWidth  = max(0.0f, min(1.0f -viewportX, viewportWidth));
-        viewportHeight = max(0.0f, min(1.0f -viewportY, viewportHeight));
+    if (newWidth != (int)m_windowDimensions.x || newHeight != (int)m_windowDimensions.y)
+    {
+        m_windowDimensions.x = newWidth;
+        m_windowDimensions.y = newHeight;
+        m_shouldUpdateDimension          = true;
     }
 }
 
@@ -1024,11 +918,11 @@ Vec2 Window::GetNormalizedMouseUV() const
         m_config.m_windowType == eWindowType::FULLSCREEN_CROP)
     {
         // Adjust cursor position relative to render area
-        float const adjustedX = static_cast<float>(cursorCoords.x - m_renderOffset.x);
-        float const adjustedY = static_cast<float>(cursorCoords.y - m_renderOffset.y);
+        float const adjustedX = cursorCoords.x - m_renderOffset.x;
+        float const adjustedY = cursorCoords.y - m_renderOffset.y;
 
-        float const normalizedX = adjustedX / static_cast<float>(m_renderDimensions.x);
-        float const normalizedY = adjustedY / static_cast<float>(m_renderDimensions.y);
+        float const normalizedX = adjustedX / static_cast<float>(m_viewportDimensions.x);
+        float const normalizedY = adjustedY / static_cast<float>(m_viewportDimensions.y);
         GetClampedZeroToOne(normalizedX);
         GetClampedZeroToOne(normalizedY);
         // Clamp to [0,1] range and flip Y

@@ -209,10 +209,10 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
         return;
     }
 
-    Window const* window           = Window::s_mainWindow;
-    IntVec2 const clientDimensions = window->GetClientDimensions();
-    IntVec2 const renderDimensions = window->GetRenderDimensions();
-    IntVec2 const renderOffset     = window->GetRenderOffset();
+    Window const* window             = Window::s_mainWindow;
+    Vec2 const    clientDimensions   = window->GetClientDimensions();
+    Vec2 const    viewportDimensions = window->GetViewportDimensions();
+    Vec2 const    viewportOffset     = window->GetViewportOffset();
 
     float viewportLeft, viewportTop, viewportRight, viewportBottom;
 
@@ -222,8 +222,8 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
     case eWindowType::FULLSCREEN_LETTERBOX:
         {
             // Letterbox 模式：視口相對於渲染區域，但需要考慮偏移
-            float const renderWidth  = static_cast<float>(renderDimensions.x);
-            float const renderHeight = static_cast<float>(renderDimensions.y);
+            float const renderWidth  = static_cast<float>(viewportDimensions.x);
+            float const renderHeight = static_cast<float>(viewportDimensions.y);
 
             // 計算相對於渲染區域的絕對座標
             float const relativeLeft   = renderWidth * newViewPort.m_mins.x;
@@ -232,18 +232,18 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
             float const relativeBottom = renderHeight * newViewPort.m_maxs.y;
 
             // 加上渲染偏移，得到相對於整個視窗的絕對座標
-            viewportLeft   = relativeLeft + static_cast<float>(renderOffset.x);
-            viewportTop    = relativeTop + static_cast<float>(renderOffset.y);
-            viewportRight  = relativeRight + static_cast<float>(renderOffset.x);
-            viewportBottom = relativeBottom + static_cast<float>(renderOffset.y);
+            viewportLeft   = relativeLeft + static_cast<float>(viewportOffset.x);
+            viewportTop    = relativeTop + static_cast<float>(viewportOffset.y);
+            viewportRight  = relativeRight + static_cast<float>(viewportOffset.x);
+            viewportBottom = relativeBottom + static_cast<float>(viewportOffset.y);
         }
         break;
 
     case eWindowType::FULLSCREEN_CROP:
         {
             // Crop 模式：使用整個螢幕，但視口計算基於渲染尺寸
-            float const renderWidth  = static_cast<float>(renderDimensions.x);
-            float const renderHeight = static_cast<float>(renderDimensions.y);
+            float const renderWidth  = static_cast<float>(viewportDimensions.x);
+            float const renderHeight = static_cast<float>(viewportDimensions.y);
 
             // 計算裁剪區域內的視口
             float const cropLeft   = renderWidth * newViewPort.m_mins.x;

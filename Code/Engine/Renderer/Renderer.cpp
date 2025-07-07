@@ -50,22 +50,25 @@ STATIC int Renderer::k_modelConstantsSlot   = 4;
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRenderConfig const& config)
 {
-    m_config = config;
-    sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
-    sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
+    m_config    = config;
+    // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
+    // sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
     // sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
     // sceneHeight = GetSystemMetrics(SM_CYSCREEN);
+
+float screenWidth = Window::s_mainWindow->GetScreenDimensions().x;
+    float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
 
     // RendererEx
     ZeroMemory(&m_bitmapInfo, sizeof(BITMAPINFO));
     m_bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    m_bitmapInfo.bmiHeader.biWidth       = sceneWidth;
-    m_bitmapInfo.bmiHeader.biHeight      = static_cast<LONG>(sceneHeight);
+    m_bitmapInfo.bmiHeader.biWidth       = screenWidth;
+    m_bitmapInfo.bmiHeader.biHeight      = static_cast<LONG>(screenHeight);
     m_bitmapInfo.bmiHeader.biPlanes      = 1;
     m_bitmapInfo.bmiHeader.biBitCount    = 32;
     m_bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-    m_pixelData.resize(sceneWidth * sceneHeight * 4);
+    m_pixelData.resize(screenWidth * screenHeight * 4);
 }
 
 void Renderer::CreateDeviceAndSwapChain(unsigned int deviceFlags)
@@ -1385,6 +1388,7 @@ void Renderer::ReadStagingTextureToPixelData()
     // 6. Unmap + release
     m_deviceContext->Unmap(stagingTex, 0);
     stagingTex->Release();
+    mainRenderTargetTexture->Release();
 }
 
 void Renderer::RenderViewportToWindow(Window const& window) const
@@ -1416,11 +1420,14 @@ void Renderer::RenderViewportToWindow(Window const& window) const
     int clientWidth  = clientRect.right - clientRect.left;
     int clientHeight = clientRect.bottom - clientRect.top;
 
+    float screenWidth = Window::s_mainWindow->GetScreenDimensions().x;
+    float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
+
     // 計算在場景紋理中的區域（使用實際的相對位置）
-    int srcX      = max(0, min(relativeX, (int)sceneWidth - 1));
-    int srcY      = max(0, min(relativeY, (int)sceneHeight - 1));
-    int srcWidth  = min(clientWidth, (int)sceneWidth - srcX);
-    int srcHeight = min(clientHeight, (int)sceneHeight - srcY);
+    int srcX      = max(0, min(relativeX, (int)screenWidth - 1));
+    int srcY      = max(0, min(relativeY, (int)screenHeight - 1));
+    int srcWidth  = min(clientWidth, (int)screenWidth - srcX);
+    int srcHeight = min(clientHeight, (int)screenHeight - srcY);
 
     // 確保有效的複製區域
     if (srcWidth <= 0 || srcHeight <= 0) return;
@@ -1431,7 +1438,7 @@ void Renderer::RenderViewportToWindow(Window const& window) const
     // 從場景數據複製指定區域
     for (int y = 0; y < srcHeight; y++)
     {
-        int srcRowIndex = (srcY + y) * sceneWidth + srcX;
+        int srcRowIndex = (srcY + y) * screenWidth + srcX;
         int dstRowIndex = y * srcWidth;
 
         memcpy(&windowPixels[dstRowIndex * 4],
@@ -1458,7 +1465,7 @@ void Renderer::RenderViewportToWindow(Window const& window) const
     );
 }
 
-void Renderer::RenderViewportToWindowDX11(const Window& window)
+void Renderer::RenderViewportToWindowDX11( Window& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
@@ -1484,7 +1491,7 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
     int relativeY = clientTopLeft.y - mainWindowRect.top;
 
     // 1. 從主視窗 RenderTarget 複製指定區域到子視窗
-    D3D11_BOX sourceBox = {};
+    D3D11_BOX sourceBox ;
     sourceBox.left      = (UINT)relativeX;
     sourceBox.top       = (UINT)relativeY;
     sourceBox.right     = (UINT)(relativeX + clientRect.right);
@@ -1509,9 +1516,11 @@ void Renderer::RenderViewportToWindowDX11(const Window& window)
     );
 
     windowTexture->Release();
+    mainRenderTargetTexture->Release();
 
     // 2. Present 子視窗
     window.m_swapChain->Present(0, 0);
+
 }
 
 HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
@@ -1544,7 +1553,7 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 
     // 4. Resize swap chain buffers
     HRESULT hr = window.m_swapChain->ResizeBuffers(
-        1,                              // BufferCount
+        2,                              // BufferCount
         newWidth,                       // Width
         newHeight,                      // Height
         DXGI_FORMAT_R8G8B8A8_UNORM,    // NewFormat
@@ -1576,27 +1585,29 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     }
 
     // 6. Update window info
-    window.width  = newWidth;
-    window.height = newHeight;
+    window.m_windowDimensions.x  = newWidth;
+    window.m_windowDimensions.y = newHeight;
 
     // 7. Recalculate viewport parameters
     RECT windowRect;
     if (GetWindowRect((HWND)window.m_windowHandle, &windowRect))
     {
-        window.viewportX      = (float)windowRect.left / (float)window.virtualScreenWidth;
-        window.viewportY      = (float)windowRect.top / (float)window.virtualScreenHeight;
-        window.viewportWidth  = (float)window.width / (float)window.virtualScreenWidth;
-        window.viewportHeight = (float)window.height / (float)window.virtualScreenHeight;
+
+
+        window.m_viewportPosition.x   = (float)windowRect.left / (float)window.GetScreenDimensions().x;
+        window.m_viewportPosition.y   = (float)windowRect.top / (float)window.GetScreenDimensions().y;
+        window.m_viewportDimensions.x = (float)window.m_windowDimensions.x / (float)window.GetScreenDimensions().x;
+        window.m_viewportDimensions.y = (float)window.m_windowDimensions.y / (float)window.GetScreenDimensions().y;
 
         // Clamp to valid range
-        window.viewportX      = max(0.0f, min(1.0f, window.viewportX));
-        window.viewportY      = max(0.0f, min(1.0f, window.viewportY));
-        window.viewportWidth  = max(0.0f, min(1.0f - window.viewportX, window.viewportWidth));
-        window.viewportHeight = max(0.0f, min(1.0f - window.viewportY, window.viewportHeight));
+        window.m_viewportPosition.x   = max(0.0f, min(1.0f, window.m_viewportPosition.x));
+        window.m_viewportPosition.y   = max(0.0f, min(1.0f, window.m_viewportPosition.y ));
+        window.m_viewportDimensions.x = max(0.0f, min(1.0f - window.m_viewportPosition.x, window.m_viewportDimensions.x));
+        window.m_viewportDimensions.y = max(0.0f, min(1.0f - window.m_viewportPosition.y, window.m_viewportDimensions.y));
     }
 
-    window.needsUpdate = true;
-    window.needsResize = false;
+    // window.m_shouldUpdatePosition = true;
+    window.m_shouldUpdateDimension = false;
 
     DebuggerPrintf("Window resized successfully to %dx%d\n", newWidth, newHeight);
     return S_OK;
@@ -1621,8 +1632,8 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
 
     RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);
-    window.width  = clientRect.right - clientRect.left;
-    window.height = clientRect.bottom - clientRect.top;
+    window.m_windowDimensions.x  = clientRect.right - clientRect.left;
+    window.m_windowDimensions.y = clientRect.bottom - clientRect.top;
 
     // 獲取 DXGI Factory2（注意這裡會用到 IDXGIFactory2 而非舊的 IDXGIFactory）
     IDXGIDevice* dxgiDevice = nullptr;
@@ -1645,8 +1656,8 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
 
     // 使用 DXGI_SWAP_CHAIN_DESC1（新版描述）
     DXGI_SWAP_CHAIN_DESC1 scDesc = {};
-    scDesc.Width                 = window.width;
-    scDesc.Height                = window.height;
+    scDesc.Width                 = window.m_windowDimensions.x;
+    scDesc.Height                = window.m_windowDimensions.y;
     scDesc.Format                = DXGI_FORMAT_R8G8B8A8_UNORM;
     scDesc.SampleDesc.Count      = 1;
     scDesc.SampleDesc.Quality    = 0;
