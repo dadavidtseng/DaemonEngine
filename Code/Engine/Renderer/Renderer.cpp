@@ -50,13 +50,13 @@ STATIC int Renderer::k_modelConstantsSlot   = 4;
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRenderConfig const& config)
 {
-    m_config    = config;
+    m_config = config;
     // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
     // sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
     // sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
     // sceneHeight = GetSystemMetrics(SM_CYSCREEN);
 
-float screenWidth = Window::s_mainWindow->GetScreenDimensions().x;
+    float screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
     float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
 
     // RendererEx
@@ -1393,8 +1393,6 @@ void Renderer::ReadStagingTextureToPixelData()
 
 void Renderer::RenderViewportToWindow(Window const& window)
 {
-
-
     if (!window.m_displayContext) return;
     // ReadStagingTextureToPixelData();
     // 取得子視窗在螢幕上的實際客戶區域位置
@@ -1422,7 +1420,7 @@ void Renderer::RenderViewportToWindow(Window const& window)
     int clientWidth  = clientRect.right - clientRect.left;
     int clientHeight = clientRect.bottom - clientRect.top;
 
-    float screenWidth = Window::s_mainWindow->GetScreenDimensions().x;
+    float screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
     float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
 
     // 計算在場景紋理中的區域（使用實際的相對位置）
@@ -1467,7 +1465,7 @@ void Renderer::RenderViewportToWindow(Window const& window)
     );
 }
 
-void Renderer::RenderViewportToWindowDX11( Window& window)
+void Renderer::RenderViewportToWindowDX11(Window& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
@@ -1493,13 +1491,13 @@ void Renderer::RenderViewportToWindowDX11( Window& window)
     int relativeY = clientTopLeft.y - mainWindowRect.top;
 
     // 1. 從主視窗 RenderTarget 複製指定區域到子視窗
-    D3D11_BOX sourceBox ;
-    sourceBox.left      = (UINT)relativeX;
-    sourceBox.top       = (UINT)relativeY;
-    sourceBox.right     = (UINT)(relativeX + clientRect.right);
-    sourceBox.bottom    = (UINT)(relativeY + clientRect.bottom);
-    sourceBox.front     = 0;
-    sourceBox.back      = 1;
+    D3D11_BOX sourceBox;
+    sourceBox.left   = (UINT)relativeX;
+    sourceBox.top    = (UINT)relativeY;
+    sourceBox.right  = (UINT)(relativeX + clientRect.right);
+    sourceBox.bottom = (UINT)(relativeY + clientRect.bottom);
+    sourceBox.front  = 0;
+    sourceBox.back   = 1;
 
     // 獲取子視窗的 texture
     ID3D11Texture2D* windowTexture = nullptr;
@@ -1519,10 +1517,9 @@ void Renderer::RenderViewportToWindowDX11( Window& window)
 
     windowTexture->Release();
     mainRenderTargetTexture->Release();
-    window.m_shouldUpdatePosition = false;
+    // window.m_shouldUpdatePosition = false;
     // 2. Present 子視窗
     window.m_swapChain->Present(0, 0);
-
 }
 
 HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
@@ -1587,15 +1584,13 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     }
 
     // 6. Update window info
-    window.m_windowDimensions.x  = newWidth;
+    window.m_windowDimensions.x = newWidth;
     window.m_windowDimensions.y = newHeight;
 
     // 7. Recalculate viewport parameters
     RECT windowRect;
     if (GetWindowRect((HWND)window.m_windowHandle, &windowRect))
     {
-
-
         window.m_viewportPosition.x   = (float)windowRect.left / (float)window.GetScreenDimensions().x;
         window.m_viewportPosition.y   = (float)windowRect.top / (float)window.GetScreenDimensions().y;
         window.m_viewportDimensions.x = (float)window.m_windowDimensions.x / (float)window.GetScreenDimensions().x;
@@ -1633,7 +1628,7 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
 
     RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);
-    window.m_windowDimensions.x  = clientRect.right - clientRect.left;
+    window.m_windowDimensions.x = clientRect.right - clientRect.left;
     window.m_windowDimensions.y = clientRect.bottom - clientRect.top;
 
     // 獲取 DXGI Factory2（注意這裡會用到 IDXGIFactory2 而非舊的 IDXGIFactory）

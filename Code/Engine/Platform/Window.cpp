@@ -950,11 +950,17 @@ Vec2 Window::GetNormalizedMouseUV() const
 
 Vec2 Window::GetCursorPositionOnScreen() const
 {
-    POINT      cursorCoords;
-
+    POINT cursorCoords;
     GetCursorPos(&cursorCoords);
 
-    return Vec2((int)cursorCoords.x,(int) cursorCoords.y);
+    // 取得螢幕高度
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    // 轉換座標：Y 軸反轉
+    int x = static_cast<int>(cursorCoords.x);
+    int y = screenHeight - static_cast<int>(cursorCoords.y);
+
+    return Vec2(x, y);
 }
 
 
