@@ -15,28 +15,12 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 #pragma comment(lib, "Ws2_32.lib")
 
 //----------------------------------------------------------------------------------------------------
 NetworkSubsystem::NetworkSubsystem(NetworkSubsystemConfig const& config)
     : m_config(config)
-    , m_mode(NetworkMode::NONE)
-    , m_connectionState(ConnectionState::DISCONNECTED)
-    , m_lastFrameConnectionState(ConnectionState::DISCONNECTED)
-    , m_clientSocket((uintptr_t)~0ull)
-    , m_listenSocket((uintptr_t)~0ull)
-    , m_hostAddress(0)
-    , m_hostPort(0)
-    , m_sendBuffer(nullptr)
-    , m_recvBuffer(nullptr)
-    , m_nextClientId(1)
-    , m_heartbeatTimer(0.0f)
-    , m_lastHeartbeatReceived(0.0f)
-    , m_winsockInitialized(false)
-    , m_messagesSent(0)
-    , m_messagesReceived(0)
-    , m_connectionsAccepted(0)
-    , m_connectionsLost(0)
 {
 }
 
@@ -64,27 +48,27 @@ void NetworkSubsystem::StartUp()
     // Determine mode from config
     if (m_config.modeString == "Client" || m_config.modeString == "client")
     {
-        m_mode = NetworkMode::CLIENT;
+        m_mode = eNetworkMode::CLIENT;
         LogMessage("NetworkSubsystem initialized as CLIENT");
     }
     else if (m_config.modeString == "Server" || m_config.modeString == "server")
     {
-        m_mode = NetworkMode::SERVER;
+        m_mode = eNetworkMode::SERVER;
         LogMessage("NetworkSubsystem initialized as SERVER");
     }
     else
     {
-        m_mode = NetworkMode::NONE;
+        m_mode = eNetworkMode::NONE;
         LogMessage("NetworkSubsystem initialized in NONE mode");
         return;
     }
 
     // Mode-specific initialization
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         CreateClientSocket();
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         CreateServerSocket();
     }
@@ -93,22 +77,21 @@ void NetworkSubsystem::StartUp()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::BeginFrame()
 {
-    if (m_mode == NetworkMode::NONE)
-        return;
+    if (m_mode == eNetworkMode::NONE) return;
 
     // Clear previous frame's incoming messages
     m_incomingMessages.clear();
 
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         // Client connection logic
-        if (m_connectionState == ConnectionState::CONNECTING || m_connectionState == ConnectionState::DISCONNECTED)
+        if (m_connectionState == eConnectionState::CONNECTING || m_connectionState == eConnectionState::DISCONNECTED)
         {
             // Attempt connection
-            sockaddr_in addr = {};
-            addr.sin_family = AF_INET;
+            sockaddr_in addr          = {};
+            addr.sin_family           = AF_INET;
             addr.sin_addr.S_un.S_addr = htonl(m_hostAddress);
-            addr.sin_port = htons(m_hostPort);
+            addr.sin_port             = htons(m_hostPort);
 
             int result = connect((SOCKET)m_clientSocket, (sockaddr*)(&addr), sizeof(addr));
 
@@ -120,13 +103,13 @@ void NetworkSubsystem::BeginFrame()
             FD_SET((SOCKET)m_clientSocket, &exceptSockets);
 
             timeval waitTime = {};
-            result = select(0, NULL, &writeSockets, &exceptSockets, &waitTime);
+            result           = select(0, NULL, &writeSockets, &exceptSockets, &waitTime);
 
             if (result >= 0)
             {
                 if (FD_ISSET((SOCKET)m_clientSocket, &writeSockets))
                 {
-                    m_connectionState = ConnectionState::CONNECTED;
+                    m_connectionState = eConnectionState::CONNECTED;
                     if (!ProcessClientMessages())
                     {
                         return;
@@ -137,12 +120,12 @@ void NetworkSubsystem::BeginFrame()
                     // Connection attempt, check for errors
                     if (!DealWithSocketError(m_clientSocket))
                     {
-                        m_connectionState = ConnectionState::DISCONNECTED;
+                        m_connectionState = eConnectionState::DISCONNECTED;
                     }
                 }
             }
         }
-        else if (m_connectionState == ConnectionState::CONNECTED)
+        else if (m_connectionState == eConnectionState::CONNECTED)
         {
             if (!ProcessClientMessages())
             {
@@ -153,18 +136,18 @@ void NetworkSubsystem::BeginFrame()
         // Log connection state changes
         if (m_lastFrameConnectionState != m_connectionState)
         {
-            if (m_lastFrameConnectionState == ConnectionState::DISCONNECTED && m_connectionState == ConnectionState::CONNECTED)
+            if (m_lastFrameConnectionState == eConnectionState::DISCONNECTED && m_connectionState == eConnectionState::CONNECTED)
             {
                 LogMessage(Stringf("Connected to server %s! Socket: %llu", m_config.hostAddressString.c_str(), m_clientSocket));
             }
-            else if (m_lastFrameConnectionState == ConnectionState::CONNECTED && m_connectionState == ConnectionState::DISCONNECTED)
+            else if (m_lastFrameConnectionState == eConnectionState::CONNECTED && m_connectionState == eConnectionState::DISCONNECTED)
             {
                 LogMessage(Stringf("Disconnected from server %s! Socket: %llu", m_config.hostAddressString.c_str(), m_clientSocket));
             }
         }
         m_lastFrameConnectionState = m_connectionState;
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         // Server: accept new connections and process existing ones
         ProcessIncomingConnections();
@@ -187,8 +170,7 @@ void NetworkSubsystem::EndFrame()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::Update(float deltaSeconds)
 {
-    if (m_mode == NetworkMode::NONE)
-        return;
+    if (m_mode == eNetworkMode::NONE) return;
 
     // Update heartbeat system
     if (m_config.enableHeartbeat)
@@ -200,7 +182,7 @@ void NetworkSubsystem::Update(float deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::ShutDown()
 {
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         if (m_clientSocket != (uintptr_t)~0ull)
         {
@@ -216,11 +198,9 @@ void NetworkSubsystem::ShutDown()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::ProcessIncomingConnections()
 {
-    if (m_listenSocket == (uintptr_t)~0ull)
-        return;
+    if (m_listenSocket == (uintptr_t)~0ull) return;
 
-    if (m_clients.size() >= (size_t)m_config.maxClients)
-        return; // Already at max capacity
+    if (m_clients.size() >= (size_t)m_config.maxClients) return; // Already at max capacity
 
     SOCKET newClientSocket = accept((SOCKET)m_listenSocket, NULL, NULL);
     if (newClientSocket != INVALID_SOCKET)
@@ -230,13 +210,13 @@ void NetworkSubsystem::ProcessIncomingConnections()
 
         // Create new client connection
         ClientConnection newClient;
-        newClient.socket = (uintptr_t)newClientSocket;
-        newClient.clientId = m_nextClientId++;
-        newClient.state = ConnectionState::CONNECTED;
-        newClient.address = "Unknown"; // Could get actual IP if needed
-        newClient.port = 0;
+        newClient.socket            = (uintptr_t)newClientSocket;
+        newClient.clientId          = m_nextClientId++;
+        newClient.state             = eConnectionState::CONNECTED;
+        newClient.address           = "Unknown"; // Could get actual IP if needed
+        newClient.port              = 0;
         newClient.lastHeartbeatTime = 0.0f;
-        newClient.recvQueue = "";  // Initialize empty receive queue
+        newClient.recvQueue         = "";  // Initialize empty receive queue
 
         m_clients.push_back(newClient);
         m_connectionsAccepted++;
@@ -259,7 +239,7 @@ void NetworkSubsystem::CheckClientConnections()
     // Remove disconnected clients
     for (auto it = m_clients.begin(); it != m_clients.end();)
     {
-        if (it->state == ConnectionState::DISCONNECTED || it->state == ConnectionState::ERROR_STATE)
+        if (it->state == eConnectionState::DISCONNECTED || it->state == eConnectionState::ERROR_STATE)
         {
             LogMessage(Stringf("Client %d disconnected", it->clientId));
 
@@ -313,7 +293,7 @@ std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t socket)
         {
             if (client.socket == socket)
             {
-                client.state = ConnectionState::DISCONNECTED;
+                client.state = eConnectionState::DISCONNECTED;
                 break;
             }
         }
@@ -382,7 +362,7 @@ bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
 
     if (error == WSAECONNABORTED || error == WSAECONNRESET || error == 0)
     {
-        if (m_mode == NetworkMode::SERVER)
+        if (m_mode == eNetworkMode::SERVER)
         {
             // Find and disconnect the client
             for (auto& client : m_clients)
@@ -390,14 +370,14 @@ bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
                 if (client.socket == socket)
                 {
                     LogMessage(Stringf("Client %d disconnected due to connection error", client.clientId));
-                    client.state = ConnectionState::DISCONNECTED;
+                    client.state = eConnectionState::DISCONNECTED;
                     break;
                 }
             }
         }
-        else if (m_mode == NetworkMode::CLIENT)
+        else if (m_mode == eNetworkMode::CLIENT)
         {
-            m_connectionState = ConnectionState::DISCONNECTED;
+            m_connectionState = eConnectionState::DISCONNECTED;
             if (m_clientSocket == socket)
             {
                 closesocket((SOCKET)m_clientSocket);
@@ -430,7 +410,7 @@ void NetworkSubsystem::CloseClientConnection(int clientId)
                 closesocket((SOCKET)client.socket);
                 client.socket = (uintptr_t)~0ull;
             }
-            client.state = ConnectionState::DISCONNECTED;
+            client.state = eConnectionState::DISCONNECTED;
             break;
         }
     }
@@ -464,7 +444,7 @@ void NetworkSubsystem::ProcessHeartbeat(float deltaSeconds)
     }
 
     // Check for heartbeat timeout (client only)
-    if (m_mode == NetworkMode::CLIENT && m_lastHeartbeatReceived > m_config.heartbeatInterval * 3.0f)
+    if (m_mode == eNetworkMode::CLIENT && m_lastHeartbeatReceived > m_config.heartbeatInterval * 3.0f)
     {
         LogMessage("Heartbeat timeout, disconnecting...");
         DisconnectFromServer();
@@ -475,17 +455,17 @@ void NetworkSubsystem::ProcessHeartbeat(float deltaSeconds)
 void NetworkSubsystem::SendHeartbeat()
 {
     NetworkMessage heartbeat("Heartbeat", "", -1);
-    std::string serialized = SerializeMessage(heartbeat);
+    std::string    serialized = SerializeMessage(heartbeat);
 
-    if (m_mode == NetworkMode::CLIENT && m_connectionState == ConnectionState::CONNECTED)
+    if (m_mode == eNetworkMode::CLIENT && m_connectionState == eConnectionState::CONNECTED)
     {
         SendRawData(serialized);
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         for (auto& client : m_clients)
         {
-            if (client.state == ConnectionState::CONNECTED)
+            if (client.state == eConnectionState::CONNECTED)
             {
                 SendRawDataToSocket(client.socket, serialized);
             }
@@ -496,11 +476,11 @@ void NetworkSubsystem::SendHeartbeat()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::ProcessHeartbeatMessage(int fromClientId)
 {
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         m_lastHeartbeatReceived = 0.0f;
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         // Update client's last heartbeat time
         for (auto& client : m_clients)
@@ -552,9 +532,9 @@ NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int
 
     if (parts.size() >= 3)
     {
-        std::string messageType = parts[0];
-        int originalClientId = atoi(parts[1].c_str());
-        std::string messageData = parts[2];
+        std::string messageType      = parts[0];
+        int         originalClientId = atoi(parts[1].c_str());
+        std::string messageData      = parts[2];
 
         // 再次清理 messageData
         std::string cleanMessageData;
@@ -567,7 +547,7 @@ NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int
         }
 
         // 使用提供的 fromClientId for server mode, 原始的 for client mode
-        int actualClientId = (m_mode == NetworkMode::SERVER) ? fromClientId : originalClientId;
+        int actualClientId = (m_mode == eNetworkMode::SERVER) ? fromClientId : originalClientId;
 
         return NetworkMessage(messageType, cleanMessageData, actualClientId);
     }
@@ -576,20 +556,20 @@ NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::string& outIP, unsigned short& outPort)
+void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::string& out_IP, unsigned short& out_port)
 {
     StringList ipAndPort;
     SplitStringOnDelimiter(ipAndPort, hostString, ':');
 
     if (ipAndPort.size() >= 2)
     {
-        outIP = ipAndPort[0];
-        outPort = (unsigned short)atoi(ipAndPort[1].c_str());
+        out_IP   = ipAndPort[0];
+        out_port = (unsigned short)atoi(ipAndPort[1].c_str());
     }
     else
     {
-        outIP = "127.0.0.1";
-        outPort = 3100;
+        out_IP   = "127.0.0.1";
+        out_port = 3100;
     }
 }
 
@@ -609,7 +589,7 @@ void NetworkSubsystem::LogError(const std::string& error)
     {
         g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[NetworkSubsystem ERROR] " + error);
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         CloseAllConnections();
 
@@ -635,8 +615,8 @@ void NetworkSubsystem::LogError(const std::string& error)
         m_sendBuffer = nullptr;
     }
 
-    m_mode = NetworkMode::NONE;
-    m_connectionState = ConnectionState::DISCONNECTED;
+    m_mode            = eNetworkMode::NONE;
+    m_connectionState = eConnectionState::DISCONNECTED;
 
     LogMessage("NetworkSubsystem shut down");
 }
@@ -644,29 +624,29 @@ void NetworkSubsystem::LogError(const std::string& error)
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::IsEnabled() const
 {
-    return m_connectionState != ConnectionState::DISABLED && m_mode != NetworkMode::NONE;
+    return m_connectionState != eConnectionState::DISABLED && m_mode != eNetworkMode::NONE;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::IsServer() const
 {
-    return m_mode == NetworkMode::SERVER;
+    return m_mode == eNetworkMode::SERVER;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::IsClient() const
 {
-    return m_mode == NetworkMode::CLIENT;
+    return m_mode == eNetworkMode::CLIENT;
 }
 
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::IsConnected() const
 {
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
-        return m_connectionState == ConnectionState::CONNECTED;
+        return m_connectionState == eConnectionState::CONNECTED;
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         return !m_clients.empty();
     }
@@ -674,13 +654,13 @@ bool NetworkSubsystem::IsConnected() const
 }
 
 //----------------------------------------------------------------------------------------------------
-NetworkMode NetworkSubsystem::GetNetworkMode() const
+eNetworkMode NetworkSubsystem::GetNetworkMode() const
 {
     return m_mode;
 }
 
 //----------------------------------------------------------------------------------------------------
-ConnectionState NetworkSubsystem::GetConnectionState() const
+eConnectionState NetworkSubsystem::GetConnectionState() const
 {
     return m_connectionState;
 }
@@ -688,28 +668,28 @@ ConnectionState NetworkSubsystem::GetConnectionState() const
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::StartServer(int port)
 {
-    if (m_mode != NetworkMode::NONE)
+    if (m_mode != eNetworkMode::NONE)
     {
         LogError("Cannot start server: already in network mode");
         return false;
     }
 
-    m_mode = NetworkMode::SERVER;
+    m_mode = eNetworkMode::SERVER;
 
     if (port != -1)
     {
         // Update port in host address string
-        std::string ip;
+        std::string    ip;
         unsigned short oldPort;
         ParseHostAddress(m_config.hostAddressString, ip, oldPort);
         m_config.hostAddressString = ip + ":" + std::to_string(port);
-        m_hostPort = (unsigned short)port;
+        m_hostPort                 = (unsigned short)port;
     }
 
     InitializeWinsock();
     CreateServerSocket();
 
-    m_connectionState = ConnectionState::CONNECTED;
+    m_connectionState = eConnectionState::CONNECTED;
     LogMessage(Stringf("Server started on port %d", m_hostPort));
 
     return true;
@@ -718,20 +698,19 @@ bool NetworkSubsystem::StartServer(int port)
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::StopServer()
 {
-    if (m_mode != NetworkMode::SERVER)
-        return;
+    if (m_mode != eNetworkMode::SERVER) return;
 
     CloseAllConnections();
 
-    if (m_listenSocket != (uintptr_t)~0ull)
+    if (m_listenSocket != ~0ull)
     {
-        shutdown((SOCKET)m_listenSocket, SD_BOTH);
-        closesocket((SOCKET)m_listenSocket);
-        m_listenSocket = (uintptr_t)~0ull;
+        shutdown(m_listenSocket, SD_BOTH);
+        closesocket(m_listenSocket);
+        m_listenSocket = ~0ull;
     }
 
-    m_mode = NetworkMode::NONE;
-    m_connectionState = ConnectionState::DISCONNECTED;
+    m_mode            = eNetworkMode::NONE;
+    m_connectionState = eConnectionState::DISCONNECTED;
 
     LogMessage("Server stopped");
 }
@@ -739,14 +718,12 @@ void NetworkSubsystem::StopServer()
 //----------------------------------------------------------------------------------------------------
 int NetworkSubsystem::GetConnectedClientCount() const
 {
-    if (m_mode != NetworkMode::SERVER)
-        return 0;
+    if (m_mode != eNetworkMode::SERVER) return 0;
 
     int count = 0;
     for (const auto& client : m_clients)
     {
-        if (client.state == ConnectionState::CONNECTED)
-            count++;
+        if (client.state == eConnectionState::CONNECTED) count++;
     }
     return count;
 }
@@ -755,13 +732,11 @@ int NetworkSubsystem::GetConnectedClientCount() const
 std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
 {
     std::vector<int> clientIds;
-    if (m_mode != NetworkMode::SERVER)
-        return clientIds;
+    if (m_mode != eNetworkMode::SERVER) return clientIds;
 
     for (const auto& client : m_clients)
     {
-        if (client.state == ConnectionState::CONNECTED)
-            clientIds.push_back(client.clientId);
+        if (client.state == eConnectionState::CONNECTED) clientIds.push_back(client.clientId);
     }
     return clientIds;
 }
@@ -769,19 +744,19 @@ std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::ConnectToServer(const std::string& address, int port)
 {
-    if (m_mode != NetworkMode::NONE)
+    if (m_mode != eNetworkMode::NONE)
     {
         LogError("Cannot connect to server: already in network mode");
         return false;
     }
 
-    m_mode = NetworkMode::CLIENT;
+    m_mode                     = eNetworkMode::CLIENT;
     m_config.hostAddressString = address + ":" + std::to_string(port);
 
     InitializeWinsock();
     CreateClientSocket();
 
-    m_connectionState = ConnectionState::CONNECTING;
+    m_connectionState = eConnectionState::CONNECTING;
     LogMessage(Stringf("Attempting to connect to %s:%d", address.c_str(), port));
 
     return true;
@@ -790,8 +765,7 @@ bool NetworkSubsystem::ConnectToServer(const std::string& address, int port)
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::DisconnectFromServer()
 {
-    if (m_mode != NetworkMode::CLIENT)
-        return;
+    if (m_mode != eNetworkMode::CLIENT) return;
 
     if (m_clientSocket != (uintptr_t)~0ull)
     {
@@ -800,8 +774,8 @@ void NetworkSubsystem::DisconnectFromServer()
         m_clientSocket = (uintptr_t)~0ull;
     }
 
-    m_mode = NetworkMode::NONE;
-    m_connectionState = ConnectionState::DISCONNECTED;
+    m_mode            = eNetworkMode::NONE;
+    m_connectionState = eConnectionState::DISCONNECTED;
 
     LogMessage("Disconnected from server");
 }
@@ -816,20 +790,20 @@ void NetworkSubsystem::SendRawData(const std::string& data)
 void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClientId)
 {
     NetworkMessage message("GameData", gameData, targetClientId);
-    std::string serialized = SerializeMessage(message);
+    std::string    serialized = SerializeMessage(message);
 
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         SendRawData(serialized);
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         if (targetClientId == -1)
         {
             // Broadcast to all clients
             for (auto& client : m_clients)
             {
-                if (client.state == ConnectionState::CONNECTED)
+                if (client.state == eConnectionState::CONNECTED)
                 {
                     SendRawDataToSocket(client.socket, serialized);
                 }
@@ -847,20 +821,20 @@ void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClien
 void NetworkSubsystem::SendChatMessage(const std::string& message, int targetClientId)
 {
     NetworkMessage chatMsg("ChatMessage", message, targetClientId);
-    std::string serialized = SerializeMessage(chatMsg);
+    std::string    serialized = SerializeMessage(chatMsg);
 
-    if (m_mode == NetworkMode::CLIENT)
+    if (m_mode == eNetworkMode::CLIENT)
     {
         SendRawData(serialized);
     }
-    else if (m_mode == NetworkMode::SERVER)
+    else if (m_mode == eNetworkMode::SERVER)
     {
         if (targetClientId == -1)
         {
             // Broadcast to all clients
             for (auto& client : m_clients)
             {
-                if (client.state == ConnectionState::CONNECTED)
+                if (client.state == eConnectionState::CONNECTED)
                 {
                     SendRawDataToSocket(client.socket, serialized);
                 }
@@ -874,14 +848,13 @@ void NetworkSubsystem::SendChatMessage(const std::string& message, int targetCli
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToClient(int clientId, const NetworkMessage& message)
+bool NetworkSubsystem::SendMessageToClient(int const clientId, const NetworkMessage& message)
 {
-    if (m_mode != NetworkMode::SERVER)
-        return false;
+    if (m_mode != eNetworkMode::SERVER) return false;
 
     for (auto& client : m_clients)
     {
-        if (client.clientId == clientId && client.state == ConnectionState::CONNECTED)
+        if (client.clientId == clientId && client.state == eConnectionState::CONNECTED)
         {
             std::string serialized = SerializeMessage(message);
             return SendRawDataToSocket(client.socket, serialized);
@@ -891,17 +864,16 @@ bool NetworkSubsystem::SendMessageToClient(int clientId, const NetworkMessage& m
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToAllClients(const NetworkMessage& message)
+bool NetworkSubsystem::SendMessageToAllClients( NetworkMessage const& message)
 {
-    if (m_mode != NetworkMode::SERVER)
-        return false;
+    if (m_mode != eNetworkMode::SERVER) return false;
 
     std::string serialized = SerializeMessage(message);
-    bool allSuccess = true;
+    bool        allSuccess = true;
 
     for (auto& client : m_clients)
     {
-        if (client.state == ConnectionState::CONNECTED)
+        if (client.state == eConnectionState::CONNECTED)
         {
             if (!SendRawDataToSocket(client.socket, serialized))
             {
@@ -913,10 +885,9 @@ bool NetworkSubsystem::SendMessageToAllClients(const NetworkMessage& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToServer(const NetworkMessage& message)
+bool NetworkSubsystem::SendMessageToServer( NetworkMessage const& message)
 {
-    if (m_mode != NetworkMode::CLIENT || m_connectionState != ConnectionState::CONNECTED)
-        return false;
+    if (m_mode != eNetworkMode::CLIENT || m_connectionState != eConnectionState::CONNECTED) return false;
 
     std::string serialized = SerializeMessage(message);
     SendRawData(serialized);
@@ -932,8 +903,7 @@ bool NetworkSubsystem::HasPendingMessages() const
 //----------------------------------------------------------------------------------------------------
 NetworkMessage NetworkSubsystem::GetNextMessage()
 {
-    if (m_incomingMessages.empty())
-        return NetworkMessage();
+    if (m_incomingMessages.empty()) return NetworkMessage();
 
     NetworkMessage message = m_incomingMessages.front();
     m_incomingMessages.pop_front();
@@ -949,11 +919,10 @@ void NetworkSubsystem::ClearMessageQueue()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::InitializeWinsock()
 {
-    if (m_winsockInitialized)
-        return;
+    if (m_winsockInitialized) return;
 
     WSADATA data;
-    int result = WSAStartup(MAKEWORD(2, 2), &data);
+    int     result = WSAStartup(MAKEWORD(2, 2), &data);
     if (result != 0)
     {
         ERROR_AND_DIE(Stringf("WSAStartup failed with error: %d", result));
@@ -987,8 +956,8 @@ void NetworkSubsystem::CreateClientSocket()
     std::string ip;
     ParseHostAddress(m_config.hostAddressString, ip, m_hostPort);
 
-    IN_ADDR addr = {};
-    int result = inet_pton(AF_INET, ip.c_str(), &addr);
+    IN_ADDR addr   = {};
+    int     result = inet_pton(AF_INET, ip.c_str(), &addr);
     if (result <= 0)
     {
         LogError(Stringf("Invalid IP address: %s", ip.c_str()));
@@ -1017,10 +986,10 @@ void NetworkSubsystem::CreateServerSocket()
     m_hostAddress = INADDR_ANY;
 
     // Bind to port
-    sockaddr_in addr = {};
-    addr.sin_family = AF_INET;
+    sockaddr_in addr          = {};
+    addr.sin_family           = AF_INET;
     addr.sin_addr.S_un.S_addr = htonl(m_hostAddress);
-    addr.sin_port = htons(m_hostPort);
+    addr.sin_port             = htons(m_hostPort);
 
     int result = bind((SOCKET)m_listenSocket, (sockaddr*)&addr, sizeof(addr));
     if (result == SOCKET_ERROR)
@@ -1049,8 +1018,8 @@ bool NetworkSubsystem::ProcessClientMessages()
     // Send queued messages
     while (!m_sendQueue.empty())
     {
-        const std::string& data = m_sendQueue.front();
-        int result = send((SOCKET)m_clientSocket, data.c_str(), (int)data.length() + 1, 0);
+        const std::string& data   = m_sendQueue.front();
+        int                result = send((SOCKET)m_clientSocket, data.c_str(), (int)data.length() + 1, 0);
 
         if (result > 0)
         {
@@ -1075,8 +1044,8 @@ bool NetworkSubsystem::ProcessClientMessages()
 
         // Process received data (similar to original logic)
         StringList lines;
-        bool hasStringInIt = false;
-        int lastStrEnd = 0;
+        bool       hasStringInIt = false;
+        int        lastStrEnd    = 0;
 
         for (int i = 0; i < result; i++)
         {
@@ -1120,7 +1089,7 @@ bool NetworkSubsystem::ProcessClientMessages()
     else if (result == 0)
     {
         // Connection closed
-        m_connectionState = ConnectionState::DISCONNECTED;
+        m_connectionState = eConnectionState::DISCONNECTED;
         return false;
     }
     else
@@ -1141,8 +1110,7 @@ bool NetworkSubsystem::ProcessServerMessages()
 
     for (auto& client : m_clients)
     {
-        if (client.state != ConnectionState::CONNECTED)
-            continue;
+        if (client.state != eConnectionState::CONNECTED) continue;
 
         // Receive messages from this client
         std::string receivedData = ReceiveRawDataFromSocket(client.socket);
@@ -1156,12 +1124,12 @@ bool NetworkSubsystem::ProcessServerMessages()
     // Send queued messages to all clients
     while (!m_sendQueue.empty())
     {
-        const std::string& data = m_sendQueue.front();
-        bool sentToAll = true;
+        const std::string& data      = m_sendQueue.front();
+        bool               sentToAll = true;
 
         for (auto& client : m_clients)
         {
-            if (client.state == ConnectionState::CONNECTED)
+            if (client.state == eConnectionState::CONNECTED)
             {
                 if (!SendRawDataToSocket(client.socket, data))
                 {
@@ -1182,4 +1150,3 @@ bool NetworkSubsystem::ProcessServerMessages()
     }
     return allSuccess;
 }
-
