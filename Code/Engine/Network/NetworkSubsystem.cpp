@@ -1,0 +1,1185 @@
+//----------------------------------------------------------------------------------------------------
+// NetworkSubsystem.cpp
+//----------------------------------------------------------------------------------------------------
+
+#include "Engine/Network/NetworkSubsystem.hpp"
+
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/NamedStrings.hpp"
+
+// Windows networking headers - only in .cpp file
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+
+//----------------------------------------------------------------------------------------------------
+NetworkSubsystem::NetworkSubsystem(NetworkSubsystemConfig const& config)
+    : m_config(config)
+    , m_mode(NetworkMode::NONE)
+    , m_connectionState(ConnectionState::DISCONNECTED)
+    , m_lastFrameConnectionState(ConnectionState::DISCONNECTED)
+    , m_clientSocket((uintptr_t)~0ull)
+    , m_listenSocket((uintptr_t)~0ull)
+    , m_hostAddress(0)
+    , m_hostPort(0)
+    , m_sendBuffer(nullptr)
+    , m_recvBuffer(nullptr)
+    , m_nextClientId(1)
+    , m_heartbeatTimer(0.0f)
+    , m_lastHeartbeatReceived(0.0f)
+    , m_winsockInitialized(false)
+    , m_messagesSent(0)
+    , m_messagesReceived(0)
+    , m_connectionsAccepted(0)
+    , m_connectionsLost(0)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+NetworkSubsystem::~NetworkSubsystem()
+{
+    ShutDown();
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::StartUp()
+{
+    // Allocate buffers
+    m_recvBuffer = (char*)malloc(m_config.recvBufferSize);
+    m_sendBuffer = (char*)malloc(m_config.sendBufferSize);
+
+    if (!m_recvBuffer || !m_sendBuffer)
+    {
+        ERROR_AND_DIE("Failed to allocate network buffers");
+    }
+
+    // Initialize Winsock
+    InitializeWinsock();
+
+    // Determine mode from config
+    if (m_config.modeString == "Client" || m_config.modeString == "client")
+    {
+        m_mode = NetworkMode::CLIENT;
+        LogMessage("NetworkSubsystem initialized as CLIENT");
+    }
+    else if (m_config.modeString == "Server" || m_config.modeString == "server")
+    {
+        m_mode = NetworkMode::SERVER;
+        LogMessage("NetworkSubsystem initialized as SERVER");
+    }
+    else
+    {
+        m_mode = NetworkMode::NONE;
+        LogMessage("NetworkSubsystem initialized in NONE mode");
+        return;
+    }
+
+    // Mode-specific initialization
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        CreateClientSocket();
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        CreateServerSocket();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::BeginFrame()
+{
+    if (m_mode == NetworkMode::NONE)
+        return;
+
+    // Clear previous frame's incoming messages
+    m_incomingMessages.clear();
+
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        // Client connection logic
+        if (m_connectionState == ConnectionState::CONNECTING || m_connectionState == ConnectionState::DISCONNECTED)
+        {
+            // Attempt connection
+            sockaddr_in addr = {};
+            addr.sin_family = AF_INET;
+            addr.sin_addr.S_un.S_addr = htonl(m_hostAddress);
+            addr.sin_port = htons(m_hostPort);
+
+            int result = connect((SOCKET)m_clientSocket, (sockaddr*)(&addr), sizeof(addr));
+
+            // Check connection status with select
+            fd_set writeSockets, exceptSockets;
+            FD_ZERO(&writeSockets);
+            FD_ZERO(&exceptSockets);
+            FD_SET((SOCKET)m_clientSocket, &writeSockets);
+            FD_SET((SOCKET)m_clientSocket, &exceptSockets);
+
+            timeval waitTime = {};
+            result = select(0, NULL, &writeSockets, &exceptSockets, &waitTime);
+
+            if (result >= 0)
+            {
+                if (FD_ISSET((SOCKET)m_clientSocket, &writeSockets))
+                {
+                    m_connectionState = ConnectionState::CONNECTED;
+                    if (!ProcessClientMessages())
+                    {
+                        return;
+                    }
+                }
+                else if (FD_ISSET((SOCKET)m_clientSocket, &exceptSockets))
+                {
+                    // Connection attempt, check for errors
+                    if (!DealWithSocketError(m_clientSocket))
+                    {
+                        m_connectionState = ConnectionState::DISCONNECTED;
+                    }
+                }
+            }
+        }
+        else if (m_connectionState == ConnectionState::CONNECTED)
+        {
+            if (!ProcessClientMessages())
+            {
+                return;
+            }
+        }
+
+        // Log connection state changes
+        if (m_lastFrameConnectionState != m_connectionState)
+        {
+            if (m_lastFrameConnectionState == ConnectionState::DISCONNECTED && m_connectionState == ConnectionState::CONNECTED)
+            {
+                LogMessage(Stringf("Connected to server %s! Socket: %llu", m_config.hostAddressString.c_str(), m_clientSocket));
+            }
+            else if (m_lastFrameConnectionState == ConnectionState::CONNECTED && m_connectionState == ConnectionState::DISCONNECTED)
+            {
+                LogMessage(Stringf("Disconnected from server %s! Socket: %llu", m_config.hostAddressString.c_str(), m_clientSocket));
+            }
+        }
+        m_lastFrameConnectionState = m_connectionState;
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        // Server: accept new connections and process existing ones
+        ProcessIncomingConnections();
+
+        if (!ProcessServerMessages())
+        {
+            return;
+        }
+
+        CheckClientConnections();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::EndFrame()
+{
+    // Nothing specific needed for end frame currently
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::Update(float deltaSeconds)
+{
+    if (m_mode == NetworkMode::NONE)
+        return;
+
+    // Update heartbeat system
+    if (m_config.enableHeartbeat)
+    {
+        ProcessHeartbeat(deltaSeconds);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ShutDown()
+{
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        if (m_clientSocket != (uintptr_t)~0ull)
+        {
+            shutdown((SOCKET)m_clientSocket, SD_BOTH);
+            closesocket((SOCKET)m_clientSocket);
+            m_clientSocket = (uintptr_t)~0ull;
+        }
+    }
+
+    // return allSuccess;
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ProcessIncomingConnections()
+{
+    if (m_listenSocket == (uintptr_t)~0ull)
+        return;
+
+    if (m_clients.size() >= (size_t)m_config.maxClients)
+        return; // Already at max capacity
+
+    SOCKET newClientSocket = accept((SOCKET)m_listenSocket, NULL, NULL);
+    if (newClientSocket != INVALID_SOCKET)
+    {
+        // Set non-blocking mode
+        SetSocketNonBlocking((uintptr_t)newClientSocket);
+
+        // Create new client connection
+        ClientConnection newClient;
+        newClient.socket = (uintptr_t)newClientSocket;
+        newClient.clientId = m_nextClientId++;
+        newClient.state = ConnectionState::CONNECTED;
+        newClient.address = "Unknown"; // Could get actual IP if needed
+        newClient.port = 0;
+        newClient.lastHeartbeatTime = 0.0f;
+        newClient.recvQueue = "";  // Initialize empty receive queue
+
+        m_clients.push_back(newClient);
+        m_connectionsAccepted++;
+
+        LogMessage(Stringf("Client %d connected! Socket: %llu", newClient.clientId, newClient.socket));
+
+        // Fire connection event
+        if (g_theEventSystem)
+        {
+            NamedStrings args;
+            args.SetValue("clientId", std::to_string(newClient.clientId));
+            g_theEventSystem->FireEvent("ClientConnected", args);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CheckClientConnections()
+{
+    // Remove disconnected clients
+    for (auto it = m_clients.begin(); it != m_clients.end();)
+    {
+        if (it->state == ConnectionState::DISCONNECTED || it->state == ConnectionState::ERROR_STATE)
+        {
+            LogMessage(Stringf("Client %d disconnected", it->clientId));
+
+            // Fire disconnection event
+            if (g_theEventSystem)
+            {
+                NamedStrings args;
+                args.SetValue("clientId", std::to_string(it->clientId));
+                g_theEventSystem->FireEvent("ClientDisconnected", args);
+            }
+
+            if (it->socket != (uintptr_t)~0ull)
+            {
+                closesocket((SOCKET)it->socket);
+            }
+
+            it = m_clients.erase(it);
+            m_connectionsLost++;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::SendRawDataToSocket(uintptr_t socket, const std::string& data)
+{
+    int result = send((SOCKET)socket, data.c_str(), (int)data.length() + 1, 0);
+    if (result <= 0)
+    {
+        return DealWithSocketError(socket);
+    }
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t socket)
+{
+    int result = recv((SOCKET)socket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
+    if (result > 0)
+    {
+        m_recvBuffer[result] = '\0';
+        return std::string(m_recvBuffer, result);
+    }
+    else if (result == 0)
+    {
+        // Connection closed
+        for (auto& client : m_clients)
+        {
+            if (client.socket == socket)
+            {
+                client.state = ConnectionState::DISCONNECTED;
+                break;
+            }
+        }
+    }
+    else
+    {
+        DealWithSocketError(socket);
+    }
+
+    return "";
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fromClientId)
+{
+    // Try to deserialize as NetworkMessage first
+    NetworkMessage netMsg = DeserializeMessage(message, fromClientId);
+    if (!netMsg.messageType.empty())
+    {
+        QueueIncomingMessage(netMsg);
+
+        // Fire specific events based on message type
+        if (g_theEventSystem)
+        {
+            NamedStrings args;
+            args.SetValue("messageType", netMsg.messageType);
+            args.SetValue("data", netMsg.data);
+            args.SetValue("fromClientId", std::to_string(fromClientId));
+
+            if (netMsg.messageType == "GameData")
+            {
+                g_theEventSystem->FireEvent("GameDataReceived", args);
+            }
+            else if (netMsg.messageType == "ChatMessage")
+            {
+                g_theEventSystem->FireEvent("ChatMessageReceived", args);
+            }
+            else if (netMsg.messageType == "Heartbeat")
+            {
+                ProcessHeartbeatMessage(fromClientId);
+            }
+
+            g_theEventSystem->FireEvent("NetworkMessageReceived", args);
+        }
+    }
+    else
+    {
+        // Fall back to executing as console command (legacy behavior)
+        if (g_theDevConsole)
+        {
+            g_theDevConsole->Execute(message, true);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::QueueIncomingMessage(const NetworkMessage& message)
+{
+    m_incomingMessages.push_back(message);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
+{
+    int error = WSAGetLastError();
+
+    if (error == WSAECONNABORTED || error == WSAECONNRESET || error == 0)
+    {
+        if (m_mode == NetworkMode::SERVER)
+        {
+            // Find and disconnect the client
+            for (auto& client : m_clients)
+            {
+                if (client.socket == socket)
+                {
+                    LogMessage(Stringf("Client %d disconnected due to connection error", client.clientId));
+                    client.state = ConnectionState::DISCONNECTED;
+                    break;
+                }
+            }
+        }
+        else if (m_mode == NetworkMode::CLIENT)
+        {
+            m_connectionState = ConnectionState::DISCONNECTED;
+            if (m_clientSocket == socket)
+            {
+                closesocket((SOCKET)m_clientSocket);
+                CreateClientSocket(); // Recreate socket for reconnection attempts
+            }
+        }
+        return false;
+    }
+    else if (error == WSAEWOULDBLOCK || error == WSAEALREADY)
+    {
+        return true; // Non-blocking operation, continue
+    }
+    else
+    {
+        LogError(Stringf("Socket error code: %d", error));
+        return false;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CloseClientConnection(int clientId)
+{
+    for (auto& client : m_clients)
+    {
+        if (client.clientId == clientId)
+        {
+            if (client.socket != (uintptr_t)~0ull)
+            {
+                shutdown((SOCKET)client.socket, SD_BOTH);
+                closesocket((SOCKET)client.socket);
+                client.socket = (uintptr_t)~0ull;
+            }
+            client.state = ConnectionState::DISCONNECTED;
+            break;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CloseAllConnections()
+{
+    for (auto& client : m_clients)
+    {
+        if (client.socket != (uintptr_t)~0ull)
+        {
+            shutdown((SOCKET)client.socket, SD_BOTH);
+            closesocket((SOCKET)client.socket);
+        }
+    }
+    m_clients.clear();
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ProcessHeartbeat(float deltaSeconds)
+{
+    m_heartbeatTimer += deltaSeconds;
+    m_lastHeartbeatReceived += deltaSeconds;
+
+    // Send heartbeat periodically
+    if (m_heartbeatTimer >= m_config.heartbeatInterval)
+    {
+        SendHeartbeat();
+        m_heartbeatTimer = 0.0f;
+    }
+
+    // Check for heartbeat timeout (client only)
+    if (m_mode == NetworkMode::CLIENT && m_lastHeartbeatReceived > m_config.heartbeatInterval * 3.0f)
+    {
+        LogMessage("Heartbeat timeout, disconnecting...");
+        DisconnectFromServer();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::SendHeartbeat()
+{
+    NetworkMessage heartbeat("Heartbeat", "", -1);
+    std::string serialized = SerializeMessage(heartbeat);
+
+    if (m_mode == NetworkMode::CLIENT && m_connectionState == ConnectionState::CONNECTED)
+    {
+        SendRawData(serialized);
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        for (auto& client : m_clients)
+        {
+            if (client.state == ConnectionState::CONNECTED)
+            {
+                SendRawDataToSocket(client.socket, serialized);
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ProcessHeartbeatMessage(int fromClientId)
+{
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        m_lastHeartbeatReceived = 0.0f;
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        // Update client's last heartbeat time
+        for (auto& client : m_clients)
+        {
+            if (client.clientId == fromClientId)
+            {
+                client.lastHeartbeatTime = 0.0f;
+                break;
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+std::string NetworkSubsystem::SerializeMessage(const NetworkMessage& message)
+{
+    // 清理訊息內容，移除可能造成問題的字符
+    std::string cleanData = message.data;
+
+    // 移除所有控制字符（除了正常的可列印字符）
+    std::string filteredData;
+    for (char c : cleanData)
+    {
+        // 只允許可列印字符和空格
+        if ((c >= 32 && c <= 126) || c == ' ')
+        {
+            filteredData += c;
+        }
+    }
+
+    // 簡化的序列化格式，使用更安全的分隔符
+    std::string serialized = message.messageType + "|" + std::to_string(message.fromClientId) + "|" + filteredData + "\0";
+
+    return serialized;
+}
+
+//----------------------------------------------------------------------------------------------------
+NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int fromClientId)
+{
+    // 移除尾部的 null terminator 和換行符
+    std::string cleanData = data;
+    while (!cleanData.empty() && (cleanData.back() == '\0' || cleanData.back() == '\n' || cleanData.back() == '\r'))
+    {
+        cleanData.pop_back();
+    }
+
+    StringList parts;
+    SplitStringOnDelimiter(parts, cleanData, '|');
+
+    if (parts.size() >= 3)
+    {
+        std::string messageType = parts[0];
+        int originalClientId = atoi(parts[1].c_str());
+        std::string messageData = parts[2];
+
+        // 再次清理 messageData
+        std::string cleanMessageData;
+        for (char c : messageData)
+        {
+            if ((c >= 32 && c <= 126) || c == ' ')
+            {
+                cleanMessageData += c;
+            }
+        }
+
+        // 使用提供的 fromClientId for server mode, 原始的 for client mode
+        int actualClientId = (m_mode == NetworkMode::SERVER) ? fromClientId : originalClientId;
+
+        return NetworkMessage(messageType, cleanMessageData, actualClientId);
+    }
+
+    return NetworkMessage(); // 空訊息表示解析失敗
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::string& outIP, unsigned short& outPort)
+{
+    StringList ipAndPort;
+    SplitStringOnDelimiter(ipAndPort, hostString, ':');
+
+    if (ipAndPort.size() >= 2)
+    {
+        outIP = ipAndPort[0];
+        outPort = (unsigned short)atoi(ipAndPort[1].c_str());
+    }
+    else
+    {
+        outIP = "127.0.0.1";
+        outPort = 3100;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::LogMessage(const std::string& message)
+{
+    if (m_config.enableConsoleOutput && g_theDevConsole)
+    {
+        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[NetworkSubsystem] " + message);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::LogError(const std::string& error)
+{
+    if (m_config.enableConsoleOutput && g_theDevConsole)
+    {
+        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[NetworkSubsystem ERROR] " + error);
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        CloseAllConnections();
+
+        if (m_listenSocket != (uintptr_t)~0ull)
+        {
+            shutdown((SOCKET)m_listenSocket, SD_BOTH);
+            closesocket((SOCKET)m_listenSocket);
+            m_listenSocket = (uintptr_t)~0ull;
+        }
+    }
+
+    CleanupWinsock();
+
+    // Free buffers
+    if (m_recvBuffer)
+    {
+        free(m_recvBuffer);
+        m_recvBuffer = nullptr;
+    }
+    if (m_sendBuffer)
+    {
+        free(m_sendBuffer);
+        m_sendBuffer = nullptr;
+    }
+
+    m_mode = NetworkMode::NONE;
+    m_connectionState = ConnectionState::DISCONNECTED;
+
+    LogMessage("NetworkSubsystem shut down");
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::IsEnabled() const
+{
+    return m_connectionState != ConnectionState::DISABLED && m_mode != NetworkMode::NONE;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::IsServer() const
+{
+    return m_mode == NetworkMode::SERVER;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::IsClient() const
+{
+    return m_mode == NetworkMode::CLIENT;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::IsConnected() const
+{
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        return m_connectionState == ConnectionState::CONNECTED;
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        return !m_clients.empty();
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------------------------
+NetworkMode NetworkSubsystem::GetNetworkMode() const
+{
+    return m_mode;
+}
+
+//----------------------------------------------------------------------------------------------------
+ConnectionState NetworkSubsystem::GetConnectionState() const
+{
+    return m_connectionState;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::StartServer(int port)
+{
+    if (m_mode != NetworkMode::NONE)
+    {
+        LogError("Cannot start server: already in network mode");
+        return false;
+    }
+
+    m_mode = NetworkMode::SERVER;
+
+    if (port != -1)
+    {
+        // Update port in host address string
+        std::string ip;
+        unsigned short oldPort;
+        ParseHostAddress(m_config.hostAddressString, ip, oldPort);
+        m_config.hostAddressString = ip + ":" + std::to_string(port);
+        m_hostPort = (unsigned short)port;
+    }
+
+    InitializeWinsock();
+    CreateServerSocket();
+
+    m_connectionState = ConnectionState::CONNECTED;
+    LogMessage(Stringf("Server started on port %d", m_hostPort));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::StopServer()
+{
+    if (m_mode != NetworkMode::SERVER)
+        return;
+
+    CloseAllConnections();
+
+    if (m_listenSocket != (uintptr_t)~0ull)
+    {
+        shutdown((SOCKET)m_listenSocket, SD_BOTH);
+        closesocket((SOCKET)m_listenSocket);
+        m_listenSocket = (uintptr_t)~0ull;
+    }
+
+    m_mode = NetworkMode::NONE;
+    m_connectionState = ConnectionState::DISCONNECTED;
+
+    LogMessage("Server stopped");
+}
+
+//----------------------------------------------------------------------------------------------------
+int NetworkSubsystem::GetConnectedClientCount() const
+{
+    if (m_mode != NetworkMode::SERVER)
+        return 0;
+
+    int count = 0;
+    for (const auto& client : m_clients)
+    {
+        if (client.state == ConnectionState::CONNECTED)
+            count++;
+    }
+    return count;
+}
+
+//----------------------------------------------------------------------------------------------------
+std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
+{
+    std::vector<int> clientIds;
+    if (m_mode != NetworkMode::SERVER)
+        return clientIds;
+
+    for (const auto& client : m_clients)
+    {
+        if (client.state == ConnectionState::CONNECTED)
+            clientIds.push_back(client.clientId);
+    }
+    return clientIds;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::ConnectToServer(const std::string& address, int port)
+{
+    if (m_mode != NetworkMode::NONE)
+    {
+        LogError("Cannot connect to server: already in network mode");
+        return false;
+    }
+
+    m_mode = NetworkMode::CLIENT;
+    m_config.hostAddressString = address + ":" + std::to_string(port);
+
+    InitializeWinsock();
+    CreateClientSocket();
+
+    m_connectionState = ConnectionState::CONNECTING;
+    LogMessage(Stringf("Attempting to connect to %s:%d", address.c_str(), port));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::DisconnectFromServer()
+{
+    if (m_mode != NetworkMode::CLIENT)
+        return;
+
+    if (m_clientSocket != (uintptr_t)~0ull)
+    {
+        shutdown((SOCKET)m_clientSocket, SD_BOTH);
+        closesocket((SOCKET)m_clientSocket);
+        m_clientSocket = (uintptr_t)~0ull;
+    }
+
+    m_mode = NetworkMode::NONE;
+    m_connectionState = ConnectionState::DISCONNECTED;
+
+    LogMessage("Disconnected from server");
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::SendRawData(const std::string& data)
+{
+    m_sendQueue.push_back(data);
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClientId)
+{
+    NetworkMessage message("GameData", gameData, targetClientId);
+    std::string serialized = SerializeMessage(message);
+
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        SendRawData(serialized);
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        if (targetClientId == -1)
+        {
+            // Broadcast to all clients
+            for (auto& client : m_clients)
+            {
+                if (client.state == ConnectionState::CONNECTED)
+                {
+                    SendRawDataToSocket(client.socket, serialized);
+                }
+            }
+        }
+        else
+        {
+            // Send to specific client
+            SendMessageToClient(targetClientId, message);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::SendChatMessage(const std::string& message, int targetClientId)
+{
+    NetworkMessage chatMsg("ChatMessage", message, targetClientId);
+    std::string serialized = SerializeMessage(chatMsg);
+
+    if (m_mode == NetworkMode::CLIENT)
+    {
+        SendRawData(serialized);
+    }
+    else if (m_mode == NetworkMode::SERVER)
+    {
+        if (targetClientId == -1)
+        {
+            // Broadcast to all clients
+            for (auto& client : m_clients)
+            {
+                if (client.state == ConnectionState::CONNECTED)
+                {
+                    SendRawDataToSocket(client.socket, serialized);
+                }
+            }
+        }
+        else
+        {
+            SendMessageToClient(targetClientId, chatMsg);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::SendMessageToClient(int clientId, const NetworkMessage& message)
+{
+    if (m_mode != NetworkMode::SERVER)
+        return false;
+
+    for (auto& client : m_clients)
+    {
+        if (client.clientId == clientId && client.state == ConnectionState::CONNECTED)
+        {
+            std::string serialized = SerializeMessage(message);
+            return SendRawDataToSocket(client.socket, serialized);
+        }
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::SendMessageToAllClients(const NetworkMessage& message)
+{
+    if (m_mode != NetworkMode::SERVER)
+        return false;
+
+    std::string serialized = SerializeMessage(message);
+    bool allSuccess = true;
+
+    for (auto& client : m_clients)
+    {
+        if (client.state == ConnectionState::CONNECTED)
+        {
+            if (!SendRawDataToSocket(client.socket, serialized))
+            {
+                allSuccess = false;
+            }
+        }
+    }
+    return allSuccess;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::SendMessageToServer(const NetworkMessage& message)
+{
+    if (m_mode != NetworkMode::CLIENT || m_connectionState != ConnectionState::CONNECTED)
+        return false;
+
+    std::string serialized = SerializeMessage(message);
+    SendRawData(serialized);
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::HasPendingMessages() const
+{
+    return !m_incomingMessages.empty();
+}
+
+//----------------------------------------------------------------------------------------------------
+NetworkMessage NetworkSubsystem::GetNextMessage()
+{
+    if (m_incomingMessages.empty())
+        return NetworkMessage();
+
+    NetworkMessage message = m_incomingMessages.front();
+    m_incomingMessages.pop_front();
+    return message;
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::ClearMessageQueue()
+{
+    m_incomingMessages.clear();
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::InitializeWinsock()
+{
+    if (m_winsockInitialized)
+        return;
+
+    WSADATA data;
+    int result = WSAStartup(MAKEWORD(2, 2), &data);
+    if (result != 0)
+    {
+        ERROR_AND_DIE(Stringf("WSAStartup failed with error: %d", result));
+    }
+
+    m_winsockInitialized = true;
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CleanupWinsock()
+{
+    if (m_winsockInitialized)
+    {
+        WSACleanup();
+        m_winsockInitialized = false;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CreateClientSocket()
+{
+    m_clientSocket = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_clientSocket == (uintptr_t)INVALID_SOCKET)
+    {
+        ERROR_AND_DIE(Stringf("Error creating client socket: %ld", WSAGetLastError()));
+    }
+
+    SetSocketNonBlocking(m_clientSocket);
+
+    // Parse host address
+    std::string ip;
+    ParseHostAddress(m_config.hostAddressString, ip, m_hostPort);
+
+    IN_ADDR addr = {};
+    int result = inet_pton(AF_INET, ip.c_str(), &addr);
+    if (result <= 0)
+    {
+        LogError(Stringf("Invalid IP address: %s", ip.c_str()));
+    }
+    m_hostAddress = ntohl(addr.S_un.S_addr);
+}
+
+//----------------------------------------------------------------------------------------------------
+void NetworkSubsystem::CreateServerSocket()
+{
+    m_listenSocket = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_listenSocket == (uintptr_t)INVALID_SOCKET)
+    {
+        ERROR_AND_DIE(Stringf("Error creating server socket: %ld", WSAGetLastError()));
+    }
+
+    SetSocketNonBlocking(m_listenSocket);
+
+    // Allow address reuse
+    char yes = 1;
+    setsockopt((SOCKET)m_listenSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
+    // Parse host address
+    std::string ip;
+    ParseHostAddress(m_config.hostAddressString, ip, m_hostPort);
+    m_hostAddress = INADDR_ANY;
+
+    // Bind to port
+    sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.S_un.S_addr = htonl(m_hostAddress);
+    addr.sin_port = htons(m_hostPort);
+
+    int result = bind((SOCKET)m_listenSocket, (sockaddr*)&addr, sizeof(addr));
+    if (result == SOCKET_ERROR)
+    {
+        ERROR_AND_DIE(Stringf("bind failed with error: %d", WSAGetLastError()));
+    }
+
+    // Start listening
+    result = listen((SOCKET)m_listenSocket, m_config.maxClients);
+    if (result == SOCKET_ERROR)
+    {
+        ERROR_AND_DIE(Stringf("listen failed with error: %d", WSAGetLastError()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::SetSocketNonBlocking(uintptr_t socket)
+{
+    unsigned long blockingMode = 1;
+    return ioctlsocket((SOCKET)socket, FIONBIO, &blockingMode) == 0;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::ProcessClientMessages()
+{
+    // Send queued messages
+    while (!m_sendQueue.empty())
+    {
+        const std::string& data = m_sendQueue.front();
+        int result = send((SOCKET)m_clientSocket, data.c_str(), (int)data.length() + 1, 0);
+
+        if (result > 0)
+        {
+            m_sendQueue.pop_front();
+            m_messagesSent++;
+        }
+        else
+        {
+            if (!DealWithSocketError(m_clientSocket))
+            {
+                return false;
+            }
+            break;
+        }
+    }
+
+    // Receive messages
+    int result = recv((SOCKET)m_clientSocket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
+    if (result > 0)
+    {
+        m_recvBuffer[result] = '\0';
+
+        // Process received data (similar to original logic)
+        StringList lines;
+        bool hasStringInIt = false;
+        int lastStrEnd = 0;
+
+        for (int i = 0; i < result; i++)
+        {
+            if (m_recvBuffer[i] == '\0')
+            {
+                hasStringInIt = true;
+                lines.push_back(std::string(&m_recvBuffer[lastStrEnd]));
+                lastStrEnd = i + 1;
+            }
+        }
+
+        if (!hasStringInIt)
+        {
+            m_recvQueue += std::string(m_recvBuffer, result);
+        }
+        else if (lastStrEnd < result)
+        {
+            lines.push_back(std::string(&m_recvBuffer[lastStrEnd], result - lastStrEnd));
+        }
+
+        for (size_t i = 0; i < lines.size(); i++)
+        {
+            if (!m_recvQueue.empty() && i == 0)
+            {
+                m_recvQueue += lines[i];
+                ExecuteReceivedMessage(m_recvQueue);
+                m_recvQueue.clear();
+            }
+            else if (i == lines.size() - 1 && lastStrEnd < result)
+            {
+                m_recvQueue += lines[i];
+            }
+            else
+            {
+                ExecuteReceivedMessage(lines[i]);
+            }
+        }
+
+        m_messagesReceived++;
+    }
+    else if (result == 0)
+    {
+        // Connection closed
+        m_connectionState = ConnectionState::DISCONNECTED;
+        return false;
+    }
+    else
+    {
+        if (!DealWithSocketError(m_clientSocket))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool NetworkSubsystem::ProcessServerMessages()
+{
+    bool allSuccess = true;
+
+    for (auto& client : m_clients)
+    {
+        if (client.state != ConnectionState::CONNECTED)
+            continue;
+
+        // Receive messages from this client
+        std::string receivedData = ReceiveRawDataFromSocket(client.socket);
+        if (!receivedData.empty())
+        {
+            ExecuteReceivedMessage(receivedData, client.clientId);
+            m_messagesReceived++;
+        }
+    }
+
+    // Send queued messages to all clients
+    while (!m_sendQueue.empty())
+    {
+        const std::string& data = m_sendQueue.front();
+        bool sentToAll = true;
+
+        for (auto& client : m_clients)
+        {
+            if (client.state == ConnectionState::CONNECTED)
+            {
+                if (!SendRawDataToSocket(client.socket, data))
+                {
+                    sentToAll = false;
+                }
+            }
+        }
+
+        if (sentToAll)
+        {
+            m_sendQueue.pop_front();
+            m_messagesSent++;
+        }
+        else
+        {
+            break; // Stop trying to send if we can't send to all clients
+        }
+    }
+    return allSuccess;
+}
+

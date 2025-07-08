@@ -217,6 +217,8 @@
     <ClCompile Include="Math\Vec2.cpp" />
     <ClCompile Include="Math\Vec3.cpp" />
     <ClCompile Include="Math\Vec4.cpp" />
+    <ClCompile Include="Network\NetworkCommon.cpp" />
+    <ClCompile Include="Network\NetworkSubsystem.cpp" />
     <ClCompile Include="Platform\Window.cpp" />
     <ClCompile Include="Platform\WindowCommon.cpp" />
     <ClCompile Include="Renderer\BitmapFont.cpp" />
@@ -313,6 +315,8 @@
     <ClInclude Include="Math\Vec2.hpp" />
     <ClInclude Include="Math\Vec3.hpp" />
     <ClInclude Include="Math\Vec4.hpp" />
+    <ClInclude Include="Network\NetworkCommon.hpp" />
+    <ClInclude Include="Network\NetworkSubsystem.hpp" />
     <ClInclude Include="Platform\Window.hpp" />
     <ClInclude Include="Platform\WindowCommon.hpp" />
     <ClInclude Include="Renderer\BitmapFont.hpp" />

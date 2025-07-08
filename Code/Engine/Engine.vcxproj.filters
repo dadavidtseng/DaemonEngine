@@ -41,6 +41,9 @@
     <Filter Include="Resource\ResourceLoader">
       <UniqueIdentifier>{ad14d715-d333-4a6b-91cd-958816295411}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{c73bea8b-6107-4cbe-a15b-80514048ae9d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -297,6 +300,12 @@
     </ClCompile>
     <ClCompile Include="Resource\Resource\TextureResource.cpp">
       <Filter>Resource\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkSubsystem.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkCommon.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -584,6 +593,12 @@
     </ClInclude>
     <ClInclude Include="Resource\Resource\TextureResource.hpp">
       <Filter>Resource\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkSubsystem.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkCommon.hpp">
+      <Filter>Network</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

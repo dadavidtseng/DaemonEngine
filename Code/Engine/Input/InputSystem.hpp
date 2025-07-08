@@ -8,7 +8,7 @@
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Math/IntVec2.hpp"
 
-//-----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 extern unsigned char const NUMCODE_0;
 extern unsigned char const NUMCODE_1;
 extern unsigned char const NUMCODE_2;
