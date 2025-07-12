@@ -16,10 +16,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 //----------------------------------------------------------------------------------------------------
-NetworkSubsystem::NetworkSubsystem(NetworkSubsystemConfig const& config)
+NetworkSubsystem::NetworkSubsystem(sNetworkSubsystemConfig const& config)
     : m_config(config)
 {
 }
@@ -209,25 +209,25 @@ void NetworkSubsystem::ProcessIncomingConnections()
         SetSocketNonBlocking((uintptr_t)newClientSocket);
 
         // Create new client connection
-        ClientConnection newClient;
-        newClient.socket            = (uintptr_t)newClientSocket;
-        newClient.clientId          = m_nextClientId++;
-        newClient.state             = eConnectionState::CONNECTED;
-        newClient.address           = "Unknown"; // Could get actual IP if needed
-        newClient.port              = 0;
-        newClient.lastHeartbeatTime = 0.0f;
-        newClient.recvQueue         = "";  // Initialize empty receive queue
+        sClientConnection newClient;
+        newClient.m_socket            = (uintptr_t)newClientSocket;
+        newClient.m_clientId          = m_nextClientId++;
+        newClient.m_state             = eConnectionState::CONNECTED;
+        newClient.m_address           = "Unknown"; // Could get actual IP if needed
+        newClient.m_port              = 0;
+        newClient.m_lastHeartbeatTime = 0.0f;
+        newClient.m_recvQueue         = "";  // Initialize empty receive queue
 
         m_clients.push_back(newClient);
         m_connectionsAccepted++;
 
-        LogMessage(Stringf("Client %d connected! Socket: %llu", newClient.clientId, newClient.socket));
+        LogMessage(Stringf("Client %d connected! Socket: %llu", newClient.m_clientId, newClient.m_socket));
 
         // Fire connection event
         if (g_theEventSystem)
         {
             NamedStrings args;
-            args.SetValue("clientId", std::to_string(newClient.clientId));
+            args.SetValue("clientId", std::to_string(newClient.m_clientId));
             g_theEventSystem->FireEvent("ClientConnected", args);
         }
     }
@@ -239,21 +239,21 @@ void NetworkSubsystem::CheckClientConnections()
     // Remove disconnected clients
     for (auto it = m_clients.begin(); it != m_clients.end();)
     {
-        if (it->state == eConnectionState::DISCONNECTED || it->state == eConnectionState::ERROR_STATE)
+        if (it->m_state == eConnectionState::DISCONNECTED || it->m_state == eConnectionState::ERROR_STATE)
         {
-            LogMessage(Stringf("Client %d disconnected", it->clientId));
+            LogMessage(Stringf("Client %d disconnected", it->m_clientId));
 
             // Fire disconnection event
             if (g_theEventSystem)
             {
                 NamedStrings args;
-                args.SetValue("clientId", std::to_string(it->clientId));
+                args.SetValue("clientId", std::to_string(it->m_clientId));
                 g_theEventSystem->FireEvent("ClientDisconnected", args);
             }
 
-            if (it->socket != (uintptr_t)~0ull)
+            if (it->m_socket != (uintptr_t)~0ull)
             {
-                closesocket((SOCKET)it->socket);
+                closesocket((SOCKET)it->m_socket);
             }
 
             it = m_clients.erase(it);
@@ -291,9 +291,9 @@ std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t socket)
         // Connection closed
         for (auto& client : m_clients)
         {
-            if (client.socket == socket)
+            if (client.m_socket == socket)
             {
-                client.state = eConnectionState::DISCONNECTED;
+                client.m_state = eConnectionState::DISCONNECTED;
                 break;
             }
         }
@@ -310,8 +310,8 @@ std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t socket)
 void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fromClientId)
 {
     // Try to deserialize as NetworkMessage first
-    NetworkMessage netMsg = DeserializeMessage(message, fromClientId);
-    if (!netMsg.messageType.empty())
+    sNetworkMessage netMsg = DeserializeMessage(message, fromClientId);
+    if (!netMsg.m_messageType.empty())
     {
         QueueIncomingMessage(netMsg);
 
@@ -319,19 +319,19 @@ void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fr
         if (g_theEventSystem)
         {
             NamedStrings args;
-            args.SetValue("messageType", netMsg.messageType);
-            args.SetValue("data", netMsg.data);
+            args.SetValue("messageType", netMsg.m_messageType);
+            args.SetValue("data", netMsg.m_data);
             args.SetValue("fromClientId", std::to_string(fromClientId));
 
-            if (netMsg.messageType == "GameData")
+            if (netMsg.m_messageType == "GameData")
             {
                 g_theEventSystem->FireEvent("GameDataReceived", args);
             }
-            else if (netMsg.messageType == "ChatMessage")
+            else if (netMsg.m_messageType == "ChatMessage")
             {
                 g_theEventSystem->FireEvent("ChatMessageReceived", args);
             }
-            else if (netMsg.messageType == "Heartbeat")
+            else if (netMsg.m_messageType == "Heartbeat")
             {
                 ProcessHeartbeatMessage(fromClientId);
             }
@@ -350,7 +350,7 @@ void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fr
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::QueueIncomingMessage(const NetworkMessage& message)
+void NetworkSubsystem::QueueIncomingMessage(const sNetworkMessage& message)
 {
     m_incomingMessages.push_back(message);
 }
@@ -367,10 +367,10 @@ bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
             // Find and disconnect the client
             for (auto& client : m_clients)
             {
-                if (client.socket == socket)
+                if (client.m_socket == socket)
                 {
-                    LogMessage(Stringf("Client %d disconnected due to connection error", client.clientId));
-                    client.state = eConnectionState::DISCONNECTED;
+                    LogMessage(Stringf("Client %d disconnected due to connection error", client.m_clientId));
+                    client.m_state = eConnectionState::DISCONNECTED;
                     break;
                 }
             }
@@ -402,15 +402,15 @@ void NetworkSubsystem::CloseClientConnection(int clientId)
 {
     for (auto& client : m_clients)
     {
-        if (client.clientId == clientId)
+        if (client.m_clientId == clientId)
         {
-            if (client.socket != (uintptr_t)~0ull)
+            if (client.m_socket != (uintptr_t)~0ull)
             {
-                shutdown((SOCKET)client.socket, SD_BOTH);
-                closesocket((SOCKET)client.socket);
-                client.socket = (uintptr_t)~0ull;
+                shutdown((SOCKET)client.m_socket, SD_BOTH);
+                closesocket((SOCKET)client.m_socket);
+                client.m_socket = (uintptr_t)~0ull;
             }
-            client.state = eConnectionState::DISCONNECTED;
+            client.m_state = eConnectionState::DISCONNECTED;
             break;
         }
     }
@@ -421,10 +421,10 @@ void NetworkSubsystem::CloseAllConnections()
 {
     for (auto& client : m_clients)
     {
-        if (client.socket != (uintptr_t)~0ull)
+        if (client.m_socket != (uintptr_t)~0ull)
         {
-            shutdown((SOCKET)client.socket, SD_BOTH);
-            closesocket((SOCKET)client.socket);
+            shutdown((SOCKET)client.m_socket, SD_BOTH);
+            closesocket((SOCKET)client.m_socket);
         }
     }
     m_clients.clear();
@@ -454,8 +454,8 @@ void NetworkSubsystem::ProcessHeartbeat(float deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::SendHeartbeat()
 {
-    NetworkMessage heartbeat("Heartbeat", "", -1);
-    std::string    serialized = SerializeMessage(heartbeat);
+    sNetworkMessage heartbeat("Heartbeat", "", -1);
+    std::string     serialized = SerializeMessage(heartbeat);
 
     if (m_mode == eNetworkMode::CLIENT && m_connectionState == eConnectionState::CONNECTED)
     {
@@ -465,9 +465,9 @@ void NetworkSubsystem::SendHeartbeat()
     {
         for (auto& client : m_clients)
         {
-            if (client.state == eConnectionState::CONNECTED)
+            if (client.m_state == eConnectionState::CONNECTED)
             {
-                SendRawDataToSocket(client.socket, serialized);
+                SendRawDataToSocket(client.m_socket, serialized);
             }
         }
     }
@@ -485,9 +485,9 @@ void NetworkSubsystem::ProcessHeartbeatMessage(int fromClientId)
         // Update client's last heartbeat time
         for (auto& client : m_clients)
         {
-            if (client.clientId == fromClientId)
+            if (client.m_clientId == fromClientId)
             {
-                client.lastHeartbeatTime = 0.0f;
+                client.m_lastHeartbeatTime = 0.0f;
                 break;
             }
         }
@@ -495,10 +495,10 @@ void NetworkSubsystem::ProcessHeartbeatMessage(int fromClientId)
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string NetworkSubsystem::SerializeMessage(const NetworkMessage& message)
+std::string NetworkSubsystem::SerializeMessage(const sNetworkMessage& message)
 {
     // 清理訊息內容，移除可能造成問題的字符
-    std::string cleanData = message.data;
+    std::string cleanData = message.m_data;
 
     // 移除所有控制字符（除了正常的可列印字符）
     std::string filteredData;
@@ -512,13 +512,13 @@ std::string NetworkSubsystem::SerializeMessage(const NetworkMessage& message)
     }
 
     // 簡化的序列化格式，使用更安全的分隔符
-    std::string serialized = message.messageType + "|" + std::to_string(message.fromClientId) + "|" + filteredData + "\0";
+    std::string serialized = message.m_messageType + "|" + std::to_string(message.m_fromClientId) + "|" + filteredData + "\0";
 
     return serialized;
 }
 
 //----------------------------------------------------------------------------------------------------
-NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int fromClientId)
+sNetworkMessage NetworkSubsystem::DeserializeMessage(String const& data, int const fromClientId)
 {
     // 移除尾部的 null terminator 和換行符
     std::string cleanData = data;
@@ -549,10 +549,10 @@ NetworkMessage NetworkSubsystem::DeserializeMessage(const std::string& data, int
         // 使用提供的 fromClientId for server mode, 原始的 for client mode
         int actualClientId = (m_mode == eNetworkMode::SERVER) ? fromClientId : originalClientId;
 
-        return NetworkMessage(messageType, cleanMessageData, actualClientId);
+        return sNetworkMessage(messageType, cleanMessageData, actualClientId);
     }
 
-    return NetworkMessage(); // 空訊息表示解析失敗
+    return sNetworkMessage(); // 空訊息表示解析失敗
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -723,7 +723,7 @@ int NetworkSubsystem::GetConnectedClientCount() const
     int count = 0;
     for (const auto& client : m_clients)
     {
-        if (client.state == eConnectionState::CONNECTED) count++;
+        if (client.m_state == eConnectionState::CONNECTED) count++;
     }
     return count;
 }
@@ -736,7 +736,7 @@ std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
 
     for (const auto& client : m_clients)
     {
-        if (client.state == eConnectionState::CONNECTED) clientIds.push_back(client.clientId);
+        if (client.m_state == eConnectionState::CONNECTED) clientIds.push_back(client.m_clientId);
     }
     return clientIds;
 }
@@ -789,8 +789,8 @@ void NetworkSubsystem::SendRawData(const std::string& data)
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClientId)
 {
-    NetworkMessage message("GameData", gameData, targetClientId);
-    std::string    serialized = SerializeMessage(message);
+    sNetworkMessage message("GameData", gameData, targetClientId);
+    std::string     serialized = SerializeMessage(message);
 
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -803,9 +803,9 @@ void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClien
             // Broadcast to all clients
             for (auto& client : m_clients)
             {
-                if (client.state == eConnectionState::CONNECTED)
+                if (client.m_state == eConnectionState::CONNECTED)
                 {
-                    SendRawDataToSocket(client.socket, serialized);
+                    SendRawDataToSocket(client.m_socket, serialized);
                 }
             }
         }
@@ -820,8 +820,8 @@ void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClien
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::SendChatMessage(const std::string& message, int targetClientId)
 {
-    NetworkMessage chatMsg("ChatMessage", message, targetClientId);
-    std::string    serialized = SerializeMessage(chatMsg);
+    sNetworkMessage chatMsg("ChatMessage", message, targetClientId);
+    std::string     serialized = SerializeMessage(chatMsg);
 
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -834,9 +834,9 @@ void NetworkSubsystem::SendChatMessage(const std::string& message, int targetCli
             // Broadcast to all clients
             for (auto& client : m_clients)
             {
-                if (client.state == eConnectionState::CONNECTED)
+                if (client.m_state == eConnectionState::CONNECTED)
                 {
-                    SendRawDataToSocket(client.socket, serialized);
+                    SendRawDataToSocket(client.m_socket, serialized);
                 }
             }
         }
@@ -848,23 +848,23 @@ void NetworkSubsystem::SendChatMessage(const std::string& message, int targetCli
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToClient(int const clientId, const NetworkMessage& message)
+bool NetworkSubsystem::SendMessageToClient(int const clientId, const sNetworkMessage& message)
 {
     if (m_mode != eNetworkMode::SERVER) return false;
 
     for (auto& client : m_clients)
     {
-        if (client.clientId == clientId && client.state == eConnectionState::CONNECTED)
+        if (client.m_clientId == clientId && client.m_state == eConnectionState::CONNECTED)
         {
             std::string serialized = SerializeMessage(message);
-            return SendRawDataToSocket(client.socket, serialized);
+            return SendRawDataToSocket(client.m_socket, serialized);
         }
     }
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToAllClients( NetworkMessage const& message)
+bool NetworkSubsystem::SendMessageToAllClients(sNetworkMessage const& message)
 {
     if (m_mode != eNetworkMode::SERVER) return false;
 
@@ -873,9 +873,9 @@ bool NetworkSubsystem::SendMessageToAllClients( NetworkMessage const& message)
 
     for (auto& client : m_clients)
     {
-        if (client.state == eConnectionState::CONNECTED)
+        if (client.m_state == eConnectionState::CONNECTED)
         {
-            if (!SendRawDataToSocket(client.socket, serialized))
+            if (!SendRawDataToSocket(client.m_socket, serialized))
             {
                 allSuccess = false;
             }
@@ -885,7 +885,7 @@ bool NetworkSubsystem::SendMessageToAllClients( NetworkMessage const& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToServer( NetworkMessage const& message)
+bool NetworkSubsystem::SendMessageToServer(sNetworkMessage const& message)
 {
     if (m_mode != eNetworkMode::CLIENT || m_connectionState != eConnectionState::CONNECTED) return false;
 
@@ -901,11 +901,11 @@ bool NetworkSubsystem::HasPendingMessages() const
 }
 
 //----------------------------------------------------------------------------------------------------
-NetworkMessage NetworkSubsystem::GetNextMessage()
+sNetworkMessage NetworkSubsystem::GetNextMessage()
 {
-    if (m_incomingMessages.empty()) return NetworkMessage();
+    if (m_incomingMessages.empty()) return sNetworkMessage();
 
-    NetworkMessage message = m_incomingMessages.front();
+    sNetworkMessage message = m_incomingMessages.front();
     m_incomingMessages.pop_front();
     return message;
 }
@@ -1110,13 +1110,13 @@ bool NetworkSubsystem::ProcessServerMessages()
 
     for (auto& client : m_clients)
     {
-        if (client.state != eConnectionState::CONNECTED) continue;
+        if (client.m_state != eConnectionState::CONNECTED) continue;
 
         // Receive messages from this client
-        std::string receivedData = ReceiveRawDataFromSocket(client.socket);
+        std::string receivedData = ReceiveRawDataFromSocket(client.m_socket);
         if (!receivedData.empty())
         {
-            ExecuteReceivedMessage(receivedData, client.clientId);
+            ExecuteReceivedMessage(receivedData, client.m_clientId);
             m_messagesReceived++;
         }
     }
@@ -1129,9 +1129,9 @@ bool NetworkSubsystem::ProcessServerMessages()
 
         for (auto& client : m_clients)
         {
-            if (client.state == eConnectionState::CONNECTED)
+            if (client.m_state == eConnectionState::CONNECTED)
             {
-                if (!SendRawDataToSocket(client.socket, data))
+                if (!SendRawDataToSocket(client.m_socket, data))
                 {
                     sentToAll = false;
                 }

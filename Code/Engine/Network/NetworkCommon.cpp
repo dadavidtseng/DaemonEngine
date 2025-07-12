@@ -5,6 +5,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Network/NetworkCommon.hpp"
 
-NetworkMessage::NetworkMessage(String const& type, String const& msgData, int clientId): messageType(type), data(msgData), fromClientId(clientId)
+sNetworkMessage::sNetworkMessage(String const& type,
+                               String const& msgData,
+                               int           clientId)
+    : m_messageType(type),
+      m_data(msgData),
+      m_fromClientId(clientId)
 {
 }

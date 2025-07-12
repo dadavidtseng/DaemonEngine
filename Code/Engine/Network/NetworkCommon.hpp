@@ -29,27 +29,25 @@ enum class eConnectionState : uint8_t
 
 //----------------------------------------------------------------------------------------------------
 // Client connection info for server mode
-struct ClientConnection
+struct sClientConnection
 {
-    uintptr_t        socket   = ~0ull;
-    int              clientId = -1;
-    eConnectionState state    = eConnectionState::DISCONNECTED;
-    String           address;
-    unsigned short   port              = 0;
-    float            lastHeartbeatTime = 0.f;
-    String           recvQueue;
-
-    ClientConnection() = default;
+    uintptr_t        m_socket   = ~0ull;
+    int              m_clientId = -1;
+    eConnectionState m_state    = eConnectionState::DISCONNECTED;
+    String           m_address;
+    unsigned short   m_port              = 0;
+    float            m_lastHeartbeatTime = 0.f;
+    String           m_recvQueue;
 };
 
 //----------------------------------------------------------------------------------------------------
 // Network message structure
-struct NetworkMessage
+struct sNetworkMessage
 {
-    std::string messageType;
-    std::string data;
-    int         fromClientId = -1;  // -1 for server messages, client ID for client messages
+    String m_messageType;
+    String m_data;
+    int    m_fromClientId = -1;  // -1 for server messages, client ID for client messages
 
-    NetworkMessage() = default;
-    NetworkMessage(String const& type, String const& msgData, int clientId = -1);
+    sNetworkMessage() = default;
+    sNetworkMessage(String const& type, String const& msgData, int clientId = -1);
 };

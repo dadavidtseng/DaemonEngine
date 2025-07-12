@@ -2,7 +2,6 @@
 // NetworkSubsystem.hpp
 //----------------------------------------------------------------------------------------------------
 
-
 #pragma once
 
 #include <deque>
@@ -17,7 +16,7 @@
 class NamedStrings;
 
 //----------------------------------------------------------------------------------------------------
-struct NetworkSubsystemConfig
+struct sNetworkSubsystemConfig
 {
     std::string modeString          = "None";               // "None", "Client", "Server"
     std::string hostAddressString   = "127.0.0.1:3100";     // IP:Port format
@@ -29,12 +28,11 @@ struct NetworkSubsystemConfig
     bool        enableConsoleOutput = true;                 // Enable debug output to console
 };
 
-
 //----------------------------------------------------------------------------------------------------
 class NetworkSubsystem
 {
 public:
-    explicit NetworkSubsystem(NetworkSubsystemConfig const& config);
+    explicit NetworkSubsystem(sNetworkSubsystemConfig const& config);
     ~NetworkSubsystem();
 
     // Core lifecycle
@@ -57,13 +55,13 @@ public:
     void             StopServer();
     int              GetConnectedClientCount() const;
     std::vector<int> GetConnectedClientIds() const;
-    bool             SendMessageToClient(int clientId, NetworkMessage const& message);
-    bool             SendMessageToAllClients(NetworkMessage const& message);
+    bool             SendMessageToClient(int clientId, sNetworkMessage const& message);
+    bool             SendMessageToAllClients(sNetworkMessage const& message);
 
     // Client specific
     bool ConnectToServer(String const& address, int port);
     void DisconnectFromServer();
-    bool SendMessageToServer(NetworkMessage const& message);
+    bool SendMessageToServer(sNetworkMessage const& message);
 
     // General messaging
     void SendRawData(String const& data);
@@ -72,7 +70,7 @@ public:
 
     // Event-based message retrieval
     bool           HasPendingMessages() const;
-    NetworkMessage GetNextMessage();
+    sNetworkMessage GetNextMessage();
     void           ClearMessageQueue();
 
 protected:
@@ -95,7 +93,7 @@ protected:
 
     // Message handling
     void ExecuteReceivedMessage(String const& message, int fromClientId = -1);
-    void QueueIncomingMessage(NetworkMessage const& message);
+    void QueueIncomingMessage(sNetworkMessage const& message);
 
     // Connection management
     bool DealWithSocketError(uintptr_t socket, int clientId = -1);
@@ -108,16 +106,16 @@ protected:
     void ProcessHeartbeatMessage(int fromClientId);
 
     // Utility functions
-    std::string    SerializeMessage(NetworkMessage const& message);
-    NetworkMessage DeserializeMessage(String const& data, int fromClientId = -1);
+    std::string    SerializeMessage(sNetworkMessage const& message);
+    sNetworkMessage DeserializeMessage(String const& data, int fromClientId = -1);
     void           ParseHostAddress(String const& hostString, std::string& out_ip, unsigned short& out_port);
     void           LogMessage(String const& message);
     void           LogError(String const& error);
 
-    NetworkSubsystemConfig m_config;
-    eNetworkMode           m_mode                     = eNetworkMode::NONE;
-    eConnectionState       m_connectionState          = eConnectionState::DISCONNECTED;
-    eConnectionState       m_lastFrameConnectionState = eConnectionState::DISCONNECTED;
+    sNetworkSubsystemConfig m_config;
+    eNetworkMode            m_mode                     = eNetworkMode::NONE;
+    eConnectionState        m_connectionState          = eConnectionState::DISCONNECTED;
+    eConnectionState        m_lastFrameConnectionState = eConnectionState::DISCONNECTED;
 
     // Socket handles (using uintptr_t to avoid Windows headers in .hpp)
     uintptr_t m_clientSocket = ~0ull;
@@ -134,10 +132,10 @@ protected:
     // Message queues
     std::deque<String>         m_sendQueue;
     std::string                m_recvQueue;
-    std::deque<NetworkMessage> m_incomingMessages;
+    std::deque<sNetworkMessage> m_incomingMessages;
 
     // Server mode: client management
-    std::vector<ClientConnection> m_clients;
+    std::vector<sClientConnection> m_clients;
     int                           m_nextClientId = 1;
 
     // Heartbeat system
