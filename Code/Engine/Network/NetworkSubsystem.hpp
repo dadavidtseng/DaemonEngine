@@ -8,39 +8,36 @@
 #include <string>
 #include <vector>
 
+#include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Network/NetworkCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
-// Forward declarations
-class NamedStrings;
-
-//----------------------------------------------------------------------------------------------------
 struct sNetworkSubsystemConfig
 {
-    std::string modeString          = "None";               // "None", "Client", "Server"
-    std::string hostAddressString   = "127.0.0.1:3100";     // IP:Port format
-    int         sendBufferSize      = 2048;
-    int         recvBufferSize      = 2048;
-    int         maxClients          = 4;                    // Server only: maximum number of clients
-    bool        enableHeartbeat     = true;                 // Enable heartbeat system
-    float       heartbeatInterval   = 2.0f;                 // Heartbeat interval in seconds
-    bool        enableConsoleOutput = true;                 // Enable debug output to console
+    String modeString          = "None";            // "None", "Client", "Server"
+    String hostAddressString   = "127.0.0.1";       // IP:Port format
+    int    sendBufferSize      = 2048;
+    int    recvBufferSize      = 2048;
+    int    maxClients          = 4;                 // Server only: maximum number of clients
+    bool   enableHeartbeat     = true;              // Enable heartbeat system
+    float  heartbeatInterval   = 2.f;               // Heartbeat interval in seconds
+    bool   enableConsoleOutput = true;              // Enable debug output to console
 };
 
 //----------------------------------------------------------------------------------------------------
 class NetworkSubsystem
 {
 public:
-    explicit NetworkSubsystem(sNetworkSubsystemConfig const& config);
+    explicit NetworkSubsystem(sNetworkSubsystemConfig config);
     ~NetworkSubsystem();
 
     // Core lifecycle
     void StartUp();
     void BeginFrame();
+    void Update();
     void EndFrame();
     void ShutDown();
-    void Update(float deltaSeconds);
 
     // Status queries
     bool             IsEnabled() const;
@@ -69,9 +66,9 @@ public:
     void SendChatMessage(String const& message, int targetClientId = -1);
 
     // Event-based message retrieval
-    bool           HasPendingMessages() const;
+    bool            HasPendingMessages() const;
     sNetworkMessage GetNextMessage();
-    void           ClearMessageQueue();
+    void            ClearMessageQueue();
 
 protected:
     // Core networking functions
@@ -79,17 +76,17 @@ protected:
     void CleanupWinsock();
     void CreateClientSocket();
     void CreateServerSocket();
-    bool SetSocketNonBlocking(uintptr_t socket);
+    bool SetSocketNonBlocking(uintptr_t socket) const;
 
     // Message processing
-    bool ProcessServerMessages();  // Server: handle multiple clients
-    bool ProcessClientMessages();  // Client: handle server communication
+    bool ProcessServerMessages();       // Server: handle multiple clients
+    bool ProcessClientMessages();       // Client: handle server communication
     void ProcessIncomingConnections();  // Server: accept new connections
     void CheckClientConnections();      // Server: maintain client connections
 
     // Send/Receive primitives
-    bool        SendRawDataToSocket(uintptr_t socket, String const& data);
-    std::string ReceiveRawDataFromSocket(uintptr_t socket);
+    bool   SendRawDataToSocket(uintptr_t socket, String const& data);
+    String ReceiveRawDataFromSocket(uintptr_t socket);
 
     // Message handling
     void ExecuteReceivedMessage(String const& message, int fromClientId = -1);
@@ -106,11 +103,11 @@ protected:
     void ProcessHeartbeatMessage(int fromClientId);
 
     // Utility functions
-    std::string    SerializeMessage(sNetworkMessage const& message);
+    std::string     SerializeMessage(sNetworkMessage const& message);
     sNetworkMessage DeserializeMessage(String const& data, int fromClientId = -1);
-    void           ParseHostAddress(String const& hostString, std::string& out_ip, unsigned short& out_port);
-    void           LogMessage(String const& message);
-    void           LogError(String const& error);
+    void            ParseHostAddress(String const& hostString, std::string& out_ip, unsigned short& out_port);
+    void            LogMessage(String const& message);
+    void            LogError(String const& error);
 
     sNetworkSubsystemConfig m_config;
     eNetworkMode            m_mode                     = eNetworkMode::NONE;
@@ -130,13 +127,13 @@ protected:
     char* m_recvBuffer = nullptr;
 
     // Message queues
-    std::deque<String>         m_sendQueue;
-    std::string                m_recvQueue;
+    std::deque<String>          m_sendQueue;
+    std::string                 m_recvQueue;
     std::deque<sNetworkMessage> m_incomingMessages;
 
     // Server mode: client management
     std::vector<sClientConnection> m_clients;
-    int                           m_nextClientId = 1;
+    int                            m_nextClientId = 1;
 
     // Heartbeat system
     float m_heartbeatTimer        = 0.f;
@@ -150,4 +147,6 @@ protected:
     int m_messagesReceived    = 0;
     int m_connectionsAccepted = 0;
     int m_connectionsLost     = 0;
+
+    Clock* m_networkClock = nullptr;
 };

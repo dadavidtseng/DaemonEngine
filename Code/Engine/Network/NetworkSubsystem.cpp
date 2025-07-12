@@ -19,9 +19,10 @@
 #pragma comment(lib, "ws2_32.lib")
 
 //----------------------------------------------------------------------------------------------------
-NetworkSubsystem::NetworkSubsystem(sNetworkSubsystemConfig const& config)
-    : m_config(config)
+NetworkSubsystem::NetworkSubsystem(sNetworkSubsystemConfig config)
+    : m_config(std::move(config))
 {
+    m_networkClock = new Clock(Clock::GetSystemClock());
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -34,12 +35,12 @@ NetworkSubsystem::~NetworkSubsystem()
 void NetworkSubsystem::StartUp()
 {
     // Allocate buffers
-    m_recvBuffer = (char*)malloc(m_config.recvBufferSize);
-    m_sendBuffer = (char*)malloc(m_config.sendBufferSize);
+    m_recvBuffer = static_cast<char*>(malloc(m_config.recvBufferSize));
+    m_sendBuffer = static_cast<char*>(malloc(m_config.sendBufferSize));
 
     if (!m_recvBuffer || !m_sendBuffer)
     {
-        ERROR_AND_DIE("Failed to allocate network buffers");
+        ERROR_AND_DIE("Failed to allocate network buffers")
     }
 
     // Initialize Winsock
@@ -93,7 +94,7 @@ void NetworkSubsystem::BeginFrame()
             addr.sin_addr.S_un.S_addr = htonl(m_hostAddress);
             addr.sin_port             = htons(m_hostPort);
 
-            int result = connect((SOCKET)m_clientSocket, (sockaddr*)(&addr), sizeof(addr));
+            int result = connect(m_clientSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 
             // Check connection status with select
             fd_set writeSockets, exceptSockets;
@@ -103,11 +104,11 @@ void NetworkSubsystem::BeginFrame()
             FD_SET((SOCKET)m_clientSocket, &exceptSockets);
 
             timeval waitTime = {};
-            result           = select(0, NULL, &writeSockets, &exceptSockets, &waitTime);
+            result           = select(0, nullptr, &writeSockets, &exceptSockets, &waitTime);
 
             if (result >= 0)
             {
-                if (FD_ISSET((SOCKET)m_clientSocket, &writeSockets))
+                if (FD_ISSET(m_clientSocket, &writeSockets))
                 {
                     m_connectionState = eConnectionState::CONNECTED;
                     if (!ProcessClientMessages())
@@ -115,7 +116,7 @@ void NetworkSubsystem::BeginFrame()
                         return;
                     }
                 }
-                else if (FD_ISSET((SOCKET)m_clientSocket, &exceptSockets))
+                else if (FD_ISSET(m_clientSocket, &exceptSockets))
                 {
                     // Connection attempt, check for errors
                     if (!DealWithSocketError(m_clientSocket))
@@ -168,9 +169,11 @@ void NetworkSubsystem::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::Update(float deltaSeconds)
+void NetworkSubsystem::Update()
 {
     if (m_mode == eNetworkMode::NONE) return;
+
+    float const deltaSeconds = static_cast<float>(m_networkClock->GetDeltaSeconds());
 
     // Update heartbeat system
     if (m_config.enableHeartbeat)
@@ -184,7 +187,7 @@ void NetworkSubsystem::ShutDown()
 {
     if (m_mode == eNetworkMode::CLIENT)
     {
-        if (m_clientSocket != (uintptr_t)~0ull)
+        if (m_clientSocket != ~0ull)
         {
             shutdown((SOCKET)m_clientSocket, SD_BOTH);
             closesocket((SOCKET)m_clientSocket);
@@ -198,19 +201,19 @@ void NetworkSubsystem::ShutDown()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::ProcessIncomingConnections()
 {
-    if (m_listenSocket == (uintptr_t)~0ull) return;
+    if (m_listenSocket == ~0ull) return;
 
     if (m_clients.size() >= (size_t)m_config.maxClients) return; // Already at max capacity
 
-    SOCKET newClientSocket = accept((SOCKET)m_listenSocket, NULL, NULL);
+    SOCKET newClientSocket = accept(m_listenSocket, nullptr, nullptr);
     if (newClientSocket != INVALID_SOCKET)
     {
         // Set non-blocking mode
-        SetSocketNonBlocking((uintptr_t)newClientSocket);
+        SetSocketNonBlocking(newClientSocket);
 
         // Create new client connection
         sClientConnection newClient;
-        newClient.m_socket            = (uintptr_t)newClientSocket;
+        newClient.m_socket            = newClientSocket;
         newClient.m_clientId          = m_nextClientId++;
         newClient.m_state             = eConnectionState::CONNECTED;
         newClient.m_address           = "Unknown"; // Could get actual IP if needed
@@ -246,14 +249,14 @@ void NetworkSubsystem::CheckClientConnections()
             // Fire disconnection event
             if (g_theEventSystem)
             {
-                NamedStrings args;
+                EventArgs args;
                 args.SetValue("clientId", std::to_string(it->m_clientId));
                 g_theEventSystem->FireEvent("ClientDisconnected", args);
             }
 
-            if (it->m_socket != (uintptr_t)~0ull)
+            if (it->m_socket != ~0ull)
             {
-                closesocket((SOCKET)it->m_socket);
+                closesocket(it->m_socket);
             }
 
             it = m_clients.erase(it);
@@ -267,9 +270,10 @@ void NetworkSubsystem::CheckClientConnections()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendRawDataToSocket(uintptr_t socket, const std::string& data)
+bool NetworkSubsystem::SendRawDataToSocket(uintptr_t const socket,
+                                           String const&   data)
 {
-    int result = send((SOCKET)socket, data.c_str(), (int)data.length() + 1, 0);
+    int const result = send(socket, data.c_str(), (int)data.length() + 1, 0);
     if (result <= 0)
     {
         return DealWithSocketError(socket);
@@ -278,9 +282,9 @@ bool NetworkSubsystem::SendRawDataToSocket(uintptr_t socket, const std::string& 
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t socket)
+std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
 {
-    int result = recv((SOCKET)socket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
+    int const result = recv(socket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
     if (result > 0)
     {
         m_recvBuffer[result] = '\0';
@@ -431,7 +435,7 @@ void NetworkSubsystem::CloseAllConnections()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ProcessHeartbeat(float deltaSeconds)
+void NetworkSubsystem::ProcessHeartbeat(float const deltaSeconds)
 {
     m_heartbeatTimer += deltaSeconds;
     m_lastHeartbeatReceived += deltaSeconds;
@@ -474,7 +478,7 @@ void NetworkSubsystem::SendHeartbeat()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ProcessHeartbeatMessage(int fromClientId)
+void NetworkSubsystem::ProcessHeartbeatMessage(int const fromClientId)
 {
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -921,12 +925,10 @@ void NetworkSubsystem::InitializeWinsock()
 {
     if (m_winsockInitialized) return;
 
-    WSADATA data;
-    int     result = WSAStartup(MAKEWORD(2, 2), &data);
-    if (result != 0)
-    {
-        ERROR_AND_DIE(Stringf("WSAStartup failed with error: %d", result));
-    }
+    WSADATA   data;
+    int const result = WSAStartup(MAKEWORD(2, 2), &data);
+
+    if (result != 0) ERROR_AND_DIE(Stringf("WSAStartup failed with error: %d", result))
 
     m_winsockInitialized = true;
 }
@@ -944,10 +946,10 @@ void NetworkSubsystem::CleanupWinsock()
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::CreateClientSocket()
 {
-    m_clientSocket = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (m_clientSocket == (uintptr_t)INVALID_SOCKET)
+    m_clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_clientSocket == INVALID_SOCKET)
     {
-        ERROR_AND_DIE(Stringf("Error creating client socket: %ld", WSAGetLastError()));
+        ERROR_AND_DIE(Stringf("Error creating client socket: %ld", WSAGetLastError()))
     }
 
     SetSocketNonBlocking(m_clientSocket);
@@ -956,8 +958,8 @@ void NetworkSubsystem::CreateClientSocket()
     std::string ip;
     ParseHostAddress(m_config.hostAddressString, ip, m_hostPort);
 
-    IN_ADDR addr   = {};
-    int     result = inet_pton(AF_INET, ip.c_str(), &addr);
+    IN_ADDR   addr   = {};
+    int const result = inet_pton(AF_INET, ip.c_str(), &addr);
     if (result <= 0)
     {
         LogError(Stringf("Invalid IP address: %s", ip.c_str()));
@@ -1006,10 +1008,10 @@ void NetworkSubsystem::CreateServerSocket()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SetSocketNonBlocking(uintptr_t socket)
+bool NetworkSubsystem::SetSocketNonBlocking(uintptr_t const socket) const
 {
     unsigned long blockingMode = 1;
-    return ioctlsocket((SOCKET)socket, FIONBIO, &blockingMode) == 0;
+    return ioctlsocket(socket, FIONBIO, &blockingMode) == 0;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1018,8 +1020,8 @@ bool NetworkSubsystem::ProcessClientMessages()
     // Send queued messages
     while (!m_sendQueue.empty())
     {
-        const std::string& data   = m_sendQueue.front();
-        int                result = send((SOCKET)m_clientSocket, data.c_str(), (int)data.length() + 1, 0);
+        String const& data   = m_sendQueue.front();
+        int const     result = send(m_clientSocket, data.c_str(), static_cast<int>(data.length()) + 1, 0);
 
         if (result > 0)
         {
@@ -1037,7 +1039,7 @@ bool NetworkSubsystem::ProcessClientMessages()
     }
 
     // Receive messages
-    int result = recv((SOCKET)m_clientSocket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
+    int const result = recv(m_clientSocket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
     if (result > 0)
     {
         m_recvBuffer[result] = '\0';
@@ -1052,18 +1054,18 @@ bool NetworkSubsystem::ProcessClientMessages()
             if (m_recvBuffer[i] == '\0')
             {
                 hasStringInIt = true;
-                lines.push_back(std::string(&m_recvBuffer[lastStrEnd]));
+                lines.emplace_back(&m_recvBuffer[lastStrEnd]);
                 lastStrEnd = i + 1;
             }
         }
 
         if (!hasStringInIt)
         {
-            m_recvQueue += std::string(m_recvBuffer, result);
+            m_recvQueue += String(m_recvBuffer, result);
         }
         else if (lastStrEnd < result)
         {
-            lines.push_back(std::string(&m_recvBuffer[lastStrEnd], result - lastStrEnd));
+            lines.emplace_back(&m_recvBuffer[lastStrEnd], result - lastStrEnd);
         }
 
         for (size_t i = 0; i < lines.size(); i++)
@@ -1106,14 +1108,14 @@ bool NetworkSubsystem::ProcessClientMessages()
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::ProcessServerMessages()
 {
-    bool allSuccess = true;
+    bool constexpr allSuccess = true;
 
-    for (auto& client : m_clients)
+    for (sClientConnection const& client : m_clients)
     {
         if (client.m_state != eConnectionState::CONNECTED) continue;
 
         // Receive messages from this client
-        std::string receivedData = ReceiveRawDataFromSocket(client.m_socket);
+        String receivedData = ReceiveRawDataFromSocket(client.m_socket);
         if (!receivedData.empty())
         {
             ExecuteReceivedMessage(receivedData, client.m_clientId);
@@ -1124,10 +1126,10 @@ bool NetworkSubsystem::ProcessServerMessages()
     // Send queued messages to all clients
     while (!m_sendQueue.empty())
     {
-        const std::string& data      = m_sendQueue.front();
-        bool               sentToAll = true;
+        String const& data      = m_sendQueue.front();
+        bool          sentToAll = true;
 
-        for (auto& client : m_clients)
+        for (sClientConnection const& client : m_clients)
         {
             if (client.m_state == eConnectionState::CONNECTED)
             {
