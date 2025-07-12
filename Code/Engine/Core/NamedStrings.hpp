@@ -25,6 +25,7 @@ public:
     IntVec2     GetValue(String const& keyName, IntVec2 const& defaultValue) const;
     EulerAngles GetValue(String const& keyName, EulerAngles const& defaultValue) const;
     FloatRange  GetValue(String const& keyName, FloatRange const& defaultValue) const;
+    std::map<String, String> GetAllKeyValuePairs();
 
 private:
     std::map<String, String> m_keyValuePairs;

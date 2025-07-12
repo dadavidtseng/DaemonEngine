@@ -85,8 +85,6 @@ void NamedStrings::PopulateFromXmlElementAttributes(XmlElement const& element)
     //     PopulateFromXmlElementAttributes(*child);
     //     child = child->NextSiblingElement();
     // }
-
-
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -103,10 +101,10 @@ String NamedStrings::GetValue(String const& keyName, String const& defaultValue)
     if (it == m_keyValuePairs.end())
     {
         printf("%s not found\n", keyName.c_str());
-        
+
         return defaultValue;
     }
-    
+
     return it->second;
 }
 
@@ -118,7 +116,7 @@ bool NamedStrings::GetValue(String const& keyName, bool const defaultValue) cons
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
 
@@ -133,10 +131,10 @@ int NamedStrings::GetValue(String const& keyName, int const defaultValue) const
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
-    
+
     return atoi(it->second.c_str());
 }
 
@@ -148,7 +146,7 @@ float NamedStrings::GetValue(String const& keyName, float const defaultValue) co
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
 
@@ -169,15 +167,14 @@ Rgba8 NamedStrings::GetValue(String const& keyName, Rgba8 const& defaultValue) c
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
-    
+
     Rgba8 result = defaultValue;
     result.SetFromText(it->second.c_str());
 
     return result;
-
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -188,10 +185,10 @@ Vec2 NamedStrings::GetValue(String const& keyName, Vec2 const& defaultValue) con
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
-    
+
     Vec2 result = defaultValue;
     result.SetFromText(it->second.c_str());
 
@@ -224,10 +221,10 @@ IntVec2 NamedStrings::GetValue(String const& keyName, IntVec2 const& defaultValu
     if (it == m_keyValuePairs.end())
     {
         printf("( %s ) is not in the game config!\n", keyName.c_str());
-        
+
         return defaultValue;
     }
-    
+
     IntVec2 result = defaultValue;
     result.SetFromText(it->second.c_str());
 
@@ -267,4 +264,9 @@ FloatRange NamedStrings::GetValue(String const& keyName, FloatRange const& defau
     result.SetFromText(it->second.c_str());
 
     return result;
+}
+
+std::map<String, String> NamedStrings::GetAllKeyValuePairs()
+{
+    return m_keyValuePairs;
 }
