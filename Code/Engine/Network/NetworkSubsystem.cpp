@@ -4,11 +4,10 @@
 
 #include "Engine/Network/NetworkSubsystem.hpp"
 
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/StringUtils.hpp"
 
 // Windows networking headers - only in .cpp file
 #define WIN32_LEAN_AND_MEAN
@@ -38,40 +37,25 @@ void NetworkSubsystem::StartUp()
     m_recvBuffer = static_cast<char*>(malloc(m_config.recvBufferSize));
     m_sendBuffer = static_cast<char*>(malloc(m_config.sendBufferSize));
 
-    if (!m_recvBuffer || !m_sendBuffer)
-    {
-        ERROR_AND_DIE("Failed to allocate network buffers")
-    }
+    if (!m_recvBuffer || !m_sendBuffer) ERROR_AND_DIE("Failed to allocate network buffers")
 
     // Initialize Winsock
     InitializeWinsock();
 
     // Determine mode from config
-    if (m_config.modeString == "Client" || m_config.modeString == "client")
+    if (m_config.m_mode == eNetworkMode::CLIENT)
     {
-        m_mode = eNetworkMode::CLIENT;
         LogMessage("NetworkSubsystem initialized as CLIENT");
+        CreateClientSocket();
     }
-    else if (m_config.modeString == "Server" || m_config.modeString == "server")
+    else if (m_config.m_mode == eNetworkMode::SERVER)
     {
-        m_mode = eNetworkMode::SERVER;
         LogMessage("NetworkSubsystem initialized as SERVER");
+        CreateServerSocket();
     }
     else
     {
-        m_mode = eNetworkMode::NONE;
         LogMessage("NetworkSubsystem initialized in NONE mode");
-        return;
-    }
-
-    // Mode-specific initialization
-    if (m_mode == eNetworkMode::CLIENT)
-    {
-        CreateClientSocket();
-    }
-    else if (m_mode == eNetworkMode::SERVER)
-    {
-        CreateServerSocket();
     }
 }
 
@@ -229,7 +213,7 @@ void NetworkSubsystem::ProcessIncomingConnections()
         // Fire connection event
         if (g_theEventSystem)
         {
-            NamedStrings args;
+            EventArgs args;
             args.SetValue("clientId", std::to_string(newClient.m_clientId));
             g_theEventSystem->FireEvent("ClientConnected", args);
         }
@@ -274,21 +258,24 @@ bool NetworkSubsystem::SendRawDataToSocket(uintptr_t const socket,
                                            String const&   data)
 {
     int const result = send(socket, data.c_str(), (int)data.length() + 1, 0);
+
     if (result <= 0)
     {
         return DealWithSocketError(socket);
     }
+
     return true;
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
+String NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
 {
     int const result = recv(socket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
+
     if (result > 0)
     {
         m_recvBuffer[result] = '\0';
-        return std::string(m_recvBuffer, result);
+        return String(m_recvBuffer, result);
     }
     else if (result == 0)
     {
@@ -311,7 +298,8 @@ std::string NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fromClientId)
+void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
+                                              int const     fromClientId)
 {
     // Try to deserialize as NetworkMessage first
     sNetworkMessage netMsg = DeserializeMessage(message, fromClientId);
@@ -322,7 +310,7 @@ void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fr
         // Fire specific events based on message type
         if (g_theEventSystem)
         {
-            NamedStrings args;
+            EventArgs args;
             args.SetValue("messageType", netMsg.m_messageType);
             args.SetValue("data", netMsg.m_data);
             args.SetValue("fromClientId", std::to_string(fromClientId));
@@ -354,7 +342,7 @@ void NetworkSubsystem::ExecuteReceivedMessage(const std::string& message, int fr
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::QueueIncomingMessage(const sNetworkMessage& message)
+void NetworkSubsystem::QueueIncomingMessage(sNetworkMessage const& message)
 {
     m_incomingMessages.push_back(message);
 }
@@ -362,7 +350,7 @@ void NetworkSubsystem::QueueIncomingMessage(const sNetworkMessage& message)
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
 {
-    int error = WSAGetLastError();
+    int const error = WSAGetLastError();
 
     if (error == WSAECONNABORTED || error == WSAECONNRESET || error == 0)
     {
@@ -893,7 +881,7 @@ bool NetworkSubsystem::SendMessageToServer(sNetworkMessage const& message)
 {
     if (m_mode != eNetworkMode::CLIENT || m_connectionState != eConnectionState::CONNECTED) return false;
 
-    std::string serialized = SerializeMessage(message);
+    String serialized = SerializeMessage(message);
     SendRawData(serialized);
     return true;
 }
@@ -907,7 +895,7 @@ bool NetworkSubsystem::HasPendingMessages() const
 //----------------------------------------------------------------------------------------------------
 sNetworkMessage NetworkSubsystem::GetNextMessage()
 {
-    if (m_incomingMessages.empty()) return sNetworkMessage();
+    if (m_incomingMessages.empty()) return sNetworkMessage{};
 
     sNetworkMessage message = m_incomingMessages.front();
     m_incomingMessages.pop_front();
@@ -921,6 +909,8 @@ void NetworkSubsystem::ClearMessageQueue()
 }
 
 //----------------------------------------------------------------------------------------------------
+// Engage the network adapter and start a network interface instance for this program.
+// Windows Sockets API Version 2.2 (0x00000202)
 void NetworkSubsystem::InitializeWinsock()
 {
     if (m_winsockInitialized) return;

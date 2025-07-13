@@ -15,14 +15,14 @@
 //----------------------------------------------------------------------------------------------------
 struct sNetworkSubsystemConfig
 {
-    String modeString          = "None";            // "None", "Client", "Server"
-    String hostAddressString   = "127.0.0.1";       // IP:Port format
-    int    sendBufferSize      = 2048;
-    int    recvBufferSize      = 2048;
-    int    maxClients          = 4;                 // Server only: maximum number of clients
-    bool   enableHeartbeat     = true;              // Enable heartbeat system
-    float  heartbeatInterval   = 2.f;               // Heartbeat interval in seconds
-    bool   enableConsoleOutput = true;              // Enable debug output to console
+    eNetworkMode m_mode              = eNetworkMode::NONE;      // "None", "Client", "Server"
+    String       hostAddressString   = "127.0.0.1";             // IP:Port format
+    int          sendBufferSize      = 2048;
+    int          recvBufferSize      = 2048;
+    int          maxClients          = 4;                       // Server only: maximum number of clients
+    bool         enableHeartbeat     = false;                   // Enable heartbeat system
+    float        heartbeatInterval   = 2.f;                     // Heartbeat interval in seconds
+    bool         enableConsoleOutput = true;                    // Enable debug output to console
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ protected:
     // Utility functions
     std::string     SerializeMessage(sNetworkMessage const& message);
     sNetworkMessage DeserializeMessage(String const& data, int fromClientId = -1);
-    void            ParseHostAddress(String const& hostString, std::string& out_ip, unsigned short& out_port);
+    void            ParseHostAddress(String const& hostString, String& out_ip, unsigned short& out_port);
     void            LogMessage(String const& message);
     void            LogError(String const& error);
 
@@ -128,7 +128,7 @@ protected:
 
     // Message queues
     std::deque<String>          m_sendQueue;
-    std::string                 m_recvQueue;
+    String                      m_recvQueue;
     std::deque<sNetworkMessage> m_incomingMessages;
 
     // Server mode: client management
