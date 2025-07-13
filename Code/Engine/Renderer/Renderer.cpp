@@ -1465,7 +1465,7 @@ void Renderer::RenderViewportToWindow(Window const& window)
     );
 }
 
-void Renderer::RenderViewportToWindowDX11(Window& window)
+void Renderer::RenderViewportToWindowDX11(Window const& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
@@ -1623,8 +1623,8 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
     }
 
     // 強制釋放 deferred 資源
-    m_deviceContext->ClearState();
-    m_deviceContext->Flush();
+    // m_deviceContext->ClearState();
+    // m_deviceContext->Flush();
 
     RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);

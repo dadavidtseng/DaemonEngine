@@ -106,21 +106,21 @@ public:
     void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
 
     // RendererEx
-    void     Render();
-    HRESULT  CreateWindowSwapChain(Window& window);
-    HRESULT  ResizeWindowSwapChain(Window& window) const;
-    void     RenderViewportToWindow(Window const& window) ;
-    void     RenderViewportToWindowDX11( Window& window);
-    void                    ReadStagingTextureToPixelData();
+    void    Render();
+    HRESULT CreateWindowSwapChain(Window& window);
+    HRESULT ResizeWindowSwapChain(Window& window) const;
+    void    RenderViewportToWindow(Window const& window);
+    void    RenderViewportToWindowDX11(Window const& window);
+    void    ReadStagingTextureToPixelData();
 
 private:
-    void     CreateDeviceAndSwapChain(unsigned int deviceFlags);
-    void     CreateRenderTargetView();
-    void     CreateBlendStates();
-    void     CreateDepthStencilTextureAndView();
-    void     CreateDepthStencilState();
-    void     CreateSamplerState();
-    void     CreateRasterizerState();
+    void CreateDeviceAndSwapChain(unsigned int deviceFlags);
+    void CreateRenderTargetView();
+    void CreateBlendStates();
+    void CreateDepthStencilTextureAndView();
+    void CreateDepthStencilState();
+    void CreateSamplerState();
+    void CreateRasterizerState();
 
     Texture*    GetTextureForFileName(char const* imageFilePath) const;
     BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
@@ -200,7 +200,6 @@ protected:
 
     // int                     sceneWidth              = 0;
     // int                     sceneHeight             = 0;
-    BITMAPINFO              m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
-    std::vector<BYTE>       m_pixelData;
-
+    BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
+    std::vector<BYTE> m_pixelData;
 };
