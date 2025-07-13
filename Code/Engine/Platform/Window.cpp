@@ -8,8 +8,10 @@
 #include <iostream>
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 // #define CONSOLE_HANDLER
 #define WIN32_LEAN_AND_MEAN
@@ -18,8 +20,7 @@
 #include <dxgi1_2.h>
 #include <windows.h>
 
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Math/MathUtils.hpp"
+
 
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
@@ -49,6 +50,7 @@ void Window::Shutdown()
 {
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_renderTargetView)
+    ShowWindow((HWND)m_windowHandle, SW_HIDE);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -264,6 +266,21 @@ Vec2 Window::GetClientDimensions() const
     return m_clientDimensions;
 }
 
+Vec2 Window::GetClientPosition() const
+{
+    return m_clientPosition;
+}
+
+void Window::SetClientDimensions(Vec2 const& newDimensions)
+{
+    m_clientDimensions = newDimensions;
+}
+
+void Window::SetClientPosition(Vec2 const& newPosition)
+{
+    m_clientPosition = newPosition;
+}
+
 void Window::SetWindowDimensions(Vec2 const& newDimensions)
 {
 
@@ -459,6 +476,7 @@ void Window::CreateOSWindow()
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
             m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
         }
         break;
 
@@ -490,6 +508,7 @@ void Window::CreateOSWindow()
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
             m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
         }
         break;
 
@@ -579,6 +598,7 @@ void Window::CreateOSWindow()
 
             // Store rendering information
             m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
+            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
             m_viewportDimensions = Vec2(clientWidth, clientHeight);
             m_renderOffset       = Vec2(offsetX, offsetY);
         }

@@ -64,6 +64,9 @@ public:
 
     // Render information getters (useful for letterbox/crop modes)
     Vec2 GetClientDimensions() const;
+    Vec2 GetClientPosition() const;
+    void SetClientDimensions(Vec2 const& newDimensions);
+    void SetClientPosition(Vec2 const& newPosition);
     void SetWindowDimensions(Vec2 const& newDimensions);
     void SetWindowPosition(Vec2 const& newPosition);
     Vec2 GetViewportDimensions() const;
