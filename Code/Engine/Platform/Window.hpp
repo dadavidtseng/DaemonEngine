@@ -54,7 +54,7 @@ public:
     void*                GetDisplayContext() const;
     void*                GetWindowHandle() const;
     Vec2                 GetNormalizedMouseUV() const;
-    Vec2 GetCursorPositionOnScreen()const;
+    Vec2                 GetCursorPositionOnScreen() const;
 
     static Window* s_mainWindow; // fancy way of advertising global variables (advertisement)
 
@@ -67,6 +67,8 @@ public:
     Vec2 GetClientPosition() const;
     void SetClientDimensions(Vec2 const& newDimensions);
     void SetClientPosition(Vec2 const& newPosition);
+    Vec2 GetWindowPosition() const;
+    Vec2 GetWindowDimensions() const;
     void SetWindowDimensions(Vec2 const& newDimensions);
     void SetWindowPosition(Vec2 const& newPosition);
     Vec2 GetViewportDimensions() const;
@@ -83,7 +85,7 @@ public:
 
 
     // WindowEx
-    void UpdateWindowPosition(Vec2 const& newPosition);
+    void UpdatePosition(Vec2 const& newPosition);
     void UpdatePosition();
     void UpdateDimension();
 

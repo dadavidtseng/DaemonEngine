@@ -21,7 +21,6 @@
 #include <windows.h>
 
 
-
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
 
@@ -278,18 +277,29 @@ void Window::SetClientDimensions(Vec2 const& newDimensions)
 
 void Window::SetClientPosition(Vec2 const& newPosition)
 {
-    m_clientPosition = newPosition;
+    m_clientPosition       = newPosition;
+    m_shouldUpdatePosition = true;
+}
+
+Vec2 Window::GetWindowPosition() const
+{
+    return m_windowPosition;
+}
+
+Vec2 Window::GetWindowDimensions() const
+{
+    return m_windowDimensions;
 }
 
 void Window::SetWindowDimensions(Vec2 const& newDimensions)
 {
-
-     m_windowDimensions = newDimensions;
+    m_windowDimensions = newDimensions;
 }
 
 void Window::SetWindowPosition(Vec2 const& newPosition)
 {
-    m_windowPosition = newPosition;
+    m_windowPosition       = newPosition;
+    m_shouldUpdatePosition = true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -476,7 +486,7 @@ void Window::CreateOSWindow()
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
             m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
-            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
+            m_clientPosition   = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
         }
         break;
 
@@ -508,7 +518,7 @@ void Window::CreateOSWindow()
             clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
             m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
-            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
+            m_clientPosition   = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
         }
         break;
 
@@ -598,7 +608,7 @@ void Window::CreateOSWindow()
 
             // Store rendering information
             m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
-            m_clientPosition = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
+            m_clientPosition     = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
             m_viewportDimensions = Vec2(clientWidth, clientHeight);
             m_renderOffset       = Vec2(offsetX, offsetY);
         }
@@ -834,7 +844,7 @@ float Window::GetViewportAspectRatio() const
     return m_viewportDimensions.x / m_viewportDimensions.y;
 }
 
-void Window::UpdateWindowPosition(Vec2 const& newPosition)
+void Window::UpdatePosition(Vec2 const& newPosition)
 {
     // 假設 newPosition 是以像素為單位的左上角座標
     // 並且 width / height 是已知（可在其他地方更新）
@@ -874,7 +884,8 @@ void Window::UpdateWindowPosition(Vec2 const& newPosition)
     //     viewportWidth  = std::clamp(viewportWidth, 0.0f, 1.0f - viewportX);
     //     viewportHeight = std::clamp(viewportHeight, 0.0f, 1.0f - viewportY);
     // }
-    SetWindowPos((HWND)m_windowHandle, nullptr, newPosition.x, -newPosition.y, 0, 0,
+    m_windowPosition += newPosition;
+    SetWindowPos((HWND)m_windowHandle, nullptr, m_windowPosition.x, m_windowPosition.y, 0, 0,
                  SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
@@ -885,15 +896,15 @@ void Window::UpdatePosition()
 
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
-        lastRect.left   = windowRect.left;
-        lastRect.top    = windowRect.top;
-        lastRect.right  = windowRect.right;
-        lastRect.bottom = windowRect.bottom;
-        m_shouldUpdatePosition     = true;
+        lastRect.left          = windowRect.left;
+        lastRect.top           = windowRect.top;
+        lastRect.right         = windowRect.right;
+        lastRect.bottom        = windowRect.bottom;
+        m_shouldUpdatePosition = true;
 
         // 重新计算viewport参数
-        m_viewportPosition.x   = (float)windowRect.left / m_screenDimensions.x;
-        m_viewportPosition.y   = (float)windowRect.top / m_screenDimensions.y;
+        m_viewportPosition.x = (float)windowRect.left / m_screenDimensions.x;
+        m_viewportPosition.y = (float)windowRect.top / m_screenDimensions.y;
         // m_viewportDimensions.x = (float)m_windowDimensions.x / m_screenDimensions.x;
         // m_viewportDimensions.y = (float)m_windowDimensions.y / m_screenDimensions.y;
 
@@ -926,9 +937,9 @@ void Window::UpdateDimension()
 
     if (newWidth != (int)m_windowDimensions.x || newHeight != (int)m_windowDimensions.y)
     {
-        m_windowDimensions.x = newWidth;
-        m_windowDimensions.y = newHeight;
-        m_shouldUpdateDimension          = true;
+        m_windowDimensions.x    = newWidth;
+        m_windowDimensions.y    = newHeight;
+        m_shouldUpdateDimension = true;
     }
 }
 
@@ -947,7 +958,7 @@ Vec2 Window::GetNormalizedMouseUV() const
     // For letterbox/crop modes, adjust mouse coordinates to render area
     // if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX ||
     //     m_config.m_windowType == eWindowType::FULLSCREEN_CROP)
-        if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX)
+    if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX)
     {
         // Adjust cursor position relative to render area
         float const adjustedX = cursorCoords.x - m_renderOffset.x;
