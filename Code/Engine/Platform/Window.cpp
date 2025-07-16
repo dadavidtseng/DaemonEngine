@@ -271,6 +271,39 @@ Vec2 Window::GetClientPosition() const
 void Window::SetClientDimensions(Vec2 const& newDimensions)
 {
     m_clientDimensions = newDimensions;
+
+    // 計算所需的視窗大小來達到指定的client大小
+    RECT desiredClientRect = {0, 0, (int)newDimensions.x, (int)newDimensions.y};
+
+    // 取得當前視窗樣式
+    DWORD windowStyle = GetWindowLong((HWND)m_windowHandle, GWL_STYLE);
+    DWORD windowExStyle = GetWindowLong((HWND)m_windowHandle, GWL_EXSTYLE);
+
+    // 計算達到此client大小所需的視窗大小
+    AdjustWindowRectEx(&desiredClientRect, windowStyle, FALSE, windowExStyle);
+
+    // 計算新的視窗尺寸
+    int newWindowWidth = desiredClientRect.right - desiredClientRect.left;
+    int newWindowHeight = desiredClientRect.bottom - desiredClientRect.top;
+
+    // 保持當前位置，只改變大小
+    RECT currentWindowRect;
+    GetWindowRect((HWND)m_windowHandle, &currentWindowRect);
+
+    SetWindowPos((HWND)m_windowHandle, nullptr,
+                 currentWindowRect.left, currentWindowRect.top,
+                 newWindowWidth, newWindowHeight,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+
+    // 更新視窗尺寸記錄
+    m_windowDimensions.x = newWindowWidth;
+    m_windowDimensions.y = newWindowHeight;
+
+    // 更新viewport dimensions (通常與client dimensions相同)
+    m_viewportDimensions = newDimensions;
+
+    // 標記需要更新
+    m_shouldUpdateDimension = true;
 }
 
 void Window::SetClientPosition(Vec2 const& newPosition)
@@ -306,6 +339,28 @@ Vec2 Window::GetWindowDimensions() const
 void Window::SetWindowDimensions(Vec2 const& newDimensions)
 {
     m_windowDimensions = newDimensions;
+
+    // 保持當前位置，只改變大小
+    RECT currentWindowRect;
+    GetWindowRect((HWND)m_windowHandle, &currentWindowRect);
+
+    // 使用當前的左上角位置，設定新的大小
+    SetWindowPos((HWND)m_windowHandle, nullptr,
+                 currentWindowRect.left, currentWindowRect.top,
+                 (int)newDimensions.x, (int)newDimensions.y,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+
+    // 更新client dimensions (會因為邊框而有所不同)
+    RECT newClientRect;
+    GetClientRect((HWND)m_windowHandle, &newClientRect);
+    m_clientDimensions.x = newClientRect.right - newClientRect.left;
+    m_clientDimensions.y = newClientRect.bottom - newClientRect.top;
+
+    // 更新viewport dimensions (通常與client dimensions相同，除非有letterbox等模式)
+    m_viewportDimensions = m_clientDimensions;
+
+    // 標記需要更新
+    m_shouldUpdateDimension = true;
 }
 
 void Window::SetWindowPosition(Vec2 const& newPosition)
