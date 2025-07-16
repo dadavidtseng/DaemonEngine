@@ -276,6 +276,21 @@ void Window::SetClientDimensions(Vec2 const& newDimensions)
 void Window::SetClientPosition(Vec2 const& newPosition)
 {
     m_clientPosition = newPosition;
+
+    // 計算對應的 window position
+    Vec2 borderOffset = GetBorderOffset();
+    m_windowPosition  = newPosition - borderOffset;
+
+    // 移動視窗
+    SetWindowPos((HWND)m_windowHandle, nullptr,
+                 (int)m_windowPosition.x, (int)m_windowPosition.y, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+    // 更新 viewport position
+    m_viewportPosition.x = newPosition.x / m_screenDimensions.x;
+    m_viewportPosition.y = newPosition.y / m_screenDimensions.y;
+
+    m_shouldUpdatePosition = true;
 }
 
 Vec2 Window::GetWindowPosition() const
@@ -295,7 +310,39 @@ void Window::SetWindowDimensions(Vec2 const& newDimensions)
 
 void Window::SetWindowPosition(Vec2 const& newPosition)
 {
-    m_windowPosition = newPosition;
+    m_windowPosition = newPosition;  // 儲存引擎座標
+
+    // 轉換為Windows座標並移動視窗
+    Vec2 windowsPosition = EngineToWindowsCoords(newPosition);
+    SetWindowPos((HWND)m_windowHandle, nullptr,
+                 (int)windowsPosition.x, (int)windowsPosition.y, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+    // 更新相關座標（都用引擎座標儲存）
+    Vec2 borderOffset = GetBorderOffset();
+    // 注意：borderOffset也需要進行Y軸調整
+    m_clientPosition     = newPosition + Vec2(borderOffset.x, -borderOffset.y);
+    m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
+    m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
+
+    m_shouldUpdatePosition = true;
+}
+
+// 引擎座標 -> Windows座標 (Y軸翻轉)
+Vec2 Window::EngineToWindowsCoords(Vec2 const& engineCoords) const
+{
+    float windowsX = engineCoords.x;
+    float windowsY = m_screenDimensions.y - engineCoords.y - m_windowDimensions.y;
+    return Vec2(windowsX, windowsY);
+}
+
+// Windows座標 -> 引擎座標 (Y軸翻轉)
+Vec2 Window::WindowsToEngineCoords(Vec2 const& windowsCoords) const
+{
+     // Windows座標的左上角 -> 引擎座標的左下角
+        float engineX = windowsCoords.x;
+        float engineY = m_screenDimensions.y - windowsCoords.y - m_windowDimensions.y;
+        return Vec2(engineX, engineY);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1005,6 +1052,19 @@ Vec2 Window::GetScreenDimensions() const
     return m_screenDimensions;
 }
 
+Vec2 Window::GetBorderOffset()
+{
+    RECT windowRect, clientRect;
+    GetWindowRect((HWND)m_windowHandle, &windowRect);
+    GetClientRect((HWND)m_windowHandle, &clientRect);
+
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
+
+    return Vec2((float)(clientTopLeft.x - windowRect.left),
+                (float)(clientTopLeft.y - windowRect.top));
+}
+
 float Window::GetViewportAspectRatio() const
 {
     return m_viewportDimensions.x / m_viewportDimensions.y;
@@ -1015,42 +1075,28 @@ void Window::UpdatePosition()
     RECT windowRect;
     GetWindowRect((HWND)m_windowHandle, &windowRect);
 
+    // 只在實際視窗位置改變時才更新
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
-        lastRect.left   = windowRect.left;
         lastRect.top    = windowRect.top;
-        lastRect.right  = windowRect.right;
         lastRect.bottom = windowRect.bottom;
-        // m_shouldUpdatePosition = true;
+        lastRect.left   = windowRect.left;
+        lastRect.right  = windowRect.right;
 
-        m_viewportPosition.x = (float)windowRect.left / m_screenDimensions.x;
-        m_viewportPosition.y = (float)windowRect.top / m_screenDimensions.y;
-        m_viewportDimensions.x = (float)m_windowDimensions.x / m_screenDimensions.x;
-        m_viewportDimensions.y = (float)m_windowDimensions.y / m_screenDimensions.y;
+        // 同步所有內部座標變數（處理使用者手動拖拉視窗的情況）
+        Vec2 windowsWindowPos = Vec2((float)windowRect.left,(float) windowRect.top);
+        m_windowPosition = WindowsToEngineCoords(windowsWindowPos);
 
-        // float sceneWidth  = 1920.f;
-        // float sceneHeight = 1200.f;
-        //
-        // // 确保座标对齐到像素边界
-        // float pixelAlignX = 1.0f / (float)sceneWidth;
-        // float pixelAlignY = 1.0f / (float)sceneHeight;
-        //
-        // m_viewportPosition.x   = floor(m_viewportPosition.x / pixelAlignX) * pixelAlignX;
-        // m_viewportPosition.y   = floor(m_viewportPosition.y / pixelAlignY) * pixelAlignY;
-        // m_viewportDimensions.x = ceil(m_viewportDimensions.x / pixelAlignX) * pixelAlignX;
-        // m_viewportDimensions.y = ceil(m_viewportDimensions.y / pixelAlignY) * pixelAlignY;
-        //
-        // // 边界检查
-        // m_viewportPosition.x   = max(0.0f, min(1.0f,m_viewportPosition.x));
-        // m_viewportPosition.y   = max(0.0f, min(1.0f,m_viewportPosition.y));
-        // m_viewportDimensions.x = max(0.0f, min(1.0f -m_viewportPosition.x,m_viewportDimensions.x));
-        // m_viewportDimensions.y = max(0.0f, min(1.0f -m_viewportPosition.y, m_viewportDimensions.y));
+        POINT clientTopLeft = {0, 0};
+        ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
+        Vec2 windowsClientPos = Vec2((float)clientTopLeft.x,(float) clientTopLeft.y);
+        m_clientPosition = WindowsToEngineCoords(windowsClientPos);
+
+        m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
+        m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
+
+        m_shouldUpdatePosition = true;
     }
-
-    // x, The new position of the left side of the window, in client coordinates.
-    // y, The new position of the top of the window, in client coordinates.
-    SetWindowPos((HWND)m_windowHandle, nullptr, m_windowPosition.x, m_screenDimensions.y-m_windowPosition.y-m_windowDimensions.y, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void Window::UpdateDimension()

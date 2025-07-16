@@ -73,9 +73,12 @@ public:
     Vec2 GetWindowDimensions() const;
     void SetWindowDimensions(Vec2 const& newDimensions);
     void SetWindowPosition(Vec2 const& newPosition);
+    Vec2 EngineToWindowsCoords(Vec2 const& engineCoords) const;
+    Vec2 WindowsToEngineCoords(Vec2 const& windowsCoords) const;
     Vec2 GetViewportDimensions() const;
     Vec2 GetViewportOffset() const;
     Vec2 GetScreenDimensions() const;
+    Vec2 GetBorderOffset();
 
     // Utility functions
     float GetViewportAspectRatio() const;
