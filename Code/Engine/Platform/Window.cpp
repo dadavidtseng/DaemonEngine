@@ -25,8 +25,8 @@
 STATIC Window* Window::s_mainWindow = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-Window::Window(sWindowConfig const& config)
-    : m_config(config)
+Window::Window(sWindowConfig config)
+    : m_config(std::move(config))
 {
     if (s_mainWindow == nullptr)
     {
@@ -193,7 +193,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 // For each message in the queue, our WindowsMessageHandlingProcedure (or "WinProc") function
 //	is called, telling us what happened (key up/down, minimized/restored, gained/lost focus, etc.)
 //
-void Window::RunMessagePump()
+void Window::RunMessagePump() const
 {
     MSG queuedMessage;
 
@@ -213,8 +213,6 @@ void Window::RunMessagePump()
 }
 
 //----------------------------------------------------------------------------------------------------
-// return a reference that is read only
-//
 sWindowConfig const& Window::GetConfig() const
 {
     return m_config;
@@ -261,7 +259,7 @@ Vec2 Window::GetClientDimensions() const
     // float const desktopWidth  = static_cast<float>(desktopRect.right - desktopRect.left);
     // float const desktopHeight = static_cast<float>(desktopRect.bottom - desktopRect.top);
     // float const desktopAspect = desktopWidth / desktopHeight;
-    // return IntVec2(desktopWidth, desktopHeight);
+    // return Vec2(desktopWidth, desktopHeight);
     return m_clientDimensions;
 }
 
@@ -277,8 +275,7 @@ void Window::SetClientDimensions(Vec2 const& newDimensions)
 
 void Window::SetClientPosition(Vec2 const& newPosition)
 {
-    m_clientPosition       = newPosition;
-    m_shouldUpdatePosition = true;
+    m_clientPosition = newPosition;
 }
 
 Vec2 Window::GetWindowPosition() const
@@ -298,8 +295,7 @@ void Window::SetWindowDimensions(Vec2 const& newDimensions)
 
 void Window::SetWindowPosition(Vec2 const& newPosition)
 {
-    m_windowPosition       = newPosition;
-    m_shouldUpdatePosition = true;
+    m_windowPosition = newPosition;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -462,7 +458,7 @@ void Window::CreateOSWindow()
             windowStyleFlags = WS_CAPTION | WS_SYSMENU | WS_OVERLAPPED | WS_MINIMIZEBOX;
 
             // Calculate windowed size (90% of desktop, maintaining aspect ratio)
-            float constexpr maxClientFractionOfDesktop = 0.90f;
+            float constexpr maxClientFractionOfDesktop = 0.9f;
             float const     clientAspect               = m_config.m_aspectRatio;
             float           clientWidth                = static_cast<float>(desktopWidth) * maxClientFractionOfDesktop;
             float           clientHeight               = static_cast<float>(desktopHeight) * maxClientFractionOfDesktop;
@@ -571,7 +567,7 @@ void Window::CreateOSWindow()
             // Store the actual screen dimensions for rendering
             m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
             m_viewportDimensions = Vec2(clientWidth, clientHeight);
-            m_renderOffset       = Vec2(offsetX, offsetY);
+            m_viewportOffset     = Vec2(offsetX, offsetY);
         }
         break;
 
@@ -610,7 +606,7 @@ void Window::CreateOSWindow()
             m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
             m_clientPosition     = Vec2(static_cast<int>(clientRect.bottom), static_cast<int>(clientRect.left));
             m_viewportDimensions = Vec2(clientWidth, clientHeight);
-            m_renderOffset       = Vec2(offsetX, offsetY);
+            m_viewportOffset     = Vec2(offsetX, offsetY);
         }
         break;
 
@@ -662,6 +658,8 @@ void Window::CreateOSWindow()
         clientRect.bottom = clientRect.top + static_cast<int>(clientHeight);
 
         m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+        break;
+
         break;
     }
 
@@ -737,18 +735,41 @@ void Window::SetWindowType(eWindowType newType)
 }
 
 //----------------------------------------------------------------------------------------------------
+void Window::SetWindowHandle(void* newWindowHandle)
+{
+    m_windowHandle = newWindowHandle;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Window::SetDisplayContext(void* newDisplayContext)
+{
+    m_displayContext = newDisplayContext;
+}
+
+//----------------------------------------------------------------------------------------------------
+// TODO: FIX
 void Window::ReconfigureWindow()
 {
     if (!m_windowHandle) return;
 
     HWND const windowHandle = static_cast<HWND>(m_windowHandle);
 
-    // Get desktop dimensions
+    // Get desktop dimensions (screen size)
     RECT       desktopRect;
     HWND const desktopWindowHandle = GetDesktopWindow();
     GetClientRect(desktopWindowHandle, &desktopRect);
-    int const desktopWidth  = desktopRect.right - desktopRect.left;
-    int const desktopHeight = desktopRect.bottom - desktopRect.top;
+    int const   desktopWidth  = desktopRect.right - desktopRect.left;
+    int const   desktopHeight = desktopRect.bottom - desktopRect.top;
+    float const desktopAspect = static_cast<float>(desktopWidth) / static_cast<float>(desktopHeight);
+
+    // IMPORTANT: Reset viewport-related variables to prevent contamination
+    m_viewportDimensions = Vec2::ZERO;
+    m_viewportOffset     = Vec2::ZERO;
+    m_windowDimensions   = Vec2::ZERO;
+    m_windowPosition     = Vec2::ZERO;
+    m_clientPosition     = Vec2::ZERO;
+    m_clientDimensions   = Vec2::ZERO;
+    m_viewportOffset     = Vec2::ZERO;
 
     DWORD windowStyleFlags   = 0;
     DWORD windowStyleExFlags = WS_EX_APPWINDOW;
@@ -759,54 +780,207 @@ void Window::ReconfigureWindow()
     switch (m_config.m_windowType)
     {
     case eWindowType::WINDOWED:
-        windowStyleFlags = WS_CAPTION | WS_SYSMENU | WS_OVERLAPPED | WS_MINIMIZEBOX;
-        // Calculate centered windowed position
         {
-            int const width    = static_cast<int>(1600 * 0.8f);
-            int const height   = static_cast<int>(width / m_config.m_aspectRatio);
-            newRect.left       = (desktopWidth - width) / 2;
-            newRect.top        = (desktopHeight - height) / 2;
-            newRect.right      = newRect.left + width;
-            newRect.bottom     = newRect.top + height;
-            m_clientDimensions = Vec2(width, height);
+            windowStyleFlags = WS_CAPTION | WS_SYSMENU | WS_OVERLAPPED | WS_MINIMIZEBOX;
+
+            // Calculate windowed size (90% of desktop, maintaining aspect ratio) - consistent with CreateOSWindow
+            float constexpr maxClientFractionOfDesktop = 0.9f;
+            float const     clientAspect               = m_config.m_aspectRatio;
+            float           clientWidth                = static_cast<float>(desktopWidth) * maxClientFractionOfDesktop;
+            float           clientHeight               = static_cast<float>(desktopHeight) * maxClientFractionOfDesktop;
+
+            if (clientAspect > desktopAspect)
+            {
+                clientHeight = clientWidth / clientAspect;
+            }
+            else
+            {
+                clientWidth = clientHeight * clientAspect;
+            }
+
+            // Center the window
+            float const clientMarginX = 0.5f * (static_cast<float>(desktopWidth) - clientWidth);
+            float const clientMarginY = 0.5f * (static_cast<float>(desktopHeight) - clientHeight);
+
+            newRect.left   = static_cast<int>(clientMarginX);
+            newRect.top    = static_cast<int>(clientMarginY);
+            newRect.right  = newRect.left + static_cast<int>(clientWidth);
+            newRect.bottom = newRect.top + static_cast<int>(clientHeight);
+
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            // Windowed mode doesn't use viewport dimensions - they should remain zero
+        }
+        break;
+
+    case eWindowType::BORDERLESS:
+        {
+            windowStyleFlags = WS_POPUP;
+
+            // Same size calculation as windowed but without borders
+            float constexpr maxClientFractionOfDesktop = 0.90f;
+            float const     clientAspect               = m_config.m_aspectRatio;
+            float           clientWidth                = static_cast<float>(desktopWidth) * maxClientFractionOfDesktop;
+            float           clientHeight               = static_cast<float>(desktopHeight) * maxClientFractionOfDesktop;
+
+            if (clientAspect > desktopAspect)
+            {
+                clientHeight = clientWidth / clientAspect;
+            }
+            else
+            {
+                clientWidth = clientHeight * clientAspect;
+            }
+
+            float const clientMarginX = 0.5f * (static_cast<float>(desktopWidth) - clientWidth);
+            float const clientMarginY = 0.5f * (static_cast<float>(desktopHeight) - clientHeight);
+
+            newRect.left   = static_cast<int>(clientMarginX);
+            newRect.top    = static_cast<int>(clientMarginY);
+            newRect.right  = newRect.left + static_cast<int>(clientWidth);
+            newRect.bottom = newRect.top + static_cast<int>(clientHeight);
+
+            m_clientDimensions = Vec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
+            // Borderless mode doesn't use viewport dimensions - they should remain zero
         }
         break;
 
     case eWindowType::FULLSCREEN_STRETCH:
-        windowStyleFlags = WS_POPUP;
-        windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
-        newRect            = {0, 0, desktopWidth, desktopHeight};
-        m_clientDimensions = Vec2(desktopWidth, desktopHeight);
+        {
+            windowStyleFlags   = WS_POPUP;
+            windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+
+            // Fill entire screen
+            newRect.left   = 0;
+            newRect.top    = 0;
+            newRect.right  = desktopWidth;
+            newRect.bottom = desktopHeight;
+
+            m_clientDimensions = Vec2(desktopWidth, desktopHeight);
+            // Stretch mode doesn't use viewport dimensions - they should remain zero
+        }
+        break;
+
+    case eWindowType::FULLSCREEN_LETTERBOX:
+        {
+            windowStyleFlags   = WS_POPUP;
+            windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+
+            // Calculate letterbox dimensions to maintain aspect ratio
+            float const targetAspect = m_config.m_aspectRatio;
+            int         clientWidth, clientHeight;
+
+            if (targetAspect > desktopAspect)
+            {
+                // Fit to width, letterbox top/bottom
+                clientWidth  = desktopWidth;
+                clientHeight = static_cast<int>(static_cast<float>(desktopWidth) / targetAspect);
+            }
+            else
+            {
+                // Fit to height, letterbox left/right
+                clientHeight = desktopHeight;
+                clientWidth  = static_cast<int>(static_cast<float>(desktopHeight) * targetAspect);
+            }
+
+            // Center the content area
+            int const offsetX = (desktopWidth - clientWidth) / 2;
+            int const offsetY = (desktopHeight - clientHeight) / 2;
+
+            newRect.left   = 0;
+            newRect.top    = 0;
+            newRect.right  = desktopWidth;
+            newRect.bottom = desktopHeight;
+
+            // Store the actual screen dimensions for rendering
+            m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
+            m_viewportDimensions = Vec2(clientWidth, clientHeight);
+            m_viewportOffset     = Vec2(offsetX, offsetY);
+        }
+        break;
+
+    case eWindowType::FULLSCREEN_CROP:
+        {
+            windowStyleFlags   = WS_POPUP;
+            windowStyleExFlags = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+
+            // Fill screen and crop to maintain aspect ratio
+            float const targetAspect = m_config.m_aspectRatio;
+            int         clientWidth, clientHeight;
+
+            if (targetAspect > desktopAspect)
+            {
+                // Fit to height, crop left/right
+                clientHeight = desktopHeight;
+                clientWidth  = static_cast<int>(static_cast<float>(desktopHeight) * targetAspect);
+            }
+            else
+            {
+                // Fit to width, crop top/bottom
+                clientWidth  = desktopWidth;
+                clientHeight = static_cast<int>(static_cast<float>(desktopWidth) / targetAspect);
+            }
+
+            DebuggerPrintf(Stringf("CROP Mode - ClientWidth = %d | ClientHeight = %d", clientWidth, clientHeight).c_str());
+
+            // Center the viewport
+            int const offsetX = (desktopWidth - clientWidth) / 2;
+            int const offsetY = (desktopHeight - clientHeight) / 2;
+
+            newRect.left   = 0;
+            newRect.top    = 0;
+            newRect.right  = desktopWidth;
+            newRect.bottom = desktopHeight;
+
+            // Store rendering information
+            m_clientDimensions   = Vec2(desktopWidth, desktopHeight);
+            m_viewportDimensions = Vec2(clientWidth, clientHeight);
+            m_viewportOffset     = Vec2(offsetX, offsetY);
+        }
         break;
 
     case eWindowType::MINIMIZED:
-        showCmd = SW_MINIMIZE;
-        return; // Don't change window style for minimize
+        ShowWindow(windowHandle, SW_MINIMIZE);
+        return; // Early return, no style changes needed
 
     case eWindowType::HIDDEN:
-        showCmd = SW_HIDE;
-        return; // Don't change window style for hide
+        ShowWindow(windowHandle, SW_HIDE);
+        return; // Early return, no style changes needed
+
+    default:
+        // Default to windowed mode if invalid type
+        m_config.m_windowType = eWindowType::WINDOWED;
+        return ReconfigureWindow(); // Recursive call with corrected type
     }
 
     // Apply new window style
     SetWindowLong(windowHandle, GWL_STYLE, windowStyleFlags);
     SetWindowLong(windowHandle, GWL_EXSTYLE, windowStyleExFlags);
 
-    // Adjust for window frame if windowed
-    if (m_config.m_windowType == eWindowType::WINDOWED)
+    // Calculate the outer dimensions of the physical window, including frame
+    RECT windowRect = newRect;
+    if (m_config.m_windowType == eWindowType::WINDOWED || m_config.m_windowType == eWindowType::BORDERLESS)
     {
-        AdjustWindowRectEx(&newRect, windowStyleFlags, FALSE, windowStyleExFlags);
+        AdjustWindowRectEx(&windowRect, windowStyleFlags, FALSE, windowStyleExFlags);
     }
 
     // Apply new position and size
     SetWindowPos(windowHandle,
-                 (m_config.m_windowType == eWindowType::FULLSCREEN_STRETCH) ? HWND_TOPMOST : HWND_TOP,
-                 newRect.left, newRect.top,
-                 newRect.right - newRect.left, newRect.bottom - newRect.top,
+                 (windowStyleExFlags & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_TOP,
+                 windowRect.left, windowRect.top,
+                 windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
                  SWP_FRAMECHANGED);
 
+    // Show the window
     ShowWindow(windowHandle, showCmd);
+
+    // Set focus and foreground for visible windows
+    if (m_config.m_windowType != eWindowType::HIDDEN)
+    {
+        SetForegroundWindow(windowHandle);
+        SetFocus(windowHandle);
+    }
 }
+
 
 //----------------------------------------------------------------------------------------------------
 // Add getter methods for render information (useful for letterbox/crop modes)
@@ -823,7 +997,7 @@ Vec2 Window::GetViewportDimensions() const
 //----------------------------------------------------------------------------------------------------
 Vec2 Window::GetViewportOffset() const
 {
-    return m_renderOffset;
+    return m_viewportOffset;
 }
 
 Vec2 Window::GetScreenDimensions() const
@@ -831,62 +1005,9 @@ Vec2 Window::GetScreenDimensions() const
     return m_screenDimensions;
 }
 
-//----------------------------------------------------------------------------------------------------
-bool Window::IsFullscreen() const
-{
-    return (m_config.m_windowType == eWindowType::FULLSCREEN_STRETCH ||
-        m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX ||
-        m_config.m_windowType == eWindowType::FULLSCREEN_CROP);
-}
-
 float Window::GetViewportAspectRatio() const
 {
     return m_viewportDimensions.x / m_viewportDimensions.y;
-}
-
-void Window::UpdatePosition(Vec2 const& newPosition)
-{
-    // 假設 newPosition 是以像素為單位的左上角座標
-    // 並且 width / height 是已知（可在其他地方更新）
-
-    // 紀錄舊位置檢查是否真的有更新
-    // if (newPosition.x != lastRect.left || newPosition.y != lastRect.top)
-    // {
-    //     lastRect.left   = static_cast<LONG>(newPosition.x);
-    //     lastRect.top    = static_cast<LONG>(newPosition.y);
-    //     lastRect.right  = lastRect.left + width;
-    //     lastRect.bottom = lastRect.top + height;
-    //
-    //     needsUpdate = true;
-    //
-    //     // 虛擬螢幕大小（例如主視窗邏輯大小）
-    //     float sceneWidth  = 1920.f;
-    //     float sceneHeight = 1080.f;
-    //
-    //     // 計算 viewport 相對座標（0～1）
-    //     viewportX      = newPosition.x / sceneWidth;
-    //     viewportY      = newPosition.y / sceneHeight;
-    //     viewportWidth  = (float)width / sceneWidth;
-    //     viewportHeight = (float)height / sceneHeight;
-    //
-    //     // pixel 對齊
-    //     float pixelAlignX = 1.0f / sceneWidth;
-    //     float pixelAlignY = 1.0f / sceneHeight;
-    //
-    //     viewportX      = floor(viewportX / pixelAlignX) * pixelAlignX;
-    //     viewportY      = floor(viewportY / pixelAlignY) * pixelAlignY;
-    //     viewportWidth  = ceil(viewportWidth / pixelAlignX) * pixelAlignX;
-    //     viewportHeight = ceil(viewportHeight / pixelAlignY) * pixelAlignY;
-    //
-    //     // 限制在合法範圍
-    //     viewportX      = std::clamp(viewportX, 0.0f, 1.0f);
-    //     viewportY      = std::clamp(viewportY, 0.0f, 1.0f);
-    //     viewportWidth  = std::clamp(viewportWidth, 0.0f, 1.0f - viewportX);
-    //     viewportHeight = std::clamp(viewportHeight, 0.0f, 1.0f - viewportY);
-    // }
-    m_windowPosition += newPosition;
-    SetWindowPos((HWND)m_windowHandle, nullptr, m_windowPosition.x, m_windowPosition.y, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void Window::UpdatePosition()
@@ -896,17 +1017,16 @@ void Window::UpdatePosition()
 
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
-        lastRect.left          = windowRect.left;
-        lastRect.top           = windowRect.top;
-        lastRect.right         = windowRect.right;
-        lastRect.bottom        = windowRect.bottom;
-        m_shouldUpdatePosition = true;
+        lastRect.left   = windowRect.left;
+        lastRect.top    = windowRect.top;
+        lastRect.right  = windowRect.right;
+        lastRect.bottom = windowRect.bottom;
+        // m_shouldUpdatePosition = true;
 
-        // 重新计算viewport参数
         m_viewportPosition.x = (float)windowRect.left / m_screenDimensions.x;
         m_viewportPosition.y = (float)windowRect.top / m_screenDimensions.y;
-        // m_viewportDimensions.x = (float)m_windowDimensions.x / m_screenDimensions.x;
-        // m_viewportDimensions.y = (float)m_windowDimensions.y / m_screenDimensions.y;
+        m_viewportDimensions.x = (float)m_windowDimensions.x / m_screenDimensions.x;
+        m_viewportDimensions.y = (float)m_windowDimensions.y / m_screenDimensions.y;
 
         // float sceneWidth  = 1920.f;
         // float sceneHeight = 1200.f;
@@ -926,6 +1046,11 @@ void Window::UpdatePosition()
         // m_viewportDimensions.x = max(0.0f, min(1.0f -m_viewportPosition.x,m_viewportDimensions.x));
         // m_viewportDimensions.y = max(0.0f, min(1.0f -m_viewportPosition.y, m_viewportDimensions.y));
     }
+
+    // x, The new position of the left side of the window, in client coordinates.
+    // y, The new position of the top of the window, in client coordinates.
+    SetWindowPos((HWND)m_windowHandle, nullptr, m_windowPosition.x, m_screenDimensions.y-m_windowPosition.y-m_windowDimensions.y, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void Window::UpdateDimension()
@@ -937,8 +1062,8 @@ void Window::UpdateDimension()
 
     if (newWidth != (int)m_windowDimensions.x || newHeight != (int)m_windowDimensions.y)
     {
-        m_windowDimensions.x    = newWidth;
-        m_windowDimensions.y    = newHeight;
+        m_windowDimensions.x    = (float)newWidth;
+        m_windowDimensions.y    = (float)newHeight;
         m_shouldUpdateDimension = true;
     }
 }
@@ -961,8 +1086,8 @@ Vec2 Window::GetNormalizedMouseUV() const
     if (m_config.m_windowType == eWindowType::FULLSCREEN_LETTERBOX)
     {
         // Adjust cursor position relative to render area
-        float const adjustedX = cursorCoords.x - m_renderOffset.x;
-        float const adjustedY = cursorCoords.y - m_renderOffset.y;
+        float const adjustedX = cursorCoords.x - m_viewportOffset.x;
+        float const adjustedY = cursorCoords.y - m_viewportOffset.y;
 
         float const normalizedX = adjustedX / static_cast<float>(m_viewportDimensions.x);
         float const normalizedY = adjustedY / static_cast<float>(m_viewportDimensions.y);
@@ -993,7 +1118,6 @@ Vec2 Window::GetCursorPositionOnScreen() const
 
     return Vec2(x, y);
 }
-
 
 //----------------------------------------------------------------------------------------------------
 #ifdef CONSOLE_HANDLER

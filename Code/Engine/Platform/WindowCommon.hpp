@@ -7,6 +7,7 @@
 #include <cstdint>
 
 //----------------------------------------------------------------------------------------------------
+// TODO: add more window types, such as WINDOWED_FIXED and WINDOWED_EXPANDABLE, etc...
 enum class eWindowType : uint8_t
 {
     INVALID,

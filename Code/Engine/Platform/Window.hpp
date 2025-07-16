@@ -22,7 +22,7 @@ struct sWindowConfig
 {
     InputSystem*   m_inputSystem = nullptr;
     eWindowType    m_windowType  = eWindowType::INVALID;
-    float          m_aspectRatio = 4.f / 3.f;
+    float          m_aspectRatio = 2.f;
     String         m_consoleTitle[11];
     String         m_windowTitle  = "DEFAULT";
     wchar_t const* m_iconFilePath = nullptr;
@@ -42,7 +42,7 @@ class Window
     friend class Renderer;
 
 public:
-    explicit Window(sWindowConfig const& config);
+    explicit Window(sWindowConfig config);
     ~Window() = default;
     void Startup();
     void Shutdown();
@@ -60,6 +60,8 @@ public:
 
     // Window type management
     void SetWindowType(eWindowType newType);
+    void SetWindowHandle(void* newWindowHandle);
+    void SetDisplayContext(void* newDisplayContext);
     void ReconfigureWindow();
 
     // Render information getters (useful for letterbox/crop modes)
@@ -74,18 +76,11 @@ public:
     Vec2 GetViewportDimensions() const;
     Vec2 GetViewportOffset() const;
     Vec2 GetScreenDimensions() const;
-    bool IsFullscreen() const;
 
     // Utility functions
-    float                   GetViewportAspectRatio() const;
-    void*                   m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
-    void*                   m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
-    IDXGISwapChain1*        m_swapChain        = nullptr;
-    ID3D11RenderTargetView* m_renderTargetView = nullptr;
-
+    float GetViewportAspectRatio() const;
 
     // WindowEx
-    void UpdatePosition(Vec2 const& newPosition);
     void UpdatePosition();
     void UpdateDimension();
 
@@ -96,16 +91,20 @@ public:
 private:
     void CreateOSWindow();
     void CreateConsole();
-    void RunMessagePump();
+    void RunMessagePump() const;
 
-    sWindowConfig m_config;
+    sWindowConfig           m_config;
+    void*                   m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
+    void*                   m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
+    IDXGISwapChain1*        m_swapChain        = nullptr;
+    ID3D11RenderTargetView* m_renderTargetView = nullptr;
 
     Vec2 m_screenDimensions   = Vec2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-    Vec2 m_windowPosition     = Vec2::ZERO;
-    Vec2 m_windowDimensions   = Vec2::ZERO;
-    Vec2 m_clientPosition     = Vec2::ZERO;
-    Vec2 m_clientDimensions   = Vec2::ZERO;
-    Vec2 m_viewportPosition   = Vec2::ZERO;
-    Vec2 m_viewportDimensions = Vec2::ZERO;      // For letterbox/crop modes - actual render area size
-    Vec2 m_renderOffset       = Vec2::ZERO;      // For letterbox/crop modes - offset of render area
+    Vec2 m_windowDimensions   = Vec2::ZERO;         // the dimension of your window, will need conversion if m_windowType is `eWindowType::WINDOWED`
+    Vec2 m_windowPosition     = Vec2::ZERO;         // the position of your window, will need conversion if m_windowType is `eWindowType::WINDOWED`
+    Vec2 m_clientDimensions   = Vec2::ZERO;         // the dimension of your client dimension
+    Vec2 m_clientPosition     = Vec2::ZERO;         // the position of your client position
+    Vec2 m_viewportDimensions = Vec2::ZERO;         // the dimension of your viewport, which is used by `Renderer` and `Camera`
+    Vec2 m_viewportPosition   = Vec2::ZERO;         // the position of your viewport, which is used by `Renderer` and `Camera`
+    Vec2 m_viewportOffset     = Vec2::ZERO;         // For letterbox/crop modes - offset of render area
 };
