@@ -87,17 +87,6 @@ public:
     void UpdatePosition();
     void UpdateDimension();
 
-    // 平滑改變視窗尺寸
-    void AnimateToWindowDimensions(Vec2 const& targetDimensions, float duration = 0.5f);
-    void AnimateToWindowPosition(Vec2 const& targetPosition, float duration = 0.5f);
-    void AnimateToWindowPositionAndDimensions(Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration = 0.5f);
-
-    // 更新動畫
-    void UpdateAnimations(float deltaSeconds);
-
-    // 檢查是否正在動畫中
-    bool IsAnimating() const { return m_isAnimatingSize || m_isAnimatingPosition; }
-
     WindowRect lastRect{};
     bool       m_shouldUpdatePosition  = false;
     bool       m_shouldUpdateDimension = false;
@@ -121,17 +110,4 @@ private:
     Vec2 m_viewportDimensions = Vec2::ZERO;         // the dimension of your viewport, which is used by `Renderer` and `Camera`
     Vec2 m_viewportPosition   = Vec2::ZERO;         // the position of your viewport, which is used by `Renderer` and `Camera`
     Vec2 m_viewportOffset     = Vec2::ZERO;         // For letterbox/crop modes - offset of render area
-
-private:
-    // 動畫相關的成員變數
-    bool m_isAnimatingSize     = false;
-    bool m_isAnimatingPosition = false;
-
-    Vec2 m_targetWindowDimensions = Vec2::ZERO;
-    Vec2 m_startWindowDimensions  = Vec2::ZERO;
-    Vec2 m_targetWindowPosition   = Vec2::ZERO;
-    Vec2 m_startWindowPosition    = Vec2::ZERO;
-
-    float m_animationDuration = 0.5f;  // 動畫持續時間（秒）
-    float m_animationTimer    = 0.0f;     // 當前動畫時間
 };

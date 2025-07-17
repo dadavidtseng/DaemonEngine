@@ -276,14 +276,14 @@ void Window::SetClientDimensions(Vec2 const& newDimensions)
     RECT desiredClientRect = {0, 0, (int)newDimensions.x, (int)newDimensions.y};
 
     // 取得當前視窗樣式
-    DWORD windowStyle = GetWindowLong((HWND)m_windowHandle, GWL_STYLE);
+    DWORD windowStyle   = GetWindowLong((HWND)m_windowHandle, GWL_STYLE);
     DWORD windowExStyle = GetWindowLong((HWND)m_windowHandle, GWL_EXSTYLE);
 
     // 計算達到此client大小所需的視窗大小
     AdjustWindowRectEx(&desiredClientRect, windowStyle, FALSE, windowExStyle);
 
     // 計算新的視窗尺寸
-    int newWindowWidth = desiredClientRect.right - desiredClientRect.left;
+    int newWindowWidth  = desiredClientRect.right - desiredClientRect.left;
     int newWindowHeight = desiredClientRect.bottom - desiredClientRect.top;
 
     // 保持當前位置，只改變大小
@@ -394,10 +394,10 @@ Vec2 Window::EngineToWindowsCoords(Vec2 const& engineCoords) const
 // Windows座標 -> 引擎座標 (Y軸翻轉)
 Vec2 Window::WindowsToEngineCoords(Vec2 const& windowsCoords) const
 {
-     // Windows座標的左上角 -> 引擎座標的左下角
-        float engineX = windowsCoords.x;
-        float engineY = m_screenDimensions.y - windowsCoords.y - m_windowDimensions.y;
-        return Vec2(engineX, engineY);
+    // Windows座標的左上角 -> 引擎座標的左下角
+    float engineX = windowsCoords.x;
+    float engineY = m_screenDimensions.y - windowsCoords.y - m_windowDimensions.y;
+    return Vec2(engineX, engineY);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1139,13 +1139,13 @@ void Window::UpdatePosition()
         lastRect.right  = windowRect.right;
 
         // 同步所有內部座標變數（處理使用者手動拖拉視窗的情況）
-        Vec2 windowsWindowPos = Vec2((float)windowRect.left,(float) windowRect.top);
-        m_windowPosition = WindowsToEngineCoords(windowsWindowPos);
+        Vec2 windowsWindowPos = Vec2((float)windowRect.left, (float)windowRect.top);
+        m_windowPosition      = WindowsToEngineCoords(windowsWindowPos);
 
         POINT clientTopLeft = {0, 0};
         ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
-        Vec2 windowsClientPos = Vec2((float)clientTopLeft.x,(float) clientTopLeft.y);
-        m_clientPosition = WindowsToEngineCoords(windowsClientPos);
+        Vec2 windowsClientPos = Vec2((float)clientTopLeft.x, (float)clientTopLeft.y);
+        m_clientPosition      = WindowsToEngineCoords(windowsClientPos);
 
         m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
         m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
@@ -1218,70 +1218,6 @@ Vec2 Window::GetCursorPositionOnScreen() const
     int y = screenHeight - static_cast<int>(cursorCoords.y);
 
     return Vec2(x, y);
-}
-void Window::AnimateToWindowDimensions(Vec2 const& targetDimensions, float duration)
-{
-    if (targetDimensions == m_windowDimensions) return;
-
-    m_startWindowDimensions = m_windowDimensions;
-    m_targetWindowDimensions = targetDimensions;
-    m_animationDuration = duration;
-    m_animationTimer = 0.0f;
-    m_isAnimatingSize = true;
-}
-
-void Window::AnimateToWindowPosition(Vec2 const& targetPosition, float duration)
-{
-    if (targetPosition == m_windowPosition) return;
-
-    m_startWindowPosition = m_windowPosition;
-    m_targetWindowPosition = targetPosition;
-    m_animationDuration = duration;
-    m_animationTimer = 0.0f;
-    m_isAnimatingPosition = true;
-}
-
-void Window::AnimateToWindowPositionAndDimensions(Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration)
-{
-    m_startWindowPosition = m_windowPosition;
-    m_targetWindowPosition = targetPosition;
-    m_startWindowDimensions = m_windowDimensions;
-    m_targetWindowDimensions = targetDimensions;
-    m_animationDuration = duration;
-    m_animationTimer = 0.0f;
-    m_isAnimatingSize = true;
-    m_isAnimatingPosition = true;
-}
-
-void Window::UpdateAnimations(float deltaSeconds)
-{
-    if (!IsAnimating()) return;
-
-    m_animationTimer += deltaSeconds;
-    float t = m_animationTimer / m_animationDuration;
-
-    if (t >= 1.0f)
-    {
-        // 動畫完成
-        t = 1.0f;
-        m_isAnimatingSize = false;
-        m_isAnimatingPosition = false;
-    }
-
-    // 使用 SmoothStep3 來創造平滑的動畫效果
-    float easedT = SmoothStep5(t);
-
-    if (m_isAnimatingSize)
-    {
-        Vec2 currentDimensions = Interpolate(m_startWindowDimensions, m_targetWindowDimensions, easedT);
-        SetWindowDimensions(currentDimensions);
-    }
-
-    if (m_isAnimatingPosition)
-    {
-        Vec2 currentPosition = Interpolate(m_startWindowPosition, m_targetWindowPosition, easedT);
-        SetWindowPosition(currentPosition);
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
