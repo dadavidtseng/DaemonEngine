@@ -1163,8 +1163,8 @@ void Window::UpdateDimension()
 
     if (newWidth != (int)m_windowDimensions.x || newHeight != (int)m_windowDimensions.y)
     {
-        m_windowDimensions.x    = (float)newWidth;
-        m_windowDimensions.y    = (float)newHeight;
+        // m_windowDimensions.x    = (float)newWidth;
+        // m_windowDimensions.y    = (float)newHeight;
         m_shouldUpdateDimension = true;
     }
 }
@@ -1218,6 +1218,70 @@ Vec2 Window::GetCursorPositionOnScreen() const
     int y = screenHeight - static_cast<int>(cursorCoords.y);
 
     return Vec2(x, y);
+}
+void Window::AnimateToWindowDimensions(Vec2 const& targetDimensions, float duration)
+{
+    if (targetDimensions == m_windowDimensions) return;
+
+    m_startWindowDimensions = m_windowDimensions;
+    m_targetWindowDimensions = targetDimensions;
+    m_animationDuration = duration;
+    m_animationTimer = 0.0f;
+    m_isAnimatingSize = true;
+}
+
+void Window::AnimateToWindowPosition(Vec2 const& targetPosition, float duration)
+{
+    if (targetPosition == m_windowPosition) return;
+
+    m_startWindowPosition = m_windowPosition;
+    m_targetWindowPosition = targetPosition;
+    m_animationDuration = duration;
+    m_animationTimer = 0.0f;
+    m_isAnimatingPosition = true;
+}
+
+void Window::AnimateToWindowPositionAndDimensions(Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration)
+{
+    m_startWindowPosition = m_windowPosition;
+    m_targetWindowPosition = targetPosition;
+    m_startWindowDimensions = m_windowDimensions;
+    m_targetWindowDimensions = targetDimensions;
+    m_animationDuration = duration;
+    m_animationTimer = 0.0f;
+    m_isAnimatingSize = true;
+    m_isAnimatingPosition = true;
+}
+
+void Window::UpdateAnimations(float deltaSeconds)
+{
+    if (!IsAnimating()) return;
+
+    m_animationTimer += deltaSeconds;
+    float t = m_animationTimer / m_animationDuration;
+
+    if (t >= 1.0f)
+    {
+        // 動畫完成
+        t = 1.0f;
+        m_isAnimatingSize = false;
+        m_isAnimatingPosition = false;
+    }
+
+    // 使用 SmoothStep3 來創造平滑的動畫效果
+    float easedT = SmoothStep5(t);
+
+    if (m_isAnimatingSize)
+    {
+        Vec2 currentDimensions = Interpolate(m_startWindowDimensions, m_targetWindowDimensions, easedT);
+        SetWindowDimensions(currentDimensions);
+    }
+
+    if (m_isAnimatingPosition)
+    {
+        Vec2 currentPosition = Interpolate(m_startWindowPosition, m_targetWindowPosition, easedT);
+        SetWindowPosition(currentPosition);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
