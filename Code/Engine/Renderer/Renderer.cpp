@@ -1584,8 +1584,7 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     }
 
     // 6. Update window info
-    window.m_windowDimensions.x = newWidth;
-    window.m_windowDimensions.y = newHeight;
+    window.SetClientDimensions(Vec2((float)newWidth, (float)newHeight));
 
     // 7. Recalculate viewport parameters
     RECT windowRect;
@@ -1626,10 +1625,10 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
     // m_deviceContext->ClearState();
     // m_deviceContext->Flush();
 
-    RECT clientRect;
-    GetClientRect((HWND)window.m_windowHandle, &clientRect);
-    window.m_windowDimensions.x = clientRect.right - clientRect.left;
-    window.m_windowDimensions.y = clientRect.bottom - clientRect.top;
+    // RECT clientRect;
+    // GetClientRect((HWND)window.m_windowHandle, &clientRect);
+    // window.m_windowDimensions.x = clientRect.right - clientRect.left;
+    // window.m_windowDimensions.y = clientRect.bottom - clientRect.top;
 
     // 獲取 DXGI Factory2（注意這裡會用到 IDXGIFactory2 而非舊的 IDXGIFactory）
     IDXGIDevice* dxgiDevice = nullptr;
