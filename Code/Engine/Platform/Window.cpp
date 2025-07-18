@@ -370,7 +370,7 @@ void Window::SetWindowPosition(Vec2 const& newPosition)
     // 更新相關座標（都用引擎座標儲存）
     Vec2 borderOffset = GetBorderOffset();
     // 注意：borderOffset也需要進行Y軸調整
-    m_clientPosition     = newPosition + Vec2(borderOffset.x, -borderOffset.y);
+    m_clientPosition     = newPosition + Vec2(borderOffset.x, borderOffset.y);
     m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
     m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
 
@@ -816,15 +816,15 @@ void Window::CreateOSWindow()
     HCURSOR const cursor = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(cursor);
 
-    if (m_config.m_supportMultipleWindows)
-    {
-        // 設置全螢幕透明主視窗
-        SetWindowLong(windowHandle, GWL_EXSTYLE,
-                      GetWindowLong(windowHandle, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-
-        // 完全透明，滑鼠穿透
-        SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
-    }
+    // if (m_config.m_supportMultipleWindows)
+    // {
+    //     // 設置全螢幕透明主視窗
+    //     SetWindowLong(windowHandle, GWL_EXSTYLE,
+    //                   GetWindowLong(windowHandle, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+    //
+    //     // 完全透明，滑鼠穿透
+    //     SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1137,24 +1137,55 @@ void Window::UpdatePosition()
     // 只在實際視窗位置改變時才更新
     if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
     {
-        lastRect.top    = windowRect.top;
-        lastRect.bottom = windowRect.bottom;
-        lastRect.left   = windowRect.left;
-        lastRect.right  = windowRect.right;
+        // lastRect.top    = windowRect.top;
+        // lastRect.bottom = windowRect.bottom;
+        // lastRect.left   = windowRect.left;
+        // lastRect.right  = windowRect.right;
+        //
+        // // 同步所有內部座標變數（處理使用者手動拖拉視窗的情況）
+        // Vec2 windowsWindowPos = Vec2((float)windowRect.left, (float)windowRect.top);
+        // m_windowPosition      = WindowsToEngineCoords(windowsWindowPos);
+        //
+        // POINT clientTopLeft = {0, 0};
+        // ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
+        // Vec2 windowsClientPos = Vec2((float)clientTopLeft.x, (float)clientTopLeft.y);
+        // m_clientPosition      = WindowsToEngineCoords(windowsClientPos);
+        //
+        // m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
+        // m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
+        //
+        // m_shouldUpdatePosition = true;
+        RECT windowRect;
+        GetWindowRect((HWND)m_windowHandle, &windowRect);
 
-        // 同步所有內部座標變數（處理使用者手動拖拉視窗的情況）
-        Vec2 windowsWindowPos = Vec2((float)windowRect.left, (float)windowRect.top);
-        m_windowPosition      = WindowsToEngineCoords(windowsWindowPos);
+        if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
+        {
+            lastRect.left   = windowRect.left;
+            lastRect.top    = windowRect.top;
+            lastRect.right  = windowRect.right;
+            lastRect.bottom = windowRect.bottom;
+            m_shouldUpdatePosition = true;
 
-        POINT clientTopLeft = {0, 0};
-        ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
-        Vec2 windowsClientPos = Vec2((float)clientTopLeft.x, (float)clientTopLeft.y);
-        m_clientPosition      = WindowsToEngineCoords(windowsClientPos);
+            // 更新視窗位置（需要Y軸翻轉）
+            m_windowPosition.x = (float)windowRect.left;
+            m_windowPosition.y = m_screenDimensions.y - (float)windowRect.bottom;  // Y軸翻轉
 
-        m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
-        m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
+            // 計算客戶區域位置（加上邊框偏移，也需要Y軸翻轉）
+            POINT clientTopLeft = {0, 0};
+            ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
 
-        m_shouldUpdatePosition = true;
+            // 計算客戶區域的底部位置來做Y軸翻轉
+            RECT clientRect;
+            GetClientRect((HWND)m_windowHandle, &clientRect);
+            int clientHeight = clientRect.bottom - clientRect.top;
+
+            m_clientPosition.x = (float)clientTopLeft.x;
+            m_clientPosition.y = m_screenDimensions.y - (float)(clientTopLeft.y + clientHeight);  // Y軸翻轉
+
+            // 重新計算viewport參數
+            m_viewportPosition.x = (float)windowRect.left / m_screenDimensions.x;
+            m_viewportPosition.y = (float)windowRect.top / m_screenDimensions.y;
+        }
     }
 }
 

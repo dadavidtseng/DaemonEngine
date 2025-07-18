@@ -1584,7 +1584,7 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     }
 
     // 6. Update window info
-    window.SetClientDimensions(Vec2((float)newWidth, (float)newHeight));
+    // window.SetClientDimensions(Vec2((float)newWidth, (float)newHeight));
 
     // 7. Recalculate viewport parameters
     RECT windowRect;
