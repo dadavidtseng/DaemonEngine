@@ -262,6 +262,7 @@ Vec2 Window::GetClientPosition() const
     return m_clientPosition;
 }
 
+// TODO: Decide if I want to delete this function
 void Window::SetClientDimensions(Vec2 const& newDimensions)
 {
     m_clientDimensions = newDimensions;
@@ -308,16 +309,16 @@ void Window::SetClientPosition(Vec2 const& newPosition)
     Vec2 borderOffset = GetBorderOffset();
     m_windowPosition  = newPosition - borderOffset;
 
-    // 移動視窗
+    Vec2 windowsPosition = EngineToWindowsCoords(newPosition);
     SetWindowPos((HWND)m_windowHandle, nullptr,
-                 (int)m_windowPosition.x, (int)m_windowPosition.y, 0, 0,
+                 (int)windowsPosition.x, (int)windowsPosition.y, 0, 0,
                  SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 
     // 更新 viewport position
     m_viewportPosition.x = newPosition.x / m_screenDimensions.x;
     m_viewportPosition.y = newPosition.y / m_screenDimensions.y;
 
-    m_shouldUpdatePosition = true;
+    // m_shouldUpdatePosition = true;
 }
 
 Vec2 Window::GetWindowPosition() const
@@ -374,7 +375,7 @@ void Window::SetWindowPosition(Vec2 const& newPosition)
     m_viewportPosition.x = m_clientPosition.x / m_screenDimensions.x;
     m_viewportPosition.y = m_clientPosition.y / m_screenDimensions.y;
 
-    m_shouldUpdatePosition = true;
+    // m_shouldUpdatePosition = true;
 }
 
 // 引擎座標 -> Windows座標 (Y軸翻轉)
@@ -1121,7 +1122,7 @@ Vec2 Window::GetBorderOffset()
     ClientToScreen((HWND)m_windowHandle, &clientTopLeft);
 
     return Vec2((float)(clientTopLeft.x - windowRect.left),
-                (float)(clientTopLeft.y - windowRect.top));
+                (float)(clientTopLeft.x - windowRect.left));
 }
 
 float Window::GetViewportAspectRatio() const
@@ -1189,6 +1190,7 @@ void Window::UpdatePosition()
     }
 }
 
+// TODO: potential bug could happen here, when replacing `SetClientDimensions` to `SetWindowDimensions`
 void Window::UpdateDimension()
 {
     RECT clientRect;
@@ -1200,6 +1202,8 @@ void Window::UpdateDimension()
     {
         // m_windowDimensions.x    = (float)newWidth;
         // m_windowDimensions.y    = (float)newHeight;
+        SetClientDimensions(Vec2(newWidth, newHeight));
+        // SetWindowDimensions(Vec2(newWidth, newHeight));
         m_shouldUpdateDimension = true;
     }
 }
