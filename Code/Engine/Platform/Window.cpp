@@ -42,11 +42,19 @@ void Window::Startup()
 #endif
 
     CreateOSWindow();
+    if (m_config.m_supportMultipleWindows)
+    {
+        EnableGlobalInputCapture();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void Window::Shutdown()
 {
+    if (m_config.m_supportMultipleWindows)
+    {
+        DisableGlobalInputCapture();
+    }
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_renderTargetView)
     ShowWindow((HWND)m_windowHandle, SW_HIDE);
@@ -67,6 +75,130 @@ void Window::EndFrame()
 // Handles Windows (Win32) messages/events; i.e. the OS is trying to tell us something happened.
 // This function is called back by Windows whenever we tell it to (by calling DispatchMessage).
 //
+// LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
+//                                                  UINT const   wmMessageCode,
+//                                                  WPARAM const wParam,
+//                                                  LPARAM const lParam)
+// {
+//     InputSystem* input = nullptr;
+//
+//     if (Window::s_mainWindow != nullptr &&
+//         Window::s_mainWindow->GetConfig().m_inputSystem)
+//     {
+//         input = Window::s_mainWindow->GetConfig().m_inputSystem;
+//     }
+//
+//     switch (wmMessageCode)
+//     {
+//     // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
+//     case WM_CLOSE:
+//         {
+//             if (g_theDevConsole == nullptr)
+//             {
+//                 return 0;
+//             }
+//
+//             g_theEventSystem->FireEvent("OnCloseButtonClicked");
+//
+//             return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+//         }
+//
+//     // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
+//     case WM_KEYDOWN:
+//         {
+//             if (g_theDevConsole == nullptr)
+//             {
+//                 return 0;
+//             }
+//
+//             EventArgs args;
+//             args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
+//             FireEvent("OnWindowKeyPressed", args);
+//
+//             return 0;
+//         }
+//
+//     // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
+//     case WM_KEYUP:
+//         {
+//             if (g_theDevConsole == nullptr)
+//             {
+//                 return 0;
+//             }
+//
+//             EventArgs args;
+//             args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
+//             FireEvent("OnWindowKeyReleased", args);
+//
+//             return 0;
+//         }
+//
+//     case WM_CHAR:
+//         {
+//             if (g_theDevConsole == nullptr)
+//             {
+//                 return 0;
+//             }
+//
+//             EventArgs args;
+//             args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
+//             FireEvent("OnWindowCharInput", args);
+//
+//             return 0;
+//         }
+//
+//     // Mouse left & right button down and up events; treat as a fake keyboard key
+//     case WM_LBUTTONDOWN:
+//         {
+//             if (input != nullptr)
+//             {
+//                 input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
+//             }
+//
+//             return 0;
+//         }
+//
+//     case WM_LBUTTONUP:
+//         {
+//             if (input != nullptr)
+//             {
+//                 input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
+//             }
+//
+//             return 0;
+//         }
+//
+//     case WM_RBUTTONDOWN:
+//         {
+//             if (input != nullptr)
+//             {
+//                 input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
+//             }
+//
+//             return 0;
+//         }
+//
+//     case WM_RBUTTONUP:
+//         {
+//             if (input != nullptr)
+//             {
+//                 input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
+//             }
+//
+//             return 0;
+//         }
+//
+//     default: ;
+//     }
+//
+//
+//     // Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
+//     return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);
+// }
+
+//----------------------------------------------------------------------------------------------------
+// 改造後的 WindowsMessageHandlingProcedure - 完全處理所有輸入
+//----------------------------------------------------------------------------------------------------
 LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
                                                  UINT const   wmMessageCode,
                                                  WPARAM const wParam,
@@ -82,46 +214,37 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
 
     switch (wmMessageCode)
     {
-    // App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
     case WM_CLOSE:
         {
             if (g_theDevConsole == nullptr)
             {
                 return 0;
             }
-
             g_theEventSystem->FireEvent("OnCloseButtonClicked");
-
-            return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+            return 0;
         }
 
-    // Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
     case WM_KEYDOWN:
         {
             if (g_theDevConsole == nullptr)
             {
                 return 0;
             }
-
             EventArgs args;
             args.SetValue("OnWindowKeyPressed", Stringf("%d", static_cast<unsigned char>(wParam)));
             FireEvent("OnWindowKeyPressed", args);
-
             return 0;
         }
 
-    // Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
     case WM_KEYUP:
         {
             if (g_theDevConsole == nullptr)
             {
                 return 0;
             }
-
             EventArgs args;
             args.SetValue("OnWindowKeyReleased", Stringf("%d", static_cast<unsigned char>(wParam)));
             FireEvent("OnWindowKeyReleased", args);
-
             return 0;
         }
 
@@ -131,21 +254,27 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             {
                 return 0;
             }
-
             EventArgs args;
             args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
             FireEvent("OnWindowCharInput", args);
-
+            DebuggerPrintf("WM_CHAR\n");
             return 0;
         }
 
-    // Mouse left & right button down and up events; treat as a fake keyboard key
     case WM_LBUTTONDOWN:
         {
             if (input != nullptr)
             {
                 input->HandleKeyPressed(KEYCODE_LEFT_MOUSE);
             }
+
+            // // 處理全域點擊邏輯（只在全域模式下才處理視窗外點擊）
+            // if (Window::IsGlobalInputCaptureEnabled())
+            // {
+            //     POINT clientPos = {LOWORD(lParam), HIWORD(lParam)};
+            //     ClientToScreen(windowHandle, &clientPos);
+            //     Window::HandleGlobalMouseClick(clientPos, true, true);
+            // }
 
             return 0;
         }
@@ -156,7 +285,6 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             {
                 input->HandleKeyReleased(KEYCODE_LEFT_MOUSE);
             }
-
             return 0;
         }
 
@@ -167,6 +295,14 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
                 input->HandleKeyPressed(KEYCODE_RIGHT_MOUSE);
             }
 
+            // // 處理全域點擊邏輯
+            // if (Window::IsGlobalInputCaptureEnabled())
+            // {
+            //     POINT clientPos = {LOWORD(lParam), HIWORD(lParam)};
+            //     ClientToScreen(windowHandle, &clientPos);
+            //     Window::HandleGlobalMouseClick(clientPos, false, true);
+            // }
+
             return 0;
         }
 
@@ -176,17 +312,15 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             {
                 input->HandleKeyReleased(KEYCODE_RIGHT_MOUSE);
             }
-
             return 0;
         }
 
     default: ;
     }
 
-
-    // Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
     return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);
 }
+
 
 //----------------------------------------------------------------------------------------------------
 // Processes all Windows messages (WM_xxx) for this app that have queued up since last frame.
@@ -303,7 +437,7 @@ void Window::SetClientDimensions(Vec2 const& newDimensions)
     m_viewportDimensions = newDimensions;
 
     // 標記需要更新
-    m_shouldUpdateDimension = true;
+    // m_shouldUpdateDimension = true;
 }
 
 void Window::SetClientPosition(Vec2 const& newPosition)
@@ -360,7 +494,7 @@ void Window::SetWindowDimensions(Vec2 const& newDimensions)
     m_viewportDimensions = m_clientDimensions;
 
     // 標記需要更新
-    m_shouldUpdateDimension = true;
+    // m_shouldUpdateDimension = true;
 }
 
 void Window::SetWindowPosition(Vec2 const& newPosition)
@@ -821,6 +955,16 @@ void Window::CreateOSWindow()
 
     HCURSOR const cursor = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(cursor);
+
+    if (m_config.m_supportMultipleWindows)
+    {
+        // 設置全螢幕透明主視窗
+        SetWindowLong(windowHandle, GWL_EXSTYLE,
+                      GetWindowLong(windowHandle, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+
+        // 完全透明，滑鼠穿透
+        SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1219,6 +1363,207 @@ Vec2 Window::GetCursorPositionOnScreen() const
 
     return Vec2(x, y);
 }
+
+// HHOOK Window::s_globalMouseHook = nullptr;
+// HHOOK Window::s_globalKeyboardHook = nullptr;
+// bool Window::s_useGlobalCapture = false;
+
+
+//----------------------------------------------------------------------------------------------------
+// 全域輸入捕捉實現
+//----------------------------------------------------------------------------------------------------
+void Window::EnableGlobalInputCapture()
+{
+    if (m_useGlobalCapture) return;
+
+    m_globalMouseHook = SetWindowsHookEx(
+        WH_MOUSE_LL,
+        GlobalMouseProc,
+        GetModuleHandle(nullptr),
+        0
+    );
+
+    m_globalKeyboardHook = SetWindowsHookEx(
+        WH_KEYBOARD_LL,
+        GlobalKeyboardProc,
+        GetModuleHandle(nullptr),
+        0
+    );
+
+    if (m_globalMouseHook && m_globalKeyboardHook)
+    {
+        m_useGlobalCapture = true;
+        DebuggerPrintf("Global input capture enabled\n");
+    }
+    else
+    {
+        DebuggerPrintf("Failed to enable global input capture\n");
+        DisableGlobalInputCapture();  // 清理失敗的鉤子
+    }
+}
+
+void Window::DisableGlobalInputCapture()
+{
+    if (m_globalMouseHook)
+    {
+        UnhookWindowsHookEx(m_globalMouseHook);
+        m_globalMouseHook = nullptr;
+    }
+
+    if (m_globalKeyboardHook)
+    {
+        UnhookWindowsHookEx(m_globalKeyboardHook);
+        m_globalKeyboardHook = nullptr;
+    }
+
+    m_useGlobalCapture = false;
+    DebuggerPrintf("Global input capture disabled\n");
+}
+
+LRESULT CALLBACK Window::GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode >= 0 && s_mainWindow)
+    {
+        PMSLLHOOKSTRUCT mouseStruct = (PMSLLHOOKSTRUCT)lParam;
+
+        if (s_mainWindow->m_windowHandle)
+        {
+            // 轉換為客戶端座標
+            POINT clientPos = mouseStruct->pt;
+            ScreenToClient((HWND)s_mainWindow->m_windowHandle, &clientPos);
+            LPARAM clientLParam = MAKELPARAM(clientPos.x, clientPos.y);
+
+            // 處理滑鼠事件
+            bool eventHandled = false;
+            switch (wParam)
+            {
+            case WM_LBUTTONDOWN:
+                WindowsMessageHandlingProcedure((HWND)s_mainWindow->m_windowHandle, WM_LBUTTONDOWN, 0, clientLParam);
+                eventHandled = true;
+                break;
+            case WM_LBUTTONUP:
+                WindowsMessageHandlingProcedure((HWND)s_mainWindow->m_windowHandle, WM_LBUTTONUP, 0, clientLParam);
+                eventHandled = true;
+                break;
+            case WM_RBUTTONDOWN:
+                WindowsMessageHandlingProcedure((HWND)s_mainWindow->m_windowHandle, WM_RBUTTONDOWN, 0, clientLParam);
+                eventHandled = true;
+                break;
+            case WM_RBUTTONUP:
+                WindowsMessageHandlingProcedure((HWND)s_mainWindow->m_windowHandle, WM_RBUTTONUP, 0, clientLParam);
+                eventHandled = true;
+                break;
+            }
+
+            // 如果我們處理了這個事件，就不要傳遞給其他應用程式
+            if (eventHandled)
+            {
+                return 1;  // 阻止訊息繼續傳遞
+            }
+        }
+    }
+
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+LRESULT CALLBACK Window::GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode >= 0 && s_mainWindow)
+    {
+        PKBDLLHOOKSTRUCT keyboardStruct = (PKBDLLHOOKSTRUCT)lParam;
+        HWND             mainWindow     = static_cast<HWND>(s_mainWindow->GetWindowHandle());
+
+        // 處理鍵盤事件
+        bool eventHandled = false;
+        switch (wParam)
+        {
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+            WindowsMessageHandlingProcedure(mainWindow, WM_KEYDOWN, keyboardStruct->vkCode, 0);
+            eventHandled = true;
+            break;
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
+            WindowsMessageHandlingProcedure(mainWindow, WM_KEYUP, keyboardStruct->vkCode, 0);
+            eventHandled = true;
+            break;
+        }
+
+        // 如果我們處理了這個事件，就不要傳遞給其他應用程式
+        if (eventHandled)
+        {
+            return 1;  // 阻止訊息繼續傳遞
+        }
+    }
+
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+// HWND Window::FindTargetWindowForGlobalInput(POINT screenPos)
+// {
+//     // 先檢查是否點擊在子視窗上
+//     if (g_theWindowSubsystem)
+//     {
+//         // 通過 WindowSubsystem 的 public interface 取得視窗列表
+//         for (const auto& windowPair : g_theWindowSubsystem->GetWindowList())
+//         {
+//             HWND childHwnd = static_cast<HWND>(windowPair.second->GetWindowHandle());
+//             RECT windowRect;
+//             GetWindowRect(childHwnd, &windowRect);
+//
+//             if (PtInRect(&windowRect, screenPos))
+//             {
+//                 return childHwnd;
+//             }
+//         }
+//     }
+//
+//     // 如果沒有點在子視窗上，使用主視窗
+//     return s_mainWindow ? static_cast<HWND>(s_mainWindow->GetWindowHandle()) : nullptr;
+// }
+//
+// void Window::HandleGlobalMouseClick(POINT screenPos, bool isLeftClick, bool isButtonDown)
+// {
+//     if (!isButtonDown) return;  // 只處理按下事件
+//
+//     // 檢查是否點擊在子視窗外面
+//     bool isOnChildWindow = false;
+//
+//     if (g_theWindowSubsystem)
+//     {
+//         for (const auto& windowPair : g_theWindowSubsystem->GetWindowList())
+//         {
+//             HWND childHwnd = static_cast<HWND>(windowPair.second->GetWindowHandle());
+//             RECT windowRect;
+//             GetWindowRect(childHwnd, &windowRect);
+//
+//             if (PtInRect(&windowRect, screenPos))
+//             {
+//                 isOnChildWindow = true;
+//
+//                 // 確保該視窗獲得焦點
+//                 SetForegroundWindow(childHwnd);
+//                 SetFocus(childHwnd);
+//                 break;
+//             }
+//         }
+//     }
+//
+//     // 如果點擊在所有子視窗外面
+//     if (!isOnChildWindow)
+//     {
+//         DebuggerPrintf("%s click outside all child windows at (%d, %d)\n",
+//                       isLeftClick ? "Left" : "Right", screenPos.x, screenPos.y);
+//
+//         // 可以在這裡添加視窗外點擊的處理邏輯
+//         // 例如：讓所有子視窗失去焦點
+//         if (g_theWindowSubsystem)
+//         {
+//             // 通知 WindowSubsystem 有視窗外點擊（如果需要的話）
+//             // 但不要讓 WindowSubsystem 處理輸入邏輯
+//         }
+//     }
+// }
 
 //----------------------------------------------------------------------------------------------------
 #ifdef CONSOLE_HANDLER
