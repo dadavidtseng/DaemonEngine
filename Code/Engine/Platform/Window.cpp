@@ -133,7 +133,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             EventArgs args;
             args.SetValue("OnWindowCharInput", Stringf("%d", static_cast<unsigned char>(wParam)));
             FireEvent("OnWindowCharInput", args);
-            DebuggerPrintf("WM_CHAR\n");
+
             return 0;
         }
 
@@ -817,15 +817,15 @@ void Window::CreateOSWindow()
     HCURSOR const cursor = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(cursor);
 
-    // if (m_config.m_supportMultipleWindows)
-    // {
-    //     // 設置全螢幕透明主視窗
-    //     SetWindowLong(windowHandle, GWL_EXSTYLE,
-    //                   GetWindowLong(windowHandle, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-    //
-    //     // 完全透明，滑鼠穿透
-    //     SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
-    // }
+    if (m_config.m_supportMultipleWindows)
+    {
+        // 設置全螢幕透明主視窗
+        SetWindowLong(windowHandle, GWL_EXSTYLE,
+                      GetWindowLong(windowHandle, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+
+        // 完全透明，滑鼠穿透
+        SetLayeredWindowAttributes(windowHandle, 0, 0, LWA_ALPHA);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
