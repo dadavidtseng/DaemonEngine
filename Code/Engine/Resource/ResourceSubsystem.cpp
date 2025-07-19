@@ -1,18 +1,21 @@
-// ============================================
+//----------------------------------------------------------------------------------------------------
 // ResourceSubsystem.cpp
-// ============================================
-#include "Engine/Resource/ResourceSubsystem.hpp"
-#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include <filesystem>
+//----------------------------------------------------------------------------------------------------
 
-ResourceSubsystem& ResourceSubsystem::GetInstance()
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Resource/ResourceSubsystem.hpp"
+#include <filesystem>
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
+
+//----------------------------------------------------------------------------------------------------
+ResourceSubsystem::ResourceSubsystem(sResourceSubsystemConfig const& config)
+    : m_config(config)
 {
-    static ResourceSubsystem instance;
-    return instance;
 }
 
-void ResourceSubsystem::Initialize(size_t threadCount)
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::Startup()
 {
     m_running = true;
 
@@ -23,11 +26,12 @@ void ResourceSubsystem::Initialize(size_t threadCount)
     // RegisterLoader(std::make_unique<ShaderLoader>());
 
     // 創建工作執行緒
-    for (size_t i = 0; i < threadCount; ++i)
+    for (int i = 0; i < m_config.m_threadCount; ++i)
     {
         m_workerThreads.emplace_back(&ResourceSubsystem::WorkerThread, this);
     }
 }
+
 
 void ResourceSubsystem::Shutdown()
 {

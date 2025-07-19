@@ -16,15 +16,18 @@
 #include "Engine/Resource/ResourceCache.hpp"
 #include "Engine/Resource/ResourceHandle.hpp"
 
+struct sResourceSubsystemConfig
+{
+    int m_threadCount = 0;
+};
 
 //----------------------------------------------------------------------------------------------------
 class ResourceSubsystem
 {
 public:
-    static ResourceSubsystem& GetInstance();
+    explicit ResourceSubsystem(sResourceSubsystemConfig const& config);
 
-    // 初始化與關閉
-    void Initialize(size_t threadCount = 4);
+    void Startup();
     void Shutdown();
 
     // 註冊載入器
@@ -73,7 +76,7 @@ public:
     void SetMemoryLimit(size_t bytes) { m_memoryLimit = bytes; }
 
 private:
-    ResourceSubsystem() = default;
+    sResourceSubsystemConfig m_config;
     ~ResourceSubsystem() { Shutdown(); }
 
     // 禁止複製

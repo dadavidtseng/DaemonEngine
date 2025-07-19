@@ -768,7 +768,7 @@ void Window::CreateOSWindow()
     }
 
     // Convert window title to wide character
-    WCHAR windowTitle[1024];
+    wchar_t windowTitle[1024];
     MultiByteToWideChar(GetACP(), 0, m_config.m_windowTitle.c_str(), -1, windowTitle,
                         sizeof(windowTitle) / sizeof(windowTitle[0]));
 
@@ -1161,10 +1161,10 @@ void Window::UpdatePosition()
 
         if (memcmp(&windowRect, &lastRect, sizeof(RECT)) != 0)
         {
-            lastRect.left   = windowRect.left;
-            lastRect.top    = windowRect.top;
-            lastRect.right  = windowRect.right;
-            lastRect.bottom = windowRect.bottom;
+            lastRect.left          = windowRect.left;
+            lastRect.top           = windowRect.top;
+            lastRect.right         = windowRect.right;
+            lastRect.bottom        = windowRect.bottom;
             m_shouldUpdatePosition = true;
 
             // 更新視窗位置（需要Y軸翻轉）
