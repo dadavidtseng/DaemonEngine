@@ -273,6 +273,20 @@ void Renderer::CreateSamplerState()
 void Renderer::CreateRasterizerState()
 {
     D3D11_RASTERIZER_DESC rasterizerDesc;
+
+    rasterizerDesc.CullMode = D3D11_CULL_FRONT;
+    rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+    rasterizerDesc.FrontCounterClockwise = true;
+    rasterizerDesc.DepthBias = 0;
+    rasterizerDesc.DepthBiasClamp = 0.f;
+    rasterizerDesc.SlopeScaledDepthBias = 0.f;
+    rasterizerDesc.DepthClipEnable = true;
+    rasterizerDesc.ScissorEnable = false;
+    rasterizerDesc.MultisampleEnable = false;
+    rasterizerDesc.AntialiasedLineEnable = true;
+
+   HRESULT  hr = m_device->CreateRasterizerState( &rasterizerDesc, &m_rasterizerStates[(int)eRasterizerMode::SOLID_CULL_FRONT] );
+
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.CullMode              = D3D11_CULL_NONE;
     rasterizerDesc.FrontCounterClockwise = true;
@@ -284,7 +298,7 @@ void Renderer::CreateRasterizerState()
     rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-    HRESULT hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+     hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
     if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
@@ -1583,10 +1597,10 @@ Texture* Renderer::CreateRenderTexture(IntVec2 const& dimensions, char const* na
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
     HRESULT hr = m_device->CreateTexture2D( &textureDesc, NULL, &(newTexture->m_texture) );
-    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Render Texture Failed" ) );
+    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Render Texture Failed" ) )
 
     hr = m_device->CreateShaderResourceView( newTexture->m_texture, NULL, &(newTexture->m_shaderResourceView) );
-    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Shader Resource View failed" ) );
+    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Shader Resource View failed" ) )
 
     hr = m_device->CreateRenderTargetView( newTexture->m_texture, NULL, &newTexture->m_renderTargetView );
     GUARANTEE_OR_DIE( SUCCEEDED( hr ), "Could not create render target view." );

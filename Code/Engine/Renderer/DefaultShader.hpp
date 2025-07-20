@@ -184,9 +184,9 @@ SamplerState sourceSampler : register(s0);
 
 struct vs_input_t
 {
-	float3 localPosition : POSITION;
-	float4 color : COLOR;
-	float2 uv : TEXCOORD;
+	float3 localPosition : VERTEX_POSITION;
+	float4 color : VERTEX_COLOR;
+	float2 uv : VERTEX_UVTEXCOORDS;
 };
 
 struct v2p_t
@@ -239,9 +239,9 @@ SamplerState blurSampler : register(s0);
 
 struct vs_input_t
 {
-    float3 localPosition : POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
+    float3 localPosition : VERTEX_POSITION;
+    float4 color : VERTEX_COLOR;
+    float2 uv : VERTEX_UVTEXCOORDS;
 };
 
 struct v2p_t
