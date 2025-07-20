@@ -68,13 +68,13 @@ public:
 
 
     void Startup();
-    void BeginFrame() const;
+    void BeginFrame() ;
     void EndFrame() const;
     void Shutdown();
 
     void ClearScreen(Rgba8 const& clearColor) const;
     void ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) const;
-    void BeginCamera(Camera const& camera) const;
+    void BeginCamera(Camera const& camera) ;
     void EndCamera(Camera const& camera);
 
     void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
@@ -119,10 +119,11 @@ public:
     void    RenderViewportToWindowDX11(Window const& window);
     void    ReadStagingTextureToPixelData();
 
-    // void SetCustomConstantBuffer( ConstantBuffer*& cbo, void* data, size_t size, int slot );
+
     // Shadowmap and Bloom
-    void RenderEmissive();
-    void SetDefaultRenderTargets();
+    void     SetCustomConstantBuffer( ConstantBuffer*& cbo, void* data, size_t size, int slot );
+    void     RenderEmissive();
+    void     SetDefaultRenderTargets();
     Texture* CreateRenderTexture( IntVec2 const& dimensions, char const* name );
 
 private:
@@ -150,6 +151,7 @@ private:
     void BindIndexBuffer(IndexBuffer const* ibo) const;
     void BindVertexBuffer(VertexBuffer const* vbo) const;
     void SetStatesIfChanged();
+    D3D11_VIEWPORT* m_cameraViewport = nullptr;
 
     sRendererConfig m_config;
 
@@ -222,4 +224,9 @@ protected:
     Texture*      m_blurUpTextures[k_blurUpTextureCount];
     BlurConstants m_blurConstants;
     Texture* m_screenTexture = nullptr;
+    // 建議預先創建 blur shader，而不是每次都創建
+    Shader* m_blurDownShader = nullptr;
+    Shader* m_blurUpShader = nullptr;
+    Shader* m_blurCompositeShader = nullptr;
+    void UnbindShaderResources(); // 添加這個函式聲明
 };

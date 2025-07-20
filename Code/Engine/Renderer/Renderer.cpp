@@ -51,6 +51,7 @@ STATIC int    Renderer::k_blurConstantSlot     = 5;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRendererConfig const& config)
+    : m_blurDownTextures{}, m_blurUpTextures{}, m_blurConstants()
 {
     m_config = config;
     // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
@@ -396,15 +397,19 @@ void Renderer::Startup()
     m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-
+// 預先創建 blur shader
+    m_blurDownShader = CreateShader("BlurDown", blurDownShaderSource, eVertexType::VERTEX_PCU);
+    m_blurUpShader = CreateShader("BlurUp", blurUpShaderSource, eVertexType::VERTEX_PCU);
+    m_blurCompositeShader = CreateShader("BlurComposite", blurCompositeShaderSource, eVertexType::VERTEX_PCU);
     BindShader(m_defaultShader);
     BindTexture(m_defaultTexture, 0);
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::BeginFrame() const
+void Renderer::BeginFrame()
 {
-    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+    // m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+    SetDefaultRenderTargets();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -541,11 +546,11 @@ void Renderer::ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) 
     }
 
     m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
-    m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
+    // m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
 }
 
 //----------------------------------------------------------------------------------------------------
-void Renderer::BeginCamera(Camera const& camera) const
+void Renderer::BeginCamera(Camera const& camera)
 {
     // Set viewport
     D3D11_VIEWPORT viewport;
@@ -562,7 +567,7 @@ void Renderer::BeginCamera(Camera const& camera) const
     // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;
     viewport.MaxDepth = 1.f;
-
+m_cameraViewport = &viewport;
     m_deviceContext->RSSetViewports(1, &viewport);
 
 
@@ -1381,6 +1386,7 @@ void Renderer::SetStatesIfChanged()
         m_deviceContext->PSSetSamplers(1, 1, &m_samplerState);
         m_deviceContext->PSSetSamplers(2, 1, &m_samplerState);
     }
+    // m_deviceContext->RSSetViewports( 1, m_cameraViewport );
 }
 
 void Renderer::ReadStagingTextureToPixelData()
@@ -1450,11 +1456,11 @@ void Renderer::ReadStagingTextureToPixelData()
     mainRenderTargetTexture->Release();
 }
 
-// void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
-// {
-//     CopyCPUToGPU( data, size, cbo );
-//     BindConstantBuffer( slot, cbo );
-// }
+void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
+{
+    CopyCPUToGPU( data, size, cbo );
+    BindConstantBuffer( slot, cbo );
+}
 
 void Renderer::RenderEmissive()
 {
@@ -1490,8 +1496,8 @@ void Renderer::RenderEmissive()
     m_blurConstants.m_samples[12].m_offset = Vec2(-2.f, -2.f);
     m_blurConstants.m_samples[12].m_weight = 0.0323f;
 
-    // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
-    BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+    SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+    // BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
     m_deviceContext->OMSetRenderTargets(1, &m_blurDownTextures[0]->m_renderTargetView, nullptr);
 
     BindTexture(m_emissiveTexture);
@@ -1508,8 +1514,8 @@ void Renderer::RenderEmissive()
         screenVerts.clear();
         AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(-1.f + (float)pow(0.5, i), 1.f - (float)pow(0.5, i))), Rgba8::WHITE);
         m_blurConstants.m_texelSize = Vec2(1.f / m_blurDownTextures[i - 1]->GetDimensions().x, 1.f / m_blurDownTextures[i - 1]->GetDimensions().y);
-        // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
-        BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+        SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+        // BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
         m_deviceContext->OMSetRenderTargets(1, &m_blurDownTextures[i]->m_renderTargetView, nullptr);
         BindTexture(m_blurDownTextures[i - 1]);
         DrawVertexArray(screenVerts);
@@ -1541,8 +1547,8 @@ void Renderer::RenderEmissive()
     m_blurConstants.m_samples[8].m_offset = Vec2(1.f, -1.f);
     m_blurConstants.m_samples[8].m_weight = 0.0625f;
 
-    // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
-    BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+    SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+    // BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
     m_deviceContext->OMSetRenderTargets(1, &m_blurUpTextures[k_blurUpTextureCount - 1]->m_renderTargetView, nullptr);
 
     BindTexture(m_blurDownTextures[k_blurDownTextureCount - 1], 0);
@@ -1555,8 +1561,8 @@ void Renderer::RenderEmissive()
         screenVerts.clear();
         AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(-1.f + (float)pow(0.5, i - 1), 1.f - (float)pow(0.5, i - 1))), Rgba8::WHITE);
         m_blurConstants.m_texelSize = Vec2(1.f / m_blurUpTextures[i + 1]->GetDimensions().x, 1.f / m_blurUpTextures[i + 1]->GetDimensions().y);
-        // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
-        BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+        SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+        // BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
         m_deviceContext->OMSetRenderTargets(1, &m_blurUpTextures[i]->m_renderTargetView, nullptr);
         BindTexture(m_blurDownTextures[i]);
         DrawVertexArray(screenVerts);
@@ -1904,4 +1910,12 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
     backBuffer->Release();
 
     return hr;
+}
+
+// 在 Renderer.cpp 中實作解綁函式
+void Renderer::UnbindShaderResources()
+{
+    ID3D11ShaderResourceView* nullSRV[8] = { nullptr };
+    m_deviceContext->PSSetShaderResources(0, 8, nullSRV);
+    m_deviceContext->VSSetShaderResources(0, 8, nullSRV);
 }
