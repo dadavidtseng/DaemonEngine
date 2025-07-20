@@ -48,7 +48,7 @@ STATIC int Renderer::k_cameraConstantSlot   = 3;
 STATIC int Renderer::k_modelConstantsSlot   = 4;
 
 //----------------------------------------------------------------------------------------------------
-Renderer::Renderer(sRenderConfig const& config)
+Renderer::Renderer(sRendererConfig const& config)
 {
     m_config = config;
     // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;

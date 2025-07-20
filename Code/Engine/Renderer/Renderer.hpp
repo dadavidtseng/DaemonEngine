@@ -46,7 +46,7 @@ enum class eBlendMode : int8_t
 };
 
 //----------------------------------------------------------------------------------------------------
-struct sRenderConfig
+struct sRendererConfig
 {
     Window* m_window = nullptr;
 };
@@ -55,7 +55,7 @@ struct sRenderConfig
 class Renderer
 {
 public:
-    explicit Renderer(sRenderConfig const& config);
+    explicit Renderer(sRendererConfig const& config);
 
     static int k_perFrameConstantSlot;
     static int k_lightConstantSlot;
@@ -139,7 +139,7 @@ private:
     void BindVertexBuffer(VertexBuffer const* vbo) const;
     void SetStatesIfChanged();
 
-    sRenderConfig m_config;
+    sRendererConfig m_config;
 
 protected:
     // Create variables to store DirectX state------------------------------------------------------------
