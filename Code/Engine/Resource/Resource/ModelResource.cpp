@@ -7,7 +7,7 @@
 #include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
-ModelResource::ModelResource(const std::string& path)
+ModelResource::ModelResource(String const& path)
     : IResource(path, ResourceType::Model)
 {
 }

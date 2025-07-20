@@ -63,7 +63,7 @@ void ResourceSubsystem::RegisterLoader(std::unique_ptr<IResourceLoader> loader)
 
 std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(String const& path)
 {
-    std::string extension = GetFileExtension(path);
+    String extension = GetFileExtension(path);
 
     // 尋找適合的載入器
     for (std::unique_ptr<IResourceLoader> const& loader : m_loaders)

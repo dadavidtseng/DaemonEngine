@@ -63,7 +63,7 @@ public:
     }
 
     // 預載入資源列表
-    void PreloadResources(const std::vector<std::string>& paths);
+    void PreloadResources( std::vector<std::string> const& paths);
 
     // 卸載未使用的資源
     void UnloadUnusedResources();
@@ -80,12 +80,12 @@ private:
     ~ResourceSubsystem() { Shutdown(); }
 
     // 禁止複製
-    ResourceSubsystem(const ResourceSubsystem&)            = delete;
-    ResourceSubsystem& operator=(const ResourceSubsystem&) = delete;
+    ResourceSubsystem( ResourceSubsystem const&)            = delete;
+    ResourceSubsystem& operator=( ResourceSubsystem const&) = delete;
 
     // 內部載入方法
-    std::shared_ptr<IResource> LoadResourceInternal(const std::string& path);
-    std::string                GetFileExtension(const std::string& path) const;
+    std::shared_ptr<IResource> LoadResourceInternal( String const& path);
+    String                GetFileExtension( String const& path) const;
 
     // 工作執行緒
     void WorkerThread();

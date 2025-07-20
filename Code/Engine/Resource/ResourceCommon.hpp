@@ -29,7 +29,6 @@ enum class ResourceState
     Unloading    // 卸載中
 };
 
-// 資源載入優先級
 enum class ResourcePriority
 {
     Low,

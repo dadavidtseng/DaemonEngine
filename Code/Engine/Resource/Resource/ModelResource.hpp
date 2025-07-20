@@ -23,7 +23,7 @@ public:
         bool hasUVs = false;
     };
 
-    explicit ModelResource(const std::string& path);
+    explicit ModelResource(String const& path);
 
     ~ModelResource() override
     {
@@ -35,17 +35,17 @@ public:
     size_t CalculateMemorySize() const override;
 
     // 模型專用方法
-    const std::vector<SubMesh>& GetSubMeshes() const { return m_subMeshes; }
-    const SubMesh* GetSubMesh(const std::string& name) const;
+     std::vector<SubMesh> const& GetSubMeshes() const { return m_subMeshes; }
+     SubMesh const* GetSubMesh( String const& name) const;
 
     // 直接取得頂點和索引（為了兼容你現有的程式碼）
-    const VertexList_PCUTBN& GetVertices() const { return m_vertices; }
-    const IndexList& GetIndices() const { return m_indices; }
+     VertexList_PCUTBN const& GetVertices() const { return m_vertices; }
+     IndexList const& GetIndices() const { return m_indices; }
     bool HasNormals() const { return m_hasNormals; }
     bool HasUVs() const { return m_hasUVs; }
 
     // 材質資訊
-    const std::unordered_map<std::string, Rgba8>& GetMaterials() const { return m_materials; }
+     std::unordered_map<std::string, Rgba8> const& GetMaterials() const { return m_materials; }
 
 private:
     friend class ObjModelLoader;
