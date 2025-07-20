@@ -45,6 +45,7 @@ enum class eRasterizerMode : int8_t
 {
     SOLID_CULL_NONE,
     SOLID_CULL_BACK,
+    SOLID_CULL_FRONT,
     WIREFRAME_CULL_NONE,
     WIREFRAME_CULL_BACK,
     COUNT
@@ -86,4 +87,19 @@ struct sPerFrameConstants
     int   c_debugInt;
     float c_debugFloat;
     float padding;
+};
+
+struct BlurSample {
+    Vec2 m_offset;
+    float m_weight;
+    float m_padding;
+};
+
+constexpr int k_blurMaxSamples = 64;
+
+struct BlurConstants {
+    Vec2 m_texelSize;
+    float m_lerpT;
+    int m_numSamples;
+    BlurSample m_samples[k_blurMaxSamples];
 };

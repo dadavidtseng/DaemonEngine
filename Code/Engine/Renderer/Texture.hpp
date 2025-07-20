@@ -31,4 +31,5 @@ protected:
     /// A shader-resource-view interface specifies the subresources a shader can access during rendering.
     /// Examples of shader resources include a constant buffer, a texture buffer, and a texture.
     ID3D11ShaderResourceView* m_shaderResourceView = nullptr;
+    ID3D11RenderTargetView* m_renderTargetView = nullptr;
 };

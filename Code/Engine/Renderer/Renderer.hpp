@@ -36,6 +36,9 @@ struct ID3D11BlendState;
 #undef OPAQUE
 #endif
 
+constexpr int k_blurDownTextureCount           = 4;
+constexpr int k_blurUpTextureCount             = k_blurDownTextureCount;
+
 //----------------------------------------------------------------------------------------------------
 enum class eBlendMode : int8_t
 {
@@ -61,6 +64,8 @@ public:
     static int k_lightConstantSlot;
     static int k_cameraConstantSlot;
     static int k_modelConstantsSlot;
+    static int k_blurConstantSlot;
+
 
     void Startup();
     void BeginFrame() const;
@@ -68,6 +73,7 @@ public:
     void Shutdown();
 
     void ClearScreen(Rgba8 const& clearColor) const;
+    void ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) const;
     void BeginCamera(Camera const& camera) const;
     void EndCamera(Camera const& camera);
 
@@ -112,6 +118,12 @@ public:
     void    RenderViewportToWindow(Window const& window);
     void    RenderViewportToWindowDX11(Window const& window);
     void    ReadStagingTextureToPixelData();
+
+    // void SetCustomConstantBuffer( ConstantBuffer*& cbo, void* data, size_t size, int slot );
+    // Shadowmap and Bloom
+    void RenderEmissive();
+    void SetDefaultRenderTargets();
+    Texture* CreateRenderTexture( IntVec2 const& dimensions, char const* name );
 
 private:
     void CreateDeviceAndSwapChain(unsigned int deviceFlags);
@@ -182,6 +194,7 @@ protected:
     ConstantBuffer* m_lightCBO            = nullptr;
     ConstantBuffer* m_modelCBO            = nullptr;
     ConstantBuffer* m_perFrameCBO         = nullptr;
+    ConstantBuffer* m_blurCBO             = nullptr;
 
     Texture* m_defaultTexture = nullptr;
     Shader*  m_defaultShader  = nullptr;
@@ -202,4 +215,11 @@ protected:
     // int                     sceneHeight             = 0;
     BITMAPINFO        m_bitmapInfo;     // The BITMAPINFO structure defines the dimensions and color information for a DIB.
     std::vector<BYTE> m_pixelData;
+
+    // Shadowmap and Bloom
+    Texture*      m_emissiveTexture = nullptr;
+    Texture*      m_blurDownTextures[k_blurDownTextureCount];
+    Texture*      m_blurUpTextures[k_blurUpTextureCount];
+    BlurConstants m_blurConstants;
+    Texture* m_screenTexture = nullptr;
 };

@@ -9,6 +9,7 @@
 #include <d3dcompiler.h>
 #include <dxgi1_2.h>
 
+#include "DefaultShader.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/FileUtils.hpp"
@@ -42,10 +43,11 @@
 #endif
 
 //----------------------------------------------------------------------------------------------------
-STATIC int Renderer::k_perFrameConstantSlot = 1;
-STATIC int Renderer::k_lightConstantSlot    = 2;
-STATIC int Renderer::k_cameraConstantSlot   = 3;
-STATIC int Renderer::k_modelConstantsSlot   = 4;
+STATIC int    Renderer::k_perFrameConstantSlot = 1;
+STATIC int    Renderer::k_lightConstantSlot    = 2;
+STATIC int    Renderer::k_cameraConstantSlot   = 3;
+STATIC int    Renderer::k_modelConstantsSlot   = 4;
+STATIC int    Renderer::k_blurConstantSlot     = 5;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRendererConfig const& config)
@@ -352,6 +354,16 @@ void Renderer::Startup()
     CreateSamplerState();
     CreateRasterizerState();
 
+    m_emissiveTexture = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions()), "EmissiveTexture" );
+    m_screenTexture = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions().x * 8, m_config.m_window->GetClientDimensions().x * 8), "ScreenTexture");
+
+    for (int i = 0; i < k_blurDownTextureCount; i++) {
+        m_blurDownTextures[i] = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x / (int)pow(2, i + 1),m_config.m_window->GetClientDimensions().y / (int)pow(2, i + 1)), Stringf("Blur Down Texture %d", i).c_str());
+    }
+
+    for (int i = 0; i < k_blurUpTextureCount; i++) {
+        m_blurUpTextures[i] = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions().x / (int)pow(2, i), m_config.m_window->GetClientDimensions().y / (int)pow(2, i)), Stringf("Blur Up Texture %d", i).c_str());
+    }
 
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
@@ -360,6 +372,7 @@ void Renderer::Startup()
     m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
     m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
     m_perFrameCBO         = CreateConstantBuffer(sizeof(sPerFrameConstants));
+    m_blurCBO = CreateConstantBuffer(sizeof(BlurConstants));
 
     //------------------------------------------------------------------------------------------------
     // Initialize m_defaultTexture to a 2x2 white image
@@ -409,6 +422,17 @@ void Renderer::Shutdown()
     m_loadedFonts.clear();
     m_loadedShaders.clear();
     m_loadedTextures.clear();
+
+    for (int i = 0; i < k_blurUpTextureCount; i++) {
+        delete m_blurUpTextures[i];
+    }
+
+    for (int i = 0; i < k_blurDownTextureCount; i++) {
+        delete m_blurDownTextures[i];
+    }
+
+    delete m_emissiveTexture;
+    delete m_screenTexture;
 
     ENGINE_SAFE_RELEASE(m_perFrameCBO);
     ENGINE_SAFE_RELEASE(m_modelCBO);
@@ -483,6 +507,27 @@ void Renderer::ClearScreen(Rgba8 const& clearColor) const
     clearColor.GetAsFloats(colorAsFloats);
     m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
     m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+}
+
+void Renderer::ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) const
+{
+    // Clear the screen
+    float colorAsFloats[4];
+    clearColor.GetAsFloats( colorAsFloats );
+    float colorWhite[4];
+    emissiveColor.GetAsFloats( colorWhite );
+    m_deviceContext->ClearRenderTargetView( m_renderTargetView, colorAsFloats );
+    m_deviceContext->ClearRenderTargetView( m_emissiveTexture->m_renderTargetView, colorWhite );
+    m_deviceContext->ClearRenderTargetView( m_screenTexture->m_renderTargetView, colorAsFloats );
+    for (int i = 0; i < k_blurUpTextureCount; i++) {
+        m_deviceContext->ClearRenderTargetView( m_blurUpTextures[i]->m_renderTargetView, colorWhite );
+    }
+    for (int i = 0; i < k_blurDownTextureCount; i++) {
+        m_deviceContext->ClearRenderTargetView( m_blurDownTextures[i]->m_renderTargetView, colorWhite );
+    }
+
+    m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
+    m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1389,6 +1434,163 @@ void Renderer::ReadStagingTextureToPixelData()
     m_deviceContext->Unmap(stagingTex, 0);
     stagingTex->Release();
     mainRenderTargetTexture->Release();
+}
+
+// void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
+// {
+//     CopyCPUToGPU( data, size, cbo );
+//     BindConstantBuffer( slot, cbo );
+// }
+
+void Renderer::RenderEmissive()
+{
+    std::vector<Vertex_PCU> screenVerts;
+    AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(0.f, 0.f)), Rgba8::WHITE);
+
+    m_blurConstants.m_numSamples           = 13;
+    m_blurConstants.m_texelSize            = Vec2(1.f / m_emissiveTexture->GetDimensions().x, 1.f / m_emissiveTexture->GetDimensions().y);
+    m_blurConstants.m_samples[0].m_offset  = Vec2();
+    m_blurConstants.m_samples[0].m_weight  = 0.0968f;
+    m_blurConstants.m_samples[1].m_offset  = Vec2(1.f, 1.f);
+    m_blurConstants.m_samples[1].m_weight  = 0.129f;
+    m_blurConstants.m_samples[2].m_offset  = Vec2(1.f, -1.f);
+    m_blurConstants.m_samples[2].m_weight  = 0.129f;
+    m_blurConstants.m_samples[3].m_offset  = Vec2(-1.f, -1.f);
+    m_blurConstants.m_samples[3].m_weight  = 0.129f;
+    m_blurConstants.m_samples[4].m_offset  = Vec2(-1.f, 1.f);
+    m_blurConstants.m_samples[4].m_weight  = 0.129f;
+    m_blurConstants.m_samples[5].m_offset  = Vec2(2.f, 0.f);
+    m_blurConstants.m_samples[5].m_weight  = 0.0645f;
+    m_blurConstants.m_samples[6].m_offset  = Vec2(-2.f, 0.f);
+    m_blurConstants.m_samples[6].m_weight  = 0.0645f;
+    m_blurConstants.m_samples[7].m_offset  = Vec2(0.f, 2.f);
+    m_blurConstants.m_samples[7].m_weight  = 0.0645f;
+    m_blurConstants.m_samples[8].m_offset  = Vec2(0.f, -2.f);
+    m_blurConstants.m_samples[8].m_weight  = 0.0645f;
+    m_blurConstants.m_samples[9].m_offset  = Vec2(2.f, 2.f);
+    m_blurConstants.m_samples[9].m_weight  = 0.0323f;
+    m_blurConstants.m_samples[10].m_offset = Vec2(-2.f, 2.f);
+    m_blurConstants.m_samples[10].m_weight = 0.0323f;
+    m_blurConstants.m_samples[11].m_offset = Vec2(2.f, -2.f);
+    m_blurConstants.m_samples[11].m_weight = 0.0323f;
+    m_blurConstants.m_samples[12].m_offset = Vec2(-2.f, -2.f);
+    m_blurConstants.m_samples[12].m_weight = 0.0323f;
+
+    // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+    BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+    m_deviceContext->OMSetRenderTargets(1, &m_blurDownTextures[0]->m_renderTargetView, nullptr);
+
+    BindTexture(m_emissiveTexture);
+    BindShader(CreateShader("BlurDown", blurDownShaderSource));
+    SetModelConstants();
+    SetRasterizerMode(eRasterizerMode::SOLID_CULL_FRONT);
+    SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    SetBlendMode(eBlendMode::OPAQUE);
+    SetDepthMode(eDepthMode::DISABLED);
+    DrawVertexArray(screenVerts);
+
+    for (int i = 1; i < k_blurDownTextureCount; i++)
+    {
+        screenVerts.clear();
+        AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(-1.f + (float)pow(0.5, i), 1.f - (float)pow(0.5, i))), Rgba8::WHITE);
+        m_blurConstants.m_texelSize = Vec2(1.f / m_blurDownTextures[i - 1]->GetDimensions().x, 1.f / m_blurDownTextures[i - 1]->GetDimensions().y);
+        // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+        BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+        m_deviceContext->OMSetRenderTargets(1, &m_blurDownTextures[i]->m_renderTargetView, nullptr);
+        BindTexture(m_blurDownTextures[i - 1]);
+        DrawVertexArray(screenVerts);
+    }
+
+    // blur up
+    screenVerts.clear();
+    AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(-1.f + (float)pow(0.5, k_blurUpTextureCount - 2), 1.f - (float)pow(0.5, k_blurUpTextureCount - 2))), Rgba8::WHITE);
+
+    m_blurConstants.m_numSamples          = 9;
+    m_blurConstants.m_lerpT               = 0.85f;
+    m_blurConstants.m_texelSize           = Vec2(1.f / m_blurDownTextures[k_blurDownTextureCount - 1]->GetDimensions().x, 1.f / m_blurDownTextures[k_blurDownTextureCount - 1]->GetDimensions().y);
+    m_blurConstants.m_samples[0].m_offset = Vec2();
+    m_blurConstants.m_samples[0].m_weight = 0.25f;
+    m_blurConstants.m_samples[1].m_offset = Vec2(1.f, 0.f);
+    m_blurConstants.m_samples[1].m_weight = 0.125f;
+    m_blurConstants.m_samples[2].m_offset = Vec2(0.f, -1.f);
+    m_blurConstants.m_samples[2].m_weight = 0.125f;
+    m_blurConstants.m_samples[3].m_offset = Vec2(-1.f, 0.f);
+    m_blurConstants.m_samples[3].m_weight = 0.125f;
+    m_blurConstants.m_samples[4].m_offset = Vec2(0.f, 1.f);
+    m_blurConstants.m_samples[4].m_weight = 0.125f;
+    m_blurConstants.m_samples[5].m_offset = Vec2(1.f, 1.f);
+    m_blurConstants.m_samples[5].m_weight = 0.0625f;
+    m_blurConstants.m_samples[6].m_offset = Vec2(-1.f, 1.f);
+    m_blurConstants.m_samples[6].m_weight = 0.0625f;
+    m_blurConstants.m_samples[7].m_offset = Vec2(1.f, -1.f);
+    m_blurConstants.m_samples[7].m_weight = 0.0625f;
+    m_blurConstants.m_samples[8].m_offset = Vec2(1.f, -1.f);
+    m_blurConstants.m_samples[8].m_weight = 0.0625f;
+
+    // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+    BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+    m_deviceContext->OMSetRenderTargets(1, &m_blurUpTextures[k_blurUpTextureCount - 1]->m_renderTargetView, nullptr);
+
+    BindTexture(m_blurDownTextures[k_blurDownTextureCount - 1], 0);
+    BindTexture(m_blurDownTextures[k_blurDownTextureCount - 1], 1);
+    BindShader(CreateShader("BlurUp", blurUpShaderSource));
+    DrawVertexArray(screenVerts);
+
+    for (int i = k_blurUpTextureCount - 2; i >= 0; i--)
+    {
+        screenVerts.clear();
+        AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(-1.f + (float)pow(0.5, i - 1), 1.f - (float)pow(0.5, i - 1))), Rgba8::WHITE);
+        m_blurConstants.m_texelSize = Vec2(1.f / m_blurUpTextures[i + 1]->GetDimensions().x, 1.f / m_blurUpTextures[i + 1]->GetDimensions().y);
+        // SetCustomConstantBuffer(m_blurCBO, &m_blurConstants, sizeof(BlurConstants), k_blurConstantSlot);
+        BindConstantBuffer(k_blurConstantSlot, m_blurCBO);
+        m_deviceContext->OMSetRenderTargets(1, &m_blurUpTextures[i]->m_renderTargetView, nullptr);
+        BindTexture(m_blurDownTextures[i]);
+        DrawVertexArray(screenVerts);
+    }
+
+    // composite together
+    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
+    screenVerts.clear();
+    AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(1.f, -1.f)), Rgba8::WHITE);
+    SetBlendMode(eBlendMode::ADDITIVE);
+    SetRasterizerMode(eRasterizerMode::SOLID_CULL_FRONT);
+    BindShader(CreateShader("BlurComposite", blurCompositeShaderSource));
+    BindTexture(m_blurUpTextures[0]);
+    DrawVertexArray(screenVerts);
+
+    SetDefaultRenderTargets();
+}
+
+void Renderer::SetDefaultRenderTargets()
+{
+    ID3D11RenderTargetView* renderTargetViews[] = {m_renderTargetView, m_emissiveTexture->m_renderTargetView};
+    m_deviceContext->OMSetRenderTargets(2, renderTargetViews, m_depthStencilDSV);
+}
+
+Texture* Renderer::CreateRenderTexture(IntVec2 const& dimensions, char const* name)
+{
+    Texture* newTexture = new Texture();
+    newTexture->m_dimensions = dimensions;
+    newTexture->m_name = name;
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width = dimensions.x;
+    textureDesc.Height = dimensions.y;
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+    HRESULT hr = m_device->CreateTexture2D( &textureDesc, NULL, &(newTexture->m_texture) );
+    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Render Texture Failed" ) );
+
+    hr = m_device->CreateShaderResourceView( newTexture->m_texture, NULL, &(newTexture->m_shaderResourceView) );
+    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Shader Resource View failed" ) );
+
+    hr = m_device->CreateRenderTargetView( newTexture->m_texture, NULL, &newTexture->m_renderTargetView );
+    GUARANTEE_OR_DIE( SUCCEEDED( hr ), "Could not create render target view." );
+    return newTexture;
 }
 
 void Renderer::RenderViewportToWindow(Window const& window)
