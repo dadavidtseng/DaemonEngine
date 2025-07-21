@@ -151,8 +151,8 @@ void InputSystem::BeginFrame()
         m_cursorState.m_cursorClientDelta = m_cursorState.m_cursorClientPosition - previousCursorClientPosition;
 
         // Set the Windows cursor position back to the center of our client region
-        int const clientX = Window::s_mainWindow->GetClientDimensions().x;
-        int const clientY = Window::s_mainWindow->GetClientDimensions().y;
+        int const clientX = (int)Window::s_mainWindow->GetClientDimensions().x;
+        int const clientY = (int)Window::s_mainWindow->GetClientDimensions().y;
         POINT     center  = {clientX / 2, clientY / 2};
         ClientToScreen(GetActiveWindow(), &center);
         SetCursorPos(center.x, center.y);

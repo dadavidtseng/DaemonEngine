@@ -350,6 +350,7 @@ void NetworkSubsystem::QueueIncomingMessage(sNetworkMessage const& message)
 //----------------------------------------------------------------------------------------------------
 bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
 {
+    UNUSED(clientId)
     int const error = WSAGetLastError();
 
     if (error == WSAECONNABORTED || error == WSAECONNRESET || error == 0)

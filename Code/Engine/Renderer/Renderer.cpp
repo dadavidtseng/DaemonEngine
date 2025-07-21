@@ -1459,7 +1459,7 @@ void Renderer::ReadStagingTextureToPixelData()
 
 void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
 {
-    CopyCPUToGPU(data, size, cbo);
+    CopyCPUToGPU(data, (unsigned int)size, cbo);
     BindConstantBuffer(slot, cbo);
 }
 

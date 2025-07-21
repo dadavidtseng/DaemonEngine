@@ -252,8 +252,8 @@ void Camera::SetNormalizedViewport(AABB2 const& newViewPort)
             float const cropBottom = renderHeight * newViewPort.m_maxs.y;
 
             // 計算裁剪區域的尺寸
-            float const cropWidth  = cropRight - cropLeft;
-            float const cropHeight = cropBottom - cropTop;
+            // float const cropWidth  = cropRight - cropLeft;
+            // float const cropHeight = cropBottom - cropTop;
 
             // 映射到實際螢幕座標
             float const screenWidth  = static_cast<float>(clientDimensions.x);
