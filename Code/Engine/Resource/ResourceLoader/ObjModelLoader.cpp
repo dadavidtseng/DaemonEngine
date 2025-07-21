@@ -99,7 +99,7 @@ bool ObjModelLoader::Load(String const&      fileName,
 
             if (faceVertices.size() < 3) continue;
 
-            // 解析第一個頂點
+            // 解析頂點的 lambda 函數
             auto parseVertex = [&](const std::string& vertexStr) -> Vertex_PCUTBN {
                 Vertex_PCUTBN      vert;
                 std::istringstream vertStream(vertexStr);
@@ -121,13 +121,15 @@ bool ObjModelLoader::Load(String const&      fileName,
                     vert.m_uvTexCoords = textureCoords[uv];
                 }
 
-                // 法線
-                if (!normalIdx.empty())
+                // 法線處理
+                if (!normalIdx.empty() && !normals.empty())
                 {
+                    // OBJ 檔案提供了法線，直接使用
                     out_hasNormals = true;
                     int normal     = std::stoi(normalIdx) - 1;
                     vert.m_normal  = normals[normal];
                 }
+                // 如果沒有法線，會在後面計算三角形法線
 
                 // 顏色
                 vert.m_color = curRgba8 ? *curRgba8 : Rgba8::WHITE;
@@ -142,6 +144,24 @@ bool ObjModelLoader::Load(String const&      fileName,
             {
                 Vertex_PCUTBN vert1 = parseVertex(faceVertices[i]);
                 Vertex_PCUTBN vert2 = parseVertex(faceVertices[i + 1]);
+
+                // **重要：如果沒有法線資料，計算三角形法線**
+                if (normals.empty())
+                {
+                    // 計算三角形的兩個邊向量
+                    Vec3 edge1 = vert1.m_position - firstVert.m_position;
+                    Vec3 edge2 = vert2.m_position - firstVert.m_position;
+
+                    // 使用叉積計算法線（右手座標系）
+                    Vec3 triangleNormal = CrossProduct3D(edge1, edge2).GetNormalized();
+
+                    // 將計算出的法線指派給三個頂點
+                    firstVert.m_normal = triangleNormal;
+                    vert1.m_normal     = triangleNormal;
+                    vert2.m_normal     = triangleNormal;
+
+                    out_hasNormals = true;
+                }
 
                 // 添加三角形
                 out_indexes.push_back(static_cast<unsigned int>(out_vertexes.size()));
@@ -173,6 +193,37 @@ bool ObjModelLoader::Load(String const&      fileName,
 
             auto iter = materialMap.find(materialName);
             curRgba8  = (iter != materialMap.end()) ? &iter->second : nullptr;
+        }
+    }
+
+    // 在 Load 函數的最後，變換矩陣應用之前添加：
+    if (normals.empty() && out_hasNormals)
+    {
+        // 如果我們計算了法線，進行平滑化處理
+        std::unordered_map<Vec3, std::vector<Vec3>, Vec3Hasher> positionToNormals;
+
+        // 收集每個位置的所有法線
+        for (const auto& vertex : out_vertexes)
+        {
+            positionToNormals[vertex.m_position].push_back(vertex.m_normal);
+        }
+
+        // 計算每個位置的平均法線
+        std::unordered_map<Vec3, Vec3, Vec3Hasher> positionToAverageNormal;
+        for (const auto& pair : positionToNormals)
+        {
+            Vec3 sum = Vec3::ZERO;
+            for (const Vec3& normal : pair.second)
+            {
+                sum += normal;
+            }
+            positionToAverageNormal[pair.first] = sum.GetNormalized();
+        }
+
+        // 更新所有頂點的法線
+        for (auto& vertex : out_vertexes)
+        {
+            vertex.m_normal = positionToAverageNormal[vertex.m_position];
         }
     }
 
@@ -265,16 +316,17 @@ bool ObjModelLoader::LoadMaterial(std::string const& path, std::unordered_map<st
     return true;
 }
 
-bool ObjModelLoader::CanLoad(const std::string& extension) const
+bool ObjModelLoader::CanLoad(String const& extension) const
 {
     std::string ext = extension;
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    std::transform(ext.begin(), ext.end(), ext.begin(),
+                   [](unsigned char const c) { return static_cast<char>(std::tolower(c)); });
     return ext == ".obj";
 }
 
 std::vector<std::string> ObjModelLoader::GetSupportedExtensions() const
 {
-    return { ".obj", ".OBJ" };
+    return {".obj", ".OBJ"};
 }
 
 std::shared_ptr<IResource> ObjModelLoader::Load(const std::string& path)

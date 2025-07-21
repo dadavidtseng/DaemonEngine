@@ -85,17 +85,13 @@ bool MaterialResource::CreateConstantBuffer(ID3D11Device* device)
     if (m_constantBuffer) return true;
 
     D3D11_BUFFER_DESC cbDesc = {};
-    cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-    cbDesc.ByteWidth = sizeof(MaterialConstants);
-    cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    cbDesc.Usage             = D3D11_USAGE_DYNAMIC;
+    cbDesc.ByteWidth         = sizeof(MaterialConstants);
+    cbDesc.BindFlags         = D3D11_BIND_CONSTANT_BUFFER;
+    cbDesc.CPUAccessFlags    = D3D11_CPU_ACCESS_WRITE;
 
     HRESULT hr = device->CreateBuffer(&cbDesc, nullptr, &m_constantBuffer);
-    if (FAILED(hr))
-    {
-        ERROR_AND_DIE("Failed to create material constant buffer");
-        return false;
-    }
+    if (FAILED(hr)) ERROR_AND_DIE("Failed to create material constant buffer")
 
     return true;
 }
@@ -109,25 +105,25 @@ void MaterialResource::UpdateConstantBuffer(ID3D11DeviceContext* context, const 
 
     // 準備常數資料
     MaterialConstants constants;
-    constants.diffuseColor = prop->diffuseColor;
+    constants.diffuseColor  = prop->diffuseColor;
     constants.specularColor = prop->specularColor;
-    constants.ambientColor = prop->ambientColor;
+    constants.ambientColor  = prop->ambientColor;
     constants.emissiveColor = prop->emissiveColor;
 
     constants.shininess = prop->shininess;
-    constants.metallic = prop->metallic;
+    constants.metallic  = prop->metallic;
     constants.roughness = prop->roughness;
-    constants.opacity = prop->opacity;
+    constants.opacity   = prop->opacity;
 
-    constants.normalStrength = prop->normalStrength;
-    constants.aoStrength = prop->aoStrength;
-    constants.uvScale = prop->uvScale;
-    constants.uvOffset = prop->uvOffset;
+    constants.normalStrength     = prop->normalStrength;
+    constants.aoStrength         = prop->aoStrength;
+    constants.uvScale            = prop->uvScale;
+    constants.uvOffset           = prop->uvOffset;
     constants.alphaTestThreshold = prop->alphaTestThreshold;
 
     // 更新緩衝區
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    HRESULT hr = context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    HRESULT                  hr = context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (SUCCEEDED(hr))
     {
         memcpy(mappedResource.pData, &constants, sizeof(MaterialConstants));
@@ -135,19 +131,19 @@ void MaterialResource::UpdateConstantBuffer(ID3D11DeviceContext* context, const 
     }
 }
 
-void MaterialResource::SetTextureResource(const std::string& propertyName,
-                                         const std::string& textureType,
-                                         TextureResource* texture)
+void MaterialResource::SetTextureResource(String const&    propertyName,
+                                          String const&    textureType,
+                                          TextureResource* texture)
 {
-    TextureKey key{ propertyName, textureType };
+    TextureKey key{propertyName, textureType};
     m_textureResources[key] = texture;
 }
 
 TextureResource* MaterialResource::GetTextureResource(const std::string& propertyName,
-                                                     const std::string& textureType) const
+                                                      const std::string& textureType) const
 {
-    TextureKey key{ propertyName, textureType };
-    auto it = m_textureResources.find(key);
+    TextureKey key{propertyName, textureType};
+    auto       it = m_textureResources.find(key);
     return (it != m_textureResources.end()) ? it->second : nullptr;
 }
 

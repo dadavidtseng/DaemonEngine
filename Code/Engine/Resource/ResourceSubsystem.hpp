@@ -77,7 +77,6 @@ public:
 
 private:
     sResourceSubsystemConfig m_config;
-    ~ResourceSubsystem() { Shutdown(); }
 
     // 禁止複製
     ResourceSubsystem( ResourceSubsystem const&)            = delete;

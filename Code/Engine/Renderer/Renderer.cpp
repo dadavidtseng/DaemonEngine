@@ -43,35 +43,31 @@
 #endif
 
 //----------------------------------------------------------------------------------------------------
-STATIC int    Renderer::k_perFrameConstantSlot = 1;
-STATIC int    Renderer::k_lightConstantSlot    = 2;
-STATIC int    Renderer::k_cameraConstantSlot   = 3;
-STATIC int    Renderer::k_modelConstantsSlot   = 4;
-STATIC int    Renderer::k_blurConstantSlot     = 5;
+STATIC int Renderer::k_perFrameConstantSlot = 1;
+STATIC int Renderer::k_lightConstantSlot    = 2;
+STATIC int Renderer::k_cameraConstantSlot   = 3;
+STATIC int Renderer::k_modelConstantsSlot   = 4;
+STATIC int Renderer::k_blurConstantSlot     = 5;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRendererConfig const& config)
     : m_blurDownTextures{}, m_blurUpTextures{}, m_blurConstants()
 {
     m_config = config;
-    // sceneWidth  = Window::s_mainWindow->GetClientDimensions().x;
-    // sceneHeight = Window::s_mainWindow->GetClientDimensions().y;
-    // sceneWidth  = GetSystemMetrics(SM_CXSCREEN);
-    // sceneHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    float screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
-    float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
+    int const screenWidth  = static_cast<int>(Window::s_mainWindow->GetScreenDimensions().x);
+    int const screenHeight = static_cast<int>(Window::s_mainWindow->GetScreenDimensions().y);
 
     // RendererEx
     ZeroMemory(&m_bitmapInfo, sizeof(BITMAPINFO));
     m_bitmapInfo.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    m_bitmapInfo.bmiHeader.biWidth       = screenWidth;
+    m_bitmapInfo.bmiHeader.biWidth       = (int)screenWidth;
     m_bitmapInfo.bmiHeader.biHeight      = static_cast<LONG>(screenHeight);
     m_bitmapInfo.bmiHeader.biPlanes      = 1;
     m_bitmapInfo.bmiHeader.biBitCount    = 32;
     m_bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-    m_pixelData.resize(screenWidth * screenHeight * 4);
+    m_pixelData.resize((size_t)screenWidth * (size_t)screenHeight * 4);
 }
 
 void Renderer::CreateDeviceAndSwapChain(unsigned int deviceFlags)
@@ -79,8 +75,8 @@ void Renderer::CreateDeviceAndSwapChain(unsigned int deviceFlags)
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     Window const*        window        = m_config.m_window;
 
-    swapChainDesc.BufferDesc.Width  = window->GetClientDimensions().x;
-    swapChainDesc.BufferDesc.Height = window->GetClientDimensions().y;
+    swapChainDesc.BufferDesc.Width  = (unsigned int)window->GetClientDimensions().x;
+    swapChainDesc.BufferDesc.Height = (unsigned int)window->GetClientDimensions().y;
     swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.SampleDesc.Count  = 1;
     swapChainDesc.BufferUsage       = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -169,8 +165,8 @@ void Renderer::CreateBlendStates()
 void Renderer::CreateDepthStencilTextureAndView()
 {
     D3D11_TEXTURE2D_DESC depthTextureDesc = {};
-    depthTextureDesc.Width                = m_config.m_window->GetClientDimensions().x;
-    depthTextureDesc.Height               = m_config.m_window->GetClientDimensions().y;
+    depthTextureDesc.Width                = (unsigned int)m_config.m_window->GetClientDimensions().x;
+    depthTextureDesc.Height               = (unsigned int)m_config.m_window->GetClientDimensions().y;
     depthTextureDesc.MipLevels            = 1;
     depthTextureDesc.ArraySize            = 1;
     depthTextureDesc.Usage                = D3D11_USAGE_DEFAULT;
@@ -180,17 +176,11 @@ void Renderer::CreateDepthStencilTextureAndView()
 
     HRESULT hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
 
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Could not create texture for depth stencil.")
-    }
+    if (FAILED(hr)) ERROR_AND_DIE("Could not create texture for depth stencil.")
 
     hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
 
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE("Could not create depth stencil view.")
-    }
+    if (FAILED(hr)) ERROR_AND_DIE("Could not create depth stencil view.")
 }
 
 void Renderer::CreateDepthStencilState()
@@ -275,18 +265,18 @@ void Renderer::CreateRasterizerState()
 {
     D3D11_RASTERIZER_DESC rasterizerDesc;
 
-    rasterizerDesc.CullMode = D3D11_CULL_FRONT;
-    rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+    rasterizerDesc.CullMode              = D3D11_CULL_FRONT;
+    rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.FrontCounterClockwise = true;
-    rasterizerDesc.DepthBias = 0;
-    rasterizerDesc.DepthBiasClamp = 0.f;
-    rasterizerDesc.SlopeScaledDepthBias = 0.f;
-    rasterizerDesc.DepthClipEnable = true;
-    rasterizerDesc.ScissorEnable = false;
-    rasterizerDesc.MultisampleEnable = false;
+    rasterizerDesc.DepthBias             = 0;
+    rasterizerDesc.DepthBiasClamp        = 0.f;
+    rasterizerDesc.SlopeScaledDepthBias  = 0.f;
+    rasterizerDesc.DepthClipEnable       = true;
+    rasterizerDesc.ScissorEnable         = false;
+    rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-   HRESULT  hr = m_device->CreateRasterizerState( &rasterizerDesc, &m_rasterizerStates[(int)eRasterizerMode::SOLID_CULL_FRONT] );
+    HRESULT hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[(int)eRasterizerMode::SOLID_CULL_FRONT]);
 
     rasterizerDesc.FillMode              = D3D11_FILL_SOLID;
     rasterizerDesc.CullMode              = D3D11_CULL_NONE;
@@ -299,7 +289,7 @@ void Renderer::CreateRasterizerState()
     rasterizerDesc.MultisampleEnable     = false;
     rasterizerDesc.AntialiasedLineEnable = true;
 
-     hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerStates[static_cast<int>(eRasterizerMode::SOLID_CULL_NONE)]);
     if (FAILED(hr))
     {
         ERROR_AND_DIE("CreateRasterizerState for RasterizerMode::SOLID_CULL_NONE failed.")
@@ -369,15 +359,17 @@ void Renderer::Startup()
     CreateSamplerState();
     CreateRasterizerState();
 
-    m_emissiveTexture = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions()), "EmissiveTexture" );
-    m_screenTexture = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions().x * 8, m_config.m_window->GetClientDimensions().x * 8), "ScreenTexture");
+    m_emissiveTexture = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions()), "EmissiveTexture");
+    m_screenTexture   = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x * 8, m_config.m_window->GetClientDimensions().x * 8), "ScreenTexture");
 
-    for (int i = 0; i < k_blurDownTextureCount; i++) {
-        m_blurDownTextures[i] = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x / (int)pow(2, i + 1),m_config.m_window->GetClientDimensions().y / (int)pow(2, i + 1)), Stringf("Blur Down Texture %d", i).c_str());
+    for (int i = 0; i < k_blurDownTextureCount; i++)
+    {
+        m_blurDownTextures[i] = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x / (float)pow(2, i + 1), m_config.m_window->GetClientDimensions().y / (float)pow(2, i + 1)), Stringf("Blur Down Texture %d", i).c_str());
     }
 
-    for (int i = 0; i < k_blurUpTextureCount; i++) {
-        m_blurUpTextures[i] = CreateRenderTexture( IntVec2(m_config.m_window->GetClientDimensions().x / (int)pow(2, i), m_config.m_window->GetClientDimensions().y / (int)pow(2, i)), Stringf("Blur Up Texture %d", i).c_str());
+    for (int i = 0; i < k_blurUpTextureCount; i++)
+    {
+        m_blurUpTextures[i] = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x / (float)pow(2, i), m_config.m_window->GetClientDimensions().y / (float)pow(2, i)), Stringf("Blur Up Texture %d", i).c_str());
     }
 
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
@@ -387,7 +379,7 @@ void Renderer::Startup()
     m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
     m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
     m_perFrameCBO         = CreateConstantBuffer(sizeof(sPerFrameConstants));
-    m_blurCBO = CreateConstantBuffer(sizeof(BlurConstants));
+    m_blurCBO             = CreateConstantBuffer(sizeof(BlurConstants));
 
     //------------------------------------------------------------------------------------------------
     // Initialize m_defaultTexture to a 2x2 white image
@@ -397,9 +389,9 @@ void Renderer::Startup()
     m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
-// 預先創建 blur shader
-    m_blurDownShader = CreateShader("BlurDown", blurDownShaderSource, eVertexType::VERTEX_PCU);
-    m_blurUpShader = CreateShader("BlurUp", blurUpShaderSource, eVertexType::VERTEX_PCU);
+    // 預先創建 blur shader
+    m_blurDownShader      = CreateShader("BlurDown", blurDownShaderSource, eVertexType::VERTEX_PCU);
+    m_blurUpShader        = CreateShader("BlurUp", blurUpShaderSource, eVertexType::VERTEX_PCU);
     m_blurCompositeShader = CreateShader("BlurComposite", blurCompositeShaderSource, eVertexType::VERTEX_PCU);
     BindShader(m_defaultShader);
     BindTexture(m_defaultTexture, 0);
@@ -442,17 +434,24 @@ void Renderer::Shutdown()
     m_loadedShaders.clear();
     m_loadedTextures.clear();
 
-    for (int i = 0; i < k_blurUpTextureCount; i++) {
+    for (int i = 0; i < k_blurUpTextureCount; i++)
+    {
         delete m_blurUpTextures[i];
     }
 
-    for (int i = 0; i < k_blurDownTextureCount; i++) {
+    for (int i = 0; i < k_blurDownTextureCount; i++)
+    {
         delete m_blurDownTextures[i];
     }
 
     delete m_emissiveTexture;
     delete m_screenTexture;
+    delete m_blurDownShader;
+    delete m_blurUpShader;
+    delete m_blurCompositeShader;
 
+    UnbindShaderResources();
+    ENGINE_SAFE_RELEASE(m_blurCBO);
     ENGINE_SAFE_RELEASE(m_perFrameCBO);
     ENGINE_SAFE_RELEASE(m_modelCBO);
     ENGINE_SAFE_RELEASE(m_lightCBO);
@@ -532,20 +531,22 @@ void Renderer::ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) 
 {
     // Clear the screen
     float colorAsFloats[4];
-    clearColor.GetAsFloats( colorAsFloats );
+    clearColor.GetAsFloats(colorAsFloats);
     float colorWhite[4];
-    emissiveColor.GetAsFloats( colorWhite );
-    m_deviceContext->ClearRenderTargetView( m_renderTargetView, colorAsFloats );
-    m_deviceContext->ClearRenderTargetView( m_emissiveTexture->m_renderTargetView, colorWhite );
-    m_deviceContext->ClearRenderTargetView( m_screenTexture->m_renderTargetView, colorAsFloats );
-    for (int i = 0; i < k_blurUpTextureCount; i++) {
-        m_deviceContext->ClearRenderTargetView( m_blurUpTextures[i]->m_renderTargetView, colorWhite );
+    emissiveColor.GetAsFloats(colorWhite);
+    m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
+    m_deviceContext->ClearRenderTargetView(m_emissiveTexture->m_renderTargetView, colorWhite);
+    m_deviceContext->ClearRenderTargetView(m_screenTexture->m_renderTargetView, colorAsFloats);
+    for (int i = 0; i < k_blurUpTextureCount; i++)
+    {
+        m_deviceContext->ClearRenderTargetView(m_blurUpTextures[i]->m_renderTargetView, colorWhite);
     }
-    for (int i = 0; i < k_blurDownTextureCount; i++) {
-        m_deviceContext->ClearRenderTargetView( m_blurDownTextures[i]->m_renderTargetView, colorWhite );
+    for (int i = 0; i < k_blurDownTextureCount; i++)
+    {
+        m_deviceContext->ClearRenderTargetView(m_blurDownTextures[i]->m_renderTargetView, colorWhite);
     }
 
-    m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
+    m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
     // m_deviceContext->ClearDepthStencilView( m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0 );
 }
 
@@ -567,7 +568,7 @@ void Renderer::BeginCamera(Camera const& camera)
     // viewport.Height   = static_cast<float>(window->GetClientDimensions().y);
     viewport.MinDepth = 0.f;
     viewport.MaxDepth = 1.f;
-m_cameraViewport = &viewport;
+    m_cameraViewport  = &viewport;
     m_deviceContext->RSSetViewports(1, &viewport);
 
 
@@ -1428,7 +1429,7 @@ void Renderer::ReadStagingTextureToPixelData()
     BYTE* srcData  = static_cast<BYTE*>(mappedResource.pData);
     UINT  srcPitch = mappedResource.RowPitch;
 
-    m_pixelData.resize(desc.Width * desc.Height * 4); // RGBA 每個像素 4 bytes
+    m_pixelData.resize((size_t)desc.Width * (size_t)desc.Height * 4); // RGBA 每個像素 4 bytes
 
     for (UINT row = 0; row < desc.Height; ++row)
     {
@@ -1458,8 +1459,8 @@ void Renderer::ReadStagingTextureToPixelData()
 
 void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
 {
-    CopyCPUToGPU( data, size, cbo );
-    BindConstantBuffer( slot, cbo );
+    CopyCPUToGPU(data, size, cbo);
+    BindConstantBuffer(slot, cbo);
 }
 
 void Renderer::RenderEmissive()
@@ -1501,7 +1502,7 @@ void Renderer::RenderEmissive()
     m_deviceContext->OMSetRenderTargets(1, &m_blurDownTextures[0]->m_renderTargetView, nullptr);
 
     BindTexture(m_emissiveTexture);
-    BindShader(CreateShader("BlurDown", blurDownShaderSource));
+    BindShader(m_blurDownShader);
     SetModelConstants();
     SetRasterizerMode(eRasterizerMode::SOLID_CULL_FRONT);
     SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
@@ -1553,7 +1554,7 @@ void Renderer::RenderEmissive()
 
     BindTexture(m_blurDownTextures[k_blurDownTextureCount - 1], 0);
     BindTexture(m_blurDownTextures[k_blurDownTextureCount - 1], 1);
-    BindShader(CreateShader("BlurUp", blurUpShaderSource));
+    BindShader(m_blurUpShader);
     DrawVertexArray(screenVerts);
 
     for (int i = k_blurUpTextureCount - 2; i >= 0; i--)
@@ -1574,7 +1575,7 @@ void Renderer::RenderEmissive()
     AddVertsForAABB2D(screenVerts, AABB2(Vec2(-1.f, 1.f), Vec2(1.f, -1.f)), Rgba8::WHITE);
     SetBlendMode(eBlendMode::ADDITIVE);
     SetRasterizerMode(eRasterizerMode::SOLID_CULL_FRONT);
-    BindShader(CreateShader("BlurComposite", blurCompositeShaderSource));
+    BindShader(m_blurCompositeShader);
     BindTexture(m_blurUpTextures[0]);
     DrawVertexArray(screenVerts);
 
@@ -1589,27 +1590,27 @@ void Renderer::SetDefaultRenderTargets()
 
 Texture* Renderer::CreateRenderTexture(IntVec2 const& dimensions, char const* name)
 {
-    Texture* newTexture = new Texture();
-    newTexture->m_dimensions = dimensions;
-    newTexture->m_name = name;
+    Texture* newTexture              = new Texture();
+    newTexture->m_dimensions         = dimensions;
+    newTexture->m_name               = name;
     D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width = dimensions.x;
-    textureDesc.Height = dimensions.y;
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    textureDesc.Width                = dimensions.x;
+    textureDesc.Height               = dimensions.y;
+    textureDesc.MipLevels            = 1;
+    textureDesc.ArraySize            = 1;
+    textureDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.SampleDesc.Count     = 1;
+    textureDesc.Usage                = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
-    HRESULT hr = m_device->CreateTexture2D( &textureDesc, NULL, &(newTexture->m_texture) );
-    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Render Texture Failed" ) )
+    HRESULT hr = m_device->CreateTexture2D(&textureDesc, NULL, &(newTexture->m_texture));
+    GUARANTEE_OR_DIE(SUCCEEDED( hr ), Stringf( "Create Render Texture Failed" ))
 
-    hr = m_device->CreateShaderResourceView( newTexture->m_texture, NULL, &(newTexture->m_shaderResourceView) );
-    GUARANTEE_OR_DIE( SUCCEEDED( hr ), Stringf( "Create Shader Resource View failed" ) )
+    hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &(newTexture->m_shaderResourceView));
+    GUARANTEE_OR_DIE(SUCCEEDED( hr ), Stringf( "Create Shader Resource View failed" ))
 
-    hr = m_device->CreateRenderTargetView( newTexture->m_texture, NULL, &newTexture->m_renderTargetView );
-    GUARANTEE_OR_DIE( SUCCEEDED( hr ), "Could not create render target view." );
+    hr = m_device->CreateRenderTargetView(newTexture->m_texture, NULL, &newTexture->m_renderTargetView);
+    GUARANTEE_OR_DIE(SUCCEEDED( hr ), "Could not create render target view.")
     return newTexture;
 }
 
@@ -1627,8 +1628,8 @@ void Renderer::RenderViewportToWindow(Window const& window)
     ClientToScreen((HWND)window.m_windowHandle, &clientTopLeft);
 
     // 計算客戶區域相對於視窗左上角的偏移
-    int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
-    int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
+    // int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
+    // int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
 
     // 取得主視窗的位置（假設您有主視窗的控制代碼）
     RECT mainWindowRect;
@@ -1642,26 +1643,26 @@ void Renderer::RenderViewportToWindow(Window const& window)
     int clientWidth  = clientRect.right - clientRect.left;
     int clientHeight = clientRect.bottom - clientRect.top;
 
-    float screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
-    float screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
+    int screenWidth  = (int)Window::s_mainWindow->GetScreenDimensions().x;
+    int screenHeight = (int)Window::s_mainWindow->GetScreenDimensions().y;
 
     // 計算在場景紋理中的區域（使用實際的相對位置）
-    int srcX      = max(0, min(relativeX, (int)screenWidth - 1));
-    int srcY      = max(0, min(relativeY, (int)screenHeight - 1));
-    int srcWidth  = min(clientWidth, (int)screenWidth - srcX);
-    int srcHeight = min(clientHeight, (int)screenHeight - srcY);
+    size_t srcX      = max(0, min(relativeX, (int)screenWidth - 1));
+    size_t srcY      = max(0, min(relativeY, (int)screenHeight - 1));
+    size_t srcWidth  = min(clientWidth, (int)screenWidth - srcX);
+    size_t srcHeight = min(clientHeight, (int)screenHeight - srcY);
 
     // 確保有效的複製區域
     if (srcWidth <= 0 || srcHeight <= 0) return;
 
     // 創建臨時的 DIB 數據
-    std::vector<BYTE> windowPixels(srcWidth * srcHeight * 4);
+    std::vector<BYTE> windowPixels((size_t)srcWidth * (size_t)srcHeight * 4);
 
     // 從場景數據複製指定區域
-    for (int y = 0; y < srcHeight; y++)
+    for (size_t y = 0; y < srcHeight; y++)
     {
-        int srcRowIndex = (srcY + y) * screenWidth + srcX;
-        int dstRowIndex = y * srcWidth;
+        size_t srcRowIndex = (srcY + y) * screenWidth + srcX;
+        size_t dstRowIndex = y * srcWidth;
 
         memcpy(&windowPixels[dstRowIndex * 4],
                &m_pixelData[srcRowIndex * 4],
@@ -1670,8 +1671,8 @@ void Renderer::RenderViewportToWindow(Window const& window)
 
     // 設置 DIB 信息
     BITMAPINFO localBitmapInfo         = m_bitmapInfo;
-    localBitmapInfo.bmiHeader.biWidth  = srcWidth;
-    localBitmapInfo.bmiHeader.biHeight = -srcHeight;
+    localBitmapInfo.bmiHeader.biWidth  = (long)srcWidth;
+    localBitmapInfo.bmiHeader.biHeight = -(long)(srcHeight);
 
     // 使用 StretchDIBits 來縮放顯示到整個客戶區域
     StretchDIBits(
@@ -1679,7 +1680,8 @@ void Renderer::RenderViewportToWindow(Window const& window)
         0, 0,                          // 目標位置（客戶區域左上角）
         clientWidth, clientHeight,     // 目標大小（客戶區域大小）
         0, 0,                          // 源起始位置
-        srcWidth, srcHeight,           // 源大小
+        (long)srcWidth,
+        (long)srcHeight,           // 源大小
         windowPixels.data(),           // 像素數據
         &localBitmapInfo,              // DIB 信息
         DIB_RGB_COLORS,                // 顏色模式
@@ -1701,8 +1703,8 @@ void Renderer::RenderViewportToWindowDX11(Window const& window)
     ClientToScreen((HWND)window.m_windowHandle, &clientTopLeft);
 
     // 計算客戶區域相對於視窗左上角的偏移
-    int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
-    int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
+    // int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
+    // int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
 
     // 取得主視窗的位置（假設您有主視窗的控制代碼）
     RECT mainWindowRect;
@@ -1873,8 +1875,8 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
 
     // 使用 DXGI_SWAP_CHAIN_DESC1（新版描述）
     DXGI_SWAP_CHAIN_DESC1 scDesc = {};
-    scDesc.Width                 = window.m_windowDimensions.x;
-    scDesc.Height                = window.m_windowDimensions.y;
+    scDesc.Width                 = (unsigned int)window.m_windowDimensions.x;
+    scDesc.Height                = (unsigned int)window.m_windowDimensions.y;
     scDesc.Format                = DXGI_FORMAT_R8G8B8A8_UNORM;
     scDesc.SampleDesc.Count      = 1;
     scDesc.SampleDesc.Quality    = 0;
@@ -1915,7 +1917,7 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
 // 在 Renderer.cpp 中實作解綁函式
 void Renderer::UnbindShaderResources()
 {
-    ID3D11ShaderResourceView* nullSRV[8] = { nullptr };
+    ID3D11ShaderResourceView* nullSRV[8] = {nullptr};
     m_deviceContext->PSSetShaderResources(0, 8, nullSRV);
     m_deviceContext->VSSetShaderResources(0, 8, nullSRV);
 }

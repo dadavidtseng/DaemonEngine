@@ -24,18 +24,18 @@ public:
     struct MaterialProperty
     {
         // 基本顏色屬性
-        Vec4 diffuseColor = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        Vec4 diffuseColor  = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
         Vec4 specularColor = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        Vec4 ambientColor = Vec4(0.2f, 0.2f, 0.2f, 1.0f);
+        Vec4 ambientColor  = Vec4(0.2f, 0.2f, 0.2f, 1.0f);
         Vec4 emissiveColor = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         // 材質參數
-        float shininess = 32.0f;        // Phong 高光指數
-        float metallic = 0.0f;          // PBR 金屬度
-        float roughness = 0.5f;         // PBR 粗糙度
-        float opacity = 1.0f;           // 透明度
+        float shininess      = 32.0f;        // Phong 高光指數
+        float metallic       = 0.0f;          // PBR 金屬度
+        float roughness      = 0.5f;         // PBR 粗糙度
+        float opacity        = 1.0f;           // 透明度
         float normalStrength = 1.0f;    // 法線強度
-        float aoStrength = 1.0f;        // AO 強度
+        float aoStrength     = 1.0f;        // AO 強度
 
         // 紋理路徑
         std::string diffuseTexture;     // 漫反射貼圖
@@ -47,18 +47,18 @@ public:
         std::string metallicTexture;    // 金屬度貼圖
 
         // 紋理設定
-        Vec2 uvScale = Vec2(1.0f, 1.0f);
+        Vec2 uvScale  = Vec2(1.0f, 1.0f);
         Vec2 uvOffset = Vec2(0.0f, 0.0f);
 
         // 渲染狀態
-        bool doubleSided = false;
-        bool alphaTest = false;
+        bool  doubleSided        = false;
+        bool  alphaTest          = false;
         float alphaTestThreshold = 0.5f;
 
         // 著色器相關
-        std::string shaderName = "default";
+        std::string                            shaderName = "default";
         std::unordered_map<std::string, float> customFloats;
-        std::unordered_map<std::string, Vec4> customVectors;
+        std::unordered_map<std::string, Vec4>  customVectors;
     };
 
     // 建構與解構
@@ -66,32 +66,32 @@ public:
     ~MaterialResource() override { Unload(); }
 
     // IResource 介面實作
-    bool Load() override;
-    void Unload() override;
+    bool         Load() override;
+    void         Unload() override;
     ResourceType GetType() const override { return ResourceType::Material; }
-    size_t GetMemorySize() const override;
+    size_t       GetMemorySize() const override;
 
     // 材質屬性管理
-    void AddProperty(const std::string& name, const MaterialProperty& property);
+    void                    AddProperty(const std::string& name, const MaterialProperty& property);
     const MaterialProperty* GetProperty(const std::string& name) const;
-    MaterialProperty* GetProperty(const std::string& name);
-    bool HasProperty(const std::string& name) const;
-    void RemoveProperty(const std::string& name);
+    MaterialProperty*       GetProperty(const std::string& name);
+    bool                    HasProperty(const std::string& name) const;
+    void                    RemoveProperty(const std::string& name);
 
     // 取得所有材質
     const std::unordered_map<std::string, MaterialProperty>& GetAllProperties() const { return m_properties; }
 
     // GPU 資源管理
-    bool CreateConstantBuffer(ID3D11Device* device);
-    void UpdateConstantBuffer(ID3D11DeviceContext* context, const std::string& propertyName);
+    bool          CreateConstantBuffer(ID3D11Device* device);
+    void          UpdateConstantBuffer(ID3D11DeviceContext* context, const std::string& propertyName);
     ID3D11Buffer* GetConstantBuffer() const { return m_constantBuffer; }
 
     // 紋理資源管理
-    void SetTextureResource(const std::string& propertyName, const std::string& textureType, TextureResource* texture);
+    void             SetTextureResource(String const& propertyName, String const& textureType, TextureResource* texture);
     TextureResource* GetTextureResource(const std::string& propertyName, const std::string& textureType) const;
 
     // 著色器資源管理
-    void SetShaderResource(const std::string& propertyName, ShaderResource* shader);
+    void            SetShaderResource(const std::string& propertyName, ShaderResource* shader);
     ShaderResource* GetShaderResource(const std::string& propertyName) const;
 
 private:
@@ -110,9 +110,9 @@ private:
 
         float normalStrength;
         float aoStrength;
-        Vec2 uvScale;
+        Vec2  uvScale;
 
-        Vec2 uvOffset;
+        Vec2  uvOffset;
         float alphaTestThreshold;
         float padding;  // 對齊到 16 bytes
     };
@@ -140,10 +140,10 @@ private:
         size_t operator()(const TextureKey& key) const
         {
             return std::hash<std::string>()(key.propertyName) ^
-                   (std::hash<std::string>()(key.textureType) << 1);
+                (std::hash<std::string>()(key.textureType) << 1);
         }
     };
 
     std::unordered_map<TextureKey, TextureResource*, TextureKeyHash> m_textureResources;
-    std::unordered_map<std::string, ShaderResource*> m_shaderResources;
+    std::unordered_map<std::string, ShaderResource*>                 m_shaderResources;
 };
