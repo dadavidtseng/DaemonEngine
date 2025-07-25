@@ -126,6 +126,8 @@ void AddVertsForDisc2D(VertexList_PCU& verts,
     int constexpr   NUM_SIDES        = 32;
     float constexpr DEGREES_PER_SIDE = 360.f / static_cast<float>(NUM_SIDES);
 
+    verts.reserve(static_cast<int>(verts.size()) + NUM_SIDES * 6);
+
     for (int sideNum = 0; sideNum < NUM_SIDES; ++sideNum)
     {
         // Compute angle-related terms
@@ -136,7 +138,7 @@ void AddVertsForDisc2D(VertexList_PCU& verts,
         float const cosEnd       = CosDegrees(endDegrees);
         float const sinEnd       = SinDegrees(endDegrees);
 
-        // Compute inner & outer positions
+        // Compute inner and outer positions
         Vec3 const innerStartPos(discCenter.x + innerRadius * cosStart, discCenter.y + innerRadius * sinStart, 0.f);
         Vec3 const outerStartPos(discCenter.x + outerRadius * cosStart, discCenter.y + outerRadius * sinStart, 0.f);
         Vec3 const outerEndPos(discCenter.x + outerRadius * cosEnd, discCenter.y + outerRadius * sinEnd, 0.f);
@@ -206,6 +208,8 @@ void AddVertsForLineSegment2D(VertexList_PCU& verts,
                               bool const      isInfinite,
                               Rgba8 const&    color)
 {
+    verts.reserve(verts.size() + 6);
+
     // 1. Calculate lineSegment's forward/normalized direction.
     Vec2 const forwardDirection    = endPosition - startPosition;
     Vec2 const normalizedDirection = forwardDirection.GetNormalized();

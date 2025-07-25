@@ -20,7 +20,16 @@ extern InputSystem* g_theInput;
 
 
 //----------------------------------------------------------------------------------------------------
+/// @brief
+/// Marks a variable as intentionally unused to prevent compiler warnings.
+/// @param x
+/// The variable to mark as unused.
 #define UNUSED(x) (void)(x);
+
+//----------------------------------------------------------------------------------------------------
+/// @brief
+/// Macro to mark variables or functions in header files as static.
+/// Currently expands to nothing; serves only as a semantic marker.
 #define STATIC
 
 //----------------------------------------------------------------------------------------------------

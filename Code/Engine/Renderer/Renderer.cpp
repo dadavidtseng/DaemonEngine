@@ -360,7 +360,7 @@ void Renderer::Startup()
     CreateRasterizerState();
 
     m_emissiveTexture = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions()), "EmissiveTexture");
-    m_screenTexture   = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions().x * 8, m_config.m_window->GetClientDimensions().x * 8), "ScreenTexture");
+    m_screenTexture   = CreateRenderTexture(IntVec2(min(m_config.m_window->GetClientDimensions().x * 8,16384), min(m_config.m_window->GetClientDimensions().y * 8,16384)), "ScreenTexture");
 
     for (int i = 0; i < k_blurDownTextureCount; i++)
     {
@@ -1753,8 +1753,8 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
     // 3. 釋放 RenderTargetView
     if (window.m_renderTargetView)
     {
-        ULONG refCount = window.m_renderTargetView->Release();
-        DebuggerPrintf("RTV released, ref count: %lu\n", refCount);
+        //ULONG refCount = window.m_renderTargetView->Release();
+        // DebuggerPrintf("RTV released, ref count: %lu\n", refCount);
 
         window.m_renderTargetView = nullptr;
     }
@@ -1828,7 +1828,7 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 
     window.m_shouldUpdateDimension = false;
 
-    DebuggerPrintf("Window resized successfully to %dx%d\n", newWidth, newHeight);
+    // DebuggerPrintf("Window resized successfully to %dx%d\n", newWidth, newHeight);
     return S_OK;
 }
 

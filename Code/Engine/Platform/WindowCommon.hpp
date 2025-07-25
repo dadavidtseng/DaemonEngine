@@ -19,3 +19,5 @@ enum class eWindowType : uint8_t
     MINIMIZED,
     HIDDEN
 };
+
+//

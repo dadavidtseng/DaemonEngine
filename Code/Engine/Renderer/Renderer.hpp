@@ -160,8 +160,10 @@ protected:
     /// An IDXGISwapChain interface implements one or more surfaces for storing rendered data before presenting it to an output.
     IDXGISwapChain* m_swapChain = nullptr;
     /// The device interface represents a virtual adapter; it is used to create resources.
+    /// ID3D11Device is thread-safe
     ID3D11Device* m_device = nullptr;
     /// The ID3D11DeviceContext interface represents a device context which generates rendering commands.
+    /// ID3D11DeviceContext is NOT (for optimization reasons)
     ID3D11DeviceContext* m_deviceContext = nullptr;
     /// A render-target-view interface identifies the render-target subresources that can be accessed during rendering.
     ID3D11RenderTargetView* m_renderTargetView = nullptr;

@@ -173,9 +173,9 @@ void NetworkSubsystem::ShutDown()
     {
         if (m_clientSocket != ~0ull)
         {
-            shutdown((SOCKET)m_clientSocket, SD_BOTH);
-            closesocket((SOCKET)m_clientSocket);
-            m_clientSocket = (uintptr_t)~0ull;
+            shutdown(m_clientSocket, SD_BOTH);
+            closesocket(m_clientSocket);
+            m_clientSocket = ~0ull;
         }
     }
 
