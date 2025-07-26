@@ -255,7 +255,7 @@ Vec2 Window::GetClientDimensions() const
     // float const desktopAspect = desktopWidth / desktopHeight;
     // return Vec2(desktopWidth, desktopHeight);
     return m_clientDimensions;
-    // return Vec2(2160,1440);
+     // return Vec2(2160,1440);
 }
 
 Vec2 Window::GetClientPosition() const

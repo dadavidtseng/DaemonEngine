@@ -44,6 +44,9 @@
     <Filter Include="Network">
       <UniqueIdentifier>{c73bea8b-6107-4cbe-a15b-80514048ae9d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scripting">
+      <UniqueIdentifier>{17ca8269-39bf-4514-898d-5d621e213ad1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -306,6 +309,9 @@
     </ClCompile>
     <ClCompile Include="Network\NetworkCommon.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\V8Subsystem.cpp">
+      <Filter>Scripting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -600,5 +606,11 @@
     <ClInclude Include="Network\NetworkCommon.hpp">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Scripting\V8Subsystem.hpp">
+      <Filter>Scripting</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
