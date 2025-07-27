@@ -1,3 +1,21 @@
+# Sphinx documentation build output
+Docs/build/
+Docs/source/_build/
+
+# Sphinx cache and temporary files
+.doctrees/
+*.doctree
+*.pickle
+
+# Read the Docs build files
+_readthedocs/
+readthedocs-build/
+
+# Doxygen output (if used)
+doxygen/
+html/
+latex/
+
 .idea/
 .vs/
 .qodo/
