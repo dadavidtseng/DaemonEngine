@@ -14,6 +14,10 @@ dxObject->Release();      \
 dxObject = nullptr;       \
 }
 
+int constexpr k_blurDownTextureCount = 4;
+int constexpr k_blurUpTextureCount   = k_blurDownTextureCount;
+int constexpr k_blurMaxSamples = 64;
+
 //----------------------------------------------------------------------------------------------------
 enum class eVertexType : int8_t
 {
@@ -89,17 +93,20 @@ struct sPerFrameConstants
     float padding;
 };
 
-struct BlurSample {
-    Vec2 m_offset;
+//----------------------------------------------------------------------------------------------------
+struct BlurSample
+{
+    Vec2  m_offset;
     float m_weight;
     float m_padding;
 };
 
-constexpr int k_blurMaxSamples = 64;
 
-struct BlurConstants {
-    Vec2 m_texelSize;
-    float m_lerpT;
-    int m_numSamples;
+
+struct BlurConstants
+{
+    Vec2       m_texelSize;
+    float      m_lerpT;
+    int        m_numSamples;
     BlurSample m_samples[k_blurMaxSamples];
 };

@@ -1,19 +1,17 @@
 //----------------------------------------------------------------------------------------------------
-// V8Subsystem.cpp - 整合 JavaScriptManager 功能的實作
+// V8Subsystem.cpp
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/V8Subsystem.hpp"
+#include <fstream>
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/Vec3.hpp"
-#include <fstream>
-
-// 遊戲相關標頭檔
 #include "Game/Game.hpp"
-#include "Game/Prop.hpp"
 #include "Game/Player.hpp"
+#include "Game/Prop.hpp"
 
-// V8 標頭檔
 #pragma warning(push)
 #pragma warning(disable: 4100 4324 4127)
 #include "ThirdParty/packages/v8-v143-x64.13.0.245.25/include/v8.h"
@@ -21,27 +19,18 @@
 #pragma warning(pop)
 
 //----------------------------------------------------------------------------------------------------
-// 全域變數
-V8Subsystem* g_theV8Subsystem = nullptr;
-
-// 靜態成員初始化
-v8::Platform* V8Subsystem::s_platform = nullptr;
-int V8Subsystem::s_instanceCount = 0;
+V8Subsystem*  g_theV8Subsystem             = nullptr;
+v8::Platform* V8Subsystem::s_platform      = nullptr;
+int           V8Subsystem::s_instanceCount = 0;
 
 //----------------------------------------------------------------------------------------------------
 V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
-    : m_config(config)
-    , m_isInitialized(false)
-    , m_gameReference(nullptr)
-    , m_isolate(nullptr)
-    , m_context(nullptr)
+    : m_config(config),
+      m_isInitialized(false),
+      m_gameReference(nullptr),
+      m_isolate(nullptr),
+      m_context(nullptr)
 {
-}
-
-//----------------------------------------------------------------------------------------------------
-V8Subsystem::~V8Subsystem()
-{
-    Shutdown();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -64,8 +53,7 @@ void V8Subsystem::Startup()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Shutdown()
 {
-    if (!m_isInitialized)
-        return;
+    if (!m_isInitialized) return;
 
     DebuggerPrintf("V8Subsystem 關閉中...\n");
 
@@ -118,7 +106,7 @@ bool V8Subsystem::InitializeV8()
         // 建立 Isolate
         v8::Isolate::CreateParams createParams;
         createParams.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-        m_isolate = v8::Isolate::New(createParams);
+        m_isolate                           = v8::Isolate::New(createParams);
 
         if (!m_isolate)
         {
@@ -128,7 +116,7 @@ bool V8Subsystem::InitializeV8()
 
         // 進入 Isolate 範圍
         v8::Isolate::Scope isolateScope(m_isolate);
-        v8::HandleScope handleScope(m_isolate);
+        v8::HandleScope    handleScope(m_isolate);
 
         // 建立上下文
         v8::Local<v8::Context> context = v8::Context::New(m_isolate);
@@ -178,7 +166,7 @@ void V8Subsystem::ShutdownV8()
         v8::V8::Dispose();
         v8::V8::DisposePlatform();
         delete s_platform;
-        s_platform = nullptr;
+        s_platform      = nullptr;
         s_instanceCount = 0;
         DebuggerPrintf("V8 平台已清理\n");
     }
@@ -187,8 +175,7 @@ void V8Subsystem::ShutdownV8()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::CreateGlobalObjects()
 {
-    if (!m_isInitialized || !m_isolate || !m_context)
-        return;
+    if (!m_isInitialized || !m_isolate || !m_context) return;
 
     ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
         v8::Isolate* isolate = m_isolate;
@@ -199,8 +186,8 @@ void V8Subsystem::CreateGlobalObjects()
 
         // 將 console 設為全域物件
         context->Global()->Set(context,
-            v8::String::NewFromUtf8(isolate, "console").ToLocalChecked(),
-            console
+                               v8::String::NewFromUtf8(isolate, "console").ToLocalChecked(),
+                               console
         );
 
         DebuggerPrintf("全域 JavaScript 物件建立完成\n");
@@ -209,7 +196,7 @@ void V8Subsystem::CreateGlobalObjects()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScript(const std::string& script)
+bool V8Subsystem::ExecuteScript(std::string const& script)
 {
     if (!m_isInitialized)
     {
@@ -282,7 +269,7 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
+bool V8Subsystem::ExecuteScriptFile(std::string const& filename)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -336,8 +323,8 @@ void V8Subsystem::BindGameObjects(Game* game)
 
             // 將 Game 物件設為全域變數
             context->Global()->Set(context,
-                v8::String::NewFromUtf8(isolate, "Game").ToLocalChecked(),
-                gameObj
+                                   v8::String::NewFromUtf8(isolate, "Game").ToLocalChecked(),
+                                   gameObj
             );
 
             DebuggerPrintf("遊戲物件成功綁定到 JavaScript！\n");
@@ -367,30 +354,31 @@ void V8Subsystem::UnbindGameObjects()
 //----------------------------------------------------------------------------------------------------
 bool V8Subsystem::ExecuteInContext(std::function<bool(v8::Local<v8::Context>)> callback)
 {
-    if (!m_isolate || !m_context)
-        return false;
+    if (!m_isolate || !m_context) return false;
 
-    v8::Isolate::Scope isolateScope(m_isolate);
-    v8::HandleScope handleScope(m_isolate);
+    v8::Isolate::Scope     isolateScope(m_isolate);
+    v8::HandleScope        handleScope(m_isolate);
     v8::Local<v8::Context> context = v8::Local<v8::Context>::New(m_isolate, *m_context);
-    v8::Context::Scope contextScope(context);
+    v8::Context::Scope     contextScope(context);
 
     return callback(context);
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::BindFunction(v8::Local<v8::Context> context, v8::Local<v8::Object> object,
-                              const char* name, v8::FunctionCallback callback)
+bool V8Subsystem::BindFunction(v8::Local<v8::Context> context,
+                               v8::Local<v8::Object>  object,
+                               char const*            name,
+                               v8::FunctionCallback   callback)
 {
     try
     {
-        v8::Isolate* isolate = m_isolate;
-        v8::MaybeLocal<v8::Function> func = v8::Function::New(context, callback);
+        v8::Isolate*                 isolate = m_isolate;
+        v8::MaybeLocal<v8::Function> func    = v8::Function::New(context, callback);
         if (!func.IsEmpty())
         {
             object->Set(context,
-                v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-                func.ToLocalChecked()
+                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
+                        func.ToLocalChecked()
             );
             return true;
         }
@@ -403,14 +391,14 @@ bool V8Subsystem::BindFunction(v8::Local<v8::Context> context, v8::Local<v8::Obj
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::LogError(const std::string& error)
+void V8Subsystem::LogError(std::string const& error)
 {
     m_lastError = error;
     DebuggerPrintf("V8Subsystem 錯誤: %s\n", error.c_str());
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteFallbackScript(const std::string& script)
+bool V8Subsystem::ExecuteFallbackScript(std::string const& script)
 {
     DebuggerPrintf("FALLBACK: 執行 JavaScript: %s\n", script.c_str());
 
@@ -457,7 +445,7 @@ bool V8Subsystem::ExecuteFallbackScript(const std::string& script)
 // JavaScript 回呼函數實作（原 JavaScriptManager 的函數）
 //----------------------------------------------------------------------------------------------------
 
-void V8Subsystem::JSLog(const v8::FunctionCallbackInfo<v8::Value>& args)
+void V8Subsystem::JSLog(v8::FunctionCallbackInfo<v8::Value> const& args)
 {
     std::string output = "JS: ";
 
@@ -472,7 +460,7 @@ void V8Subsystem::JSLog(const v8::FunctionCallbackInfo<v8::Value>& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::JSCreateCube(const v8::FunctionCallbackInfo<v8::Value>& args)
+void V8Subsystem::JSCreateCube(v8::FunctionCallbackInfo<v8::Value> const& args)
 {
     if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
     {
@@ -492,11 +480,10 @@ void V8Subsystem::JSCreateCube(const v8::FunctionCallbackInfo<v8::Value>& args)
     DebuggerPrintf("JS: 在位置 (%.2f, %.2f, %.2f) 建立方塊\n", x, y, z);
     // 實際遊戲邏輯呼叫
     g_theV8Subsystem->m_gameReference->CreateCube(Vec3(x, y, z));
-
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::JSMoveProp(const v8::FunctionCallbackInfo<v8::Value>& args)
+void V8Subsystem::JSMoveProp(v8::FunctionCallbackInfo<v8::Value> const& args)
 {
     if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
     {
@@ -506,10 +493,10 @@ void V8Subsystem::JSMoveProp(const v8::FunctionCallbackInfo<v8::Value>& args)
 
     if (args.Length() >= 4)
     {
-        int propIndex = (int)args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
-        float x = (float)args[1]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
-        float y = (float)args[2]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
-        float z = (float)args[3]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        int   propIndex = (int)args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
+        float x         = (float)args[1]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float y         = (float)args[2]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float z         = (float)args[3]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
 
         DebuggerPrintf("JS: 移動物件 %d 到位置 (%.2f, %.2f, %.2f)\n", propIndex, x, y, z);
         g_theV8Subsystem->m_gameReference->MoveProp(propIndex, Vec3(x, y, z));
@@ -517,7 +504,7 @@ void V8Subsystem::JSMoveProp(const v8::FunctionCallbackInfo<v8::Value>& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::JSGetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args)
+void V8Subsystem::JSGetPlayerPosition(v8::FunctionCallbackInfo<v8::Value> const& args)
 {
     if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
     {
@@ -526,11 +513,11 @@ void V8Subsystem::JSGetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>&
     }
 
     Player* player = g_theV8Subsystem->m_gameReference->GetPlayer();
-    Vec3 pos = player ? player->m_position : Vec3(-2.0f, 0.0f, 1.0f);
+    Vec3    pos    = player ? player->m_position : Vec3(-2.0f, 0.0f, 1.0f);
 
-    v8::Isolate* isolate = args.GetIsolate();
+    v8::Isolate*           isolate = args.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::Object> posObj = v8::Object::New(isolate);
+    v8::Local<v8::Object>  posObj  = v8::Object::New(isolate);
 
     posObj->Set(context, v8::String::NewFromUtf8(isolate, "x").ToLocalChecked(), v8::Number::New(isolate, pos.x));
     posObj->Set(context, v8::String::NewFromUtf8(isolate, "y").ToLocalChecked(), v8::Number::New(isolate, pos.y));
@@ -541,7 +528,7 @@ void V8Subsystem::JSGetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>&
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::JSSetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args)
+void V8Subsystem::JSSetPlayerPosition(v8::FunctionCallbackInfo<v8::Value> const& args)
 {
     if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
     {

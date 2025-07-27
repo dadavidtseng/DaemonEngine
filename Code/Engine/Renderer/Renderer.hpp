@@ -36,9 +36,6 @@ struct ID3D11BlendState;
 #undef OPAQUE
 #endif
 
-constexpr int k_blurDownTextureCount           = 4;
-constexpr int k_blurUpTextureCount             = k_blurDownTextureCount;
-
 //----------------------------------------------------------------------------------------------------
 enum class eBlendMode : int8_t
 {
@@ -68,13 +65,13 @@ public:
 
 
     void Startup();
-    void BeginFrame() ;
+    void BeginFrame();
     void EndFrame() const;
     void Shutdown();
 
     void ClearScreen(Rgba8 const& clearColor) const;
     void ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) const;
-    void BeginCamera(Camera const& camera) ;
+    void BeginCamera(Camera const& camera);
     void EndCamera(Camera const& camera);
 
     void DrawVertexArray(int numVertexes, Vertex_PCU const* vertexes);
@@ -121,10 +118,10 @@ public:
 
 
     // Shadowmap and Bloom
-    void     SetCustomConstantBuffer( ConstantBuffer*& cbo, void* data, size_t size, int slot );
+    void     SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot);
     void     RenderEmissive();
     void     SetDefaultRenderTargets();
-    Texture* CreateRenderTexture( IntVec2 const& dimensions, char const* name );
+    Texture* CreateRenderTexture(IntVec2 const& dimensions, char const* name);
 
 private:
     void CreateDeviceAndSwapChain(unsigned int deviceFlags);
@@ -147,10 +144,10 @@ private:
     Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
 
-    void BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
-    void BindIndexBuffer(IndexBuffer const* ibo) const;
-    void BindVertexBuffer(VertexBuffer const* vbo) const;
-    void SetStatesIfChanged();
+    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
+    void            BindIndexBuffer(IndexBuffer const* ibo) const;
+    void            BindVertexBuffer(VertexBuffer const* vbo) const;
+    void            SetStatesIfChanged();
     D3D11_VIEWPORT* m_cameraViewport = nullptr;
 
     sRendererConfig m_config;
@@ -225,10 +222,10 @@ protected:
     Texture*      m_blurDownTextures[k_blurDownTextureCount];
     Texture*      m_blurUpTextures[k_blurUpTextureCount];
     BlurConstants m_blurConstants;
-    Texture* m_screenTexture = nullptr;
+    Texture*      m_screenTexture = nullptr;
     // 建議預先創建 blur shader，而不是每次都創建
-    Shader* m_blurDownShader = nullptr;
-    Shader* m_blurUpShader = nullptr;
+    Shader* m_blurDownShader      = nullptr;
+    Shader* m_blurUpShader        = nullptr;
     Shader* m_blurCompositeShader = nullptr;
-    void UnbindShaderResources(); // 添加這個函式聲明
+    void    UnbindShaderResources(); // 添加這個函式聲明
 };

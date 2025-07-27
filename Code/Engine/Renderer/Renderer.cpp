@@ -360,7 +360,7 @@ void Renderer::Startup()
     CreateRasterizerState();
 
     m_emissiveTexture = CreateRenderTexture(IntVec2(m_config.m_window->GetClientDimensions()), "EmissiveTexture");
-    m_screenTexture   = CreateRenderTexture(IntVec2(min(m_config.m_window->GetClientDimensions().x * 8,16384), min(m_config.m_window->GetClientDimensions().y * 8,16384)), "ScreenTexture");
+    m_screenTexture   = CreateRenderTexture(IntVec2(min(m_config.m_window->GetClientDimensions().x * 8, 16384), min(m_config.m_window->GetClientDimensions().y * 8, 16384)), "ScreenTexture");
 
     for (int i = 0; i < k_blurDownTextureCount; i++)
     {
@@ -524,7 +524,7 @@ void Renderer::ClearScreen(Rgba8 const& clearColor) const
     float colorAsFloats[4];
     clearColor.GetAsFloats(colorAsFloats);
     m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
-    m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    m_deviceContext->ClearDepthStencilView(m_depthStencilDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 }
 
 void Renderer::ClearScreen(Rgba8 const& clearColor, Rgba8 const& emissiveColor) const
