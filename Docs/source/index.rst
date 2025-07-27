@@ -1,19 +1,17 @@
-Welcome to Engine's documentation!
-===================================
-
-Engine is a developing 2D game engine built with C++.
+Daemon Engine's official documentation
+======================================================================================================
+Daemon Engine is a developing game engine built with C++.
 
 Features
---------
+------------------------------------------------------------------------------------------------------
 
-* High-performance 2D rendering system
-* Complete math library
-* Modular core system architecture
+* DirectX11 Render system
+* Math library
+* Multiple windows support
 * Audio support with FMOD integration
-* Cross-platform support
 
 Getting Started
----------------
+------------------------------------------------------------------------------------------------------
 
 This documentation will help you understand and use the Engine framework.
 
@@ -25,7 +23,7 @@ This documentation will help you understand and use the Engine framework.
    api
 
 Indices and tables
-==================
+======================================================================================================
 
 * :ref:`genindex`
 * :ref:`search`

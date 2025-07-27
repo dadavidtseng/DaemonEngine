@@ -1,15 +1,14 @@
 API Reference
-=============
-
+======================================================================================================
 This section contains the complete API reference for the Engine framework.
 
 Core Module
------------
+------------------------------------------------------------------------------------------------------
 
 The core module provides fundamental functionality for the engine.
 
 NamedStrings Class
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``NamedStrings`` class manages key-value pairs, commonly used for configuration files.
 
@@ -32,7 +31,7 @@ The ``NamedStrings`` class manages key-value pairs, commonly used for configurat
 * ``GetValue(const String& key, bool defaultValue)`` - Gets a boolean value
 
 Vertex_PCUTBN Structure
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A vertex structure containing position, color, UV coordinates, tangent, bitangent, and normal vectors.
 
@@ -55,12 +54,12 @@ A vertex structure containing position, color, UV coordinates, tangent, bitangen
    vertex.m_uvTexCoords = Vec2(0.0f, 0.0f);
 
 Renderer Module
----------------
+------------------------------------------------------------------------------------------------------
 
 The renderer module handles all graphics and rendering operations.
 
 Key Features
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * DirectX 11 backend support
 * Texture management
@@ -76,12 +75,11 @@ Key Features
 * ``Window`` - Window creation and management
 
 Math Module
------------
-
+------------------------------------------------------------------------------------------------------
 The math module provides mathematical operations and data structures.
 
 Vector Classes
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``Vec2`` - 2D vector operations
 * ``Vec3`` - 3D vector operations
@@ -98,8 +96,7 @@ Vector Classes
    Vec3 cross = CrossProduct3D(a, b);
 
 Utility Functions
-~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``DotProduct3D()`` - Calculate dot product
 * ``CrossProduct3D()`` - Calculate cross product
 * Mathematical constants and helper functions

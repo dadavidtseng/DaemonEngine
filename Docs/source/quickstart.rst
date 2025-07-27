@@ -1,11 +1,9 @@
 Quick Start Guide
-=================
-
+======================================================================================================
 This guide will help you get started with the Engine framework.
 
 Prerequisites
--------------
-
+------------------------------------------------------------------------------------------------------
 Before you begin, ensure you have:
 
 * Visual Studio 2019 or later
@@ -13,8 +11,7 @@ Before you begin, ensure you have:
 * Git for version control
 
 Installation
-------------
-
+------------------------------------------------------------------------------------------------------
 1. **Clone the Repository**
 
    .. code-block:: bash
@@ -35,7 +32,7 @@ Installation
    * Build the solution (Ctrl+Shift+B)
 
 Basic Usage
------------
+------------------------------------------------------------------------------------------------------
 
 Here's a simple example of how to use the Engine:
 
@@ -60,7 +57,7 @@ Here's a simple example of how to use the Engine:
    }
 
 Next Steps
-----------
+------------------------------------------------------------------------------------------------------
 
 * Explore the :doc:`api` documentation
 * Check out the sample projects in the repository
