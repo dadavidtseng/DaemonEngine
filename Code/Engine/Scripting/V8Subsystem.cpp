@@ -1,520 +1,567 @@
-// V8Subsystem.cpp - 修正 HandleScope 問題的版本
+//----------------------------------------------------------------------------------------------------
+// V8Subsystem.cpp - 整合 JavaScriptManager 功能的實作
+//----------------------------------------------------------------------------------------------------
+
 #include "Engine/Scripting/V8Subsystem.hpp"
-#include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/FileUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
+#include <fstream>
+
+// 遊戲相關標頭檔
+#include "Game/Game.hpp"
+#include "Game/Prop.hpp"
+#include "Game/Player.hpp"
 
 // V8 標頭檔
 #pragma warning(push)
 #pragma warning(disable: 4100 4324 4127)
-
-#include <stdexcept>
-#include <v8.h>
-// #include <v8-platform.h>
+#include "ThirdParty/packages/v8-v143-x64.13.0.245.25/include/v8.h"
 #include "ThirdParty/packages/v8-v143-x64.13.0.245.25/include/libplatform/libplatform.h"
-
 #pragma warning(pop)
 
 //----------------------------------------------------------------------------------------------------
-// V8 內部資料結構 - 現在是真實的
-//----------------------------------------------------------------------------------------------------
-struct V8Subsystem::V8InternalData
-{
-    std::unique_ptr<v8::Platform> platform;
-    v8::ArrayBuffer::Allocator* allocator = nullptr;
-    v8::Isolate* isolate = nullptr;
-    v8::Global<v8::Context> context;
-    bool isStubMode = false;
-};
-
-//----------------------------------------------------------------------------------------------------
-// 全域變數定義
-//----------------------------------------------------------------------------------------------------
+// 全域變數
 V8Subsystem* g_theV8Subsystem = nullptr;
 
-//----------------------------------------------------------------------------------------------------
-// 建構函數
-//----------------------------------------------------------------------------------------------------
-V8Subsystem::V8Subsystem(const Config& config)
-    : m_config(config)
-    , m_internalData(new V8InternalData())
-    , m_initialized(false)
-{
-    LogInfo("V8 子系統已建立");
-}
+// 靜態成員初始化
+v8::Platform* V8Subsystem::s_platform = nullptr;
+int V8Subsystem::s_instanceCount = 0;
 
 //----------------------------------------------------------------------------------------------------
-// 解構函數
+V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
+    : m_config(config)
+    , m_isInitialized(false)
+    , m_gameReference(nullptr)
+    , m_isolate(nullptr)
+    , m_context(nullptr)
+{
+}
+
 //----------------------------------------------------------------------------------------------------
 V8Subsystem::~V8Subsystem()
 {
     Shutdown();
-    delete m_internalData;
-    m_internalData = nullptr;
 }
 
-//----------------------------------------------------------------------------------------------------
-// 啟動子系統
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Startup()
 {
-    if (m_initialized)
+    DebuggerPrintf("V8Subsystem 啟動中...\n");
+
+    if (!InitializeV8())
     {
-        LogError("V8 子系統已經初始化過了");
+        LogError("V8 初始化失敗");
         return;
     }
 
-    try
-    {
-        LogInfo("正在初始化 V8 引擎...");
+    CreateGlobalObjects();
 
-        // 第一步：初始化 V8 Platform
-        v8::V8::InitializeICU();
-        v8::V8::InitializeExternalStartupData("");
-
-        m_internalData->platform = v8::platform::NewDefaultPlatform();
-        v8::V8::InitializePlatform(m_internalData->platform.get());
-
-        // 第二步：初始化 V8
-        if (!v8::V8::Initialize())
-        {
-            throw std::runtime_error("V8::Initialize() 失敗");
-        }
-
-        LogInfo("V8 Platform 和引擎初始化成功");
-
-        // 第三步：建立 Allocator
-        m_internalData->allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-
-        // 第四步：建立 Isolate
-        v8::Isolate::CreateParams create_params;
-        create_params.array_buffer_allocator = m_internalData->allocator;
-
-        m_internalData->isolate = v8::Isolate::New(create_params);
-        if (!m_internalData->isolate)
-        {
-            throw std::runtime_error("無法建立 V8 Isolate");
-        }
-
-        // 第五步：建立 Context
-        {
-            v8::Isolate::Scope isolate_scope(m_internalData->isolate);
-            v8::HandleScope handle_scope(m_internalData->isolate);
-
-            v8::Local<v8::Context> context = v8::Context::New(m_internalData->isolate);
-            if (context.IsEmpty())
-            {
-                throw std::runtime_error("無法建立 V8 Context");
-            }
-
-            m_internalData->context.Reset(m_internalData->isolate, context);
-
-            // 設定內建函數
-            v8::Context::Scope context_scope(context);
-            SetupBuiltinFunctions();
-        }
-
-        m_initialized = true;
-        LogInfo("V8 子系統初始化成功！");
-        LogInfo("已安裝的 V8 版本：v8-v143-x64 13.0.245.25");
-    }
-    catch (const std::exception& e)
-    {
-        LogError(Stringf("V8 初始化失敗: %s", e.what()));
-        LogError("切換到 Stub 模式");
-
-        // 清理失敗的資源
-        ShutdownV8();
-        m_internalData->isStubMode = true;
-        m_initialized = true; // 標記為已初始化，但是是 stub 模式
-    }
-    catch (...)
-    {
-        LogError("V8 初始化時發生未知錯誤");
-        LogError("切換到 Stub 模式");
-
-        ShutdownV8();
-        m_internalData->isStubMode = true;
-        m_initialized = true;
-    }
+    m_isInitialized = true;
+    DebuggerPrintf("V8Subsystem 啟動成功！\n");
 }
 
-//----------------------------------------------------------------------------------------------------
-// 關閉子系統
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Shutdown()
 {
-    if (!m_initialized) return;
+    if (!m_isInitialized)
+        return;
 
-    LogInfo("正在關閉 V8 子系統...");
+    DebuggerPrintf("V8Subsystem 關閉中...\n");
+
+    UnbindGameObjects();
     ShutdownV8();
-    m_initialized = false;
-    LogInfo("V8 子系統已關閉");
+
+    m_isInitialized = false;
+    DebuggerPrintf("V8Subsystem 已關閉。\n");
 }
 
 //----------------------------------------------------------------------------------------------------
-// 內部 V8 關閉
+void V8Subsystem::BeginFrame()
+{
+    // V8 每幀處理（如垃圾回收提示等）
+    if (m_isInitialized && m_isolate)
+    {
+        // 可選：定期觸發垃圾回收
+        // m_isolate->LowMemoryNotification();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::EndFrame()
+{
+    // 清理每幀錯誤狀態
+    if (!m_lastError.empty())
+    {
+        // 可選：在每幀結束後清理錯誤訊息
+        // m_lastError.clear();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::InitializeV8()
+{
+    try
+    {
+        // 初始化 V8 平台（全域，只需要一次）
+        if (s_platform == nullptr)
+        {
+            v8::V8::InitializeICUDefaultLocation("");
+            v8::V8::InitializeExternalStartupData("");
+            s_platform = v8::platform::NewDefaultPlatform().release();
+            v8::V8::InitializePlatform(s_platform);
+            v8::V8::Initialize();
+            DebuggerPrintf("V8 平台初始化完成\n");
+        }
+        s_instanceCount++;
+
+        // 建立 Isolate
+        v8::Isolate::CreateParams createParams;
+        createParams.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+        m_isolate = v8::Isolate::New(createParams);
+
+        if (!m_isolate)
+        {
+            LogError("無法建立 V8 Isolate");
+            return false;
+        }
+
+        // 進入 Isolate 範圍
+        v8::Isolate::Scope isolateScope(m_isolate);
+        v8::HandleScope handleScope(m_isolate);
+
+        // 建立上下文
+        v8::Local<v8::Context> context = v8::Context::New(m_isolate);
+        if (context.IsEmpty())
+        {
+            LogError("無法建立 V8 Context");
+            return false;
+        }
+
+        // 儲存持久性上下文
+        m_context = new v8::Global<v8::Context>(m_isolate, context);
+
+        DebuggerPrintf("V8 引擎初始化成功\n");
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        LogError(Stringf("V8 初始化例外: %s", e.what()));
+        return false;
+    }
+    catch (...)
+    {
+        LogError("V8 初始化發生未知例外");
+        return false;
+    }
+}
+
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::ShutdownV8()
 {
-    if (!m_internalData->context.IsEmpty())
+    if (m_context)
     {
-        m_internalData->context.Reset();
+        m_context->Reset();
+        delete m_context;
+        m_context = nullptr;
     }
 
-    if (m_internalData->isolate)
+    if (m_isolate)
     {
-        m_internalData->isolate->Dispose();
-        m_internalData->isolate = nullptr;
+        m_isolate->Dispose();
+        m_isolate = nullptr;
     }
 
-    if (m_internalData->allocator)
-    {
-        delete m_internalData->allocator;
-        m_internalData->allocator = nullptr;
-    }
-
-    if (m_internalData->platform)
+    s_instanceCount--;
+    if (s_instanceCount <= 0)
     {
         v8::V8::Dispose();
         v8::V8::DisposePlatform();
-        m_internalData->platform.reset();
+        delete s_platform;
+        s_platform = nullptr;
+        s_instanceCount = 0;
+        DebuggerPrintf("V8 平台已清理\n");
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-// 更新子系統
-//----------------------------------------------------------------------------------------------------
-void V8Subsystem::Update(float deltaSeconds)
+void V8Subsystem::CreateGlobalObjects()
 {
-    UNUSED(deltaSeconds);
+    if (!m_isInitialized || !m_isolate || !m_context)
+        return;
 
-    if (!m_initialized || m_internalData->isStubMode) return;
+    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
+        v8::Isolate* isolate = m_isolate;
 
-    // 處理 V8 的微任務（如果有的話）
-    if (m_internalData->isolate)
-    {
-        v8::Isolate::Scope isolate_scope(m_internalData->isolate);
-        v8::HandleScope handle_scope(m_internalData->isolate);
+        // 建立 console 物件
+        v8::Local<v8::Object> console = v8::Object::New(isolate);
+        BindFunction(context, console, "log", JSLog);
 
-        // 處理待處理的微任務
-        m_internalData->isolate->PerformMicrotaskCheckpoint();
-    }
+        // 將 console 設為全域物件
+        context->Global()->Set(context,
+            v8::String::NewFromUtf8(isolate, "console").ToLocalChecked(),
+            console
+        );
+
+        DebuggerPrintf("全域 JavaScript 物件建立完成\n");
+        return true;
+    });
 }
 
 //----------------------------------------------------------------------------------------------------
-// 執行 JavaScript 程式碼
-//----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScript(const std::string& scriptContent)
+bool V8Subsystem::ExecuteScript(const std::string& script)
 {
-    if (!m_initialized)
+    if (!m_isInitialized)
     {
-        LogError("V8 子系統尚未初始化");
+        DebuggerPrintf("V8Subsystem 未初始化，使用 fallback 模式\n");
+        return ExecuteFallbackScript(script);
+    }
+
+    if (!m_isolate || !m_context)
+    {
+        LogError("V8 狀態無效");
         return false;
     }
 
-    if (m_internalData->isStubMode)
-    {
-        LogInfo("STUB 模式：執行腳本 - " + scriptContent.substr(0, std::min(50u, (unsigned)scriptContent.length())));
-        return true;
-    }
-
-    try
-    {
-        v8::Isolate::Scope isolate_scope(m_internalData->isolate);
-        v8::HandleScope handle_scope(m_internalData->isolate);
-        v8::Local<v8::Context> context = v8::Local<v8::Context>::New(m_internalData->isolate, m_internalData->context);
-        v8::Context::Scope context_scope(context);
-        v8::TryCatch try_catch(m_internalData->isolate);
-
-        // 編譯腳本
-        v8::Local<v8::String> source = v8::String::NewFromUtf8(m_internalData->isolate, scriptContent.c_str()).ToLocalChecked();
-        v8::Local<v8::Script> script;
-
-        if (!v8::Script::Compile(context, source).ToLocal(&script))
+    return ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
+        try
         {
-            if (try_catch.HasCaught())
+            v8::Isolate* isolate = m_isolate;
+            v8::TryCatch tryCatch(isolate);
+
+            // 編譯腳本
+            v8::Local<v8::String> source = v8::String::NewFromUtf8(isolate, script.c_str()).ToLocalChecked();
+            v8::Local<v8::Script> compiledScript;
+
+            if (!v8::Script::Compile(context, source).ToLocal(&compiledScript))
             {
-                v8::String::Utf8Value exception(m_internalData->isolate, try_catch.Exception());
-                LogError(Stringf("JavaScript 編譯錯誤: %s", *exception));
+                if (tryCatch.HasCaught())
+                {
+                    v8::String::Utf8Value error(isolate, tryCatch.Exception());
+                    LogError(Stringf("腳本編譯錯誤: %s", *error));
+                }
+                return false;
             }
+
+            // 執行腳本
+            v8::Local<v8::Value> result;
+            if (!compiledScript->Run(context).ToLocal(&result))
+            {
+                if (tryCatch.HasCaught())
+                {
+                    v8::String::Utf8Value error(isolate, tryCatch.Exception());
+                    LogError(Stringf("腳本執行錯誤: %s", *error));
+                }
+                return false;
+            }
+
+            // 儲存結果
+            if (!result->IsUndefined())
+            {
+                v8::String::Utf8Value resultStr(isolate, result);
+                m_lastResult = *resultStr;
+            }
+            else
+            {
+                m_lastResult = "";
+            }
+
+            return true;
+        }
+        catch (const std::exception& e)
+        {
+            LogError(Stringf("執行腳本時發生例外: %s", e.what()));
             return false;
         }
-
-        // 執行腳本
-        v8::Local<v8::Value> result;
-        if (!script->Run(context).ToLocal(&result))
+        catch (...)
         {
-            if (try_catch.HasCaught())
-            {
-                v8::String::Utf8Value exception(m_internalData->isolate, try_catch.Exception());
-                LogError(Stringf("JavaScript 執行錯誤: %s", *exception));
-            }
+            LogError("執行腳本時發生未知例外");
             return false;
         }
+    });
+}
 
-        // 輸出結果（如果不是 undefined）
-        if (!result->IsUndefined())
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        LogError(Stringf("無法開啟腳本檔案: %s", filename.c_str()));
+        return false;
+    }
+
+    std::string script;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        script += line + "\n";
+    }
+    file.close();
+
+    DebuggerPrintf("載入腳本檔案: %s (%zu 字元)\n", filename.c_str(), script.length());
+    return ExecuteScript(script);
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::BindGameObjects(Game* game)
+{
+    if (!m_config.enableGameBindings)
+    {
+        DebuggerPrintf("遊戲物件綁定已停用\n");
+        return;
+    }
+
+    m_gameReference = game;
+
+    if (!m_isInitialized)
+    {
+        DebuggerPrintf("V8Subsystem 未初始化，跳過遊戲物件綁定\n");
+        return;
+    }
+
+    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
+        try
         {
-            v8::String::Utf8Value utf8(m_internalData->isolate, result);
-            LogInfo(Stringf("腳本執行結果: %s", *utf8));
+            v8::Isolate* isolate = m_isolate;
+
+            // 建立 Game 物件
+            v8::Local<v8::Object> gameObj = v8::Object::New(isolate);
+
+            // 綁定遊戲函數
+            BindFunction(context, gameObj, "createCube", JSCreateCube);
+            BindFunction(context, gameObj, "moveProp", JSMoveProp);
+            BindFunction(context, gameObj, "getPlayerPos", JSGetPlayerPosition);
+            BindFunction(context, gameObj, "setPlayerPos", JSSetPlayerPosition);
+
+            // 將 Game 物件設為全域變數
+            context->Global()->Set(context,
+                v8::String::NewFromUtf8(isolate, "Game").ToLocalChecked(),
+                gameObj
+            );
+
+            DebuggerPrintf("遊戲物件成功綁定到 JavaScript！\n");
+            DebuggerPrintf("可用函數: Game.createCube(), Game.moveProp(), Game.getPlayerPos(), Game.setPlayerPos()\n");
+            return true;
         }
-
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-        LogError(Stringf("執行腳本時發生例外: %s", e.what()));
-        return false;
-    }
-    catch (...)
-    {
-        LogError("執行腳本時發生未知例外");
-        return false;
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-// 執行腳本檔案
-//----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScriptFile(const std::string& filePath)
-{
-    // std::string fullPath = m_config.m_scriptsPath + filePath;
-    std::string fullPath =  filePath;
-    LogInfo("正在執行腳本檔案：" + fullPath);
-
-    // 讀取檔案內容
-    std::string scriptContent;
-    if (!FileReadToString(scriptContent, fullPath))
-    {
-        LogError("無法讀取腳本檔案：" + fullPath);
-        return false;
-    }
-
-    return ExecuteScript(scriptContent);
-}
-
-//----------------------------------------------------------------------------------------------------
-// 設定內建函數
-//----------------------------------------------------------------------------------------------------
-void V8Subsystem::SetupBuiltinFunctions()
-{
-    if (!m_internalData->isolate || m_internalData->context.IsEmpty()) return;
-
-    v8::Local<v8::Context> context = v8::Local<v8::Context>::New(m_internalData->isolate, m_internalData->context);
-
-    // 建立 console 物件
-    v8::Local<v8::Object> console = v8::Object::New(m_internalData->isolate);
-
-    // 建立 console.log 函數
-    auto logCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
-        std::string output = "JS: ";
-        for (int i = 0; i < args.Length(); i++) {
-            if (i > 0) output += " ";
-            v8::String::Utf8Value str(args.GetIsolate(), args[i]);
-            output += *str;
+        catch (const std::exception& e)
+        {
+            LogError(Stringf("綁定遊戲物件時發生例外: %s", e.what()));
+            return false;
         }
-        if (g_theV8Subsystem) {
-            g_theV8Subsystem->LogInfo(output);
+        catch (...)
+        {
+            LogError("綁定遊戲物件時發生未知例外");
+            return false;
         }
-    };
-
-    v8::Local<v8::Function> logFunction = v8::Function::New(context, logCallback).ToLocalChecked();
-    console->Set(context, v8::String::NewFromUtf8(m_internalData->isolate, "log").ToLocalChecked(), logFunction);
-
-    // 將 console 設為全域變數
-    context->Global()->Set(context, v8::String::NewFromUtf8(m_internalData->isolate, "console").ToLocalChecked(), console);
-
-    LogInfo("V8 內建函數設定完成");
+    });
 }
 
 //----------------------------------------------------------------------------------------------------
-// 取得 V8 Isolate（供 JavaScriptManager 使用）
-//----------------------------------------------------------------------------------------------------
-v8::Isolate* V8Subsystem::GetIsolate() const
+void V8Subsystem::UnbindGameObjects()
 {
-    return m_internalData->isolate;
+    m_gameReference = nullptr;
+    // 在實際實作中，這裡可以移除 JavaScript 中的 Game 物件
 }
 
-//----------------------------------------------------------------------------------------------------
-// 取得 V8 Context（供 JavaScriptManager 使用）- 修正版本
-//----------------------------------------------------------------------------------------------------
-bool V8Subsystem::GetContext(v8::Local<v8::Context>& outContext) const
-{
-    if (m_internalData->context.IsEmpty() || !m_internalData->isolate)
-    {
-        return false;
-    }
-
-    // 這個方法應該只在已經有 HandleScope 的情況下被呼叫
-    outContext = v8::Local<v8::Context>::New(m_internalData->isolate, m_internalData->context);
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 新的安全執行方法，供 JavaScriptManager 使用
 //----------------------------------------------------------------------------------------------------
 bool V8Subsystem::ExecuteInContext(std::function<bool(v8::Local<v8::Context>)> callback)
 {
-    if (!m_initialized || m_internalData->isStubMode || !m_internalData->isolate)
-    {
-        LogError("V8Subsystem 不可用於執行操作");
+    if (!m_isolate || !m_context)
         return false;
-    }
 
+    v8::Isolate::Scope isolateScope(m_isolate);
+    v8::HandleScope handleScope(m_isolate);
+    v8::Local<v8::Context> context = v8::Local<v8::Context>::New(m_isolate, *m_context);
+    v8::Context::Scope contextScope(context);
+
+    return callback(context);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::BindFunction(v8::Local<v8::Context> context, v8::Local<v8::Object> object,
+                              const char* name, v8::FunctionCallback callback)
+{
     try
     {
-        v8::Isolate::Scope isolate_scope(m_internalData->isolate);
-        v8::HandleScope handle_scope(m_internalData->isolate);
-        v8::Local<v8::Context> context = v8::Local<v8::Context>::New(m_internalData->isolate, m_internalData->context);
-        v8::Context::Scope context_scope(context);
-
-        return callback(context);
-    }
-    catch (const std::exception& e)
-    {
-        LogError(Stringf("執行上下文操作時發生例外: %s", e.what()));
-        return false;
+        v8::Isolate* isolate = m_isolate;
+        v8::MaybeLocal<v8::Function> func = v8::Function::New(context, callback);
+        if (!func.IsEmpty())
+        {
+            object->Set(context,
+                v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
+                func.ToLocalChecked()
+            );
+            return true;
+        }
     }
     catch (...)
     {
-        LogError("執行上下文操作時發生未知例外");
-        return false;
+        LogError(Stringf("綁定函數失敗: %s", name));
     }
+    return false;
 }
 
-//----------------------------------------------------------------------------------------------------
-// 設定全域變數實作
-//----------------------------------------------------------------------------------------------------
-void V8Subsystem::SetGlobalNumber(const std::string& name, double value)
-{
-    if (m_internalData->isStubMode)
-    {
-        LogInfo(Stringf("STUB: 設定全域數字變數：%s = %f", name.c_str(), value));
-        return;
-    }
-
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        context->Global()->Set(context,
-            v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked(),
-            v8::Number::New(m_internalData->isolate, value)
-        );
-        return true;
-    });
-}
-
-void V8Subsystem::SetGlobalString(const std::string& name, const std::string& value)
-{
-    if (m_internalData->isStubMode)
-    {
-        LogInfo(Stringf("STUB: 設定全域字串變數：%s = %s", name.c_str(), value.c_str()));
-        return;
-    }
-
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        context->Global()->Set(context,
-            v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked(),
-            v8::String::NewFromUtf8(m_internalData->isolate, value.c_str()).ToLocalChecked()
-        );
-        return true;
-    });
-}
-
-void V8Subsystem::SetGlobalBoolean(const std::string& name, bool value)
-{
-    if (m_internalData->isStubMode)
-    {
-        LogInfo(Stringf("STUB: 設定全域布林變數：%s = %s", name.c_str(), value ? "true" : "false"));
-        return;
-    }
-
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        context->Global()->Set(context,
-            v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked(),
-            v8::Boolean::New(m_internalData->isolate, value)
-        );
-        return true;
-    });
-}
-
-//----------------------------------------------------------------------------------------------------
-// 取得全域變數實作
-//----------------------------------------------------------------------------------------------------
-double V8Subsystem::GetGlobalNumber(const std::string& name)
-{
-    if (m_internalData->isStubMode) return 0.0;
-
-    double result = 0.0;
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        v8::Local<v8::Value> value;
-        if (context->Global()->Get(context, v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked()).ToLocal(&value))
-        {
-            if (value->IsNumber())
-            {
-                result = value->NumberValue(context).FromMaybe(0.0);
-            }
-        }
-        return true;
-    });
-    return result;
-}
-
-std::string V8Subsystem::GetGlobalString(const std::string& name)
-{
-    if (m_internalData->isStubMode) return "";
-
-    std::string result;
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        v8::Local<v8::Value> value;
-        if (context->Global()->Get(context, v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked()).ToLocal(&value))
-        {
-            if (value->IsString())
-            {
-                v8::String::Utf8Value utf8(m_internalData->isolate, value);
-                result = *utf8;
-            }
-        }
-        return true;
-    });
-    return result;
-}
-
-bool V8Subsystem::GetGlobalBoolean(const std::string& name)
-{
-    if (m_internalData->isStubMode) return false;
-
-    bool result = false;
-    ExecuteInContext([&](v8::Local<v8::Context> context) -> bool {
-        v8::Local<v8::Value> value;
-        if (context->Global()->Get(context, v8::String::NewFromUtf8(m_internalData->isolate, name.c_str()).ToLocalChecked()).ToLocal(&value))
-        {
-            if (value->IsBoolean())
-            {
-                result = value->BooleanValue(m_internalData->isolate);
-            }
-        }
-        return true;
-    });
-    return result;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 輔助函數
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::LogError(const std::string& error)
 {
     m_lastError = error;
-    if (g_theDevConsole)
+    DebuggerPrintf("V8Subsystem 錯誤: %s\n", error.c_str());
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::ExecuteFallbackScript(const std::string& script)
+{
+    DebuggerPrintf("FALLBACK: 執行 JavaScript: %s\n", script.c_str());
+
+    // 這裡保留你原本的 fallback 邏輯
+    if (script.find("console.log") != std::string::npos)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[V8錯誤] %s", error.c_str()));
+        size_t start = script.find("console.log(");
+        if (start != std::string::npos)
+        {
+            start += 12;
+            size_t end = script.find(")", start);
+            if (end != std::string::npos)
+            {
+                std::string logContent = script.substr(start, end - start);
+                if (!logContent.empty())
+                {
+                    if ((logContent.front() == '\'' && logContent.back() == '\'') ||
+                        (logContent.front() == '"' && logContent.back() == '"'))
+                    {
+                        logContent = logContent.substr(1, logContent.size() - 2);
+                    }
+                }
+                DebuggerPrintf("JS FALLBACK LOG: %s\n", logContent.c_str());
+            }
+        }
+    }
+
+    // 其他 fallback 邏輯...
+    if (script.find("Game.createCube") != std::string::npos)
+    {
+        DebuggerPrintf("JS FALLBACK: Would create cube\n");
+    }
+
+    if (script.find("Game.getPlayerPos") != std::string::npos)
+    {
+        DebuggerPrintf("JS FALLBACK: Would get player position\n");
+        m_lastResult = "{x: -2, y: 0, z: 1}";
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// JavaScript 回呼函數實作（原 JavaScriptManager 的函數）
+//----------------------------------------------------------------------------------------------------
+
+void V8Subsystem::JSLog(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+    std::string output = "JS: ";
+
+    for (int i = 0; i < args.Length(); i++)
+    {
+        if (i > 0) output += " ";
+        v8::String::Utf8Value str(args.GetIsolate(), args[i]);
+        output += *str;
+    }
+
+    DebuggerPrintf("%s\n", output.c_str());
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::JSCreateCube(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+    if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
+    {
+        DebuggerPrintf("JSCreateCube: 遊戲參考無效\n");
+        return;
+    }
+
+    float x = 0.0f, y = 0.0f, z = 0.0f;
+
+    if (args.Length() >= 3)
+    {
+        x = (float)args[0]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        y = (float)args[1]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        z = (float)args[2]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+    }
+
+    DebuggerPrintf("JS: 在位置 (%.2f, %.2f, %.2f) 建立方塊\n", x, y, z);
+    // 實際遊戲邏輯呼叫
+    g_theV8Subsystem->m_gameReference->CreateCube(Vec3(x, y, z));
+
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::JSMoveProp(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+    if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
+    {
+        DebuggerPrintf("JSMoveProp: 遊戲參考無效\n");
+        return;
+    }
+
+    if (args.Length() >= 4)
+    {
+        int propIndex = (int)args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
+        float x = (float)args[1]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float y = (float)args[2]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float z = (float)args[3]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+
+        DebuggerPrintf("JS: 移動物件 %d 到位置 (%.2f, %.2f, %.2f)\n", propIndex, x, y, z);
+        g_theV8Subsystem->m_gameReference->MoveProp(propIndex, Vec3(x, y, z));
     }
 }
 
-void V8Subsystem::LogInfo(const std::string& info)
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::JSGetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
-    if (g_theDevConsole)
+    if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("[V8] %s", info.c_str()));
+        DebuggerPrintf("JSGetPlayerPosition: 遊戲參考無效\n");
+        return;
+    }
+
+    Player* player = g_theV8Subsystem->m_gameReference->GetPlayer();
+    Vec3 pos = player ? player->m_position : Vec3(-2.0f, 0.0f, 1.0f);
+
+    v8::Isolate* isolate = args.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Object> posObj = v8::Object::New(isolate);
+
+    posObj->Set(context, v8::String::NewFromUtf8(isolate, "x").ToLocalChecked(), v8::Number::New(isolate, pos.x));
+    posObj->Set(context, v8::String::NewFromUtf8(isolate, "y").ToLocalChecked(), v8::Number::New(isolate, pos.y));
+    posObj->Set(context, v8::String::NewFromUtf8(isolate, "z").ToLocalChecked(), v8::Number::New(isolate, pos.z));
+
+    args.GetReturnValue().Set(posObj);
+    DebuggerPrintf("JS: 取得玩家位置 (%.2f, %.2f, %.2f)\n", pos.x, pos.y, pos.z);
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::JSSetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+    if (!g_theV8Subsystem || !g_theV8Subsystem->m_gameReference)
+    {
+        DebuggerPrintf("JSSetPlayerPosition: 遊戲參考無效\n");
+        return;
+    }
+
+    if (args.Length() >= 3)
+    {
+        float x = (float)args[0]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float y = (float)args[1]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+        float z = (float)args[2]->NumberValue(args.GetIsolate()->GetCurrentContext()).FromMaybe(0.0);
+
+        DebuggerPrintf("JS: 設定玩家位置為 (%.2f, %.2f, %.2f)\n", x, y, z);
+
+        Player* player = g_theV8Subsystem->m_gameReference->GetPlayer();
+        if (player)
+        {
+            player->m_position = Vec3(x, y, z);
+            DebuggerPrintf("JS: 玩家位置設定成功\n");
+        }
     }
 }

@@ -1,94 +1,122 @@
-// V8Subsystem.hpp - 真正的 JavaScript 引擎子系統
-#pragma once
+//----------------------------------------------------------------------------------------------------
+// V8Subsystem.hpp - 整合 JavaScriptManager 功能的版本
+//----------------------------------------------------------------------------------------------------
 
+#pragma once
+// 在任何標頭檔之前加入
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "Engine/Core/EngineCommon.hpp"
 #include <string>
-#include <vector>
 #include <functional>
-#include <memory>
+// #include <v8-function-callback.h>
+#include "ThirdParty/packages/v8-v143-x64.13.0.245.25/include/v8-function-callback.h"
+// #include "ThirdParty/packages/v8-v143-x64/13.0.245.25/include/v8-function.h"
+// #include <v8-function-callback.h>
 
-// 前向宣告 V8 類型，避免在標頭檔中包含 V8
+// 前向宣告 V8 類型
 namespace v8
 {
+    class Object;
     class Isolate;
-    template<class T> class Local;
     class Context;
+    template<class T> class Local;
+    template<class T> class Global;
+    template<class T> class FunctionCallbackInfo;
+    class Value;
+    class Platform;
 }
 
+// 前向宣告遊戲類型
+class Game;
+
 //----------------------------------------------------------------------------------------------------
-// V8 子系統 - 負責所有 JavaScript 相關功能
+// V8 子系統配置
+//----------------------------------------------------------------------------------------------------
+struct sV8SubsystemConfig
+{
+    bool enableDebugging = false;
+    int heapSizeLimit = 256; // MB
+    bool enableGameBindings = true; // 是否啟用遊戲物件綁定
+};
+
+//----------------------------------------------------------------------------------------------------
+// V8 子系統 - 完整的 JavaScript 引擎管理器
+// 包含原本 JavaScriptManager 的所有功能
 //----------------------------------------------------------------------------------------------------
 class V8Subsystem
 {
 public:
-    struct Config
-    {
-        std::string m_scriptsPath = "Data/Scripts/";
-        bool m_enableConsoleOutput = true;
-        bool m_enableDebugger = false;
-    };
-
-    // 建構和解構
-    explicit V8Subsystem(const Config& config);
+    explicit V8Subsystem(sV8SubsystemConfig const& config);
     ~V8Subsystem();
 
     // 子系統生命週期
     void Startup();
     void Shutdown();
-    void Update(float deltaSeconds);
+    void BeginFrame();
+    void EndFrame();
 
-    // 腳本執行
-    bool ExecuteScript(const std::string& scriptContent);
-    bool ExecuteScriptFile(const std::string& filePath);
+    // 基本 JavaScript 執行功能
+    bool ExecuteScript(const std::string& script);
+    bool ExecuteScriptFile(const std::string& filename);
 
-    // 與 C++ 的互動介面
-    void RegisterGlobalFunction(const std::string& name, std::function<void()> func);
-    void RegisterGlobalFunction(const std::string& name, std::function<float(float)> func);
-    void RegisterGlobalFunction(const std::string& name, std::function<void(const std::string&)> func);
+    // 遊戲特定功能（原 JavaScriptManager 功能）
+    void BindGameObjects(Game* game);
+    void UnbindGameObjects();
 
-    // 設定全域變數
-    void SetGlobalNumber(const std::string& name, double value);
-    void SetGlobalString(const std::string& name, const std::string& value);
-    void SetGlobalBoolean(const std::string& name, bool value);
-
-    // 取得全域變數
-    double GetGlobalNumber(const std::string& name);
-    std::string GetGlobalString(const std::string& name);
-    bool GetGlobalBoolean(const std::string& name);
-
-    // 提供給 JavaScriptManager 的介面
-    v8::Isolate* GetIsolate() const;
-    bool GetContext(v8::Local<v8::Context>& outContext) const;
-    bool IsInitialized() const { return m_initialized; }
-
-    // 安全的上下文執行方法
+    // 安全的上下文執行
     bool ExecuteInContext(std::function<bool(v8::Local<v8::Context>)> callback);
 
-    // 錯誤處理
-    std::string GetLastError() const { return m_lastError; }
+    // 狀態查詢
+    bool IsInitialized() const { return m_isInitialized; }
     bool HasError() const { return !m_lastError.empty(); }
-    void ClearError() { m_lastError.clear(); }
+    std::string GetLastError() const { return m_lastError; }
+    std::string GetLastResult() const { return m_lastResult; }
 
-    // 日誌函數（公開給回調函數使用）
-    void LogError(const std::string& error);
-    void LogInfo(const std::string& info);
+    // V8 存取器
+    v8::Isolate* GetIsolate() const { return m_isolate; }
 
 private:
-    // 內部實作細節隱藏在 .cpp 檔中
-    struct V8InternalData;
-    V8InternalData* m_internalData;
-
-    Config m_config;
+    sV8SubsystemConfig m_config;
+    bool m_isInitialized;
     std::string m_lastError;
-    bool m_initialized;
+    std::string m_lastResult;
+    Game* m_gameReference;
+
+    // V8 核心物件
+    static v8::Platform* s_platform;
+    static int s_instanceCount;
+    v8::Isolate* m_isolate;
+    v8::Global<v8::Context>* m_context;
 
     // 內部方法
-    void InitializeV8();
+    bool InitializeV8();
     void ShutdownV8();
-    void SetupBuiltinFunctions();
+    void CreateGlobalObjects();
+    void BindGameFunctions();
+
+    // JavaScript 回呼函數（原 JavaScriptManager 的回呼）
+    static void JSLog(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void JSCreateCube(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void JSMoveProp(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void JSGetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void JSSetPlayerPosition(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+    // 輔助方法
+    bool BindFunction(v8::Local<v8::Context> context, v8::Local<v8::Object> object,
+                     const char* name, v8::FunctionCallback callback);
+    void LogError(const std::string& error);
+    bool ExecuteFallbackScript(const std::string& script);
 };
 
 //----------------------------------------------------------------------------------------------------
-// 全域指標
-//----------------------------------------------------------------------------------------------------
+// 全域 V8 子系統
 extern V8Subsystem* g_theV8Subsystem;
