@@ -1,16 +1,22 @@
-//----------------------------------------------------------------------------------------------------
-// V8Subsystem.hpp - JavaScript 引擎子系統
-//----------------------------------------------------------------------------------------------------
-
+// V8Subsystem.hpp - 真正的 JavaScript 引擎子系統
 #pragma once
 
 #include "Engine/Core/EngineCommon.hpp"
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
+
+// 前向宣告 V8 類型，避免在標頭檔中包含 V8
+namespace v8
+{
+    class Isolate;
+    template<class T> class Local;
+    class Context;
+}
 
 //----------------------------------------------------------------------------------------------------
-// 簡化的 V8 包裝器，避免在標頭檔中包含 V8 標頭
+// V8 子系統 - 負責所有 JavaScript 相關功能
 //----------------------------------------------------------------------------------------------------
 class V8Subsystem
 {
@@ -50,10 +56,22 @@ public:
     std::string GetGlobalString(const std::string& name);
     bool GetGlobalBoolean(const std::string& name);
 
+    // 提供給 JavaScriptManager 的介面
+    v8::Isolate* GetIsolate() const;
+    bool GetContext(v8::Local<v8::Context>& outContext) const;
+    bool IsInitialized() const { return m_initialized; }
+
+    // 安全的上下文執行方法
+    bool ExecuteInContext(std::function<bool(v8::Local<v8::Context>)> callback);
+
     // 錯誤處理
     std::string GetLastError() const { return m_lastError; }
     bool HasError() const { return !m_lastError.empty(); }
     void ClearError() { m_lastError.clear(); }
+
+    // 日誌函數（公開給回調函數使用）
+    void LogError(const std::string& error);
+    void LogInfo(const std::string& info);
 
 private:
     // 內部實作細節隱藏在 .cpp 檔中
@@ -68,8 +86,6 @@ private:
     void InitializeV8();
     void ShutdownV8();
     void SetupBuiltinFunctions();
-    void LogError(const std::string& error);
-    void LogInfo(const std::string& error);
 };
 
 //----------------------------------------------------------------------------------------------------
