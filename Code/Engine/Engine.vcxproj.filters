@@ -313,6 +313,9 @@
     <ClCompile Include="Scripting\V8Subsystem.cpp">
       <Filter>Scripting</Filter>
     </ClCompile>
+    <ClCompile Include="Scripting\IScriptableObject.cpp">
+      <Filter>Scripting</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -607,6 +610,9 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\V8Subsystem.hpp">
+      <Filter>Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\IScriptableObject.hpp">
       <Filter>Scripting</Filter>
     </ClInclude>
   </ItemGroup>
