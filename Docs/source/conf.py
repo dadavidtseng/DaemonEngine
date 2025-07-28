@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
-project = 'Engine'
+project = 'DaemonEngine'
 copyright = '2025, Yu-Wei Tseng'
 author = 'Yu-Wei Tseng'
 release = '1.0.0'
