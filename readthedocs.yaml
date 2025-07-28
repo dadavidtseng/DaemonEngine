@@ -6,8 +6,8 @@ build:
     python: "3.11"
   commands:
     # 安裝 Doxygen
-    - apt-get update
-    - apt-get install -y doxygen
+#    - apt-get update
+#    - apt-get install -y doxygen
     # 生成 Doxygen XML
     - doxygen
     # 建置 Sphinx
