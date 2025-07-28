@@ -6,6 +6,9 @@ build:
     python: "3.11"
   apt_packages:
     - doxygen
+  jobs:
+    pre_build:
+      - doxygen
 
 sphinx:
   configuration: Docs/source/conf.py
