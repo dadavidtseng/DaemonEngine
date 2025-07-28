@@ -6,7 +6,10 @@ author = 'Yu-Wei Tseng'
 release = '1.0.0'
 
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
+    'breathe',
 ]
 
 templates_path = []
@@ -17,3 +20,8 @@ html_static_path = []
 
 # 確保 master document 設定正確
 master_doc = 'index'
+
+breathe_projects = {
+    "Engine": "../doxygen/xml"
+}
+breathe_default_project = "Engine"

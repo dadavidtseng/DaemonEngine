@@ -6,6 +6,15 @@
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 
 //----------------------------------------------------------------------------------------------------
+/**
+     * @brief Constructor with all parameters
+     * @param position 3D position vector
+     * @param color RGBA color value
+     * @param uvTexCoords Texture coordinates
+     * @param tangent Tangent vector
+     * @param bitangent Bitangent vector
+     * @param normal TEST vector
+     */
 Vertex_PCUTBN::Vertex_PCUTBN(Vec3 const&  position,
                              Rgba8 const& color,
                              Vec2 const&  uvTexCoords,
