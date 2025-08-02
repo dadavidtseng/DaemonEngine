@@ -39,7 +39,7 @@ html_theme_options = {
 }
 
 # Logo and branding
-html_logo = '_static/images/daemon-engine-logo.svg'
+html_logo = '_static/images/daemon-engine-logo.png'
 html_favicon = '_static/images/daemon-engine-icon.ico'
 
 # Custom CSS and JS

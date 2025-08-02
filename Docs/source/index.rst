@@ -1,7 +1,7 @@
 Welcome to DaemonEngine!
 ========================
 
-.. image:: _static/images/daemon-engine-logo.svg
+.. image:: _static/images/daemon-engine-logo.png
    :width: 300
    :align: center
    :alt: DaemonEngine Logo
