@@ -12,27 +12,29 @@
 #include <unordered_map>
 #include <string>
 #include <any>
+
 struct MethodCallbackData
 {
     std::shared_ptr<IScriptableObject> object;
-    std::string methodName;
+    std::string                        methodName;
 };
+
 //----------------------------------------------------------------------------------------------------
 // V8 子系統設定結構
 //----------------------------------------------------------------------------------------------------
 struct sV8SubsystemConfig
 {
-    bool enableDebugging = false;        // 是否啟用除錯功能
-    size_t heapSizeLimit = 256;          // 堆疊大小限制 (MB)
-    bool enableScriptBindings = true;    // 是否啟用腳本綁定 (取代原本的 enableGameBindings)
-    std::string scriptPath = "Data/Scripts/"; // 腳本檔案路徑
-    bool enableConsoleOutput = true;     // 是否啟用 console.log 輸出
+    bool        enableDebugging      = false;        // 是否啟用除錯功能
+    size_t      heapSizeLimit        = 256;          // 堆疊大小限制 (MB)
+    bool        enableScriptBindings = true;    // 是否啟用腳本綁定 (取代原本的 enableGameBindings)
+    std::string scriptPath           = "Data/Scripts/"; // 腳本檔案路徑
+    bool        enableConsoleOutput  = true;     // 是否啟用 console.log 輸出
 };
 
 //----------------------------------------------------------------------------------------------------
 // 全域腳本函式的類型定義
 //----------------------------------------------------------------------------------------------------
-using ScriptFunction = std::function<std::any(const std::vector<std::any>&)>;
+using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 
 //----------------------------------------------------------------------------------------------------
 // V8 子系統類別
@@ -41,26 +43,26 @@ using ScriptFunction = std::function<std::any(const std::vector<std::any>&)>;
 class V8Subsystem
 {
 public:
-    explicit V8Subsystem(const sV8SubsystemConfig& config);
-     ~V8Subsystem();
+    explicit V8Subsystem(sV8SubsystemConfig const& config);
+    ~V8Subsystem();
 
     // EngineSubsystem 介面實作
-     void Startup() ;
-     void Shutdown() ;
-     void Update() ;
+    void Startup();
+    void Shutdown();
+    void Update();
 
     //------------------------------------------------------------------------------------------------
     // 腳本執行功能
     //------------------------------------------------------------------------------------------------
 
     // 執行 JavaScript 程式碼字串
-    bool ExecuteScript(const std::string& script);
+    bool ExecuteScript(std::string const& script);
 
     // 執行 JavaScript 檔案
-    bool ExecuteScriptFile(const std::string& filename);
+    bool ExecuteScriptFile(std::string const& filename);
 
     // 執行 JavaScript 程式碼並回傳結果
-    std::any ExecuteScriptWithResult(const std::string& script);
+    std::any ExecuteScriptWithResult(std::string const& script);
 
     //------------------------------------------------------------------------------------------------
     // 錯誤處理和狀態查詢
@@ -123,10 +125,11 @@ public:
     // 取得 JavaScript 執行統計資訊
     struct ExecutionStats
     {
-        size_t scriptsExecuted = 0;
-        size_t errorsEncountered = 0;
+        size_t scriptsExecuted    = 0;
+        size_t errorsEncountered  = 0;
         size_t totalExecutionTime = 0; // 毫秒
     };
+
     ExecutionStats GetExecutionStats() const;
 
     // 重設執行統計
@@ -142,11 +145,12 @@ public:
     // 取得記憶體使用情況
     struct MemoryUsage
     {
-        size_t usedHeapSize = 0;       // 已使用的堆疊大小 (bytes)
-        size_t totalHeapSize = 0;      // 總堆疊大小 (bytes)
-        size_t heapSizeLimit = 0;      // 堆疊大小限制 (bytes)
+        size_t usedHeapSize    = 0;       // 已使用的堆疊大小 (bytes)
+        size_t totalHeapSize   = 0;      // 總堆疊大小 (bytes)
+        size_t heapSizeLimit   = 0;      // 堆疊大小限制 (bytes)
         double usagePercentage = 0.0;  // 使用百分比
     };
+
     MemoryUsage GetMemoryUsage() const;
 
 private:
@@ -168,8 +172,8 @@ private:
     std::unordered_map<std::string, ScriptFunction> m_globalFunctions;
 
     // 狀態追蹤
-    bool m_isInitialized = false;
-    bool m_hasError = false;
+    bool        m_isInitialized = false;
+    bool        m_hasError      = false;
     std::string m_lastError;
     std::string m_lastResult;
 
@@ -208,31 +212,9 @@ private:
     std::any ConvertFromV8Value(void* v8Value);
 
     // 驗證腳本檔案路徑
-    std::string ValidateScriptPath(const std::string& filename) const;
-
-public:
-    //------------------------------------------------------------------------------------------------
-    // 靜態全域存取（與現有程式碼相容）
-    //------------------------------------------------------------------------------------------------
-
-    // 取得全域 V8 子系統實例的指標（如果存在）
-    static V8Subsystem* GetInstance();
-
-private:
-    // 全域實例指標（為了與現有的 g_theV8Subsystem 相容）
-    static V8Subsystem* s_instance;
-
+    std::string ValidateScriptPath(std::string const& filename) const;
 
     // 儲存回呼資料的容器（避免記憶體洩漏）
     std::vector<std::unique_ptr<MethodCallbackData>> m_methodCallbacks;
-    std::vector<std::unique_ptr<ScriptFunction>> m_functionCallbacks;
-    //------------------------------------------------------------------------------------------------
-    // 移除的舊方法（不再支援）
-    //------------------------------------------------------------------------------------------------
-
-    // 以下方法在重構後被移除，因為違反了分層架構原則：
-    // void BindGameObjects(Game* game);  // 已移除 - 使用 RegisterScriptableObject 替代
-
-    // 注意：如果您的現有程式碼中還有呼叫 BindGameObjects，
-    // 需要改為使用 RegisterScriptableObject 和 GameScriptInterface
+    std::vector<std::unique_ptr<ScriptFunction>>     m_functionCallbacks;
 };

@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------------------------------------
-// V8Subsystem.cpp (重構後)
-// JavaScript V8 引擎子系統實作 - 不再依賴特定的遊戲類別
+// V8Subsystem.cpp
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/V8Subsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -41,23 +41,22 @@ V8Subsystem* g_theV8Subsystem = nullptr;
 //----------------------------------------------------------------------------------------------------
 // 靜態成員初始化
 //----------------------------------------------------------------------------------------------------
-V8Subsystem* V8Subsystem::s_instance = nullptr;
+// V8Subsystem* V8Subsystem::s_instance = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-V8Subsystem::V8Subsystem(const sV8SubsystemConfig& config)
-    : m_config(config)
-      , m_impl(std::make_unique<V8Implementation>())
-      , m_isInitialized(false)
-      , m_hasError(false)
+V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
+    : m_impl(std::make_unique<V8Implementation>()),
+      m_config(config)
+
 {
     // 設定全域實例
-    if (s_instance == nullptr)
+    if (g_theV8Subsystem == nullptr)
     {
-        s_instance = this;
+        g_theV8Subsystem = this;
     }
     else
     {
-        ERROR_AND_DIE("V8Subsystem: 只能有一個 V8Subsystem 實例");
+        ERROR_AND_DIE("V8Subsystem: 只能有一個 V8Subsystem 實例")
     }
 }
 
@@ -70,16 +69,10 @@ V8Subsystem::~V8Subsystem()
     }
 
     // 清除全域實例
-    if (s_instance == this)
+    if (g_theV8Subsystem == this)
     {
-        s_instance = nullptr;
+        g_theV8Subsystem = nullptr;
     }
-}
-
-//----------------------------------------------------------------------------------------------------
-V8Subsystem* V8Subsystem::GetInstance()
-{
-    return s_instance;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -568,20 +561,19 @@ void V8Subsystem::SetupV8Bindings()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::CreateObjectBindings()
 {
-    if (!m_impl->isolate)
-        return;
+    if (!m_impl->isolate) return;
 
-    v8::Isolate::Scope isolateScope(m_impl->isolate);
-    v8::HandleScope handleScope(m_impl->isolate);
+    v8::Isolate::Scope     isolateScope(m_impl->isolate);
+    v8::HandleScope        handleScope(m_impl->isolate);
     v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope contextScope(context);
+    v8::Context::Scope     contextScope(context);
 
     v8::Local<v8::Object> global = context->Global();
 
     for (const auto& pair : m_scriptableObjects)
     {
-        const std::string& objectName = pair.first;
-        std::shared_ptr<IScriptableObject> object = pair.second;
+        const std::string&                 objectName = pair.first;
+        std::shared_ptr<IScriptableObject> object     = pair.second;
 
         DebuggerPrintf("V8Subsystem: 創建 V8 綁定 - 物件: %s\n", objectName.c_str());
 
@@ -597,12 +589,12 @@ void V8Subsystem::CreateObjectBindings()
 
             // 為每個方法創建 V8 函式回呼
             auto methodCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
-                v8::Isolate* isolate = args.GetIsolate();
+                v8::Isolate*    isolate = args.GetIsolate();
                 v8::HandleScope scope(isolate);
 
                 // 從函式的內部欄位取得物件和方法名稱
                 v8::Local<v8::External> objectExternal = v8::Local<v8::External>::Cast(args.Data());
-                auto* callbackData = static_cast<MethodCallbackData*>(objectExternal->Value());
+                auto*                   callbackData   = static_cast<MethodCallbackData*>(objectExternal->Value());
 
                 // 轉換參數
                 std::vector<std::any> cppArgs;
@@ -666,8 +658,8 @@ void V8Subsystem::CreateObjectBindings()
             };
 
             // 創建回呼資料
-            auto callbackData = std::make_unique<MethodCallbackData>();
-            callbackData->object = object;
+            auto callbackData        = std::make_unique<MethodCallbackData>();
+            callbackData->object     = object;
             callbackData->methodName = method.name;
 
             v8::Local<v8::External> external = v8::External::New(m_impl->isolate, callbackData.get());
@@ -677,8 +669,8 @@ void V8Subsystem::CreateObjectBindings()
 
             // 將方法添加到 JavaScript 物件
             jsObject->Set(context,
-                         v8::String::NewFromUtf8(m_impl->isolate, method.name.c_str()).ToLocalChecked(),
-                         methodFunction).Check();
+                          v8::String::NewFromUtf8(m_impl->isolate, method.name.c_str()).ToLocalChecked(),
+                          methodFunction).Check();
 
             // 儲存回呼資料避免被釋放
             m_methodCallbacks.push_back(std::move(callbackData));
@@ -686,8 +678,8 @@ void V8Subsystem::CreateObjectBindings()
 
         // 將物件綁定到全域範圍
         global->Set(context,
-                   v8::String::NewFromUtf8(m_impl->isolate, objectName.c_str()).ToLocalChecked(),
-                   jsObject).Check();
+                    v8::String::NewFromUtf8(m_impl->isolate, objectName.c_str()).ToLocalChecked(),
+                    jsObject).Check();
 
         DebuggerPrintf("V8Subsystem: 物件 %s 已綁定到 JavaScript 全域範圍\n", objectName.c_str());
     }
@@ -696,31 +688,30 @@ void V8Subsystem::CreateObjectBindings()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::CreateFunctionBindings()
 {
-    if (!m_impl->isolate)
-        return;
+    if (!m_impl->isolate) return;
 
-    v8::Isolate::Scope isolateScope(m_impl->isolate);
-    v8::HandleScope handleScope(m_impl->isolate);
+    v8::Isolate::Scope     isolateScope(m_impl->isolate);
+    v8::HandleScope        handleScope(m_impl->isolate);
     v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope contextScope(context);
+    v8::Context::Scope     contextScope(context);
 
     v8::Local<v8::Object> global = context->Global();
 
     for (const auto& pair : m_globalFunctions)
     {
-        const std::string& functionName = pair.first;
-        const ScriptFunction& function = pair.second;
+        const std::string&    functionName = pair.first;
+        const ScriptFunction& function     = pair.second;
 
         DebuggerPrintf("V8Subsystem: 綁定全域函式: %s\n", functionName.c_str());
 
         // 創建函式回呼
         auto functionCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
-            v8::Isolate* isolate = args.GetIsolate();
+            v8::Isolate*    isolate = args.GetIsolate();
             v8::HandleScope scope(isolate);
 
             // 從回呼資料取得 C++ 函式
             v8::Local<v8::External> external = v8::Local<v8::External>::Cast(args.Data());
-            auto* function = static_cast<ScriptFunction*>(external->Value());
+            auto*                   function = static_cast<ScriptFunction*>(external->Value());
 
             // 轉換參數
             std::vector<std::any> cppArgs;
@@ -766,16 +757,16 @@ void V8Subsystem::CreateFunctionBindings()
         };
 
         // 創建外部資料來儲存函式指標
-        auto functionPtr = std::make_unique<ScriptFunction>(function);
-        v8::Local<v8::External> external = v8::External::New(m_impl->isolate, functionPtr.get());
+        auto                    functionPtr = std::make_unique<ScriptFunction>(function);
+        v8::Local<v8::External> external    = v8::External::New(m_impl->isolate, functionPtr.get());
 
         // 修正：直接創建函式
         v8::Local<v8::Function> jsFunction = v8::Function::New(context, functionCallback, external).ToLocalChecked();
 
         // 將函式綁定到全域範圍
         global->Set(context,
-                   v8::String::NewFromUtf8(m_impl->isolate, functionName.c_str()).ToLocalChecked(),
-                   jsFunction).Check();
+                    v8::String::NewFromUtf8(m_impl->isolate, functionName.c_str()).ToLocalChecked(),
+                    jsFunction).Check();
 
         // 儲存函式指標避免被釋放
         m_functionCallbacks.push_back(std::move(functionPtr));
@@ -785,13 +776,12 @@ void V8Subsystem::CreateFunctionBindings()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::SetupBuiltinObjects()
 {
-    if (!m_impl->isolate)
-        return;
+    if (!m_impl->isolate) return;
 
-    v8::Isolate::Scope isolateScope(m_impl->isolate);
-    v8::HandleScope handleScope(m_impl->isolate);
+    v8::Isolate::Scope     isolateScope(m_impl->isolate);
+    v8::HandleScope        handleScope(m_impl->isolate);
     v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope contextScope(context);
+    v8::Context::Scope     contextScope(context);
 
     if (m_config.enableConsoleOutput)
     {
@@ -802,7 +792,7 @@ void V8Subsystem::SetupBuiltinObjects()
 
         // 創建 console.log 方法回呼
         auto logCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
-            v8::Isolate* isolate = args.GetIsolate();
+            v8::Isolate*    isolate = args.GetIsolate();
             v8::HandleScope scope(isolate);
 
             std::string output = "CONSOLE: ";
@@ -838,14 +828,14 @@ void V8Subsystem::SetupBuiltinObjects()
         // 修正：直接創建函式
         v8::Local<v8::Function> logFunction = v8::Function::New(context, logCallback).ToLocalChecked();
         console->Set(context,
-                    v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(),
-                    logFunction).Check();
+                     v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(),
+                     logFunction).Check();
 
         // 將 console 物件綁定到全域範圍
         v8::Local<v8::Object> global = context->Global();
         global->Set(context,
-                   v8::String::NewFromUtf8(m_impl->isolate, "console").ToLocalChecked(),
-                   console).Check();
+                    v8::String::NewFromUtf8(m_impl->isolate, "console").ToLocalChecked(),
+                    console).Check();
     }
 }
 
@@ -864,7 +854,7 @@ void* V8Subsystem::ConvertToV8Value(const std::any& value)
 {
     // 實作 C++ std::any 到 V8 值的轉換
     // 這是一個複雜的函式，需要處理各種類型
-    UNUSED(value);
+    UNUSED(value)
     return nullptr; // 占位符
 }
 
@@ -872,7 +862,7 @@ void* V8Subsystem::ConvertToV8Value(const std::any& value)
 std::any V8Subsystem::ConvertFromV8Value(void* v8Value)
 {
     // 實作 V8 值到 C++ std::any 的轉換
-    UNUSED(v8Value);
+    UNUSED(v8Value)
     return std::any{}; // 占位符
 }
 

@@ -13,8 +13,8 @@
 //----------------------------------------------------------------------------------------------------
 struct ScriptMethodResult
 {
-    bool success = false;
-    std::any result;
+    bool        success = false;
+    std::any    result;
     std::string errorMessage;
 
     // 便利建構函式
@@ -22,14 +22,14 @@ struct ScriptMethodResult
     {
         ScriptMethodResult result;
         result.success = true;
-        result.result = value;
+        result.result  = value;
         return result;
     }
 
     static ScriptMethodResult Error(const std::string& message)
     {
         ScriptMethodResult result;
-        result.success = false;
+        result.success      = false;
         result.errorMessage = message;
         return result;
     }
@@ -40,15 +40,15 @@ struct ScriptMethodResult
 //----------------------------------------------------------------------------------------------------
 struct ScriptMethodInfo
 {
-    std::string name;
-    std::string description;
+    std::string              name;
+    std::string              description;
     std::vector<std::string> parameterTypes;
-    std::string returnType;
+    std::string              returnType;
 
-    ScriptMethodInfo(const std::string& methodName,
-                    const std::string& desc = "",
-                    const std::vector<std::string>& params = {},
-                    const std::string& retType = "void")
+    ScriptMethodInfo(const std::string&              methodName,
+                     const std::string&              desc    = "",
+                     const std::vector<std::string>& params  = {},
+                     const std::string&              retType = "void")
         : name(methodName), description(desc), parameterTypes(params), returnType(retType)
     {
     }
@@ -73,52 +73,20 @@ public:
     // methodName: 要呼叫的方法名稱
     // args: 方法參數，使用 std::any 來支援任意類型
     // 回傳: ScriptMethodResult 包含執行結果或錯誤資訊
-    virtual ScriptMethodResult CallMethod(const std::string& methodName,
-                                        const std::vector<std::any>& args) = 0;
+    virtual ScriptMethodResult CallMethod(std::string const& methodName, std::vector<std::any> const& args) = 0;
 
     // 取得物件的屬性值（可選實作）
-    virtual std::any GetProperty(const std::string& propertyName) const
-    {
-        return std::any{};
-    }
+    virtual std::any GetProperty(std::string const& propertyName) const;
 
     // 設定物件的屬性值（可選實作）
-    virtual bool SetProperty(const std::string& propertyName, const std::any& value)
-    {
-        return false;
-    }
+    virtual bool SetProperty(const std::string& propertyName, const std::any& value);
 
     // 取得可用屬性清單（可選實作）
-    virtual std::vector<std::string> GetAvailableProperties() const
-    {
-        return {};
-    }
+    virtual std::vector<std::string> GetAvailableProperties() const;
 
     // 檢查是否有指定的方法
-    bool HasMethod(const std::string& methodName) const
-    {
-        auto methods = GetAvailableMethods();
-        for (const auto& method : methods)
-        {
-            if (method.name == methodName)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    bool HasMethod(std::string const& methodName) const;
 
     // 檢查是否有指定的屬性
-    virtual bool HasProperty(const std::string& propertyName) const
-    {
-        auto properties = GetAvailableProperties();
-        for (const auto& prop : properties)
-        {
-            if (prop == propertyName)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    virtual bool HasProperty(std::string const& propertyName) const;
 };
