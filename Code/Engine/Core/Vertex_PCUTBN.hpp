@@ -10,12 +10,7 @@
 
 //----------------------------------------------------------------------------------------------------
 /**
- * @file Vertex_PCUTBN.hpp
- * @brief Vertex structure containing position, color, UV coordinates, tangent, bitangent, and normal
- */
-
-/**
- * @class Vertex_PCUTBN
+ * @struct Vertex_PCUTBN
  * @brief A vertex structure for rendering with complete geometric information
  *
  * This structure contains all necessary data for advanced rendering techniques

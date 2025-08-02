@@ -4,14 +4,14 @@ API Reference
 Core Module
 -----------
 
-Vertex_PCU Class
-~~~~~~~~~~~~~~~~~~~
-.. doxygenclass:: Vertex_PCU
+Vertex_PCU Struct
+~~~~~~~~~~~~~~~~~
+.. doxygenstruct:: Vertex_PCU
    :members:
    :undoc-members:
 
 Vertex_PCUTBN Struct
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 .. doxygenstruct:: Vertex_PCUTBN
    :members:
    :undoc-members:
