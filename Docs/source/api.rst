@@ -6,6 +6,9 @@ Core Module
 
 Vertex_PCUTBN Class
 ~~~~~~~~~~~~~~~~~~~
+.. doxygenclass:: Vertex_PCU
+   :members:
+   :undoc-members:
 
 .. doxygenclass:: Vertex_PCUTBN
    :members:
