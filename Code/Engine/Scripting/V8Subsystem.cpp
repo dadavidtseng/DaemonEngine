@@ -17,8 +17,16 @@
 // 注意：您可能需要根據實際的 V8 設定調整這些 include
 
 
+// 抑制 V8 第三方程式庫的警告
+#pragma warning(push)
+#pragma warning(disable: 4100) // 未使用的參數
+#pragma warning(disable: 4127) // 條件運算式為常數
+#pragma warning(disable: 4324) // 結構體填補警告
+
 #include "v8.h"
 #include "libplatform/libplatform.h"
+
+#pragma warning(pop)
 
 
 //----------------------------------------------------------------------------------------------------
