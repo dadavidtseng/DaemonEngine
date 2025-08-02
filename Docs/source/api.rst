@@ -10,9 +10,9 @@ Vertex_PCU Class
    :members:
    :undoc-members:
 
-Vertex_PCUTBN Class
+Vertex_PCUTBN Struct
 ~~~~~~~~~~~~~~~~~~~
-.. doxygenclass:: Vertex_PCUTBN
+.. doxygenstruct:: Vertex_PCUTBN
    :members:
    :undoc-members:
 
