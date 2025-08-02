@@ -1,0 +1,199 @@
+/* DaemonEngine 客製化樣式 */
+
+/* 主品牌色彩 */
+:root {
+    --daemon-primary: #2c3e50;
+    --daemon-secondary: #3498db;
+    --daemon-accent: #e74c3c;
+    --daemon-success: #27ae60;
+    --daemon-warning: #f39c12;
+}
+
+/* 側邊欄搜尋區域 */
+.wy-side-nav-search {
+    background-color: var(--daemon-primary);
+}
+
+.wy-side-nav-search .wy-dropdown > a,
+.wy-side-nav-search > a {
+    color: #ecf0f1;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.wy-side-nav-search input[type=text] {
+    border-radius: 4px;
+    border: 1px solid #34495e;
+}
+
+/* Logo 樣式 */
+.wy-side-nav-search .wy-dropdown > a img,
+.wy-side-nav-search > a img {
+    max-height: 45px;
+    width: auto;
+    margin-bottom: 0.5em;
+}
+
+/* 程式碼區塊優化 */
+.highlight {
+    background-color: #2b2b2b;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    border-left: 4px solid var(--daemon-secondary);
+}
+
+.highlight pre {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 程式碼行號 */
+.highlight .linenos {
+    background-color: #404040;
+    color: #888;
+    padding-right: 8px;
+    margin-right: 8px;
+    border-right: 1px solid #555;
+}
+
+/* API 文件特殊樣式 */
+.api-section {
+    border-left: 4px solid var(--daemon-secondary);
+    padding-left: 16px;
+    margin: 16px 0;
+    background-color: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+}
+
+/* 提示框樣式 */
+.admonition {
+    border-radius: 6px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admonition.note {
+    background-color: #e3f2fd;
+    border-left: 4px solid var(--daemon-secondary);
+}
+
+.admonition.tip {
+    background-color: #e8f5e8;
+    border-left: 4px solid var(--daemon-success);
+}
+
+.admonition.warning {
+    background-color: #fff3cd;
+    border-left: 4px solid var(--daemon-warning);
+}
+
+.admonition.danger {
+    background-color: #f8d7da;
+    border-left: 4px solid var(--daemon-accent);
+}
+
+/* 標題樣式增強 */
+.rst-content h1, .rst-content h2, .rst-content h3 {
+    color: var(--daemon-primary);
+}
+
+.rst-content h1 {
+    border-bottom: 3px solid var(--daemon-secondary);
+    padding-bottom: 0.5em;
+}
+
+.rst-content h2 {
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 0.3em;
+}
+
+/* 表格樣式 */
+.rst-content table.docutils {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.rst-content table.docutils th {
+    background-color: var(--daemon-primary);
+    color: white;
+    border: none;
+}
+
+.rst-content table.docutils td {
+    border: 1px solid #ecf0f1;
+}
+
+/* 導航按鈕 */
+.btn {
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.btn-neutral {
+    background-color: var(--daemon-primary);
+    border-color: var(--daemon-primary);
+}
+
+.btn-neutral:hover {
+    background-color: #34495e;
+    border-color: #34495e;
+}
+
+/* 頁腳客製化 */
+.footer-custom {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+    border-top: 2px solid var(--daemon-secondary);
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+.footer-custom p {
+    margin: 0;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .wy-side-nav-search > a img {
+        max-height: 35px;
+    }
+
+    .highlight {
+        padding: 12px;
+        margin: 12px 0;
+    }
+}
+
+/* 自訂類別 */
+.engine-feature {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.engine-feature h3 {
+    color: white;
+    margin-top: 0;
+}
+
+/* 程式碼標題 */
+.code-block-caption {
+    background-color: var(--daemon-primary);
+    color: white;
+    padding: 8px 16px;
+    font-weight: bold;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+}
+
+.code-block-caption + .highlight {
+    margin-top: 0;
+    border-radius: 0 0 6px 6px;
+}

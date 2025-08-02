@@ -1,0 +1,26 @@
+{# 自訂搜尋框模板 #}
+{% if pagename != "search" %}
+<div id="searchbox" style="display: none" role="search">
+    <h3>{{ _('Quick search') }}</h3>
+    <div class="searchformwrapper">
+        <form class="search" action="{{ pathto('search') }}" method="get">
+            <input type="text" name="q" placeholder="Search DaemonEngine docs..." />
+            <input type="submit" value="{{ _('Go') }}" />
+            <input type="hidden" name="check_keywords" value="yes" />
+            <input type="hidden" name="area" value="default" />
+        </form>
+    </div>
+    
+    {# 添加搜尋提示 #}
+    <div class="search-tips" style="margin-top: 10px; font-size: 0.85em; color: #666;">
+        <strong>💡 Search Tips:</strong>
+        <ul style="margin: 5px 0; padding-left: 20px;">
+            <li>Try "Vertex" for vertex operations</li>
+            <li>Search "Renderer" for graphics functions</li>
+            <li>Use "Math" for mathematical utilities</li>
+        </ul>
+    </div>
+</div>
+
+<script type="text/javascript">$('#searchbox').show(0);</script>
+{% endif %}

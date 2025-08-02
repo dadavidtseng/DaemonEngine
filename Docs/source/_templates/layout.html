@@ -1,0 +1,103 @@
+{% extends "!layout.html" %}
+
+{# 自訂頁面頭部 #}
+{% block extrahead %}
+    {{ super() }}
+    <link rel="shortcut icon" href="{{ pathto('_static/images/daemon-engine-icon.ico', 1) }}">
+    <meta name="description" content="DaemonEngine - A powerful 2D game engine built with C++. Complete documentation and API reference.">
+    <meta name="keywords" content="game engine, 2D graphics, C++, rendering, DirectX, FMOD, gaming">
+    <meta name="author" content="Yu-Wei Tseng">
+    <meta property="og:title" content="{{ title }} - DaemonEngine Documentation">
+    <meta property="og:description" content="Complete documentation for DaemonEngine, a modern 2D game engine.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ pathto('_static/images/daemon-engine-logo.svg', 1) }}">
+    
+    {# Google Analytics 或其他追蹤代碼可以放在這裡 #}
+    
+    <style>
+        /* 快速載入時的樣式優化 */
+        .wy-nav-content {
+            background: #fcfcfc;
+        }
+    </style>
+{% endblock %}
+
+{# 自訂導航欄 #}
+{% block document %}
+    {# 添加版本資訊橫幅 #}
+    {% if show_version_warning %}
+    <div class="version-warning" style="background: #f39c12; color: white; padding: 10px; text-align: center; font-weight: bold;">
+        ⚠️ You are viewing documentation for DaemonEngine {{ version }}. This is a development version.
+    </div>
+    {% endif %}
+    
+    {{ super() }}
+{% endblock %}
+
+{# 自訂側邊欄內容 #}
+{% block sidebartoc %}
+    {{ super() }}
+    
+    {# 添加快速連結區塊 #}
+    <div class="sidebar-section" style="padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 4px;">
+        <h4 style="margin-top: 0; color: #2c3e50;">🔗 Quick Links</h4>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="margin: 5px 0;">
+                <a href="https://github.com/dadavidtseng/DaemonEngine" target="_blank" style="color: #3498db;">
+                    📁 Source Code
+                </a>
+            </li>
+            <li style="margin: 5px 0;">
+                <a href="{{ pathto('api/index') }}" style="color: #3498db;">
+                    📖 API Reference
+                </a>
+            </li>
+            <li style="margin: 5px 0;">
+                <a href="{{ pathto('getting-started/index') }}" style="color: #3498db;">
+                    🚀 Getting Started
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    {# 添加版本選擇器 #}
+    <div class="sidebar-section" style="padding: 15px; margin: 10px 0; background: #e8f4fd; border-radius: 4px;">
+        <h4 style="margin-top: 0; color: #2c3e50;">📋 Version</h4>
+        <p style="margin: 0; font-size: 0.9em; color: #666;">
+            Current: <strong>{{ version }}</strong><br>
+            Released: <strong>{{ release_date or "Latest" }}</strong>
+        </p>
+    </div>
+{% endblock %}
+
+{# 自訂頁腳 #}
+{% block footer %}
+    {{ super() }}
+    <div class="footer-custom">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <p style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                        Built with ❤️ by Yu-Wei Tseng | 
+                        <a href="https://github.com/dadavidtseng/DaemonEngine" target="_blank" style="color: #3498db;">
+                            DaemonEngine on GitHub
+                        </a>
+                    </p>
+                </div>
+                <div style="font-size: 0.85em; color: #95a5a6;">
+                    Documentation generated on {{ build_date or "recent" }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {# 添加自訂 JavaScript #}
+    <script>
+        // 設定全域變數供自訂 JS 使用
+        window.DAEMON_ENGINE_CONFIG = {
+            version: '{{ version }}',
+            project: '{{ project }}',
+            basePath: '{{ pathto("", 1) }}'
+        };
+    </script>
+{% endblock %}
