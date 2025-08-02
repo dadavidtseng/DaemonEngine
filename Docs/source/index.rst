@@ -50,19 +50,38 @@ Quick Navigation
        <div style="border: 2px solid #3498db; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
            <h3 style="color: #2c3e50; margin-top: 0;">🚀 Getting Started</h3>
            <p>New to DaemonEngine? Start here to set up your development environment and create your first project.</p>
-           <a href="getting-started.html" style="background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Get Started →</a>
+           <a href="quickstart.html" style="background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Get Started →</a>
        </div>
-       
+
        <div style="border: 2px solid #27ae60; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
            <h3 style="color: #2c3e50; margin-top: 0;">📚 API Reference</h3>
-           <p>Complete API documentation generated from source code with detailed examples and usage notes.</p>
+           <p>Complete API documentation overview with links to detailed module documentation and usage guides.</p>
            <a href="api.html" style="background: #27ae60; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Browse API →</a>
        </div>
-       
+
        <div style="border: 2px solid #e74c3c; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
            <h3 style="color: #2c3e50; margin-top: 0;">🎮 Tutorials</h3>
            <p>Step-by-step guides to learn DaemonEngine features through practical examples and projects.</p>
            <a href="quickstart.html" style="background: #e74c3c; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Learn More →</a>
+       </div>
+   </div>
+
+.. raw:: html
+
+   <div style="margin: 30px 0;">
+       <h3 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">🔧 Module Documentation</h3>
+       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+           <div style="border: 2px solid #9b59b6; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
+               <h4 style="color: #2c3e50; margin-top: 0;">⚙️ Core Module</h4>
+               <p>Essential data structures, vertex definitions, and string management classes that form the foundation of the engine.</p>
+               <a href="core_module.html" style="background: #9b59b6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Core API →</a>
+           </div>
+
+           <div style="border: 2px solid #f39c12; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
+               <h4 style="color: #2c3e50; margin-top: 0;">🎨 Renderer Module</h4>
+               <p>DirectX 11 rendering system, graphics pipeline management, and visual effects processing classes.</p>
+               <a href="renderer_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
+           </div>
        </div>
    </div>
 
@@ -95,27 +114,27 @@ Here's a simple example of creating a window with DaemonEngine:
    :linenos:
 
    #include "Engine/Core/Engine.hpp"
-   
+
    int main()
    {
        // Initialize the engine
        Engine engine;
        engine.Initialize();
-       
+
        // Main game loop
        while (engine.IsRunning())
        {
            engine.Update();
            engine.Render();
        }
-       
+
        // Cleanup
        engine.Shutdown();
        return 0;
    }
 
 .. tip::
-   **Pro Tip**: Always call ``engine.Initialize()`` before starting the main loop, 
+   **Pro Tip**: Always call ``engine.Initialize()`` before starting the main loop,
    and ``engine.Shutdown()`` when your application exits for proper resource cleanup.
 
 Latest Updates
@@ -127,7 +146,7 @@ Latest Updates
 **Version 1.0.0** (Current Development)
 
 * ✅ Core engine architecture
-* ✅ DirectX 11 rendering backend  
+* ✅ DirectX 11 rendering backend
 * ✅ Math library implementation
 * ✅ FMOD audio integration
 * 🚧 Documentation and examples
@@ -142,7 +161,7 @@ Community & Support
        <h3 style="color: white; margin-top: 0;">🤝 Join the Community</h3>
        <p style="margin-bottom: 15px;">Get help, share your projects, and connect with other developers:</p>
        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-           <a href="https://github.com/dadavidtseng/DaemonEngine" target="_blank" 
+           <a href="https://github.com/dadavidtseng/DaemonEngine" target="_blank"
               style="background: rgba(255,255,255,0.2); color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">
               📁 GitHub Repository
            </a>
@@ -172,6 +191,8 @@ Documentation Contents
 
    quickstart
    api
+   core_module
+   renderer_module
 
 .. toctree::
    :maxdepth: 1
