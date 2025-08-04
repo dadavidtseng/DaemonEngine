@@ -1,12 +1,16 @@
-# Configuration file for the Sphinx documentation builder.
+# ----------------------------------------------------------------------------------------------------
+# conf.py
+# ----------------------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------------------
+# Configuration file for the Sphinx documentation builder.
 project = 'DaemonEngine'
 copyright = '2025, Yu-Wei Tseng'
 author = 'Yu-Wei Tseng'
 release = '1.0.0'
 
-# -- General configuration ---------------------------------------------------
-
+# ----------------------------------------------------------------------------------------------------
+# General configuration
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
@@ -27,7 +31,6 @@ html_static_path = ['_static']
 # Theme options
 html_theme_options = {
     'logo_only': False,
-    'display_version': True,
     'prev_next_buttons_location': 'bottom',
     'style_external_links': False,
     'style_nav_header_background': '#2c3e50',
@@ -40,7 +43,7 @@ html_theme_options = {
 
 # Logo and branding
 html_logo = '_static/images/daemon-engine-logo.png'
-html_favicon = '_static/images/daemon-engine-icon.ico'
+html_favicon = '_static/images/daemon-engine-logo.ico'
 
 # Custom CSS and JS
 html_css_files = [

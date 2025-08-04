@@ -1,5 +1,5 @@
-Renderer Module
-===============
+Render Module
+=============
 
 The Renderer Module contains Daemon Engine's rendering system functionality. This module is responsible for handling all graphics rendering and visual effects.
 
@@ -64,6 +64,6 @@ For optimal rendering performance, it is recommended to:
 Related Resources
 -----------------
 
-* :doc:`api` - Back to API Overview
+* :doc:`../api` - Back to API Overview
 * :doc:`core_module` - Core Module Documentation
-* :doc:`quickstart` - Quick Start Guide
+* :doc:`../quickstart` - Quick Start Guide

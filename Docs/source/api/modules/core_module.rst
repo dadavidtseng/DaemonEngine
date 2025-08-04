@@ -53,6 +53,6 @@ Usage Example
 Related Resources
 -----------------
 
-* :doc:`api` - Back to API Overview
-* :doc:`renderer_module` - Renderer Module Documentation
-* :doc:`quickstart` - Quick Start Guide
+* :doc:`../api` - Back to API Overview
+* :doc:`render_module` - Renderer Module Documentation
+* :doc:`../quickstart` - Quick Start Guide

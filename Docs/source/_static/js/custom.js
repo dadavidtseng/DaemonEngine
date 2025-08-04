@@ -1,5 +1,8 @@
-// DaemonEngine 客製化 JavaScript
+//----------------------------------------------------------------------------------------------------
+// custom.js
+//----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function() {
 
     // 為程式碼區塊添加複製按鈕
@@ -15,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addExternalLinkIcons();
 });
 
+//----------------------------------------------------------------------------------------------------
 // 為程式碼區塊添加複製按鈕
 function addCopyButtons() {
     const codeBlocks = document.querySelectorAll('.highlight pre');

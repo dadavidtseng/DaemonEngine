@@ -1,10 +1,17 @@
+.. ----------------------------------------------------------------------------------------------------
+.. index.rst
+.. ----------------------------------------------------------------------------------------------------
+
+.. ----------------------------------------------------------------------------------------------------
+
 Welcome to DaemonEngine!
 ========================
 
-.. image:: _static/images/daemon-engine-logo.png
-   :width: 300
-   :align: center
-   :alt: DaemonEngine Logo
+.. raw:: html
+
+   <div style="text-align: center; margin: 30px 0;">
+       <img src="_static/images/daemon-engine-logo.png" alt="DaemonEngine Logo" style="width: 100px;" />
+   </div>
 
 DaemonEngine is a powerful, lightweight 2D game engine built with modern C++. 
 Designed for performance and ease of use, it provides everything you need to create amazing 2D games.
@@ -80,7 +87,13 @@ Quick Navigation
            <div style="border: 2px solid #f39c12; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
                <h4 style="color: #2c3e50; margin-top: 0;">🎨 Renderer Module</h4>
                <p>DirectX 11 rendering system, graphics pipeline management, and visual effects processing classes.</p>
-               <a href="renderer_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
+               <a href="render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
+           </div>
+
+           <div style="border: 2px solid #f39c12; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
+               <h4 style="color: #2c3e50; margin-top: 0;">Network Module</h4>
+               <p>DirectX 11 rendering system, graphics pipeline management, and visual effects processing classes.</p>
+               <a href="render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
            </div>
        </div>
    </div>
@@ -190,9 +203,7 @@ Documentation Contents
    :hidden:
 
    quickstart
-   api
-   core_module
-   renderer_module
+   api/index
 
 .. toctree::
    :maxdepth: 1
