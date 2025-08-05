@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
+#include "Engine/Renderer/Vertex_PCUTBN.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"

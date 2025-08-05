@@ -5,8 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include "Engine/Resource/Resource/IResource.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/Vertex_PCUTBN.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 #include <vector>
 #include <unordered_map>
 

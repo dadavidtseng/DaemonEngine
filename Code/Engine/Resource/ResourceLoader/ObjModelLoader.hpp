@@ -4,7 +4,7 @@
 #pragma once
 #include "Engine/Resource/ResourceLoader/IResourceLoader.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include <unordered_map>
 

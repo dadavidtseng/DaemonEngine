@@ -3,10 +3,10 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 
 #include "Vertex_PCUTBN.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Capsule2.hpp"

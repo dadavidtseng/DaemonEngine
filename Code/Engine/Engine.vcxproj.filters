@@ -64,9 +64,6 @@
     <ClCompile Include="Core\Rgba8.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Vertex_PCU.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Math\MathUtils.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -77,9 +74,6 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\StringUtils.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\VertexUtils.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Math\AABB2.cpp">
@@ -135,9 +129,6 @@
     </ClCompile>
     <ClCompile Include="Renderer\Texture.cpp">
       <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Image.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Math\RaycastUtils.cpp">
       <Filter>Math</Filter>
@@ -210,9 +201,6 @@
     </ClCompile>
     <ClCompile Include="Math\Sphere3.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Vertex_PCUTBN.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\IndexBuffer.cpp">
       <Filter>Renderer</Filter>
@@ -316,6 +304,18 @@
     <ClCompile Include="Scripting\IScriptableObject.cpp">
       <Filter>Scripting</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Image.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Vertex_PCU.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Vertex_PCUTBN.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexUtils.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -333,9 +333,6 @@
     <ClInclude Include="Core\Rgba8.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Vertex_PCU.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Math\MathUtils.hpp">
       <Filter>Math</Filter>
     </ClInclude>
@@ -346,9 +343,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\StringUtils.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\VertexUtils.hpp">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Math\AABB2.hpp">
@@ -425,9 +419,6 @@
     </ClInclude>
     <ClInclude Include="Math\Triangle2.hpp">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Image.hpp">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Texture.hpp">
       <Filter>Renderer</Filter>
@@ -509,9 +500,6 @@
     </ClInclude>
     <ClInclude Include="Math\Sphere3.hpp">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Vertex_PCUTBN.hpp">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\IndexBuffer.hpp">
       <Filter>Renderer</Filter>
@@ -614,6 +602,18 @@
     </ClInclude>
     <ClInclude Include="Scripting\IScriptableObject.hpp">
       <Filter>Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Image.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Vertex_PCU.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Vertex_PCUTBN.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VertexUtils.hpp">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

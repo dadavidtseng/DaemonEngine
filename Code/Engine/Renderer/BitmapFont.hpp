@@ -6,7 +6,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------

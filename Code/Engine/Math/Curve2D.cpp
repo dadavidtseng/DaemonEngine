@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Curve2D.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 CubicBezierCurve2D::CubicBezierCurve2D(Vec2 const& startPosition,

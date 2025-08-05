@@ -11,7 +11,7 @@
 #include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Engine/Renderer/Vertex_PCUTBN.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Resource/Resource/IResource.hpp"
 #include "Engine/Resource/Resource/ModelResource.hpp"

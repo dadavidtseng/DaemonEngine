@@ -6,7 +6,7 @@
 #include "Engine/Core/SimpleTriangleFont.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 
 //------------------------------------------------------------------------------------------------

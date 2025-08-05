@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Core/VertexUtils.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"

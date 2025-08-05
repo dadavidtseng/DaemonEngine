@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include "Engine/Math/Vec2.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 #include <vector>
 
 //-Forward-Declaration--------------------------------------------------------------------------------
