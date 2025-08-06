@@ -1,18 +1,18 @@
 //----------------------------------------------------------------------------------------------------
-// V8Subsystem.hpp (重構後)
-// JavaScript V8 引擎子系統 - 不再依賴特定的遊戲類別
+// V8Subsystem.hpp
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #pragma once
-// #include "Engine/Core/EngineSubsystem.hpp"
-#include "Engine/Scripting/IScriptableObject.hpp"
-#include <memory>
-#include <vector>
-#include <functional>
-#include <unordered_map>
-#include <string>
 #include <any>
+#include <functional>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include "Engine/Scripting/IScriptableObject.hpp"
 
+//----------------------------------------------------------------------------------------------------
 struct MethodCallbackData
 {
     std::shared_ptr<IScriptableObject> object;
@@ -90,7 +90,7 @@ public:
     // 註冊可腳本化的物件
     // name: 在 JavaScript 中的物件名稱
     // object: 實作 IScriptableObject 介面的物件
-    void RegisterScriptableObject(const std::string& name, std::shared_ptr<IScriptableObject> object);
+    void RegisterScriptableObject(std::string const& name, std::shared_ptr<IScriptableObject> object);
 
     // 取消註冊腳本化物件
     void UnregisterScriptableObject(const std::string& name);

@@ -55,7 +55,6 @@ V8Subsystem* g_theV8Subsystem = nullptr;
 V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
     : m_impl(std::make_unique<V8Implementation>()),
       m_config(config)
-
 {
     // 設定全域實例
     if (g_theV8Subsystem == nullptr)
@@ -100,9 +99,10 @@ void V8Subsystem::Startup()
         return;
     }
 
+    m_isInitialized = true;
+
     SetupV8Bindings();
 
-    m_isInitialized = true;
     DebuggerPrintf("V8Subsystem: 啟動完成\n");
 }
 
@@ -784,7 +784,15 @@ void V8Subsystem::CreateFunctionBindings()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::SetupBuiltinObjects()
 {
-    if (!m_impl->isolate) return;
+    DebuggerPrintf("V8Subsystem: SetupBuiltinObjects() 開始執行\n");
+
+    if (!m_impl->isolate)
+    {
+        DebuggerPrintf("V8Subsystem: isolate 為空，退出 SetupBuiltinObjects\n");
+        return;
+    }
+
+    DebuggerPrintf("V8Subsystem: isolate 正常，繼續執行\n");
 
     v8::Isolate::Scope     isolateScope(m_impl->isolate);
     v8::HandleScope        handleScope(m_impl->isolate);
@@ -834,16 +842,20 @@ void V8Subsystem::SetupBuiltinObjects()
         };
 
         // 修正：直接創建函式
-        v8::Local<v8::Function> logFunction = v8::Function::New(context, logCallback).ToLocalChecked();
+        v8::Local<v8::Function> const logFunction = v8::Function::New(context, logCallback).ToLocalChecked();
         console->Set(context,
                      v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(),
                      logFunction).Check();
 
         // 將 console 物件綁定到全域範圍
-        v8::Local<v8::Object> global = context->Global();
+        v8::Local<v8::Object> const global = context->Global();
         global->Set(context,
                     v8::String::NewFromUtf8(m_impl->isolate, "console").ToLocalChecked(),
                     console).Check();
+    }
+    else
+    {
+        DebuggerPrintf("V8Subsystem: enableConsoleOutput 為 false，跳過 console 設定\n");  // 加入這行
     }
 }
 
