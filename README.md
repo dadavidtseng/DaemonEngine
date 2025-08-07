@@ -1,12 +1,32 @@
-# Daemon Engine - Modern 2D Game Engine
+# Daemon Engine - Modern Game Engine
 
-![Engine Architecture](https://img.shields.io/badge/C++-11%7C14%7C17-blue.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
-![Graphics API](https://img.shields.io/badge/Graphics-DirectX%2011-green.svg)
-![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+![C++](https://img.shields.io/badge/C++-grey?style=for-the-badge&logo=cplusplus)
+![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=for-the-badge&logo=windows)
+![Graphics API](https://img.shields.io/badge/Graphics%20API-DirectX%2011-green?style=for-the-badge&logo=microsoft)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge&logo=apache)
+
+## 📋 Table of Contents
+1. [🎮 Engine Overview](#-engine-overview)
+2. [🎯 Core Engine Systems](#-core-engine-systems)
+3. [🌟 Key Features](#-key-features)
+4. [👥 Development Team](#-development-team)
+5. [🛠️ Technical Stack](#️-technical-stack)
+6. [📁 Project Architecture](#-project-architecture)
+7. [🚀 Getting Started](#-getting-started)
+   - [Prerequisites](#prerequisites)
+   - [Installation](#installation)
+8. [🎮 Engine Usage](#-engine-usage)
+9. [📈 Development Progress](#-development-progress)
+10. [🎨 Engine Capabilities](#-engine-capabilities)
+11. [📊 Research Focus](#-research-focus)
+12. [🤝 Contributing](#-contributing)
+13. [📄 Documentation](#-documentation)
+14. [📝 License](#-license)
+15. [🙏 Acknowledgments](#-acknowledgments)
+16. [📞 Contact](#-contact)
 
 ## 🎮 Engine Overview
-Daemon Engine is a modular, performance-oriented 2D game engine built from the ground up with modern C++ practices. Designed for both educational purposes and production-ready game development, it provides a comprehensive suite of systems including advanced rendering, robust audio management, flexible input handling, and cross-platform networking capabilities. The engine emphasizes clean architecture, extensibility, and developer-friendly APIs while maintaining high performance for 2D game development across various genres.
+Daemon Engine is a modular, performance-oriented game engine built from the ground up with modern C++ practices. Designed for both educational purposes and production-ready game development, it provides a comprehensive suite of systems including advanced rendering, robust audio management, flexible input handling, and cross-platform networking capabilities. The engine emphasizes clean architecture, extensibility, and developer-friendly APIs while maintaining high performance for game development across various genres.
 
 ## 🎯 Core Engine Systems
 * **Modular Rendering Pipeline**: DirectX 11-based renderer with sprite batching, advanced lighting, and efficient GPU resource management
@@ -14,7 +34,7 @@ Daemon Engine is a modular, performance-oriented 2D game engine built from the g
 * **Event-Driven Architecture**: Robust event system enabling loose coupling between engine systems and game logic
 
 ## 🌟 Key Features
-* **High-Performance 2D Rendering**: Optimized sprite rendering with batch processing, texture atlasing, and GPU-accelerated effects
+* **High-Performance Rendering**: Optimized rendering pipeline with batch processing, texture atlasing, and GPU-accelerated effects
 * **Advanced Audio Engine**: 3D spatial audio, dynamic music systems, and real-time audio processing capabilities
 * **Flexible Input Management**: Multi-device input support with configurable key bindings and controller integration
 * **Resource Management System**: Efficient asset loading, caching, and hot-reloading for rapid development iteration
@@ -30,7 +50,7 @@ Daemon Engine is a modular, performance-oriented 2D game engine built from the g
 
 ## 🛠️ Technical Stack
 * **Programming Languages:** C++11/14/17, HLSL
-* **Graphics Pipeline:** DirectX 11, Custom 2D Renderer with GPU-accelerated effects
+* **Graphics Pipeline:** DirectX 11, Custom Renderer with GPU-accelerated effects
 * **Audio Engine:** FMOD Studio integration with 3D positional audio support
 * **Networking:** Custom TCP/UDP implementation with packet reliability systems
 * **Platform:** Windows (x64) with planned cross-platform support (Linux, macOS)
@@ -158,7 +178,7 @@ g_theRenderer->EndSpriteBatch();
 ## 🎨 Engine Capabilities
 
 ### Rendering Features
-* Hardware-accelerated 2D sprite rendering with batching optimization
+* Hardware-accelerated sprite rendering with batching optimization
 * Advanced lighting system with normal mapping and dynamic shadows
 * Particle system for visual effects and atmospheric elements
 * Debug rendering system for development visualization
@@ -180,7 +200,7 @@ This engine serves as a platform for exploring modern game engine architecture a
 
 ### Research Objectives
 * **Modular Architecture Design:** Investigating optimal patterns for game engine component organization and inter-system communication
-* **2D Rendering Optimization:** Developing efficient techniques for high-performance 2D graphics rendering on modern GPUs
+* **Rendering Optimization:** Developing efficient techniques for high-performance graphics rendering on modern GPUs
 * **Developer Experience Enhancement:** Creating intuitive APIs and tools that accelerate game development workflows
 
 ### Methodology
@@ -191,7 +211,7 @@ Development follows industry best practices with emphasis on:
 
 ### Findings
 * **Modular Design Impact:** Well-defined system boundaries significantly improve maintainability and testing capabilities
-* **Batching Effectiveness:** Sprite batching provides 300-500% performance improvement in typical 2D scenarios
+* **Batching Effectiveness:** Sprite batching provides 300-500% performance improvement in typical rendering scenarios
 * **Developer Productivity:** Comprehensive debugging and profiling tools reduce development iteration times by approximately 40%
 
 ## 🤝 Contributing
