@@ -6,35 +6,45 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge&logo=apache)
 
 ## 📋 Table of Contents
+
 1. [🎮 Engine Overview](#-engine-overview)
 2. [🎯 Core Engine Systems](#-core-engine-systems)
 3. [🌟 Key Features](#-key-features)
-4. [👥 Development Team](#-development-team)
-5. [🛠️ Technical Stack](#️-technical-stack)
-6. [📁 Project Architecture](#-project-architecture)
-7. [🚀 Getting Started](#-getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-8. [🎮 Engine Usage](#-engine-usage)
-9. [📈 Development Progress](#-development-progress)
-10. [🎨 Engine Capabilities](#-engine-capabilities)
-11. [📊 Research Focus](#-research-focus)
-12. [🤝 Contributing](#-contributing)
-13. [📄 Documentation](#-documentation)
-14. [📝 License](#-license)
-15. [🙏 Acknowledgments](#-acknowledgments)
-16. [📞 Contact](#-contact)
+4. [🛠️ Technical Stack](#️-technical-stack)
+5. [📁 Project Architecture](#-project-architecture)
+6. [🚀 Getting Started](#-getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+7. [🎮 Engine Usage](#-engine-usage)
+8. [📈 Development Progress](#-development-progress)
+9. [🎨 Engine Capabilities](#-engine-capabilities)
+10. [📊 Research Focus](#-research-focus)
+11. [🤝 Contributing](#-contributing)
+12. [📄 Documentation](#-documentation)
+13. [📝 License](#-license)
+14. [🙏 Acknowledgments](#-acknowledgments)
+15. [📞 Contact](#-contact)
 
 ## 🎮 Engine Overview
-Daemon Engine is a modular, performance-oriented game engine built from the ground up with modern C++ practices. Designed for both educational purposes and production-ready game development, it provides a comprehensive suite of systems including advanced rendering, robust audio management, flexible input handling, and cross-platform networking capabilities. The engine emphasizes clean architecture, extensibility, and developer-friendly APIs while maintaining high performance for game development across various genres.
+
+Daemon Engine is a modular, performance-oriented game engine built from the ground up with modern C++ practices.
+Designed for both educational purposes and production-ready game development, it provides a comprehensive suite of
+systems including advanced rendering, robust audio management, flexible input handling, and cross-platform networking
+capabilities. The engine emphasizes clean architecture, extensibility, and developer-friendly APIs while maintaining
+high performance for game development across various genres.
 
 ## 🎯 Core Engine Systems
-* **Modular Rendering Pipeline**: DirectX 11-based renderer with sprite batching, advanced lighting, and efficient GPU resource management
-* **Comprehensive Audio System**: 3D positional audio with FMOD integration, supporting multiple audio formats and real-time effects
+
+* **Modular Rendering Pipeline**: DirectX 11-based renderer with sprite batching, advanced lighting, and efficient GPU
+  resource management
+* **Comprehensive Audio System**: 3D positional audio with FMOD integration, supporting multiple audio formats and
+  real-time effects
 * **Event-Driven Architecture**: Robust event system enabling loose coupling between engine systems and game logic
 
 ## 🌟 Key Features
-* **High-Performance Rendering**: Optimized rendering pipeline with batch processing, texture atlasing, and GPU-accelerated effects
+
+* **High-Performance Rendering**: Optimized rendering pipeline with batch processing, texture atlasing, and
+  GPU-accelerated effects
 * **Advanced Audio Engine**: 3D spatial audio, dynamic music systems, and real-time audio processing capabilities
 * **Flexible Input Management**: Multi-device input support with configurable key bindings and controller integration
 * **Resource Management System**: Efficient asset loading, caching, and hot-reloading for rapid development iteration
@@ -43,12 +53,8 @@ Daemon Engine is a modular, performance-oriented game engine built from the grou
 * **Mathematical Framework**: Comprehensive math library optimized for game development with SIMD support
 * **XML Configuration**: Flexible configuration system supporting runtime parameter adjustment and data-driven design
 
-## 👥 Development Team
-| Role | Name | GitHub | Responsibilities |
-|------|------|--------|------------------|
-| Engine Architect | Yu-Wei Tseng | [@dadavidtseng](https://github.com/dadavidtseng) | Core Architecture, Rendering System, Performance Optimization, API Design |
-
 ## 🛠️ Technical Stack
+
 * **Programming Languages:** C++11/14/17, HLSL
 * **Graphics Pipeline:** DirectX 11, Custom Renderer with GPU-accelerated effects
 * **Audio Engine:** FMOD Studio integration with 3D positional audio support
@@ -56,6 +62,7 @@ Daemon Engine is a modular, performance-oriented game engine built from the grou
 * **Platform:** Windows (x64) with planned cross-platform support (Linux, macOS)
 
 ## 📁 Project Architecture
+
 ```
 ├── Code/
 │   └── Engine/
@@ -93,6 +100,7 @@ Daemon Engine is a modular, performance-oriented game engine built from the grou
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 * **Visual Studio 2019** or later with C++17 support
 * **Windows 10 SDK** (10.0.18362.0 or later)
 * **DirectX 11** compatible graphics hardware
@@ -100,6 +108,7 @@ Daemon Engine is a modular, performance-oriented game engine built from the grou
 * **Doxygen** (optional, for documentation generation)
 
 ### Installation
+
 1. Clone the repository
    ```bash
    git clone https://github.com/dadavidtseng/DaemonEngine.git
@@ -124,6 +133,7 @@ Daemon Engine is a modular, performance-oriented game engine built from the grou
 ## 🎮 Engine Usage
 
 ### Basic Engine Initialization
+
 ```cpp
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -143,6 +153,7 @@ while (isRunning) {
 ```
 
 ### Rendering System Usage
+
 ```cpp
 // Sprite rendering with advanced features
 g_theRenderer->BindTexture(spriteTexture);
@@ -161,6 +172,7 @@ g_theRenderer->EndSpriteBatch();
 ### Current Status: Active Development (Version 2.x)
 
 ### Milestones
+
 * [x] **Phase 1:** Core architecture and foundational systems
 * [x] **Phase 2:** DirectX 11 rendering pipeline with sprite support
 * [x] **Phase 3:** FMOD audio system integration and 3D spatial audio
@@ -171,6 +183,7 @@ g_theRenderer->EndSpriteBatch();
 * [ ] **Phase 8:** Visual editor and development tools
 
 ### Known Issues
+
 * **Memory Management:** Some edge cases in resource cleanup during rapid asset loading
 * **Platform Compatibility:** Currently Windows-only, cross-platform support in development
 * **Documentation:** API documentation is being migrated to Doxygen format
@@ -178,46 +191,60 @@ g_theRenderer->EndSpriteBatch();
 ## 🎨 Engine Capabilities
 
 ### Rendering Features
+
 * Hardware-accelerated sprite rendering with batching optimization
 * Advanced lighting system with normal mapping and dynamic shadows
 * Particle system for visual effects and atmospheric elements
 * Debug rendering system for development visualization
 
 ### Audio Features
+
 * 3D positional audio with distance attenuation and Doppler effects
 * Dynamic music system with seamless looping and crossfading
 * Real-time audio effects processing and filtering
 * Multi-channel audio mixing with priority-based voice management
 
 ### Performance Features
+
 * Memory pool allocators for efficient memory management
 * Multi-threaded rendering and asset loading
 * CPU and GPU profiling tools for performance optimization
 * Configurable quality settings for different hardware targets
 
 ## 📊 Research Focus
+
 This engine serves as a platform for exploring modern game engine architecture and optimization techniques:
 
 ### Research Objectives
-* **Modular Architecture Design:** Investigating optimal patterns for game engine component organization and inter-system communication
+
+* **Modular Architecture Design:** Investigating optimal patterns for game engine component organization and
+  inter-system communication
 * **Rendering Optimization:** Developing efficient techniques for high-performance graphics rendering on modern GPUs
 * **Developer Experience Enhancement:** Creating intuitive APIs and tools that accelerate game development workflows
 
 ### Methodology
+
 Development follows industry best practices with emphasis on:
+
 - **Performance-First Design:** Every system is architected with performance considerations as primary constraints
 - **Data-Oriented Design:** Utilizing cache-friendly data structures and processing patterns for optimal CPU utilization
 - **Continuous Profiling:** Regular performance analysis and optimization based on real-world usage patterns
 
 ### Findings
-* **Modular Design Impact:** Well-defined system boundaries significantly improve maintainability and testing capabilities
+
+* **Modular Design Impact:** Well-defined system boundaries significantly improve maintainability and testing
+  capabilities
 * **Batching Effectiveness:** Sprite batching provides 300-500% performance improvement in typical rendering scenarios
-* **Developer Productivity:** Comprehensive debugging and profiling tools reduce development iteration times by approximately 40%
+* **Developer Productivity:** Comprehensive debugging and profiling tools reduce development iteration times by
+  approximately 40%
 
 ## 🤝 Contributing
-Contributions are welcome from developers interested in game engine architecture, graphics programming, and systems development.
+
+Contributions are welcome from developers interested in game engine architecture, graphics programming, and systems
+development.
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/rendering-enhancement`)
 3. Implement changes following coding standards
@@ -226,12 +253,14 @@ Contributions are welcome from developers interested in game engine architecture
 6. Submit a pull request with detailed description
 
 ### Coding Standards
+
 * Follow C++ Core Guidelines for modern C++ practices
 * Maintain consistent naming conventions (PascalCase for classes, camelCase for functions)
 * Document all public APIs with comprehensive comments
 * Ensure thread safety in multi-threaded contexts
 
 ## 📄 Documentation
+
 * [Engine Architecture Overview](Docs/architecture.md) *(planned)*
 * [Rendering System Guide](Docs/rendering.md) *(planned)*
 * [Audio System Documentation](Docs/audio.md) *(planned)*
@@ -239,16 +268,20 @@ Contributions are welcome from developers interested in game engine architecture
 * [API Reference (Doxygen)](Docs/api/index.html) *(generated from source)*
 
 ## 📝 License
+
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
+
 * **Modern C++ Community:** Inspiration from contemporary C++ best practices and design patterns
 * **Game Engine Architecture:** Insights from established engines and academic research in real-time systems
 * **Graphics Programming Resources:** Techniques derived from GPU programming literature and developer conferences
 * **Open Source Contributors:** Various open-source projects that informed architectural decisions
 
 ## 📞 Contact
+
 For questions about engine architecture, integration, or contribution opportunities:
+
 * **Engine Architect:** Yu-Wei Tseng - [dadavidtseng@gmail.com](mailto:dadavidtseng@gmail.com)
 * **GitHub Repository:** [https://github.com/dadavidtseng/DaemonEngine](https://github.com/dadavidtseng)
 * **Portfolio:** [https://dadavidtseng.info](https://dadavidtseng.info)
