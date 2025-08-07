@@ -45,10 +45,10 @@ struct ScriptMethodInfo
     std::vector<std::string> parameterTypes;
     std::string              returnType;
 
-    ScriptMethodInfo(const std::string&              methodName,
-                     const std::string&              desc    = "",
-                     const std::vector<std::string>& params  = {},
-                     const std::string&              retType = "void")
+    ScriptMethodInfo(std::string const&              methodName,
+                     std::string const&              desc    = "",
+                     std::vector<std::string> const& params  = {},
+                     std::string const&              retType = "void")
         : name(methodName), description(desc), parameterTypes(params), returnType(retType)
     {
     }

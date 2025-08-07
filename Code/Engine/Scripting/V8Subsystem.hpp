@@ -10,17 +10,20 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Scripting/IScriptableObject.hpp"
+
+//----------------------------------------------------------------------------------------------------
+using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 
 //----------------------------------------------------------------------------------------------------
 struct MethodCallbackData
 {
-    std::shared_ptr<IScriptableObject> object;
-    std::string                        methodName;
+    std::shared_ptr<IScriptableObject> m_object;
+    std::string                        m_methodName;
 };
 
-//----------------------------------------------------------------------------------------------------
-// V8 子系統設定結構
 //----------------------------------------------------------------------------------------------------
 struct sV8SubsystemConfig
 {
@@ -31,10 +34,6 @@ struct sV8SubsystemConfig
     bool        enableConsoleOutput  = true;     // 是否啟用 console.log 輸出
 };
 
-//----------------------------------------------------------------------------------------------------
-// 全域腳本函式的類型定義
-//----------------------------------------------------------------------------------------------------
-using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 
 //----------------------------------------------------------------------------------------------------
 // V8 子系統類別
@@ -46,7 +45,6 @@ public:
     explicit V8Subsystem(sV8SubsystemConfig const& config);
     ~V8Subsystem();
 
-    // EngineSubsystem 介面實作
     void Startup();
     void Shutdown();
     void Update();
@@ -87,21 +85,10 @@ public:
     // 物件和函式註冊系統（新的架構）
     //------------------------------------------------------------------------------------------------
 
-    // 註冊可腳本化的物件
-    // name: 在 JavaScript 中的物件名稱
-    // object: 實作 IScriptableObject 介面的物件
-    void RegisterScriptableObject(std::string const& name, std::shared_ptr<IScriptableObject> object);
-
-    // 取消註冊腳本化物件
-    void UnregisterScriptableObject(const std::string& name);
-
-    // 註冊全域 JavaScript 函式
-    // name: 在 JavaScript 中的函式名稱
-    // function: C++ 函式實作
-    void RegisterGlobalFunction(const std::string& name, ScriptFunction function);
-
-    // 取消註冊全域函式
-    void UnregisterGlobalFunction(const std::string& name);
+    void RegisterScriptableObject(String const& name, std::shared_ptr<IScriptableObject> const& object);
+    void UnregisterScriptableObject(String const& name);
+    void RegisterGlobalFunction(String const& name, ScriptFunction const& function);
+    void UnregisterGlobalFunction(String const& name);
 
     // 檢查是否有註冊指定的物件
     bool HasRegisteredObject(const std::string& name) const;

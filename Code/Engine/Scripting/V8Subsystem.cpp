@@ -46,10 +46,6 @@ struct V8Subsystem::V8Implementation
 };
 
 V8Subsystem* g_theV8Subsystem = nullptr;
-//----------------------------------------------------------------------------------------------------
-// 靜態成員初始化
-//----------------------------------------------------------------------------------------------------
-// V8Subsystem* V8Subsystem::s_instance = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
@@ -68,19 +64,7 @@ V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
 }
 
 //----------------------------------------------------------------------------------------------------
-V8Subsystem::~V8Subsystem()
-{
-    if (m_isInitialized)
-    {
-        Shutdown();
-    }
-
-    // 清除全域實例
-    if (g_theV8Subsystem == this)
-    {
-        g_theV8Subsystem = nullptr;
-    }
-}
+V8Subsystem::~V8Subsystem() = default;
 
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Startup()
@@ -288,7 +272,10 @@ void V8Subsystem::ClearError()
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::RegisterScriptableObject(const std::string& name, std::shared_ptr<IScriptableObject> object)
+/// @brief 註冊可腳本化的物件
+/// @param name 在 JavaScript 中的物件名稱
+/// @param object 實作 IScriptableObject 介面的物件
+void V8Subsystem::RegisterScriptableObject(String const& name, std::shared_ptr<IScriptableObject> const& object)
 {
     if (!object)
     {
@@ -313,8 +300,8 @@ void V8Subsystem::RegisterScriptableObject(const std::string& name, std::shared_
     }
 }
 
-//----------------------------------------------------------------------------------------------------
-void V8Subsystem::UnregisterScriptableObject(const std::string& name)
+// 取消註冊腳本化物件
+void V8Subsystem::UnregisterScriptableObject(String const& name)
 {
     auto it = m_scriptableObjects.find(name);
     if (it != m_scriptableObjects.end())
@@ -331,7 +318,10 @@ void V8Subsystem::UnregisterScriptableObject(const std::string& name)
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::RegisterGlobalFunction(const std::string& name, ScriptFunction function)
+/// @brief 註冊全域 JavaScript 函式
+/// @param name 在 JavaScript 中的函式名稱
+/// @param function C++ 函式實作
+void V8Subsystem::RegisterGlobalFunction(String const& name, ScriptFunction const& function)
 {
     if (!function)
     {
@@ -351,7 +341,8 @@ void V8Subsystem::RegisterGlobalFunction(const std::string& name, ScriptFunction
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::UnregisterGlobalFunction(const std::string& name)
+// 取消註冊全域函式
+void V8Subsystem::UnregisterGlobalFunction(String const& name)
 {
     auto it = m_globalFunctions.find(name);
     if (it != m_globalFunctions.end())
@@ -439,8 +430,6 @@ void V8Subsystem::ForceGarbageCollection()
 V8Subsystem::MemoryUsage V8Subsystem::GetMemoryUsage() const
 {
     MemoryUsage usage;
-
-
     if (m_isInitialized && m_impl->isolate)
     {
         v8::HeapStatistics stats;
@@ -626,7 +615,7 @@ void V8Subsystem::CreateObjectBindings()
                 }
 
                 // 呼叫 C++ 方法
-                ScriptMethodResult result = callbackData->object->CallMethod(callbackData->methodName, cppArgs);
+                ScriptMethodResult result = callbackData->m_object->CallMethod(callbackData->m_methodName, cppArgs);
 
                 if (result.success)
                 {
@@ -667,8 +656,8 @@ void V8Subsystem::CreateObjectBindings()
 
             // 創建回呼資料
             auto callbackData        = std::make_unique<MethodCallbackData>();
-            callbackData->object     = object;
-            callbackData->methodName = method.name;
+            callbackData->m_object     = object;
+            callbackData->m_methodName = method.name;
 
             v8::Local<v8::External> external = v8::External::New(m_impl->isolate, callbackData.get());
 
