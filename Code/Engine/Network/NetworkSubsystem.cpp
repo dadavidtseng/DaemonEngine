@@ -15,6 +15,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include "Engine/Core/EngineCommon.hpp"
+
 #pragma comment(lib, "ws2_32.lib")
 
 //----------------------------------------------------------------------------------------------------
@@ -195,7 +197,7 @@ void NetworkSubsystem::ProcessIncomingConnections()
         // Set non-blocking mode
         SetSocketNonBlocking(newClientSocket);
 
-        // Create new client connection
+        // Create a new client connection
         sClientConnection newClient;
         newClient.m_socket            = newClientSocket;
         newClient.m_clientId          = m_nextClientId++;
@@ -315,7 +317,23 @@ void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
             args.SetValue("data", netMsg.m_data);
             args.SetValue("fromClientId", std::to_string(fromClientId));
 
-            if (netMsg.m_messageType == "GameData")
+            if (netMsg.m_messageType == "RemoteCommand")
+            {
+                // 處理 RemoteCommand：在命令字串後面加上 remote=true
+                String commandToExecute = netMsg.m_data + " remote=true";
+                
+                // 在 DevConsole 中執行命令
+                if (g_theDevConsole)
+                {
+                    g_theDevConsole->Execute(commandToExecute);
+                    
+                    // 記錄接收到的遠端命令
+                    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, 
+                        Stringf("[Network] Received remote command from client %d: %s", 
+                            fromClientId, netMsg.m_data.c_str()));
+                }
+            }
+            else if (netMsg.m_messageType == "GameData")
             {
                 g_theEventSystem->FireEvent("GameDataReceived", args);
             }

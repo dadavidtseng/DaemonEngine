@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "Engine/Core/Clock.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Network/NetworkCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -32,10 +31,9 @@ public:
     explicit NetworkSubsystem(sNetworkSubsystemConfig config);
     ~NetworkSubsystem();
 
-    // Core lifecycle
     void StartUp();
-    void BeginFrame();
     void Update();
+    void BeginFrame();
     void EndFrame();
     void ShutDown();
 

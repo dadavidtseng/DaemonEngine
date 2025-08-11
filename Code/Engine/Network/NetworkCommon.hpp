@@ -22,7 +22,6 @@ enum class eConnectionState : uint8_t
     DISCONNECTED = 0,
     CONNECTING,
     CONNECTED,
-    DISCONNECTING,
     ERROR_STATE,
     DISABLED
 };
