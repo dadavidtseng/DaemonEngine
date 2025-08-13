@@ -44,9 +44,15 @@ public:
     bool             IsConnected() const;
     eNetworkMode     GetNetworkMode() const;
     eConnectionState GetConnectionState() const;
+    String           GetCurrentIP() const;
+    unsigned short   GetCurrentPort() const;
+    String           GetHostAddressString() const;
+    void             SetCurrentIP(String const& newIP);
+    void             SetCurrentPort(unsigned short newPort);
+    void             SetHostAddressString(String const& newHostAddress);
 
     // Server specific
-    bool             StartServer(int port = -1);
+    bool             StartServer(int newPort = -1);
     void             StopServer();
     int              GetConnectedClientCount() const;
     std::vector<int> GetConnectedClientIds() const;
@@ -103,7 +109,7 @@ protected:
     // Utility functions
     std::string     SerializeMessage(sNetworkMessage const& message);
     sNetworkMessage DeserializeMessage(String const& data, int fromClientId = -1);
-    void            ParseHostAddress(String const& hostString, String& out_ip, unsigned short& out_port);
+    void            ParseHostAddress(String const& hostString, String& out_ip, unsigned short& out_port) const;
     void            LogMessage(String const& message);
     void            LogError(String const& error);
 
@@ -130,7 +136,7 @@ protected:
     std::deque<sNetworkMessage> m_incomingMessages;
 
     // Server mode: client management
-    std::vector<sClientConnection> m_clients;
+    std::vector<sClientConnection> m_clientList;
     int                            m_nextClientId = 1;
 
     // Heartbeat system

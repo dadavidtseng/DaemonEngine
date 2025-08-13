@@ -17,6 +17,11 @@ enum class eNetworkMode : uint8_t
 };
 
 //----------------------------------------------------------------------------------------------------
+// i.	NET_STATE_INACTIVE: The NetworkSystem has not been Started up.
+// ii.	NET_STATE_IDLE: WSAStartup has been called, but we are neither listening nor connecting.
+// iii.	NET_STATE_SERVER_LISTENING: A non-blocking listen socket has been created using socket() and configured to be non-blocking with ioctlsocket(), bound to a port using bind(), and listen() called on it; incoming connections to that port have accept() called on them, creating a new socket for communication with the newly-connected client.
+// iv.	NET_STATE_CLIENT_CONNECTING: A non-blocking socket has been created using socket() and configured to be non-blocking with ioctlsocket(), then connect() is called initiating attempts to connect to a remote (or local) server IP address and Port number.
+// v.	NET_STATE_CLIENT_CONNECTED: The above socket has been tested for writeability using select() and is confirmed connected to the server.
 enum class eConnectionState : uint8_t
 {
     DISCONNECTED = 0,
