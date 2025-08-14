@@ -657,7 +657,7 @@ bool NetworkSubsystem::IsConnected() const
     {
         return m_connectionState == eConnectionState::CONNECTED;
     }
-    else if (m_mode == eNetworkMode::SERVER)
+    if (m_mode == eNetworkMode::SERVER)
     {
         return !m_clientList.empty();
     }
@@ -678,7 +678,7 @@ eConnectionState NetworkSubsystem::GetConnectionState() const
 
 String NetworkSubsystem::GetCurrentIP() const
 {
-    String currentIP;
+    String         currentIP;
     unsigned short currentPort;
     ParseHostAddress(m_config.hostAddressString, currentIP, currentPort);
     return currentIP;
@@ -686,7 +686,7 @@ String NetworkSubsystem::GetCurrentIP() const
 
 unsigned short NetworkSubsystem::GetCurrentPort() const
 {
-    String currentIP;
+    String         currentIP;
     unsigned short currentPort;
     ParseHostAddress(m_config.hostAddressString, currentIP, currentPort);
     return currentPort;
@@ -705,7 +705,7 @@ void NetworkSubsystem::SetCurrentIP(String const& newIP)
         return;
     }
 
-    std::string currentIP;
+    std::string    currentIP;
     unsigned short currentPort;
     ParseHostAddress(m_config.hostAddressString, currentIP, currentPort);
 
@@ -721,7 +721,7 @@ void NetworkSubsystem::SetCurrentPort(unsigned short newPort)
         return;
     }
 
-    std::string currentIP;
+    std::string    currentIP;
     unsigned short currentPort;
     ParseHostAddress(m_config.hostAddressString, currentIP, currentPort);
 
@@ -755,7 +755,7 @@ bool NetworkSubsystem::StartServer(int const newPort)
     if (newPort != -1)
     {
         // Update port in host address string
-        String    ip;
+        String         ip;
         unsigned short oldPort;
         ParseHostAddress(m_config.hostAddressString, ip, oldPort);
         m_config.hostAddressString = ip + ":" + std::to_string(newPort);

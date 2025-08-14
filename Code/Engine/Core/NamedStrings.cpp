@@ -139,6 +139,39 @@ int NamedStrings::GetValue(String const& keyName, int const defaultValue) const
 }
 
 //----------------------------------------------------------------------------------------------------
+unsigned short NamedStrings::GetValue(String const&        keyName,
+                                      unsigned short const defaultValue) const
+{
+    auto const it = m_keyValuePairs.find(keyName);
+
+    if (it == m_keyValuePairs.end())
+    {
+        printf("( %s ) is not in the game config!\n", keyName.c_str());
+
+        return defaultValue;
+    }
+
+    try
+    {
+        unsigned long const value = std::stoul(it->second);
+
+        // Check if exceeding unsigned short's range (0-65535)
+        if (value > std::numeric_limits<unsigned short>::max())
+        {
+            printf("Value for ( %s ) exceeds unsigned short range, using default\n", keyName.c_str());
+            return defaultValue;
+        }
+
+        return static_cast<unsigned short>(value);
+    }
+    catch (std::exception const& e)
+    {
+        printf("Failed to convert ( %s ) to number, using default: %s\n", keyName.c_str(), e.what());
+        return defaultValue;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 float NamedStrings::GetValue(String const& keyName, float const defaultValue) const
 {
     auto const it = m_keyValuePairs.find(keyName);
