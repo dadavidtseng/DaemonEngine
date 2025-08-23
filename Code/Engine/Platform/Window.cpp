@@ -13,13 +13,18 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
-// #define CONSOLE_HANDLER
+#define CONSOLE_HANDLER
 #define WIN32_LEAN_AND_MEAN
 
 #include <chrono>
 #include <dxgi1_2.h>
 #include <windows.h>
 
+
+//----------------------------------------------------------------------------------------------------
+// 全域控制台控制代碼，供 LogSubsystem 使用
+//----------------------------------------------------------------------------------------------------
+HANDLE g_consoleHandle = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 STATIC Window* Window::s_mainWindow = nullptr;
@@ -1366,8 +1371,6 @@ LRESULT CALLBACK Window::GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lPa
 
 //----------------------------------------------------------------------------------------------------
 #ifdef CONSOLE_HANDLER
-HANDLE g_consoleHandle = nullptr;
-
 void Window::CreateConsole()
 {
     AllocConsole();

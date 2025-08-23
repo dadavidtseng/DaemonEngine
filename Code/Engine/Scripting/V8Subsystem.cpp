@@ -52,7 +52,6 @@ V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
     : m_impl(std::make_unique<V8Implementation>()),
       m_config(config)
 {
-    // 設定全域實例
     if (g_theV8Subsystem == nullptr)
     {
         g_theV8Subsystem = this;
