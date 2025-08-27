@@ -24,6 +24,7 @@
 #pragma warning(disable: 4324) // 結構體填補警告
 
 #include "v8.h"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "libplatform/libplatform.h"
 
 #pragma warning(pop)
@@ -45,16 +46,16 @@ struct V8Subsystem::V8Implementation
     std::chrono::steady_clock::time_point lastExecutionStart;
 };
 
-V8Subsystem* g_theV8Subsystem = nullptr;
+V8Subsystem* g_v8Subsystem = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
     : m_impl(std::make_unique<V8Implementation>()),
       m_config(config)
 {
-    if (g_theV8Subsystem == nullptr)
+    if (g_v8Subsystem == nullptr)
     {
-        g_theV8Subsystem = this;
+        g_v8Subsystem = this;
     }
     else
     {
@@ -68,8 +69,9 @@ V8Subsystem::~V8Subsystem() = default;
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Startup()
 {
-    DebuggerPrintf("V8Subsystem: 啟動中...\n");
-
+    // DebuggerPrintf("V8Subsystem: 啟動中...\n");
+    // DAEMON_LOG(LogScript, eLogVerbosity::Warning, Stringf("V8Subsystem::Startup()"));
+    g_logSubsystem->LogMessage("LogScript", eLogVerbosity::Display, "V8Subsystem::Startup() start");
     if (m_isInitialized)
     {
         DebuggerPrintf("V8Subsystem: 已經初始化，跳過\n");
@@ -118,8 +120,10 @@ void V8Subsystem::Update()
 {
     if (!m_isInitialized)
     {
+
         return;
     }
+
 
     // 這裡可以添加定期的 V8 維護工作
     // 例如：垃圾回收、統計更新等
@@ -654,7 +658,7 @@ void V8Subsystem::CreateObjectBindings()
             };
 
             // 創建回呼資料
-            auto callbackData        = std::make_unique<MethodCallbackData>();
+            auto callbackData          = std::make_unique<MethodCallbackData>();
             callbackData->m_object     = object;
             callbackData->m_methodName = method.name;
 

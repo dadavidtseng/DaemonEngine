@@ -16,10 +16,10 @@ class V8Subsystem;
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
 extern NamedStrings g_gameConfigBlackboard;
-extern EventSystem* g_theEventSystem;
-extern DevConsole*  g_theDevConsole;
-extern InputSystem* g_theInput;
-extern V8Subsystem* g_theV8Subsystem;
+extern EventSystem* g_eventSystem;
+extern DevConsole*  g_devConsole;
+extern InputSystem* g_input;
+extern V8Subsystem* g_v8Subsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief

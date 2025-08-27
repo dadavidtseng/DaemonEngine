@@ -86,7 +86,7 @@ unsigned char const KEYCODE_SHIFT         = VK_SHIFT;
 unsigned char const KEYCODE_CONTROL       = VK_CONTROL;
 
 //----------------------------------------------------------------------------------------------------
-InputSystem* g_theInput = nullptr;
+InputSystem* g_input = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem::InputSystem(sInputSystemConfig const& config)
@@ -97,8 +97,8 @@ InputSystem::InputSystem(sInputSystemConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
 
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
     {
@@ -281,14 +281,14 @@ STATIC bool InputSystem::OnWindowKeyPressed(EventArgs& args)
     //     ERROR_RECOVERABLE("g_theDevConsole is nullptr")
     // }
 
-    if (g_theInput == nullptr)
+    if (g_input == nullptr)
     {
         return false;
     }
 
     int const           value   = args.GetValue("OnWindowKeyPressed", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
-    g_theInput->HandleKeyPressed(keyCode);
+    g_input->HandleKeyPressed(keyCode);
 
     return true;
 }
@@ -301,7 +301,7 @@ STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
     //     return false;
     // }
 
-    if (g_theInput == nullptr)
+    if (g_input == nullptr)
     {
         return false;
     }
@@ -313,7 +313,7 @@ STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
 
     int const           value   = args.GetValue("OnWindowKeyReleased", -1);
     unsigned char const keyCode = static_cast<unsigned char>(value);
-    g_theInput->HandleKeyReleased(keyCode);
+    g_input->HandleKeyReleased(keyCode);
 
     return true;
 }

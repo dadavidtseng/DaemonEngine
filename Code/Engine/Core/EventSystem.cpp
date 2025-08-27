@@ -8,7 +8,7 @@
 #include "Engine/Core/NamedStrings.hpp"
 
 //----------------------------------------------------------------------------------------------------
-EventSystem* g_theEventSystem = nullptr;
+EventSystem* g_eventSystem = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 EventSystem::EventSystem(sEventSystemConfig const& config)
@@ -116,35 +116,35 @@ StringList EventSystem::GetAllRegisteredEventNames() const
 //----------------------------------------------------------------------------------------------------
 void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
-    if (g_theEventSystem)
+    if (g_eventSystem)
     {
-        g_theEventSystem->SubscribeEventCallbackFunction(eventName, functionPtr);
+        g_eventSystem->SubscribeEventCallbackFunction(eventName, functionPtr);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void UnsubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
-    if (g_theEventSystem)
+    if (g_eventSystem)
     {
-        g_theEventSystem->UnsubscribeEventCallbackFunction(eventName, functionPtr);
+        g_eventSystem->UnsubscribeEventCallbackFunction(eventName, functionPtr);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void FireEvent(String const& eventName, EventArgs& args)
 {
-    if (g_theEventSystem != nullptr)
+    if (g_eventSystem != nullptr)
     {
-        g_theEventSystem->FireEvent(eventName, args);
+        g_eventSystem->FireEvent(eventName, args);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void FireEvent(String const& eventName)
 {
-    if (g_theEventSystem != nullptr)
+    if (g_eventSystem != nullptr)
     {
-        g_theEventSystem->FireEvent(eventName);
+        g_eventSystem->FireEvent(eventName);
     }
 }

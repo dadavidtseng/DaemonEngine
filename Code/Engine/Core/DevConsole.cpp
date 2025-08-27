@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
@@ -23,7 +24,7 @@
 #endif
 
 //----------------------------------------------------------------------------------------------------
-DevConsole* g_theDevConsole = nullptr;
+DevConsole* g_devConsole = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 // Static color constants for different message types
@@ -47,11 +48,16 @@ DevConsole::DevConsole(sDevConsoleConfig const& config)
 //
 void DevConsole::StartUp()
 {
+    if (m_config.m_defaultCamera == nullptr)
+    {
+        ERROR_AND_DIE("DevConsole: m_defaultCamera is nullptr in DevConsole::Startup()!")
+    }
+
     // Initialize any necessary resources for the console (fonts, etc.)
-    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowCharInput", OnWindowCharInput);
-    g_theEventSystem->SubscribeEventCallbackFunction("help", Command_Help);
-    g_theEventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWindowCharInput", OnWindowCharInput);
+    g_eventSystem->SubscribeEventCallbackFunction("help", Command_Help);
+    g_eventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
 
     m_insertionPointBlinkTimer = new Timer(0.5f);
     m_insertionPointBlinkTimer->Start();
@@ -115,9 +121,9 @@ void DevConsole::Execute(String const& consoleCommandText,
     // Echo command if required
     if (echoCommand == true)
     {
-        AddLine(INFO_MAJOR, g_theDevConsole->m_inputText);
+        AddLine(INFO_MAJOR, g_devConsole->m_inputText);
 
-        StringList registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+        StringList registeredEventNames = g_eventSystem->GetAllRegisteredEventNames();
 
         bool isCommandValid = std::find(registeredEventNames.begin(), registeredEventNames.end(), command) != registeredEventNames.end();
 
@@ -135,7 +141,7 @@ void DevConsole::Execute(String const& consoleCommandText,
         eventArgs.SetValue(pair.first, pair.second);
     }
 
-    g_theEventSystem->FireEvent(command, eventArgs);
+    g_eventSystem->FireEvent(command, eventArgs);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -163,6 +169,11 @@ void DevConsole::Render(AABB2 const& bounds,
     if (rendererOverride == nullptr)
     {
         rendererOverride = m_config.m_defaultRenderer;
+    }
+
+    if (m_config.m_defaultCamera == nullptr)
+    {
+        ERROR_AND_DIE("DevConsole: m_defaultCamera is nullptr in DevConsole::Render()!")
     }
 
     rendererOverride->BeginCamera(*m_config.m_defaultCamera);
@@ -271,32 +282,32 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 
     if (keyCode == KEYCODE_TILDE)
     {
-        g_theDevConsole->ToggleMode(OPEN_FULL);
+        g_devConsole->ToggleMode(OPEN_FULL);
     }
 
-    if (g_theDevConsole->m_isOpen == false)
+    if (g_devConsole->m_isOpen == false)
     {
         return false;
     }
 
     if (keyCode == KEYCODE_ENTER)
     {
-        if (g_theDevConsole->m_inputText.empty() == true)
+        if (g_devConsole->m_inputText.empty() == true)
         {
-            g_theDevConsole->SetMode(HIDDEN);
+            g_devConsole->SetMode(HIDDEN);
         }
         else
         {
-            g_theDevConsole->m_commandHistory.push_back(g_theDevConsole->m_inputText);
-            g_theDevConsole->Execute(g_theDevConsole->m_inputText);
-            g_theDevConsole->m_inputText.clear();
-            g_theDevConsole->m_historyIndex           = -1;
-            g_theDevConsole->m_insertionPointPosition = 0;
+            g_devConsole->m_commandHistory.push_back(g_devConsole->m_inputText);
+            g_devConsole->Execute(g_devConsole->m_inputText);
+            g_devConsole->m_inputText.clear();
+            g_devConsole->m_historyIndex           = -1;
+            g_devConsole->m_insertionPointPosition = 0;
         }
     }
 
     if (keyCode == KEYCODE_BACKSPACE &&
-        !g_theDevConsole->m_inputText.empty())
+        !g_devConsole->m_inputText.empty())
     {
         // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
         //
@@ -306,18 +317,18 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
         //     g_theDevConsole->m_inputTextPosition += lineWidth;
         //     g_theDevConsole->m_insertionPointPosition += 1;
         // }
-        if (g_theDevConsole->m_insertionPointPosition == 0)
+        if (g_devConsole->m_insertionPointPosition == 0)
         {
             return false;
         }
 
-        g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition - 1, 1);
-        g_theDevConsole->m_insertionPointPosition -= 1;
-        g_theDevConsole->m_historyIndex = -1;
+        g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition - 1, 1);
+        g_devConsole->m_insertionPointPosition -= 1;
+        g_devConsole->m_historyIndex = -1;
     }
 
     if (keyCode == KEYCODE_DELETE &&
-        !g_theDevConsole->m_inputText.empty())
+        !g_devConsole->m_inputText.empty())
     {
         // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
         //
@@ -328,91 +339,91 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
         //     g_theDevConsole->m_insertionPointPosition += 1;
         // }
 
-        g_theDevConsole->m_inputText.erase(g_theDevConsole->m_insertionPointPosition, 1);
-        g_theDevConsole->m_historyIndex = -1;
+        g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition, 1);
+        g_devConsole->m_historyIndex = -1;
     }
 
     if (keyCode == KEYCODE_UPARROW)
     {
-        if (g_theDevConsole->m_historyIndex + 1 < (int)g_theDevConsole->m_commandHistory.size())
+        if (g_devConsole->m_historyIndex + 1 < (int)g_devConsole->m_commandHistory.size())
         {
-            g_theDevConsole->m_historyIndex += 1;
-            g_theDevConsole->m_inputText              = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
-            g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+            g_devConsole->m_historyIndex += 1;
+            g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
+            g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
         }
     }
 
     if (keyCode == KEYCODE_DOWNARROW)
     {
-        if (g_theDevConsole->m_historyIndex != -1)
+        if (g_devConsole->m_historyIndex != -1)
         {
-            g_theDevConsole->m_historyIndex -= 1;
+            g_devConsole->m_historyIndex -= 1;
 
-            if (g_theDevConsole->m_historyIndex == -1)
+            if (g_devConsole->m_historyIndex == -1)
             {
-                g_theDevConsole->m_inputText              = "";
-                g_theDevConsole->m_insertionPointPosition = 0;
+                g_devConsole->m_inputText              = "";
+                g_devConsole->m_insertionPointPosition = 0;
             }
             else
             {
-                g_theDevConsole->m_inputText              = g_theDevConsole->m_commandHistory[g_theDevConsole->m_historyIndex];
-                g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+                g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
+                g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
             }
         }
     }
 
     if (keyCode == KEYCODE_LEFTARROW)
     {
-        if (g_theDevConsole->m_insertionPointPosition != 0)
+        if (g_devConsole->m_insertionPointPosition != 0)
         {
-            g_theDevConsole->m_insertionPointPosition -= 1;
+            g_devConsole->m_insertionPointPosition -= 1;
         }
     }
 
     if (keyCode == KEYCODE_RIGHTARROW)
     {
-        if (g_theDevConsole->m_insertionPointPosition != (int)g_theDevConsole->m_inputText.size())
+        if (g_devConsole->m_insertionPointPosition != (int)g_devConsole->m_inputText.size())
         {
-            g_theDevConsole->m_insertionPointPosition += 1;
+            g_devConsole->m_insertionPointPosition += 1;
         }
     }
 
     if (keyCode == KEYCODE_HOME)
     {
-        g_theDevConsole->m_insertionPointPosition = 0;
+        g_devConsole->m_insertionPointPosition = 0;
     }
 
     if (keyCode == KEYCODE_END)
     {
-        g_theDevConsole->m_insertionPointPosition = (int)g_theDevConsole->m_inputText.size();
+        g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
     }
 
     if (keyCode == KEYCODE_ESC)
     {
-        if (g_theDevConsole->m_inputText.empty() == true)
+        if (g_devConsole->m_inputText.empty() == true)
         {
-            g_theDevConsole->SetMode(HIDDEN);
+            g_devConsole->SetMode(HIDDEN);
         }
         else
         {
-            g_theDevConsole->m_inputText.clear();
-            g_theDevConsole->m_historyIndex           = -1;
-            g_theDevConsole->m_insertionPointPosition = 0;
+            g_devConsole->m_inputText.clear();
+            g_devConsole->m_historyIndex           = -1;
+            g_devConsole->m_insertionPointPosition = 0;
         }
     }
 
     if (keyCode == KEYCODE_CONTROL)
     {
-        g_theDevConsole->m_isCtrlPressed = true;
+        g_devConsole->m_isCtrlPressed = true;
     }
 
-    if (g_theDevConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
+    if (g_devConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
     {
-        g_theDevConsole->PasteFromClipboard();
+        g_devConsole->PasteFromClipboard();
     }
 
-    g_theDevConsole->m_insertionPointBlinkTimer->Start();
-    g_theDevConsole->m_insertionPointVisible = true;
+    g_devConsole->m_insertionPointBlinkTimer->Start();
+    g_devConsole->m_insertionPointVisible = true;
 
     return true;
 }
@@ -422,7 +433,7 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 //
 STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
 {
-    if (g_theDevConsole->m_isOpen == false)
+    if (g_devConsole->m_isOpen == false)
     {
         return false;
     }
@@ -435,18 +446,18 @@ STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
         keyCode != '~' &&
         keyCode != '`')
     {
-        float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
+        float const lineWidth = 800.f / g_devConsole->m_config.m_maxLinesDisplay;
 
 
-        if (static_cast<float>(g_theDevConsole->m_inputText.size()) * lineWidth >= 1600.f)
+        if (static_cast<float>(g_devConsole->m_inputText.size()) * lineWidth >= 1600.f)
         {
             return false;
         }
 
-        g_theDevConsole->m_inputText += static_cast<char>(keyCode);
-        g_theDevConsole->m_insertionPointPosition += 1;
-        g_theDevConsole->m_historyIndex = -1;
-        g_theDevConsole->m_insertionPointBlinkTimer->Start();
+        g_devConsole->m_inputText += static_cast<char>(keyCode);
+        g_devConsole->m_insertionPointPosition += 1;
+        g_devConsole->m_historyIndex = -1;
+        g_devConsole->m_insertionPointBlinkTimer->Start();
 
         // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
         //
@@ -470,7 +481,7 @@ STATIC bool DevConsole::Command_Clear(EventArgs& args)
 {
     UNUSED(args)
 
-    g_theDevConsole->m_lines.clear();
+    g_devConsole->m_lines.clear();
 
     return true;
 }
@@ -482,11 +493,11 @@ STATIC bool DevConsole::Command_Help(EventArgs& args)
 {
     UNUSED(args)
 
-    StringList const registeredEventNames = g_theEventSystem->GetAllRegisteredEventNames();
+    StringList const registeredEventNames = g_eventSystem->GetAllRegisteredEventNames();
 
     for (int i = 0; i < static_cast<int>(registeredEventNames.size()); i++)
     {
-        g_theDevConsole->AddLine(INFO_MINOR, registeredEventNames[i]);
+        g_devConsole->AddLine(INFO_MINOR, registeredEventNames[i]);
     }
 
     return true;
@@ -518,7 +529,7 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
     {
         font.AddVertsForTextInBox2D(textVerts, m_inputText, inputTextBounds, lineHeight, INPUT_TEXT, fontAspect);
     }
-    else if (m_historyIndex >= 0 && m_historyIndex < static_cast<int>(g_theDevConsole->m_commandHistory.size()))
+    else if (m_historyIndex >= 0 && m_historyIndex < static_cast<int>(g_devConsole->m_commandHistory.size()))
     {
         AABB2 const commandHistoryTextBounds =
             AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_commandHistory[m_historyIndex].size()), lineHeight));

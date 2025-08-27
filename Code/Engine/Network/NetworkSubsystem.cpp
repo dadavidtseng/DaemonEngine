@@ -213,11 +213,11 @@ void NetworkSubsystem::ProcessIncomingConnections()
         LogMessage(Stringf("Client %d connected! Socket: %llu", newClient.m_clientId, newClient.m_socket));
 
         // Fire connection event
-        if (g_theEventSystem)
+        if (g_eventSystem)
         {
             EventArgs args;
             args.SetValue("clientId", std::to_string(newClient.m_clientId));
-            g_theEventSystem->FireEvent("ClientConnected", args);
+            g_eventSystem->FireEvent("ClientConnected", args);
         }
     }
 }
@@ -233,11 +233,11 @@ void NetworkSubsystem::CheckClientConnections()
             LogMessage(Stringf("Client %d disconnected", it->m_clientId));
 
             // Fire disconnection event
-            if (g_theEventSystem)
+            if (g_eventSystem)
             {
                 EventArgs args;
                 args.SetValue("clientId", std::to_string(it->m_clientId));
-                g_theEventSystem->FireEvent("ClientDisconnected", args);
+                g_eventSystem->FireEvent("ClientDisconnected", args);
             }
 
             if (it->m_socket != ~0ull)
@@ -310,7 +310,7 @@ void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
         QueueIncomingMessage(netMsg);
 
         // Fire specific events based on message type
-        if (g_theEventSystem)
+        if (g_eventSystem)
         {
             EventArgs args;
             args.SetValue("messageType", netMsg.m_messageType);
@@ -323,38 +323,38 @@ void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
                 String commandToExecute = netMsg.m_data + " remote=true";
 
                 // 在 DevConsole 中執行命令
-                if (g_theDevConsole)
+                if (g_devConsole)
                 {
-                    g_theDevConsole->Execute(commandToExecute);
+                    g_devConsole->Execute(commandToExecute);
 
                     // 記錄接收到的遠端命令
-                    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                    g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                              Stringf("[Network] Received remote command from client %d: %s",
                                                      fromClientId, netMsg.m_data.c_str()));
                 }
             }
             else if (netMsg.m_messageType == "GameData")
             {
-                g_theEventSystem->FireEvent("GameDataReceived", args);
+                g_eventSystem->FireEvent("GameDataReceived", args);
             }
             else if (netMsg.m_messageType == "ChatMessage")
             {
-                g_theEventSystem->FireEvent("ChatMessageReceived", args);
+                g_eventSystem->FireEvent("ChatMessageReceived", args);
             }
             else if (netMsg.m_messageType == "Heartbeat")
             {
                 ProcessHeartbeatMessage(fromClientId);
             }
 
-            g_theEventSystem->FireEvent("NetworkMessageReceived", args);
+            g_eventSystem->FireEvent("NetworkMessageReceived", args);
         }
     }
     else
     {
         // Fall back to executing as console command (legacy behavior)
-        if (g_theDevConsole)
+        if (g_devConsole)
         {
-            g_theDevConsole->Execute(message, true);
+            g_devConsole->Execute(message, true);
         }
     }
 }
@@ -587,18 +587,18 @@ void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::stri
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::LogMessage(const std::string& message)
 {
-    if (m_config.enableConsoleOutput && g_theDevConsole)
+    if (m_config.enableConsoleOutput && g_devConsole)
     {
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[NetworkSubsystem] " + message);
+        g_devConsole->AddLine(Rgba8(255, 255, 255), "[NetworkSubsystem] " + message);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void NetworkSubsystem::LogError(const std::string& error)
 {
-    if (m_config.enableConsoleOutput && g_theDevConsole)
+    if (m_config.enableConsoleOutput && g_devConsole)
     {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[NetworkSubsystem ERROR] " + error);
+        g_devConsole->AddLine(Rgba8(255, 0, 0), "[NetworkSubsystem ERROR] " + error);
     }
     else if (m_mode == eNetworkMode::SERVER)
     {

@@ -65,8 +65,8 @@ void DebugRenderSystemStartup(sDebugRenderConfig const& config)
     m_debugRenderConfig.m_renderer = config.m_renderer;
     m_debugRenderConfig.m_fontName = config.m_fontName;
     m_debugRenderBitmapFont        = config.m_renderer->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + config.m_fontName).c_str());
-    g_theEventSystem->SubscribeEventCallbackFunction("DebugRenderClear", OnDebugRenderClear);
-    g_theEventSystem->SubscribeEventCallbackFunction("DebugRenderToggle", OnDebugRenderToggle);
+    g_eventSystem->SubscribeEventCallbackFunction("DebugRenderClear", OnDebugRenderClear);
+    g_eventSystem->SubscribeEventCallbackFunction("DebugRenderToggle", OnDebugRenderToggle);
 }
 
 //----------------------------------------------------------------------------------------------------

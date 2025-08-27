@@ -101,7 +101,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             // {
             //     return 0;
             // }
-            g_theEventSystem->FireEvent("OnCloseButtonClicked");
+            g_eventSystem->FireEvent("OnCloseButtonClicked");
             return 0;
         }
 

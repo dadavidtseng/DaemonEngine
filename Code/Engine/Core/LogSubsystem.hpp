@@ -310,7 +310,7 @@ private:
 //----------------------------------------------------------------------------------------------------
 // 全域日誌子系統指標
 //----------------------------------------------------------------------------------------------------
-extern LogSubsystem* g_theLogSubsystem;
+extern LogSubsystem* g_logSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 // 日誌巨集定義 (類似 UE 的 UE_LOG)
@@ -324,24 +324,24 @@ extern LogSubsystem* g_theLogSubsystem;
 // 基本日誌巨集
 #define DAEMON_LOG(CategoryName, Verbosity, Format, ...) \
     do { \
-        if (g_theLogSubsystem && g_theLogSubsystem->IsCategoryRegistered(#CategoryName)) { \
-            g_theLogSubsystem->LogFormatted(#CategoryName, Verbosity, Format, ##__VA_ARGS__); \
+        if (g_logSubsystem && g_logSubsystem->IsCategoryRegistered(#CategoryName)) { \
+            g_logSubsystem->LogFormatted(#CategoryName, Verbosity, Format, ##__VA_ARGS__); \
         } \
     } while(0)
 
 // 條件日誌巨集
 #define DAEMON_LOG_IF(Condition, CategoryName, Verbosity, Format, ...) \
     do { \
-        if (Condition && g_theLogSubsystem && g_theLogSubsystem->IsCategoryRegistered(#CategoryName)) { \
-            g_theLogSubsystem->LogFormatted(#CategoryName, Verbosity, Format, ##__VA_ARGS__); \
+        if (Condition && g_logSubsystem && g_logSubsystem->IsCategoryRegistered(#CategoryName)) { \
+            g_logSubsystem->LogFormatted(#CategoryName, Verbosity, Format, ##__VA_ARGS__); \
         } \
     } while(0)
 
 // 螢幕訊息巨集 (類似 UE 的 AddOnScreenDebugMessage)
 #define DAEMON_ON_SCREEN_MESSAGE(Message, DisplayTime, Color) \
     do { \
-        if (g_theLogSubsystem) { \
-            g_theLogSubsystem->AddOnScreenMessage(Message, DisplayTime, Color); \
+        if (g_logSubsystem) { \
+            g_logSubsystem->AddOnScreenMessage(Message, DisplayTime, Color); \
         } \
     } while(0)
 
