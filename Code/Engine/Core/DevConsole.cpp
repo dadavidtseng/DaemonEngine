@@ -48,11 +48,6 @@ DevConsole::DevConsole(sDevConsoleConfig const& config)
 //
 void DevConsole::StartUp()
 {
-    if (m_config.m_defaultCamera == nullptr)
-    {
-        ERROR_AND_DIE("DevConsole: m_defaultCamera is nullptr in DevConsole::Startup()!")
-    }
-
     // Initialize any necessary resources for the console (fonts, etc.)
     g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
     g_eventSystem->SubscribeEventCallbackFunction("OnWindowCharInput", OnWindowCharInput);

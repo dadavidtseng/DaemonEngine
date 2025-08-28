@@ -51,10 +51,10 @@ AABB2::AABB2(Vec2 const& mins,
 bool AABB2::IsPointInside(Vec2 const& point) const
 {
     return
-        point.x >= m_mins.x &&
-        point.x <= m_maxs.x &&
-        point.y >= m_mins.y &&
-        point.y <= m_maxs.y;
+    point.x >= m_mins.x &&
+    point.x <= m_maxs.x &&
+    point.y >= m_mins.y &&
+    point.y <= m_maxs.y;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ Vec2 AABB2::GetNearestPoint(Vec2 const& point) const
     float const clampedY = GetClamped(point.y, m_mins.y, m_maxs.y);
 
     return
-        Vec2(clampedX, clampedY);
+    Vec2(clampedX, clampedY);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ Vec2 AABB2::GetCenter() const
     float const centerY = (m_maxs.y + m_mins.y) / 2.f;
 
     return
-        Vec2(centerX, centerY);
+    Vec2(centerX, centerY);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ Vec2 AABB2::GetDimensions() const
     float const y = m_maxs.y - m_mins.y;
 
     return
-        Vec2(x, y);
+    Vec2(x, y);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -159,6 +159,6 @@ void AABB2::StretchToIncludePoint(Vec2 const& targetPointPos)
 bool AABB2::operator==(const AABB2& aabb2) const
 {
     return
-        m_mins == aabb2.m_mins &&
-        m_maxs == aabb2.m_maxs;
+    m_mins == aabb2.m_mins &&
+    m_maxs == aabb2.m_maxs;
 }

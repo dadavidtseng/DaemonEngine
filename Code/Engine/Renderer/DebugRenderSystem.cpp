@@ -45,14 +45,14 @@ struct DebugRenderObject
     float                 m_textHeight;
     Vec2                  m_alignment;
     Mat44                 m_m2wTransform;
-    eDebugRenderMode       m_mode;
+    eDebugRenderMode      m_mode;
     bool                  m_isWireFrame = false;
 };
 
 //----------------------------------------------------------------------------------------------------
 namespace
 {
-    sDebugRenderConfig               m_debugRenderConfig;
+    sDebugRenderConfig              m_debugRenderConfig;
     BitmapFont*                     m_debugRenderBitmapFont = nullptr;
     bool                            m_debugRenderIsVisible  = true;
     std::mutex                      m_mutex;
@@ -124,8 +124,8 @@ void DebugRenderBeginFrame()
                            object->m_elapsedTime += deltaSeconds;
 
                            return
-                               object->m_elapsedTime >= object->m_maxElapsedTime &&
-                               object->m_maxElapsedTime > -1.f;
+                           object->m_elapsedTime >= object->m_maxElapsedTime &&
+                           object->m_maxElapsedTime > -1.f;
                        }),
         m_debugRenderObjectList.end());
 
@@ -563,11 +563,11 @@ void DebugRenderAddObjectToList(DebugRenderObject* objectToAdd)
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldPoint(Vec3 const&           pos,
-                        float const           radius,
-                        float const           duration,
-                        Rgba8 const&          startColor,
-                        Rgba8 const&          endColor,
+void DebugAddWorldPoint(Vec3 const&            pos,
+                        float const            radius,
+                        float const            duration,
+                        Rgba8 const&           startColor,
+                        Rgba8 const&           endColor,
                         eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -587,12 +587,12 @@ void DebugAddWorldPoint(Vec3 const&           pos,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldLine(Vec3 const&           startPosition,
-                       Vec3 const&           endPosition,
-                       float const           radius,
-                       float const           duration,
-                       Rgba8 const&          startColor,
-                       Rgba8 const&          endColor,
+void DebugAddWorldLine(Vec3 const&            startPosition,
+                       Vec3 const&            endPosition,
+                       float const            radius,
+                       float const            duration,
+                       Rgba8 const&           startColor,
+                       Rgba8 const&           endColor,
                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -612,13 +612,13 @@ void DebugAddWorldLine(Vec3 const&           startPosition,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldCylinder(Vec3 const&           base,
-                           Vec3 const&           top,
-                           float const           radius,
-                           float const           duration,
-                           bool const            isWireframe,
-                           Rgba8 const&          startColor,
-                           Rgba8 const&          endColor,
+void DebugAddWorldCylinder(Vec3 const&            base,
+                           Vec3 const&            top,
+                           float const            radius,
+                           float const            duration,
+                           bool const             isWireframe,
+                           Rgba8 const&           startColor,
+                           Rgba8 const&           endColor,
                            eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -639,11 +639,11 @@ void DebugAddWorldCylinder(Vec3 const&           base,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldWireSphere(Vec3 const&           center,
-                             float const           radius,
-                             float const           duration,
-                             Rgba8 const&          startColor,
-                             Rgba8 const&          endColor,
+void DebugAddWorldWireSphere(Vec3 const&            center,
+                             float const            radius,
+                             float const            duration,
+                             Rgba8 const&           startColor,
+                             Rgba8 const&           endColor,
                              eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -663,12 +663,12 @@ void DebugAddWorldWireSphere(Vec3 const&           center,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldArrow(Vec3 const&           startPosition,
-                        Vec3 const&           endPosition,
-                        float const           radius,
-                        float const           duration,
-                        Rgba8 const&          startColor,
-                        Rgba8 const&          endColor,
+void DebugAddWorldArrow(Vec3 const&            startPosition,
+                        Vec3 const&            endPosition,
+                        float const            radius,
+                        float const            duration,
+                        Rgba8 const&           startColor,
+                        Rgba8 const&           endColor,
                         eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -689,13 +689,13 @@ void DebugAddWorldArrow(Vec3 const&           startPosition,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldText(String const&         text,
-                       Mat44 const&          transform,
-                       float const           textHeight,
-                       Vec2 const&           alignment,
-                       float const           duration,
-                       Rgba8 const&          startColor,
-                       Rgba8 const&          endColor,
+void DebugAddWorldText(String const&          text,
+                       Mat44 const&           transform,
+                       float const            textHeight,
+                       Vec2 const&            alignment,
+                       float const            duration,
+                       Rgba8 const&           startColor,
+                       Rgba8 const&           endColor,
                        eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -716,13 +716,13 @@ void DebugAddWorldText(String const&         text,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddBillboardText(String const&         text,
-                           Vec3 const&           origin,
-                           float const           textHeight,
-                           Vec2 const&           alignment,
-                           float const           duration,
-                           Rgba8 const&          startColor,
-                           Rgba8 const&          endColor,
+void DebugAddBillboardText(String const&          text,
+                           Vec3 const&            origin,
+                           float const            textHeight,
+                           Vec2 const&            alignment,
+                           float const            duration,
+                           Rgba8 const&           startColor,
+                           Rgba8 const&           endColor,
                            eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -741,8 +741,8 @@ void DebugAddBillboardText(String const&         text,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddWorldBasis(Mat44 const&          transform,
-                        float const           duration,
+void DebugAddWorldBasis(Mat44 const&           transform,
+                        float const            duration,
                         eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
@@ -765,13 +765,13 @@ void DebugAddWorldBasis(Mat44 const&          transform,
 }
 
 //----------------------------------------------------------------------------------------------------
-void DebugAddScreenText(String const&         text,
-                        Vec2 const&           position,
-                        float const           size,
-                        Vec2 const&           alignment,
-                        float const           duration,
-                        Rgba8 const&          startColor,
-                        Rgba8 const&          endColor,
+void DebugAddScreenText(String const&          text,
+                        Vec2 const&            position,
+                        float const            size,
+                        Vec2 const&            alignment,
+                        float const            duration,
+                        Rgba8 const&           startColor,
+                        Rgba8 const&           endColor,
                         eDebugRenderMode const mode)
 {
     DebugRenderObject* object = new DebugRenderObject;
