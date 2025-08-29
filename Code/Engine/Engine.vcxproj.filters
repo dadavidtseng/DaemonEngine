@@ -319,6 +319,9 @@
     <ClCompile Include="Core\LogSubsystem.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Math\IntVec3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -620,6 +623,9 @@
     </ClInclude>
     <ClInclude Include="Core\LogSubsystem.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\IntVec3.hpp">
+      <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
