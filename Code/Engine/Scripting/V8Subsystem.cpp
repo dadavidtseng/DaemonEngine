@@ -173,7 +173,7 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
     {
         // 執行錯誤
         v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
-        HandleV8Error("腳本執行錯誤: " + std::string(*error));
+        HandleV8Error("Script execution error: " + std::string(*error));
         return false;
     }
 
@@ -229,6 +229,7 @@ bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
         return false;
     }
 
+    // DAEMON_LOG()
     DebuggerPrintf("V8Subsystem: 執行腳本檔案: %s\n", fullPath.c_str());
     return ExecuteScript(scriptContent);
 }

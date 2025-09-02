@@ -17,7 +17,6 @@ struct ScriptMethodResult
     std::any    result;
     std::string errorMessage;
 
-    // 便利建構函式
     static ScriptMethodResult Success(const std::any& value = std::any{})
     {
         ScriptMethodResult result;
@@ -45,11 +44,11 @@ struct ScriptMethodInfo
     std::vector<std::string> parameterTypes;
     std::string              returnType;
 
-    ScriptMethodInfo(std::string const&              methodName,
-                     std::string const&              desc    = "",
-                     std::vector<std::string> const& params  = {},
-                     std::string const&              retType = "void")
-        : name(methodName), description(desc), parameterTypes(params), returnType(retType)
+    explicit ScriptMethodInfo(std::string const&              methodName,
+                              std::string const&              desc       = "",
+                              std::vector<std::string> const& params     = {},
+                              std::string const&              returnType = "void")
+        : name(methodName), description(desc), parameterTypes(params), returnType(returnType)
     {
     }
 };
