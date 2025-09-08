@@ -5,13 +5,18 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/IScriptableObject.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
+
 std::any IScriptableObject::GetProperty(std::string const& propertyName) const
 {
+    UNUSED(propertyName)
     return std::any{};
 }
 
 bool IScriptableObject::SetProperty(const std::string& propertyName, const std::any& value)
 {
+    UNUSED(propertyName)
+    UNUSED(value)
     return false;
 }
 

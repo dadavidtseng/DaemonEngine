@@ -4,54 +4,49 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/V8Subsystem.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/FileUtils.hpp"
+
 #include <fstream>
 #include <sstream>
-#include <chrono>
 
 #include "Engine/Core/EngineCommon.hpp"
-
-// V8 相關的 include（這些應該只在 .cpp 檔案中）
-// 注意：您可能需要根據實際的 V8 設定調整這些 include
-
-
-// 抑制 V8 第三方程式庫的警告
-#pragma warning(push)
-#pragma warning(disable: 4100) // 未使用的參數
-#pragma warning(disable: 4127) // 條件運算式為常數
-#pragma warning(disable: 4324) // 結構體填補警告
-
-#include "v8.h"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "libplatform/libplatform.h"
-
-#pragma warning(pop)
-
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/Time.hpp"
 
 //----------------------------------------------------------------------------------------------------
-// V8 實作細節（使用 Pimpl 模式）
+// Any changes that you made to the warning state between push and pop are undone.
+//----------------------------------------------------------------------------------------------------
+#pragma warning(push)           // stores the current warning state for every warning
+
+#pragma warning(disable: 4100)  // 'identifier' : unreferenced formal parameter
+#pragma warning(disable: 4127)  // conditional expression is constant
+#pragma warning(disable: 4324)  // 'structname': structure was padded due to alignment specifier
+
+#include "v8.h"
+#include "libplatform/libplatform.h"
+
+#pragma warning(pop)            // pops the last warning state pushed onto the stack
+//----------------------------------------------------------------------------------------------------
+
+V8Subsystem* g_v8Subsystem = nullptr;
+
 //----------------------------------------------------------------------------------------------------
 struct V8Subsystem::V8Implementation
 {
     std::unique_ptr<v8::Platform>               platform;
     v8::Isolate::CreateParams                   createParams;
     v8::Isolate*                                isolate = nullptr;
-    v8::Global<v8::Context>                     context;
+    v8::Global<v8::Context>                     globalContext;              // v8 persistent handle
     std::unique_ptr<v8::ArrayBuffer::Allocator> allocator;
-
-
-    bool                                  isInitialized = false;
-    std::chrono::steady_clock::time_point lastExecutionStart;
+    bool                                        isInitialized      = false;
+    double                                      lastExecutionStart = 0.0;
 };
 
-V8Subsystem* g_v8Subsystem = nullptr;
-
 //----------------------------------------------------------------------------------------------------
-V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
+V8Subsystem::V8Subsystem(sV8SubsystemConfig config)
     : m_impl(std::make_unique<V8Implementation>()),
-      m_config(config)
+      m_config(std::move(config))
 {
     if (g_v8Subsystem == nullptr)
     {
@@ -59,7 +54,7 @@ V8Subsystem::V8Subsystem(sV8SubsystemConfig const& config)
     }
     else
     {
-        ERROR_AND_DIE("V8Subsystem: 只能有一個 V8Subsystem 實例")
+        ERROR_AND_DIE(Stringf("V8Subsystem: 只能有一個 V8Subsystem 實例"))
     }
 }
 
@@ -69,18 +64,17 @@ V8Subsystem::~V8Subsystem() = default;
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Startup()
 {
-    // DebuggerPrintf("V8Subsystem: 啟動中...\n");
-    // DAEMON_LOG(LogScript, eLogVerbosity::Warning, Stringf("V8Subsystem::Startup()"));
-    g_logSubsystem->LogMessage("LogScript", eLogVerbosity::Display, "V8Subsystem::Startup() start");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::Startup)(start)"));
+
     if (m_isInitialized)
     {
-        DebuggerPrintf("V8Subsystem: 已經初始化，跳過\n");
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, Stringf("(V8Subsystem::Startup)(V8Subsystem has already initialized, skip...)"));
         return;
     }
 
     if (!InitializeV8Engine())
     {
-        HandleV8Error("V8 引擎初始化失敗");
+        HandleV8Error(Stringf("Failed to initialize V8 engine"));
         return;
     }
 
@@ -88,13 +82,13 @@ void V8Subsystem::Startup()
 
     SetupV8Bindings();
 
-    DebuggerPrintf("V8Subsystem: 啟動完成\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::Startup)(end)"));
 }
 
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::Shutdown()
 {
-    DebuggerPrintf("V8Subsystem: 關閉中...\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::Shutdown)(start)"));
 
     if (!m_isInitialized)
     {
@@ -112,7 +106,8 @@ void V8Subsystem::Shutdown()
     ShutdownV8Engine();
 
     m_isInitialized = false;
-    DebuggerPrintf("V8Subsystem: 關閉完成\n");
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::Shutdown)(end)"));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -120,7 +115,6 @@ void V8Subsystem::Update()
 {
     if (!m_isInitialized)
     {
-
         return;
     }
 
@@ -130,7 +124,7 @@ void V8Subsystem::Update()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScript(const std::string& script)
+bool V8Subsystem::ExecuteScript(String const& script)
 {
     if (!m_isInitialized)
     {
@@ -145,12 +139,12 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
     }
 
     ClearError();
-    m_impl->lastExecutionStart = std::chrono::steady_clock::now();
+    m_impl->lastExecutionStart = GetCurrentTimeSeconds();
 
 
     v8::Isolate::Scope     isolateScope(m_impl->isolate);
     v8::HandleScope        handleScope(m_impl->isolate);
-    v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
+    v8::Local<v8::Context> context = m_impl->globalContext.Get(m_impl->isolate);
     v8::Context::Scope     contextScope(context);
 
     v8::TryCatch tryCatch(m_impl->isolate);
@@ -163,7 +157,7 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
     {
         // 編譯錯誤
         v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
-        HandleV8Error("腳本編譯錯誤: " + std::string(*error));
+        HandleV8Error("腳本編譯錯誤: " + String(*error));
         return false;
     }
 
@@ -173,7 +167,7 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
     {
         // 執行錯誤
         v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
-        HandleV8Error("Script execution error: " + std::string(*error));
+        HandleV8Error("Script execution error: " + String(*error));
         return false;
     }
 
@@ -189,19 +183,15 @@ bool V8Subsystem::ExecuteScript(const std::string& script)
     }
 
     // 更新統計
-    auto executionTime = std::chrono::steady_clock::now() - m_impl->lastExecutionStart;
+    double const executionTime = GetCurrentTimeSeconds() - m_impl->lastExecutionStart;
     m_stats.scriptsExecuted++;
-    m_stats.totalExecutionTime += std::chrono::duration_cast<std::chrono::milliseconds>(executionTime).count();
+    m_stats.totalExecutionTime += static_cast<long long>(executionTime * 1000.0);
 
     return true;
-
-    // 如果沒有編譯 V8 支援，回傳錯誤
-    HandleV8Error("V8 支援未編譯進引擎");
-    return false;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
+bool V8Subsystem::ExecuteScriptFile(String const& filename)
 {
     if (!m_isInitialized)
     {
@@ -209,7 +199,7 @@ bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
         return false;
     }
 
-    std::string fullPath = ValidateScriptPath(filename);
+    String fullPath = ValidateScriptPath(filename);
 
     // 讀取檔案內容
     std::ifstream file(fullPath);
@@ -221,7 +211,7 @@ bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
 
     std::stringstream buffer;
     buffer << file.rdbuf();
-    std::string scriptContent = buffer.str();
+    String scriptContent = buffer.str();
 
     if (scriptContent.empty())
     {
@@ -235,12 +225,13 @@ bool V8Subsystem::ExecuteScriptFile(const std::string& filename)
 }
 
 //----------------------------------------------------------------------------------------------------
-std::any V8Subsystem::ExecuteScriptWithResult(const std::string& script)
+std::any V8Subsystem::ExecuteScriptWithResult(String const& script)
 {
     if (ExecuteScript(script))
     {
         return std::any(m_lastResult);
     }
+
     return std::any{};
 }
 
@@ -251,13 +242,13 @@ bool V8Subsystem::HasError() const
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string V8Subsystem::GetLastError() const
+String V8Subsystem::GetLastError() const
 {
     return m_lastError;
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string V8Subsystem::GetLastResult() const
+String V8Subsystem::GetLastResult() const
 {
     return m_lastResult;
 }
@@ -279,9 +270,10 @@ void V8Subsystem::ClearError()
 /// @brief 註冊可腳本化的物件
 /// @param name 在 JavaScript 中的物件名稱
 /// @param object 實作 IScriptableObject 介面的物件
-void V8Subsystem::RegisterScriptableObject(String const& name, std::shared_ptr<IScriptableObject> const& object)
+void V8Subsystem::RegisterScriptableObject(String const&                             name,
+                                           std::shared_ptr<IScriptableObject> const& object)
 {
-    if (!object)
+    if (object == nullptr)
     {
         HandleV8Error("嘗試註冊空的腳本物件: " + name);
         return;
@@ -290,7 +282,7 @@ void V8Subsystem::RegisterScriptableObject(String const& name, std::shared_ptr<I
     DebuggerPrintf("V8Subsystem: 註冊腳本物件: %s\n", name.c_str());
 
     // 如果物件已存在，先移除舊的
-    if (m_scriptableObjects.find(name) != m_scriptableObjects.end())
+    if (m_scriptableObjects.contains(name))
     {
         DebuggerPrintf("V8Subsystem: 警告 - 覆蓋現有的腳本物件: %s\n", name.c_str());
     }
@@ -363,21 +355,21 @@ void V8Subsystem::UnregisterGlobalFunction(String const& name)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::HasRegisteredObject(const std::string& name) const
+bool V8Subsystem::HasRegisteredObject(const String& name) const
 {
-    return m_scriptableObjects.find(name) != m_scriptableObjects.end();
+    return m_scriptableObjects.contains(name);
 }
 
 //----------------------------------------------------------------------------------------------------
-bool V8Subsystem::HasRegisteredFunction(const std::string& name) const
+bool V8Subsystem::HasRegisteredFunction(const String& name) const
 {
-    return m_globalFunctions.find(name) != m_globalFunctions.end();
+    return m_globalFunctions.contains(name);
 }
 
 //----------------------------------------------------------------------------------------------------
-std::vector<std::string> V8Subsystem::GetRegisteredObjectNames() const
+StringList V8Subsystem::GetRegisteredObjectNames() const
 {
-    std::vector<std::string> names;
+    std::vector<String> names;
     names.reserve(m_scriptableObjects.size());
 
     for (const auto& pair : m_scriptableObjects)
@@ -389,9 +381,9 @@ std::vector<std::string> V8Subsystem::GetRegisteredObjectNames() const
 }
 
 //----------------------------------------------------------------------------------------------------
-std::vector<std::string> V8Subsystem::GetRegisteredFunctionNames() const
+StringList V8Subsystem::GetRegisteredFunctionNames() const
 {
-    std::vector<std::string> names;
+    std::vector<String> names;
     names.reserve(m_globalFunctions.size());
 
     for (const auto& pair : m_globalFunctions)
@@ -403,7 +395,7 @@ std::vector<std::string> V8Subsystem::GetRegisteredFunctionNames() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::SetDebugOutput(bool enabled)
+void V8Subsystem::SetDebugOutput(bool const enabled)
 {
     m_config.enableConsoleOutput = enabled;
 }
@@ -457,106 +449,88 @@ V8Subsystem::MemoryUsage V8Subsystem::GetMemoryUsage() const
 // 私有方法實作
 //----------------------------------------------------------------------------------------------------
 
-bool V8Subsystem::InitializeV8Engine()
+bool V8Subsystem::InitializeV8Engine() const
 {
-    DebuggerPrintf("V8Subsystem: 初始化 V8 引擎...\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::InitializeV8Engine)(start)"));
 
-    // 初始化 V8 平台
+    // Initialize V8 platform
     v8::V8::InitializeICUDefaultLocation("");
     v8::V8::InitializeExternalStartupData("");
     m_impl->platform = v8::platform::NewDefaultPlatform();
     v8::V8::InitializePlatform(m_impl->platform.get());
     v8::V8::Initialize();
 
-    // 創建 Isolate
-    m_impl->allocator.reset(v8::ArrayBuffer::Allocator::NewDefaultAllocator());
+    // Create Isolate
+    v8::ArrayBuffer::Allocator* allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+    m_impl->allocator.reset(allocator);
     m_impl->createParams.array_buffer_allocator = m_impl->allocator.get();
 
-    // 設定堆疊大小限制
-    // 修正 2: 根據 V8 版本使用不同的記憶體限制設定方法
+    // Set heap size limits
     if (m_config.heapSizeLimit > 0)
     {
-        // 嘗試新版本的 API
-#if V8_MAJOR_VERSION >= 9
         m_impl->createParams.constraints.set_max_old_generation_size_in_bytes(m_config.heapSizeLimit);
-        // m_impl->createParams.constraints.set_max_old_space_size(m_config.heapSizeLimit);
-#else
-        // 舊版本的 API
-        m_impl->createParams.constraints.ConfigureDefaults(
-            v8::internal::Heap::kPointerMultiplier * m_config.heapSizeLimit * v8::internal::MB,
-            v8::internal::Heap::kPointerMultiplier * m_config.heapSizeLimit * v8::internal::MB);
-#endif
     }
 
     m_impl->isolate = v8::Isolate::New(m_impl->createParams);
+
     if (!m_impl->isolate)
     {
-        DebuggerPrintf("V8Subsystem: 無法創建 V8 Isolate\n");
+        DAEMON_LOG(LogScript, eLogVerbosity::Error, Stringf("(V8Subsystem::InitializeV8Engine)(failed to create V8 Isolate!)"));
         return false;
     }
 
-    // 創建 Context
-    {
-        v8::Isolate::Scope isolateScope(m_impl->isolate);
-        v8::HandleScope    handleScope(m_impl->isolate);
-
-        v8::Local<v8::Context> context = v8::Context::New(m_impl->isolate);
-        m_impl->context.Reset(m_impl->isolate, context);
-    }
-
+    // Create Context
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);                     // Thread safety, make this isolate active for the current thread
+    v8::HandleScope              handleScope(m_impl->isolate);                      // Memory safety, manage temporary V8 object handles automatically
+    v8::Local<v8::Context> const localContext = v8::Context::New(m_impl->isolate);  // Create new JavaScript execution context
+    m_impl->globalContext.Reset(m_impl->isolate, localContext);                     // Convert local context to persistent handle for long-term storage
     m_impl->isInitialized = true;
-    DebuggerPrintf("V8Subsystem: V8 引擎初始化成功\n");
-    return true;
 
-    DebuggerPrintf("V8Subsystem: V8 支援未編譯進引擎\n");
-    return false;
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::InitializeV8Engine)(end)"));
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::ShutdownV8Engine()
 {
-    if (m_impl->isInitialized)
+    if (!m_impl->isInitialized) return;
+
+    // 清理 Context
+    m_impl->globalContext.Reset();
+
+    // 清理 Isolate
+    if (m_impl->isolate)
     {
-        // 清理 Context
-        m_impl->context.Reset();
-
-        // 清理 Isolate
-        if (m_impl->isolate)
-        {
-            m_impl->isolate->Dispose();
-            m_impl->isolate = nullptr;
-        }
-
-        // 清理 Allocator
-        if (m_impl->allocator)
-        {
-            delete m_impl->allocator.release();
-        }
-
-        // 清理平台
-        v8::V8::Dispose();
-        v8::V8::DisposePlatform();
-
-        m_impl->isInitialized = false;
-        DebuggerPrintf("V8Subsystem: V8 引擎已關閉\n");
+        m_impl->isolate->Dispose();
+        m_impl->isolate = nullptr;
     }
+
+    // 清理 Allocator
+    if (m_impl->allocator != nullptr)
+    {
+        m_impl->allocator = nullptr;
+    }
+
+    // 清理平台
+    v8::V8::Dispose();
+    v8::V8::DisposePlatform();
+
+    m_impl->isInitialized = false;
+    DebuggerPrintf("V8Subsystem: V8 引擎已關閉\n");
 }
 
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::SetupV8Bindings()
 {
-    if (!m_isInitialized)
-    {
-        return;
-    }
+    if (!m_isInitialized) ERROR_AND_DIE(Stringf("(V8Subsystem::SetupV8Bindings)(V8Subsystem is not initialized"))
 
-    DebuggerPrintf("V8Subsystem: 設定 V8 綁定...\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::SetupV8Bindings)(start)"));
 
     SetupBuiltinObjects();
     CreateObjectBindings();
     CreateFunctionBindings();
 
-    DebuggerPrintf("V8Subsystem: V8 綁定設定完成\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, Stringf("(V8Subsystem::SetupV8Bindings)(end)"));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -564,16 +538,16 @@ void V8Subsystem::CreateObjectBindings()
 {
     if (!m_impl->isolate) return;
 
-    v8::Isolate::Scope     isolateScope(m_impl->isolate);
-    v8::HandleScope        handleScope(m_impl->isolate);
-    v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope     contextScope(context);
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);
+    v8::HandleScope              handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope           contextScope(localContext);
 
-    v8::Local<v8::Object> global = context->Global();
+    v8::Local<v8::Object> global = localContext->Global();
 
-    for (const auto& pair : m_scriptableObjects)
+    for (auto const& pair : m_scriptableObjects)
     {
-        const std::string&                 objectName = pair.first;
+        const String&                      objectName = pair.first;
         std::shared_ptr<IScriptableObject> object     = pair.second;
 
         DebuggerPrintf("V8Subsystem: 創建 V8 綁定 - 物件: %s\n", objectName.c_str());
@@ -610,7 +584,7 @@ void V8Subsystem::CreateObjectBindings()
                     else if (arg->IsString())
                     {
                         v8::String::Utf8Value str(isolate, arg);
-                        cppArgs.push_back(std::string(*str));
+                        cppArgs.push_back(String(*str));
                     }
                     else if (arg->IsBoolean())
                     {
@@ -619,16 +593,16 @@ void V8Subsystem::CreateObjectBindings()
                 }
 
                 // 呼叫 C++ 方法
-                ScriptMethodResult result = callbackData->m_object->CallMethod(callbackData->m_methodName, cppArgs);
+                ScriptMethodResult result = callbackData->object->CallMethod(callbackData->methodName, cppArgs);
 
                 if (result.success)
                 {
                     // 轉換回傳值
                     try
                     {
-                        if (result.result.type() == typeid(std::string))
+                        if (result.result.type() == typeid(String))
                         {
-                            std::string str = std::any_cast<std::string>(result.result);
+                            String str = std::any_cast<String>(result.result);
                             args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
                         }
                         else if (result.result.type() == typeid(bool))
@@ -659,17 +633,17 @@ void V8Subsystem::CreateObjectBindings()
             };
 
             // 創建回呼資料
-            auto callbackData          = std::make_unique<MethodCallbackData>();
-            callbackData->m_object     = object;
-            callbackData->m_methodName = method.name;
+            auto callbackData        = std::make_unique<MethodCallbackData>();
+            callbackData->object     = object;
+            callbackData->methodName = method.name;
 
             v8::Local<v8::External> external = v8::External::New(m_impl->isolate, callbackData.get());
 
             // 修正：直接創建函式，而不是使用 FunctionTemplate
-            v8::Local<v8::Function> methodFunction = v8::Function::New(context, methodCallback, external).ToLocalChecked();
+            v8::Local<v8::Function> methodFunction = v8::Function::New(localContext, methodCallback, external).ToLocalChecked();
 
             // 將方法添加到 JavaScript 物件
-            jsObject->Set(context,
+            jsObject->Set(localContext,
                           v8::String::NewFromUtf8(m_impl->isolate, method.name.c_str()).ToLocalChecked(),
                           methodFunction).Check();
 
@@ -678,7 +652,7 @@ void V8Subsystem::CreateObjectBindings()
         }
 
         // 將物件綁定到全域範圍
-        global->Set(context,
+        global->Set(localContext,
                     v8::String::NewFromUtf8(m_impl->isolate, objectName.c_str()).ToLocalChecked(),
                     jsObject).Check();
 
@@ -691,16 +665,16 @@ void V8Subsystem::CreateFunctionBindings()
 {
     if (!m_impl->isolate) return;
 
-    v8::Isolate::Scope     isolateScope(m_impl->isolate);
-    v8::HandleScope        handleScope(m_impl->isolate);
-    v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope     contextScope(context);
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);
+    v8::HandleScope              handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope           contextScope(localContext);
 
-    v8::Local<v8::Object> global = context->Global();
+    v8::Local<v8::Object> global = localContext->Global();
 
     for (const auto& pair : m_globalFunctions)
     {
-        const std::string&    functionName = pair.first;
+        const String&         functionName = pair.first;
         const ScriptFunction& function     = pair.second;
 
         DebuggerPrintf("V8Subsystem: 綁定全域函式: %s\n", functionName.c_str());
@@ -727,7 +701,7 @@ void V8Subsystem::CreateFunctionBindings()
                 else if (arg->IsString())
                 {
                     v8::String::Utf8Value str(isolate, arg);
-                    cppArgs.push_back(std::string(*str));
+                    cppArgs.push_back(String(*str));
                 }
                 else if (arg->IsBoolean())
                 {
@@ -741,9 +715,9 @@ void V8Subsystem::CreateFunctionBindings()
                 std::any result = (*function)(cppArgs);
 
                 // 轉換回傳值（如果有的話）
-                if (result.type() == typeid(std::string))
+                if (result.type() == typeid(String))
                 {
-                    std::string str = std::any_cast<std::string>(result);
+                    String str = std::any_cast<String>(result);
                     args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
                 }
                 else
@@ -762,10 +736,10 @@ void V8Subsystem::CreateFunctionBindings()
         v8::Local<v8::External> external    = v8::External::New(m_impl->isolate, functionPtr.get());
 
         // 修正：直接創建函式
-        v8::Local<v8::Function> jsFunction = v8::Function::New(context, functionCallback, external).ToLocalChecked();
+        v8::Local<v8::Function> jsFunction = v8::Function::New(localContext, functionCallback, external).ToLocalChecked();
 
         // 將函式綁定到全域範圍
-        global->Set(context,
+        global->Set(localContext,
                     v8::String::NewFromUtf8(m_impl->isolate, functionName.c_str()).ToLocalChecked(),
                     jsFunction).Check();
 
@@ -775,41 +749,36 @@ void V8Subsystem::CreateFunctionBindings()
 }
 
 //----------------------------------------------------------------------------------------------------
+// TODO: integrate this with LogSubsystem or more console-related function, such as console.warn and console.error, etc...
 void V8Subsystem::SetupBuiltinObjects()
 {
-    DebuggerPrintf("V8Subsystem: SetupBuiltinObjects() 開始執行\n");
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("(V8Subsystem::SetupBuiltinObjects)(start)"));
 
-    if (!m_impl->isolate)
-    {
-        DebuggerPrintf("V8Subsystem: isolate 為空，退出 SetupBuiltinObjects\n");
-        return;
-    }
+    if (m_impl->isolate == nullptr)ERROR_AND_DIE(StringFormat("(V8Subsystem::SetupBuiltinObjects)(v8::Isolate* is nullptr"))
 
-    DebuggerPrintf("V8Subsystem: isolate 正常，繼續執行\n");
-
-    v8::Isolate::Scope     isolateScope(m_impl->isolate);
-    v8::HandleScope        handleScope(m_impl->isolate);
-    v8::Local<v8::Context> context = m_impl->context.Get(m_impl->isolate);
-    v8::Context::Scope     contextScope(context);
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);
+    v8::HandleScope              handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope           contextScope(localContext);
 
     if (m_config.enableConsoleOutput)
     {
-        DebuggerPrintf("V8Subsystem: 設定 console 物件\n");
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("(V8Subsystem::SetupBuiltinObjects)(enableConsoleOutput)"));
 
-        // 創建 console 物件
-        v8::Local<v8::Object> console = v8::Object::New(m_impl->isolate);
+        // create console object
+        v8::Local<v8::Object> const console = v8::Object::New(m_impl->isolate);
 
-        // 創建 console.log 方法回呼
+        // create console.log callback
         auto logCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
             v8::Isolate*    isolate = args.GetIsolate();
             v8::HandleScope scope(isolate);
 
-            std::string output = "CONSOLE: ";
+            String output = "CONSOLE: ";
             for (int i = 0; i < args.Length(); i++)
             {
                 if (i > 0) output += " ";
 
-                v8::Local<v8::Value> arg = args[i];
+                v8::Local<v8::Value> const arg = args[i];
                 if (arg->IsString())
                 {
                     v8::String::Utf8Value str(isolate, arg);
@@ -817,7 +786,7 @@ void V8Subsystem::SetupBuiltinObjects()
                 }
                 else if (arg->IsNumber())
                 {
-                    double num = arg->NumberValue(isolate->GetCurrentContext()).ToChecked();
+                    double const num = arg->NumberValue(isolate->GetCurrentContext()).ToChecked();
                     output += std::to_string(num);
                 }
                 else if (arg->IsBoolean())
@@ -835,31 +804,31 @@ void V8Subsystem::SetupBuiltinObjects()
         };
 
         // 修正：直接創建函式
-        v8::Local<v8::Function> const logFunction = v8::Function::New(context, logCallback).ToLocalChecked();
-        console->Set(context,
+        v8::Local<v8::Function> const logFunction = v8::Function::New(localContext, logCallback).ToLocalChecked();
+        console->Set(localContext,
                      v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(),
                      logFunction).Check();
 
         // 將 console 物件綁定到全域範圍
-        v8::Local<v8::Object> const global = context->Global();
-        global->Set(context,
+        v8::Local<v8::Object> const global = localContext->Global();
+        global->Set(localContext,
                     v8::String::NewFromUtf8(m_impl->isolate, "console").ToLocalChecked(),
                     console).Check();
     }
     else
     {
-        DebuggerPrintf("V8Subsystem: enableConsoleOutput 為 false，跳過 console 設定\n");  // 加入這行
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("(V8Subsystem::SetupBuiltinObjects)(enableConsoleOutput is false, skip...)"));
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void V8Subsystem::HandleV8Error(const std::string& error)
+void V8Subsystem::HandleV8Error(String const& error)
 {
     m_hasError  = true;
     m_lastError = error;
     m_stats.errorsEncountered++;
 
-    DebuggerPrintf("V8Subsystem 錯誤: %s\n", error.c_str());
+    DAEMON_LOG(LogScript, eLogVerbosity::Error, Stringf("(V8Subsystem::HandleV8Error)(%s)", error.c_str()));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -880,12 +849,12 @@ std::any V8Subsystem::ConvertFromV8Value(void* v8Value)
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string V8Subsystem::ValidateScriptPath(const std::string& filename) const
+String V8Subsystem::ValidateScriptPath(const String& filename) const
 {
-    std::string fullPath;
+    String fullPath;
 
     // 檢查是否已經是完整路徑
-    if (filename.find(':') != std::string::npos || filename[0] == '/' || filename[0] == '\\')
+    if (filename.find(':') != String::npos || filename[0] == '/' || filename[0] == '\\')
     {
         fullPath = filename;
     }

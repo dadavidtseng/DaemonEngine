@@ -20,8 +20,8 @@ using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 //----------------------------------------------------------------------------------------------------
 struct MethodCallbackData
 {
-    std::shared_ptr<IScriptableObject> m_object;
-    std::string                        m_methodName;
+    std::shared_ptr<IScriptableObject> object;
+    std::string                        methodName;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -42,22 +42,16 @@ struct sV8SubsystemConfig
 class V8Subsystem
 {
 public:
-    explicit V8Subsystem(sV8SubsystemConfig const& config);
+    explicit V8Subsystem(sV8SubsystemConfig config);
     ~V8Subsystem();
 
     void Startup();
     void Shutdown();
     void Update();
 
-    //------------------------------------------------------------------------------------------------
-    // 腳本執行功能
-    //------------------------------------------------------------------------------------------------
-
-    // 執行 JavaScript 程式碼字串
-    bool ExecuteScript(std::string const& script);
-
-    // 執行 JavaScript 檔案
-    bool ExecuteScriptFile(std::string const& filename);
+    // Execution related
+    bool ExecuteScript(String const& script);
+    bool ExecuteScriptFile(String const& filename);
 
     // 執行 JavaScript 程式碼並回傳結果
     std::any ExecuteScriptWithResult(std::string const& script);
@@ -70,10 +64,10 @@ public:
     bool HasError() const;
 
     // 取得最後的錯誤訊息
-    std::string GetLastError() const;
+    String GetLastError() const;
 
     // 取得最後執行的結果
-    std::string GetLastResult() const;
+    String GetLastResult() const;
 
     // 檢查 V8 是否已初始化
     bool IsInitialized() const;
@@ -81,26 +75,23 @@ public:
     // 清除錯誤狀態
     void ClearError();
 
-    //------------------------------------------------------------------------------------------------
-    // 物件和函式註冊系統（新的架構）
-    //------------------------------------------------------------------------------------------------
-
+    // Registration of `object` and `function`
     void RegisterScriptableObject(String const& name, std::shared_ptr<IScriptableObject> const& object);
     void UnregisterScriptableObject(String const& name);
     void RegisterGlobalFunction(String const& name, ScriptFunction const& function);
     void UnregisterGlobalFunction(String const& name);
 
     // 檢查是否有註冊指定的物件
-    bool HasRegisteredObject(const std::string& name) const;
+    bool HasRegisteredObject(String const& name) const;
 
     // 檢查是否有註冊指定的函式
-    bool HasRegisteredFunction(const std::string& name) const;
+    bool HasRegisteredFunction(String const& name) const;
 
     // 取得所有已註冊的物件名稱
-    std::vector<std::string> GetRegisteredObjectNames() const;
+    StringList GetRegisteredObjectNames() const;
 
     // 取得所有已註冊的函式名稱
-    std::vector<std::string> GetRegisteredFunctionNames() const;
+    StringList GetRegisteredFunctionNames() const;
 
     //------------------------------------------------------------------------------------------------
     // 除錯和工具功能
@@ -141,22 +132,21 @@ public:
     MemoryUsage GetMemoryUsage() const;
 
 private:
-    //------------------------------------------------------------------------------------------------
-    // 內部實作細節
-    //------------------------------------------------------------------------------------------------
-
-    // V8 引擎的具體實作（使用 Pimpl 模式隱藏 V8 的複雜性）
+    //----------------------------------------------------------------------------------------------------
+    /// @brief Internal implementation struct for v8
+    /// @see https://www.geeksforgeeks.org/cpp/pimpl-idiom-in-c-with-examples/
     struct V8Implementation;
+    // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
 
     // 設定資料
     sV8SubsystemConfig m_config;
 
     // 註冊的腳本物件
-    std::unordered_map<std::string, std::shared_ptr<IScriptableObject>> m_scriptableObjects;
+    std::unordered_map<String, std::shared_ptr<IScriptableObject>> m_scriptableObjects;
 
     // 註冊的全域函式
-    std::unordered_map<std::string, ScriptFunction> m_globalFunctions;
+    std::unordered_map<String, ScriptFunction> m_globalFunctions;
 
     // 狀態追蹤
     bool        m_isInitialized = false;
@@ -165,14 +155,14 @@ private:
     std::string m_lastResult;
 
     // 執行統計
-    mutable ExecutionStats m_stats;
+    ExecutionStats m_stats;
 
     //------------------------------------------------------------------------------------------------
     // 內部輔助方法
     //------------------------------------------------------------------------------------------------
 
     // 初始化 V8 引擎
-    bool InitializeV8Engine();
+    bool InitializeV8Engine() const;
 
     // 清理 V8 引擎
     void ShutdownV8Engine();
