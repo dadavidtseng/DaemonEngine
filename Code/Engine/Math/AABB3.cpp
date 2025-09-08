@@ -9,9 +9,10 @@
 #include "Engine/Math/MathUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
+STATIC AABB3 AABB3::ZERO             = AABB3(Vec3(0.f, 0.f, 0.f), Vec3(0.f, 0.f, 0.f));
 STATIC AABB3 AABB3::ZERO_TO_ONE      = AABB3(Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f));
 STATIC AABB3 AABB3::NEG_HALF_TO_HALF = AABB3(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f));
-STATIC AABB3 AABB3::NEG_ONE = AABB3(Vec3(-1.f, -1.f, -1.f), Vec3(-1.f, -1.f, -1.f));
+STATIC AABB3 AABB3::NEG_ONE          = AABB3(Vec3(-1.f, -1.f, -1.f), Vec3(-1.f, -1.f, -1.f));
 
 //----------------------------------------------------------------------------------------------------
 AABB3::AABB3(float const minX, float const minY, float const minZ,
@@ -33,12 +34,12 @@ AABB3::AABB3(Vec3 const& mins,
 bool AABB3::IsPointInside(Vec3 const& point) const
 {
     return
-        point.x >= m_mins.x &&
-        point.x <= m_maxs.x &&
-        point.y >= m_mins.y &&
-        point.y <= m_maxs.y &&
-        point.z >= m_mins.z &&
-        point.z <= m_maxs.z;
+    point.x >= m_mins.x &&
+    point.x <= m_maxs.x &&
+    point.y >= m_mins.y &&
+    point.y <= m_maxs.y &&
+    point.z >= m_mins.z &&
+    point.z <= m_maxs.z;
 }
 
 //----------------------------------------------------------------------------------------------------
