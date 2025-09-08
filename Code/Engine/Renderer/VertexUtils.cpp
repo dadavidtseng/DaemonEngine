@@ -349,21 +349,21 @@ void AddVertsForOBB3D(VertexList_PCU& verts,
                       AABB2 const&    UVs)
 {
     Vec3 minXminYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXminYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXmaxYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXmaxYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXminYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXminYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXmaxYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
 
     AddVertsForQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, color, UVs);
     AddVertsForQuad3D(verts, minXmaxYminZ, minXminYminZ, minXmaxYmaxZ, minXminYmaxZ, color, UVs);
@@ -447,21 +447,21 @@ void AddVertsForWireframeOBB3D(VertexList_PCU& verts,
                                Rgba8 const&    color)
 {
     Vec3 minXminYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXminYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXmaxYminZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 minXmaxYmaxZ = obb3.m_center - obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXminYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXminYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x -
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXmaxYminZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y - obb3.m_kBasis * obb3.m_halfDimensions.z;
     Vec3 maxXmaxYmaxZ = obb3.m_center + obb3.m_iBasis * obb3.m_halfDimensions.x +
-        obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
+    obb3.m_jBasis * obb3.m_halfDimensions.y + obb3.m_kBasis * obb3.m_halfDimensions.z;
     float diagonalLength = 2.f * obb3.m_halfDimensions.GetLength();
 
     AddVertsForWireframeQuad3D(verts, maxXminYminZ, maxXmaxYminZ, maxXminYmaxZ, maxXmaxYmaxZ, diagonalLength / 200.f, color);
@@ -595,6 +595,34 @@ void AddVertsForQuad3D(VertexList_PCU& verts,
     verts.emplace_back(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y));
     verts.emplace_back(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y));
     verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y));
+}
+
+void AddVertsForQuad3D(VertexList_PCU& verts,
+                       IndexList&      indexes,
+                       Vec3 const&     bottomLeft,
+                       Vec3 const&     bottomRight,
+                       Vec3 const&     topLeft,
+                       Vec3 const&     topRight,
+                       Rgba8 const&    color,
+                       AABB2 const&    UVs)
+{
+    // 1. Store the starting index of this quad's vertices in the vertex list.
+    unsigned int const currentIndex = static_cast<unsigned int>(verts.size());
+
+    // 5. Add the four vertices of the quad with position, color, UV, and TBN data.
+    verts.emplace_back(bottomLeft, color, UVs.m_mins);                                      // Bottom-left
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y));    // Bottom-right
+    verts.emplace_back(topRight, color, UVs.m_maxs);                                        // Top-right
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y));        // Top-left
+
+    // 6.Define two triangles using the four vertices, ordered counter-clockwise.
+    indexes.push_back(currentIndex);            // Triangle 1: bottom-left
+    indexes.push_back(currentIndex + 1);    //             bottom-right
+    indexes.push_back(currentIndex + 2);    //             top-right
+
+    indexes.push_back(currentIndex);            // Triangle 2: bottom-left
+    indexes.push_back(currentIndex + 2);    //             top-right
+    indexes.push_back(currentIndex + 3);    //             top-left
 }
 
 
