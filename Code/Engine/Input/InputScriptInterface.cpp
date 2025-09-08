@@ -154,7 +154,7 @@ ScriptMethodResult InputScriptInterface::ExecuteIsKeyDown(const std::vector<std:
     try
     {
         int keyCode = ExtractInt(args[0]);
-        bool isDown = m_inputSystem->IsKeyDown(keyCode);
+        bool isDown = m_inputSystem->IsKeyDown((char)keyCode);
         return ScriptMethodResult::Success(isDown);
     }
     catch (const std::exception& e)
@@ -172,7 +172,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustPressed(const std::vec
     try
     {
         int keyCode = ExtractInt(args[0]);
-        bool wasPressed = m_inputSystem->WasKeyJustPressed(keyCode);
+        bool wasPressed = m_inputSystem->WasKeyJustPressed((char)keyCode);
         return ScriptMethodResult::Success(wasPressed);
     }
     catch (const std::exception& e)
@@ -190,7 +190,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustReleased(const std::ve
     try
     {
         int keyCode = ExtractInt(args[0]);
-        bool wasReleased = m_inputSystem->WasKeyJustReleased(keyCode);
+        bool wasReleased = m_inputSystem->WasKeyJustReleased((char)keyCode);
         return ScriptMethodResult::Success(wasReleased);
     }
     catch (const std::exception& e)
@@ -245,7 +245,7 @@ ScriptMethodResult InputScriptInterface::ExecuteGetController(const std::vector<
     {
         int controllerIndex = ExtractInt(args[0]);
         XboxController const& controller = m_inputSystem->GetController(controllerIndex);
-        
+        UNUSED(controller)
         // 簡化的控制器狀態回傳
         std::string controllerStr = "{ index: " + std::to_string(controllerIndex) + ", connected: true }";
         return ScriptMethodResult::Success(controllerStr);
