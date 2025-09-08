@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 
+#include "LogSubsystem.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ EventSystem::EventSystem(sEventSystemConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void EventSystem::Startup()
 {
+    DAEMON_LOG(LogEvent, eLogVerbosity::Log, "EventSystem::Startup()");
 }
 
 //----------------------------------------------------------------------------------------------------

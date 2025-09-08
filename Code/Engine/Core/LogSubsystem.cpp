@@ -29,7 +29,7 @@ extern HANDLE g_consoleHandle;
 //----------------------------------------------------------------------------------------------------
 // 全域變數
 //----------------------------------------------------------------------------------------------------
-LogSubsystem* g_logSubsystem        = nullptr;
+LogSubsystem* g_logSubsystem           = nullptr;
 LogSubsystem* LogSubsystem::s_instance = nullptr;
 
 //----------------------------------------------------------------------------------------------------
@@ -135,14 +135,22 @@ void ConsoleOutputDevice::WriteLog(const LogEntry& entry)
 #else
     // Unix/Linux 系統使用 ANSI 顏色碼
     const char* colorCode = "\033[0m"; // 預設白色
-    switch (entry.verbosity) {
-        case eLogVerbosity::Fatal:      colorCode = "\033[41;37;1m"; break; // 紅底白字
-        case eLogVerbosity::Error:      colorCode = "\033[31;1m"; break;    // 亮紅色
-        case eLogVerbosity::Warning:    colorCode = "\033[33;1m"; break;    // 亮黃色
-        case eLogVerbosity::Display:    colorCode = "\033[32;1m"; break;    // 亮綠色
-        case eLogVerbosity::Log:        colorCode = "\033[37m"; break;      // 白色
-        case eLogVerbosity::Verbose:    colorCode = "\033[36m"; break;      // 青色
-        case eLogVerbosity::VeryVerbose: colorCode = "\033[34m"; break;     // 藍色
+    switch (entry.verbosity)
+    {
+    case eLogVerbosity::Fatal: colorCode = "\033[41;37;1m";
+        break; // 紅底白字
+    case eLogVerbosity::Error: colorCode = "\033[31;1m";
+        break;    // 亮紅色
+    case eLogVerbosity::Warning: colorCode = "\033[33;1m";
+        break;    // 亮黃色
+    case eLogVerbosity::Display: colorCode = "\033[32;1m";
+        break;    // 亮綠色
+    case eLogVerbosity::Log: colorCode = "\033[37m";
+        break;      // 白色
+    case eLogVerbosity::Verbose: colorCode = "\033[36m";
+        break;      // 青色
+    case eLogVerbosity::VeryVerbose: colorCode = "\033[34m";
+        break;     // 藍色
     }
 
     printf("%s[%s] [%s] %s\033[0m\n",
@@ -414,6 +422,8 @@ void LogSubsystem::Startup()
 {
     // 註冊預設日誌分類
     RegisterCategory("LogTemp");
+    RegisterCategory("LogLog");
+    RegisterCategory("LogEvent");
     RegisterCategory("LogCore");
     RegisterCategory("LogRenderer");
     RegisterCategory("LogAudio");
@@ -425,7 +435,7 @@ void LogSubsystem::Startup()
     RegisterCategory("LogScript");
     RegisterCategory("LogGame");
 
-    LogMessage("LogCore", eLogVerbosity::Display, "LogSubsystem::Startup() start");
+    LogMessage("LogLog", eLogVerbosity::Display, "LogSubsystem::Startup() start");
 
     // 建立輸出裝置
     if (m_config.enableConsole)
@@ -532,7 +542,7 @@ void LogSubsystem::SetInstance(LogSubsystem* instance)
     s_instance = instance;
 }
 
-void LogSubsystem::RegisterCategory(const String& categoryName,
+void LogSubsystem::RegisterCategory(String const& categoryName,
                                     eLogVerbosity defaultVerbosity,
                                     eLogVerbosity compileTimeVerbosity,
                                     eLogOutput    outputTargets)
