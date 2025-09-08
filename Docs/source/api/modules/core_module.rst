@@ -12,24 +12,39 @@ The Core Module primarily provides the following functionality:
 * **String Management** - Provides efficient string processing capabilities
 * **Basic Utility Classes** - Supporting auxiliary functions for other modules
 
-Vertex_PCUTBN Struct
----------------------
+StringUtils Utility Functions
+------------------------------
 
-Vertex data structure containing position, color, UV coordinates, tangent, and normal information.
+Comprehensive string manipulation utilities providing printf-style formatting, modern C++20 format support, and string splitting functionality.
 
-.. doxygenstruct:: Vertex_PCUTBN
-   :members:
-   :undoc-members:
+Key Features:
 
-Usage Example
-~~~~~~~~~~~~~
+* **Printf-style Formatting** - Traditional C-style string formatting with automatic memory management
+* **C++20 Format Support** - Modern type-safe formatting with compile-time validation
+* **String Splitting** - Advanced delimiter-based and line-based string parsing
+* **Cross-platform Compatibility** - Handles different line ending formats
+
+.. doxygenfile:: StringUtils.hpp
+
+Usage Examples
+~~~~~~~~~~~~~~
 
 .. code-block:: cpp
 
-   // Create a vertex
-   Vertex_PCUTBN vertex;
-   vertex.position = Vec3(0.0f, 0.0f, 0.0f);
-   vertex.color = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+   #include "Engine/Core/StringUtils.hpp"
+   
+   // Printf-style formatting
+   String message = Stringf("Player has %d health", playerHealth);
+   
+   // Modern C++20 formatting (type-safe)
+   String modernMsg = StringFormat("Player {} has {} health", playerName, playerHealth);
+   
+   // String splitting
+   StringList tokens = SplitStringOnDelimiter("apple,banana,orange", ',');
+   
+   // Line-based splitting
+   StringList lines;
+   int lineCount = SplitStringIntoLines(lines, multiLineText);
 
 NamedStrings Class
 ------------------

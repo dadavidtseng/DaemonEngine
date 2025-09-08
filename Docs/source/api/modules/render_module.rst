@@ -12,6 +12,55 @@ The Renderer Module primarily provides the following functionality:
 * **DirectX11 Support** - Uses DirectX11 as the rendering backend
 * **Window Management** - Supports multi-window rendering
 * **Resource Management** - Manages textures, shaders, and other rendering resources
+* **Vertex Data Structures** - Comprehensive vertex formats for advanced rendering
+
+Vertex_PCUTBN Struct
+---------------------
+
+Advanced vertex data structure containing position, color, UV coordinates, tangent, bitangent, and normal information for complete geometric rendering support.
+
+This structure is designed for advanced rendering techniques including normal mapping, tangent space calculations, and comprehensive lighting models.
+
+.. doxygenstruct:: Vertex_PCUTBN
+   :members:
+   :undoc-members:
+
+Vertex Components
+~~~~~~~~~~~~~~~~~
+
+* **Position (m_position)** - 3D world space coordinates
+* **Color (m_color)** - RGBA8 color value with alpha transparency
+* **UV Coordinates (m_uvTexCoords)** - Texture mapping coordinates
+* **Tangent (m_tangent)** - Tangent vector for normal mapping calculations
+* **Bitangent (m_bitangent)** - Bitangent vector perpendicular to tangent
+* **Normal (m_normal)** - Surface normal vector for lighting calculations
+
+Usage Example
+~~~~~~~~~~~~~
+
+.. code-block:: cpp
+
+   #include "Engine/Renderer/Vertex_PCUTBN.hpp"
+   
+   // Create a vertex with all geometric data
+   Vertex_PCUTBN vertex(
+       Vec3(0.0f, 0.0f, 0.0f),           // position
+       Rgba8::WHITE,                      // color
+       Vec2(0.0f, 0.0f),                 // UV coordinates
+       Vec3(1.0f, 0.0f, 0.0f),           // tangent
+       Vec3(0.0f, 1.0f, 0.0f),           // bitangent
+       Vec3(0.0f, 0.0f, 1.0f)            // normal
+   );
+   
+   // Or create using individual float values
+   Vertex_PCUTBN detailedVertex(
+       0.5f, 1.0f, -0.5f,                // position x, y, z
+       255, 255, 255, 255,               // color r, g, b, a
+       0.5f, 0.5f,                       // UV u, v
+       1.0f, 0.0f, 0.0f,                 // tangent x, y, z
+       0.0f, 1.0f, 0.0f,                 // bitangent x, y, z
+       0.0f, 0.0f, 1.0f                  // normal x, y, z
+   );
 
 Renderer Class
 --------------
