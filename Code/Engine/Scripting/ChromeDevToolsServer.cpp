@@ -762,29 +762,24 @@ bool ChromeDevToolsServer::HandleCustomCommand(const std::string& message)
             std::string scriptSource = m_v8Subsystem->HandleDebuggerGetScriptSource(scriptId);
             
             // Create response
-            std::string response = StringFormat(
-                "{"
-                "\"id\":{},"
+            std::string response = 
+                "{\"id\":" + callId + ","
                 "\"result\":{"
-                    "\"scriptSource\":\"{}\""
+                    "\"scriptSource\":\"" + EscapeJsonString(scriptSource) + "\""
                 "}"
-                "}",
-                callId, 
-                EscapeJsonString(scriptSource)
-            );
+                "}";
             
             SendToDevTools(response);
             
             DAEMON_LOG(LogScript, eLogVerbosity::Display, 
-                      StringFormat("Sent Debugger.getScriptSource response for script ID: {}", scriptId));
+                      "Sent Debugger.getScriptSource response for script ID: " + scriptId);
             
             return true; // Command handled
         }
         else
         {
             DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
-                      StringFormat("Failed to parse Debugger.getScriptSource command: callId='{}', scriptId='{}'", 
-                                  callId, scriptId));
+                      "Failed to parse Debugger.getScriptSource command: callId='" + callId + "', scriptId='" + scriptId + "'");
         }
     }
     
