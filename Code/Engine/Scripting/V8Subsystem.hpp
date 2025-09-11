@@ -7,6 +7,7 @@
 #include <any>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -51,7 +52,7 @@ public:
 
     // Execution related
     bool ExecuteScript(String const& script);
-    bool ExecuteScriptFile(String const& filename);
+    bool ExecuteScriptFile(String const& scriptFilename);
 
     // 執行 JavaScript 程式碼並回傳結果
     std::any ExecuteScriptWithResult(std::string const& script);
@@ -136,10 +137,10 @@ private:
     /// @brief Internal implementation struct for v8
     /// @see https://www.geeksforgeeks.org/cpp/pimpl-idiom-in-c-with-examples/
     struct V8Implementation;
+
     // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
 
-    // 設定資料
     sV8SubsystemConfig m_config;
 
     // 註冊的腳本物件
@@ -157,6 +158,10 @@ private:
     // 執行統計
     ExecutionStats m_stats;
 
+    // 綁定追蹤 (防止重複綁定)
+    std::set<String> m_boundObjects;    // 已綁定的物件
+    std::set<String> m_boundFunctions;  // 已綁定的函式
+
     //------------------------------------------------------------------------------------------------
     // 內部輔助方法
     //------------------------------------------------------------------------------------------------
@@ -170,17 +175,19 @@ private:
     // 設定 V8 綁定
     void SetupV8Bindings();
 
-    // 創建物件綁定
-    void CreateObjectBindings();
+    // 創建單一物件綁定 (incremental binding)
+    void CreateSingleObjectBinding(const String&                             objectName,
+                                   std::shared_ptr<IScriptableObject> const& object);
 
-    // 創建函式綁定
-    void CreateFunctionBindings();
+    // 創建單一函式綁定 (incremental binding)
+    void CreateSingleFunctionBinding(const String&         functionName,
+                                     const ScriptFunction& function);
 
     // 設定內建的 JavaScript 物件和函式
     void SetupBuiltinObjects();
 
     // 錯誤處理
-    void HandleV8Error(const std::string& error);
+    void HandleV8Error(String const& error);
 
     // 將 C++ 的 std::any 轉換為 V8 的值
     void* ConvertToV8Value(const std::any& value);
