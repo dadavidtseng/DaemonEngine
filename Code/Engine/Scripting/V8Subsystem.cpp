@@ -407,68 +407,14 @@ void V8Subsystem::Update()
 //----------------------------------------------------------------------------------------------------
 bool V8Subsystem::ExecuteScript(String const& script)
 {
-    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::ExecuteScript)(V8Subsystem is not initialized)"))
-
-    // DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(start)"));
-
-    if (script.empty())
-    {
-        HandleV8Error(StringFormat("Script is empty"));
-        return false;
-    }
-
-    ClearError();
-
-    m_impl->lastExecutionStart = GetCurrentTimeSeconds();
-
-    v8::Isolate::Scope           isolateScope(m_impl->isolate);
-    v8::HandleScope              handleScope(m_impl->isolate);
-    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
-    v8::Context::Scope           contextScope(localContext);
-
-    v8::TryCatch const tryCatch(m_impl->isolate);
-
-    // Compile script
-    v8::Local<v8::String> const source = v8::String::NewFromUtf8(m_impl->isolate, script.c_str()).ToLocalChecked();
-    v8::Local<v8::Script>       compiledScript;
-
-    if (!v8::Script::Compile(localContext, source).ToLocal(&compiledScript))
-    {
-        // Compile error
-        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
-        HandleV8Error(StringFormat("Script compilation error: {}", String(*error)));
-        return false;
-    }
-
-    // Execute script
-    v8::Local<v8::Value> result;
-    if (!compiledScript->Run(localContext).ToLocal(&result))
-    {
-        // Execute error
-        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
-        HandleV8Error(StringFormat("Script execution error: {}", String(*error)));
-        return false;
-    }
-
-    // Save execute result
-    if (!result->IsUndefined())
-    {
-        v8::String::Utf8Value resultStr(m_impl->isolate, result);
-        m_lastResult = *resultStr;
-    }
-    else
-    {
-        m_lastResult.clear();
-    }
-
-    // Update ExecutionStats
-    double const executionTime = GetCurrentTimeSeconds() - m_impl->lastExecutionStart;
-    m_stats.scriptsExecuted++;
-    m_stats.totalExecutionTime += static_cast<long long>(executionTime * 1000.0);
-
-    // DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(end)"));
-
-    return true;
+    // Restore the EXACT working approach that showed JSEngine.js and JSGame.js
+    // Delegate ALL ExecuteScript calls to ExecuteScriptWithOrigin with a simple counter
+    // This was the approach that successfully showed scripts in Chrome DevTools
+    
+    static int scriptCounter = 0;
+    std::string defaultScriptName = "DynamicScript" + std::to_string(++scriptCounter) + ".js";
+    
+    return ExecuteScriptWithOrigin(script, defaultScriptName);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -668,10 +614,20 @@ void V8Subsystem::ReplayScriptsToDevTools()
         return;
     }
     
+    size_t totalScripts = m_priorityScriptNotifications.size() + m_scriptNotifications.size();
     DAEMON_LOG(LogScript, eLogVerbosity::Display, 
-              StringFormat("Replaying {} script notifications to newly connected DevTools", m_scriptNotifications.size()));
+              StringFormat("Replaying {} script notifications ({} priority, {} regular) to newly connected DevTools", 
+                          totalScripts, m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
     
-    // Replay all stored script parsed notifications
+    // First, replay high-priority scripts (JSEngine.js, JSGame.js) to ensure they appear first
+    for (const std::string& notification : m_priorityScriptNotifications)
+    {
+        m_devToolsServer->SendToDevTools(notification);
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Replayed PRIORITY script: {}", notification.substr(0, 100) + "..."));
+    }
+    
+    // Then replay regular script notifications
     for (const std::string& notification : m_scriptNotifications)
     {
         m_devToolsServer->SendToDevTools(notification);
@@ -694,9 +650,28 @@ void V8Subsystem::StoreScriptIdMapping(const std::string& scriptId, const std::s
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::StoreScriptNotificationForReplay(const std::string& notification)
 {
-    m_scriptNotifications.push_back(notification);
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-              StringFormat("Stored script notification for replay ({} total)", m_scriptNotifications.size()));
+    // Check if this is a high-priority script (JSEngine.js, JSGame.js)
+    bool isHighPriority = (notification.find("JSEngine.js") != std::string::npos || 
+                          notification.find("JSGame.js") != std::string::npos);
+    
+    if (isHighPriority)
+    {
+        m_priorityScriptNotifications.push_back(notification);
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Stored HIGH PRIORITY script notification ({} priority, {} regular)", 
+                              m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
+    }
+    else
+    {
+        // For dynamic scripts, limit storage to prevent Chrome DevTools clutter
+        if (m_scriptNotifications.size() < 50) // Reasonable limit
+        {
+            m_scriptNotifications.push_back(notification);
+        }
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Stored script notification for replay ({} priority, {} regular)", 
+                              m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

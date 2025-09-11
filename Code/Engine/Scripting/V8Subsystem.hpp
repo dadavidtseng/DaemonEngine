@@ -195,7 +195,10 @@ private:
     // Script Source Storage for DevTools
     std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code
     std::unordered_map<std::string, std::string> m_scriptIdToURL; // Script ID -> URL
-    std::vector<std::string> m_scriptNotifications; // Store script parsed notifications for replay
+    
+    // Priority-based script notification storage for better Chrome DevTools experience
+    std::vector<std::string> m_priorityScriptNotifications; // High-priority scripts (JSEngine.js, JSGame.js)
+    std::vector<std::string> m_scriptNotifications;         // Regular script notifications
 
     //------------------------------------------------------------------------------------------------
     // 內部輔助方法
