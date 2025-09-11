@@ -13,7 +13,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
-// #define CONSOLE_HANDLER
+#define CONSOLE_HANDLER
 #define WIN32_LEAN_AND_MEAN
 
 #include <chrono>

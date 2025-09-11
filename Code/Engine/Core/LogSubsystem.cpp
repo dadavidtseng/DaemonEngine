@@ -420,7 +420,6 @@ LogSubsystem::~LogSubsystem()
 
 void LogSubsystem::Startup()
 {
-    // 註冊預設日誌分類
     RegisterCategory("LogTemp");
     RegisterCategory("LogLog");
     RegisterCategory("LogEvent");
