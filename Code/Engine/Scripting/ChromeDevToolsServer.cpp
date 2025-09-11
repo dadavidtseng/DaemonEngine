@@ -455,6 +455,14 @@ void ChromeDevToolsServer::ClientHandlerThread(SOCKET clientSocket)
                         DAEMON_LOG(LogScript, eLogVerbosity::Display, "WebSocket upgrade successful");
                         isWebSocket = true;
                         m_activeConnections.push_back(clientSocket);
+                        
+                        // Replay all loaded scripts to the newly connected DevTools client
+                        if (m_v8Subsystem)
+                        {
+                            DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+                                      "Replaying scripts to newly connected Chrome DevTools client");
+                            m_v8Subsystem->ReplayScriptsToDevTools();
+                        }
                     }
                     else
                     {
@@ -667,28 +675,34 @@ void ChromeDevToolsServer::ProcessWebSocketMessage(SOCKET clientSocket, const st
             DAEMON_LOG(LogScript, eLogVerbosity::Display, 
                       StringFormat("Chrome DevTools Protocol message: {}", decodedMessage));
             
-            // Forward to V8 Inspector
-            if (m_inspectorSession)
+            // Check for custom commands we need to handle before forwarding to V8 Inspector
+            bool handledCustomCommand = HandleCustomCommand(decodedMessage);
+            
+            if (!handledCustomCommand)
             {
-                DAEMON_LOG(LogScript, eLogVerbosity::Display, 
-                          StringFormat("Forwarding message to V8 Inspector session"));
-                
-                // Convert std::string to v8_inspector::StringView
-                v8_inspector::StringView messageView(
-                    reinterpret_cast<const uint8_t*>(decodedMessage.c_str()), 
-                    decodedMessage.length()
-                );
-                
-                // Dispatch message to V8 Inspector
-                m_inspectorSession->dispatchProtocolMessage(messageView);
-                
-                DAEMON_LOG(LogScript, eLogVerbosity::Display, 
-                          StringFormat("Message dispatched to V8 Inspector successfully"));
-            }
-            else
-            {
-                DAEMON_LOG(LogScript, eLogVerbosity::Error, 
-                          StringFormat("Cannot forward message: V8 Inspector session is null"));
+                // Forward to V8 Inspector for standard commands
+                if (m_inspectorSession)
+                {
+                    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+                              StringFormat("Forwarding message to V8 Inspector session"));
+                    
+                    // Convert std::string to v8_inspector::StringView
+                    v8_inspector::StringView messageView(
+                        reinterpret_cast<const uint8_t*>(decodedMessage.c_str()), 
+                        decodedMessage.length()
+                    );
+                    
+                    // Dispatch message to V8 Inspector
+                    m_inspectorSession->dispatchProtocolMessage(messageView);
+                    
+                    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+                              StringFormat("Message dispatched to V8 Inspector successfully"));
+                }
+                else
+                {
+                    DAEMON_LOG(LogScript, eLogVerbosity::Error, 
+                              StringFormat("Cannot forward message: V8 Inspector session is null"));
+                }
             }
         }
         else
@@ -702,6 +716,101 @@ void ChromeDevToolsServer::ProcessWebSocketMessage(SOCKET clientSocket, const st
         DAEMON_LOG(LogScript, eLogVerbosity::Error, 
                   StringFormat("Error processing WebSocket message: {}", e.what()));
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+bool ChromeDevToolsServer::HandleCustomCommand(const std::string& message)
+{
+    // Parse JSON to check for commands we need to handle
+    // For now, handle Debugger.getScriptSource
+    
+    if (message.find("\"method\":\"Debugger.getScriptSource\"") != std::string::npos)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+                  "Handling Debugger.getScriptSource command");
+        
+        // Extract call ID and script ID from the message
+        // Example: {"id":123,"method":"Debugger.getScriptSource","params":{"scriptId":"456"}}
+        
+        std::string callId;
+        std::string scriptId;
+        
+        // Simple JSON parsing for call ID
+        size_t idPos = message.find("\"id\":");
+        if (idPos != std::string::npos)
+        {
+            size_t idStart = message.find(":", idPos) + 1;
+            size_t idEnd = message.find(",", idStart);
+            if (idEnd == std::string::npos) idEnd = message.find("}", idStart);
+            callId = message.substr(idStart, idEnd - idStart);
+            // Remove any whitespace or quotes
+            callId.erase(0, callId.find_first_not_of(" \t\""));
+            callId.erase(callId.find_last_not_of(" \t\"") + 1);
+        }
+        
+        // Simple JSON parsing for script ID
+        size_t scriptIdPos = message.find("\"scriptId\":");
+        if (scriptIdPos != std::string::npos)
+        {
+            size_t scriptIdStart = message.find("\"", scriptIdPos + 11) + 1; // Skip "scriptId":"
+            size_t scriptIdEnd = message.find("\"", scriptIdStart);
+            scriptId = message.substr(scriptIdStart, scriptIdEnd - scriptIdStart);
+        }
+        
+        if (!callId.empty() && !scriptId.empty() && m_v8Subsystem)
+        {
+            std::string scriptSource = m_v8Subsystem->HandleDebuggerGetScriptSource(scriptId);
+            
+            // Create response
+            std::string response = StringFormat(
+                "{"
+                "\"id\":{},"
+                "\"result\":{"
+                    "\"scriptSource\":\"{}\""
+                "}"
+                "}",
+                callId, 
+                EscapeJsonString(scriptSource)
+            );
+            
+            SendToDevTools(response);
+            
+            DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+                      StringFormat("Sent Debugger.getScriptSource response for script ID: {}", scriptId));
+            
+            return true; // Command handled
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
+                      StringFormat("Failed to parse Debugger.getScriptSource command: callId='{}', scriptId='{}'", 
+                                  callId, scriptId));
+        }
+    }
+    
+    return false; // Command not handled, forward to V8 Inspector
+}
+
+//----------------------------------------------------------------------------------------------------
+std::string ChromeDevToolsServer::EscapeJsonString(const std::string& input)
+{
+    std::string escaped;
+    escaped.reserve(input.length() * 2); // Reserve space for potential escaping
+    
+    for (char c : input)
+    {
+        switch (c)
+        {
+        case '"':  escaped += "\\\""; break;
+        case '\\': escaped += "\\\\"; break;
+        case '\n': escaped += "\\n";  break;
+        case '\r': escaped += "\\r";  break;
+        case '\t': escaped += "\\t";  break;
+        default:   escaped += c;      break;
+        }
+    }
+    
+    return escaped;
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -70,6 +70,12 @@ public:
         std::string notification = StringViewToStdString(message->string());
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools Notification: {}", notification));
 
+        // Parse and store script information for replay when new DevTools connects
+        if (notification.find("\"method\":\"Debugger.scriptParsed\"") != std::string::npos)
+        {
+            StoreScriptNotification(notification);
+        }
+
         // Send notification to Chrome DevTools client
         if (m_devToolsServer)
         {
@@ -86,6 +92,26 @@ public:
     void SetDevToolsServer(ChromeDevToolsServer* devToolsServer)
     {
         m_devToolsServer = devToolsServer;
+    }
+
+    // Store script parsed notifications for replay
+    void StoreScriptNotification(const std::string& notification)
+    {
+        // Extract script ID and URL from the notification for script ID mapping
+        std::string scriptId = ExtractJsonString(notification, "scriptId");
+        std::string url = ExtractJsonString(notification, "url");
+        
+        if (!scriptId.empty() && !url.empty() && m_v8Subsystem)
+        {
+            // Store the script ID to URL mapping for Debugger.getScriptSource
+            m_v8Subsystem->StoreScriptIdMapping(scriptId, url);
+            
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                      StringFormat("Stored script mapping: ID={} → URL={}", scriptId, url));
+        }
+        
+        // Store the complete notification for replay
+        m_v8Subsystem->StoreScriptNotificationForReplay(notification);
     }
 
 private:
@@ -116,6 +142,23 @@ private:
             }
             return result;
         }
+    }
+
+    // Simple JSON string extractor
+    std::string ExtractJsonString(const std::string& json, const std::string& key)
+    {
+        std::string searchKey = "\"" + key + "\":";
+        size_t keyPos = json.find(searchKey);
+        if (keyPos == std::string::npos) return "";
+        
+        size_t valueStart = json.find("\"", keyPos + searchKey.length());
+        if (valueStart == std::string::npos) return "";
+        valueStart++; // Skip opening quote
+        
+        size_t valueEnd = json.find("\"", valueStart);
+        if (valueEnd == std::string::npos) return "";
+        
+        return json.substr(valueStart, valueEnd - valueStart);
     }
 };
 
@@ -486,8 +529,14 @@ bool V8Subsystem::ExecuteScriptWithOrigin(String const& script, String const& sc
     v8::TryCatch const tryCatch(m_impl->isolate);
 
     // Compile script with origin information for Chrome DevTools
-    v8::Local<v8::String> const source       = v8::String::NewFromUtf8(m_impl->isolate, script.c_str()).ToLocalChecked();
-    v8::Local<v8::String> const resourceName = v8::String::NewFromUtf8(m_impl->isolate, scriptName.c_str()).ToLocalChecked();
+    v8::Local<v8::String> const source = v8::String::NewFromUtf8(m_impl->isolate, script.c_str()).ToLocalChecked();
+    
+    // Convert script name to DevTools-friendly URL
+    std::string devToolsURL = ConvertToDevToolsURL(scriptName);
+    v8::Local<v8::String> const resourceName = v8::String::NewFromUtf8(m_impl->isolate, devToolsURL.c_str()).ToLocalChecked();
+    
+    // Store script source for DevTools Debugger.getScriptSource support
+    StoreScriptSource(devToolsURL, script);
 
     // Create script origin for Chrome DevTools visibility
     v8::ScriptOrigin origin(resourceName);
@@ -528,6 +577,126 @@ bool V8Subsystem::ExecuteScriptWithOrigin(String const& script, String const& sc
     m_stats.totalExecutionTime += static_cast<long long>(executionTime * 1000.0);
 
     return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Chrome DevTools Script Management Functions
+//----------------------------------------------------------------------------------------------------
+
+std::string V8Subsystem::ConvertToDevToolsURL(const std::string& scriptPath)
+{
+    // Convert relative script paths to Chrome DevTools-friendly URLs
+    // Transform "Data/Scripts/JSEngine.js" → "file:///FirstV8/Scripts/JSEngine.js"
+    
+    std::string url;
+    if (scriptPath.find("Data/Scripts/") == 0)
+    {
+        // Extract filename from Data/Scripts/ path
+        std::string filename = scriptPath.substr(13); // Remove "Data/Scripts/"
+        url = "file:///FirstV8/Scripts/" + filename;
+    }
+    else if (scriptPath.find("/") != std::string::npos || scriptPath.find("\\") != std::string::npos)
+    {
+        // Handle other paths - use the basename
+        size_t lastSlash = scriptPath.find_last_of("/\\");
+        std::string filename = (lastSlash != std::string::npos) ? 
+                              scriptPath.substr(lastSlash + 1) : scriptPath;
+        url = "file:///FirstV8/Scripts/" + filename;
+    }
+    else
+    {
+        // Simple filename
+        url = "file:///FirstV8/Scripts/" + scriptPath;
+    }
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+              StringFormat("Script URL mapping: '{}' → '{}'", scriptPath, url));
+    
+    return url;
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::StoreScriptSource(const std::string& url, const std::string& source)
+{
+    m_scriptSources[url] = source;
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+              StringFormat("Stored script source for URL: {} ({} bytes)", url, source.length()));
+}
+
+//----------------------------------------------------------------------------------------------------
+std::string V8Subsystem::GetScriptSourceByURL(const std::string& url)
+{
+    auto it = m_scriptSources.find(url);
+    if (it != m_scriptSources.end())
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Retrieved script source for URL: {} ({} bytes)", url, it->second.length()));
+        return it->second;
+    }
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
+              StringFormat("Script source not found for URL: {}", url));
+    return "";
+}
+
+//----------------------------------------------------------------------------------------------------
+// Chrome DevTools Integration Support Functions
+//----------------------------------------------------------------------------------------------------
+
+std::string V8Subsystem::HandleDebuggerGetScriptSource(const std::string& scriptId)
+{
+    // Find URL by script ID
+    auto idIt = m_scriptIdToURL.find(scriptId);
+    if (idIt == m_scriptIdToURL.end())
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
+                  StringFormat("Script ID not found: {}", scriptId));
+        return "";
+    }
+    
+    std::string url = idIt->second;
+    return GetScriptSourceByURL(url);
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::ReplayScriptsToDevTools()
+{
+    if (!m_devToolsServer || !m_devToolsServer->IsRunning())
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
+                  "Cannot replay scripts: DevTools server not running");
+        return;
+    }
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+              StringFormat("Replaying {} script notifications to newly connected DevTools", m_scriptNotifications.size()));
+    
+    // Replay all stored script parsed notifications
+    for (const std::string& notification : m_scriptNotifications)
+    {
+        m_devToolsServer->SendToDevTools(notification);
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Replayed script notification: {}", notification.substr(0, 100) + "..."));
+    }
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+              "Script notification replay completed");
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::StoreScriptIdMapping(const std::string& scriptId, const std::string& url)
+{
+    m_scriptIdToURL[scriptId] = url;
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+              StringFormat("Stored script ID mapping: {} → {}", scriptId, url));
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::StoreScriptNotificationForReplay(const std::string& notification)
+{
+    m_scriptNotifications.push_back(notification);
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+              StringFormat("Stored script notification for replay ({} total)", m_scriptNotifications.size()));
 }
 
 //----------------------------------------------------------------------------------------------------

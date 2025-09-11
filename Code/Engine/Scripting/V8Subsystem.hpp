@@ -145,6 +145,12 @@ public:
 
     MemoryUsage GetMemoryUsage() const;
 
+    // Chrome DevTools Support
+    std::string HandleDebuggerGetScriptSource(const std::string& scriptId);
+    void ReplayScriptsToDevTools();
+    void StoreScriptIdMapping(const std::string& scriptId, const std::string& url);
+    void StoreScriptNotificationForReplay(const std::string& notification);
+
 private:
     //----------------------------------------------------------------------------------------------------
     /// @brief Internal implementation struct for v8
@@ -153,6 +159,11 @@ private:
 
     // Private helper methods
     bool ExecuteScriptWithOrigin(String const& script, String const& scriptName);
+    
+    // Chrome DevTools Script Management (Private)
+    std::string ConvertToDevToolsURL(const std::string& scriptPath);
+    void StoreScriptSource(const std::string& url, const std::string& source);
+    std::string GetScriptSourceByURL(const std::string& url);
 
     // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
@@ -180,6 +191,11 @@ private:
 
     // Chrome DevTools Integration
     std::unique_ptr<ChromeDevToolsServer> m_devToolsServer;
+    
+    // Script Source Storage for DevTools
+    std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code
+    std::unordered_map<std::string, std::string> m_scriptIdToURL; // Script ID -> URL
+    std::vector<std::string> m_scriptNotifications; // Store script parsed notifications for replay
 
     //------------------------------------------------------------------------------------------------
     // 內部輔助方法

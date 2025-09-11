@@ -97,6 +97,7 @@ private:
     // WebSocket Protocol Handling
     bool ProcessWebSocketUpgrade(SOCKET clientSocket, const std::string& request);
     void ProcessWebSocketMessage(SOCKET clientSocket, const std::string& data);
+    bool HandleCustomCommand(const std::string& message); // Custom Chrome DevTools Protocol command handling
     std::string CreateWebSocketAcceptKey(const std::string& clientKey);
     std::string DecodeWebSocketFrame(const std::string& frame);
     std::string EncodeWebSocketFrame(const std::string& payload, 
@@ -119,6 +120,7 @@ private:
     // Utility
     std::string GenerateUUID();
     std::string Base64Encode(const std::string& input);
+    std::string EscapeJsonString(const std::string& input); // JSON string escaping for responses
 
 private:
     sChromeDevToolsConfig m_config;
