@@ -281,6 +281,8 @@
     <ClCompile Include="Scripting\IScriptableObject.cpp" />
     <!-- V8 子系統 -->
     <ClCompile Include="Scripting\V8Subsystem.cpp" />
+    <!-- Chrome DevTools 伺服器 -->
+    <ClCompile Include="Scripting\ChromeDevToolsServer.cpp" />
   </ItemGroup>
   <!-- 標頭檔案 -->
   <ItemGroup>
@@ -389,6 +391,8 @@
     <ClInclude Include="Scripting\IScriptableObject.hpp" />
     <!-- V8 子系統標頭檔 -->
     <ClInclude Include="Scripting\V8Subsystem.hpp" />
+    <!-- Chrome DevTools 伺服器標頭檔 -->
+    <ClInclude Include="Scripting\ChromeDevToolsServer.hpp" />
   </ItemGroup>
   <!-- NuGet packages.config 參考 -->
   <ItemGroup>

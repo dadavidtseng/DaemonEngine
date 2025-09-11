@@ -15,6 +15,9 @@
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Scripting/IScriptableObject.hpp"
 
+// Forward declaration for Chrome DevTools
+class ChromeDevToolsServer;
+
 //----------------------------------------------------------------------------------------------------
 using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 
@@ -28,11 +31,21 @@ struct MethodCallbackData
 //----------------------------------------------------------------------------------------------------
 struct sV8SubsystemConfig
 {
-    bool        enableDebugging      = false;        // 是否啟用除錯功能
-    size_t      heapSizeLimit        = 256;          // 堆疊大小限制 (MB)
-    bool        enableScriptBindings = true;    // 是否啟用腳本綁定 (取代原本的 enableGameBindings)
-    std::string scriptPath           = "Data/Scripts/"; // 腳本檔案路徑
-    bool        enableConsoleOutput  = true;     // 是否啟用 console.log 輸出
+    bool        enableDebugging      = false;        // Enable V8 debugging functionality
+    size_t      heapSizeLimit        = 256;          // Heap size limit (MB)
+    bool        enableScriptBindings = true;         // Enable script bindings
+    std::string scriptPath           = "Data/Scripts/"; // Script file path
+    bool        enableConsoleOutput  = true;         // Enable console.log output
+    
+    // Chrome DevTools Inspector Configuration
+#ifdef _DEBUG
+    bool        enableInspector      = true;         // Enable Chrome DevTools integration (default in Debug)
+#else
+    bool        enableInspector      = false;        // Disable Chrome DevTools in Release
+#endif
+    int         inspectorPort        = 9229;         // Chrome DevTools connection port
+    std::string inspectorHost        = "127.0.0.1"; // Inspector server bind address (localhost only)
+    bool        waitForDebugger      = false;        // Pause JavaScript execution until debugger connects
 };
 
 
@@ -138,6 +151,9 @@ private:
     /// @see https://www.geeksforgeeks.org/cpp/pimpl-idiom-in-c-with-examples/
     struct V8Implementation;
 
+    // Private helper methods
+    bool ExecuteScriptWithOrigin(String const& script, String const& scriptName);
+
     // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
 
@@ -161,6 +177,9 @@ private:
     // 綁定追蹤 (防止重複綁定)
     std::set<String> m_boundObjects;    // 已綁定的物件
     std::set<String> m_boundFunctions;  // 已綁定的函式
+
+    // Chrome DevTools Integration
+    std::unique_ptr<ChromeDevToolsServer> m_devToolsServer;
 
     //------------------------------------------------------------------------------------------------
     // 內部輔助方法

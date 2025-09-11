@@ -24,12 +24,190 @@
 #pragma warning(disable: 4324)  // 'structname': structure was padded due to alignment specifier
 
 #include "v8.h"
+#include "v8-inspector.h"
 #include "libplatform/libplatform.h"
+
+// Chrome DevTools Server
+#include "Engine/Scripting/ChromeDevToolsServer.hpp"
 
 #pragma warning(pop)            // pops the last warning state pushed onto the stack
 //----------------------------------------------------------------------------------------------------
 
 V8Subsystem* g_v8Subsystem = nullptr;
+
+//----------------------------------------------------------------------------------------------------
+// Chrome DevTools Inspector Implementation
+//----------------------------------------------------------------------------------------------------
+
+// Channel implementation for Chrome DevTools communication
+class V8InspectorChannelImpl : public v8_inspector::V8Inspector::Channel
+{
+public:
+    explicit V8InspectorChannelImpl(V8Subsystem* v8Subsystem, ChromeDevToolsServer* devToolsServer)
+        : m_v8Subsystem(v8Subsystem), m_devToolsServer(devToolsServer)
+    {
+    }
+
+    void sendResponse(int callId, std::unique_ptr<v8_inspector::StringBuffer> message) override
+    {
+        std::string response = StringViewToStdString(message->string());
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("V8InspectorChannelImpl::sendResponse [{}]: {}", callId, response));
+
+        // Send response to Chrome DevTools client
+        if (m_devToolsServer)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Sending response to Chrome DevTools server"));
+            m_devToolsServer->SendToDevTools(response);
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("Cannot send response: Chrome DevTools server is null"));
+        }
+    }
+
+    void sendNotification(std::unique_ptr<v8_inspector::StringBuffer> message) override
+    {
+        std::string notification = StringViewToStdString(message->string());
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools Notification: {}", notification));
+
+        // Send notification to Chrome DevTools client
+        if (m_devToolsServer)
+        {
+            m_devToolsServer->SendToDevTools(notification);
+        }
+    }
+
+    void flushProtocolNotifications() override
+    {
+        // Protocol notifications are sent immediately, no buffering needed
+    }
+
+    // Set the Chrome DevTools server after it's created
+    void SetDevToolsServer(ChromeDevToolsServer* devToolsServer)
+    {
+        m_devToolsServer = devToolsServer;
+    }
+
+private:
+    V8Subsystem*          m_v8Subsystem;
+    ChromeDevToolsServer* m_devToolsServer;
+
+    std::string StringViewToStdString(const v8_inspector::StringView& view)
+    {
+        if (view.is8Bit())
+        {
+            return std::string(reinterpret_cast<const char*>(view.characters8()), view.length());
+        }
+        else
+        {
+            // Convert UTF-16 to UTF-8
+            std::string     result;
+            const uint16_t* chars = view.characters16();
+            for (size_t i = 0; i < view.length(); ++i)
+            {
+                if (chars[i] < 128)
+                {
+                    result += static_cast<char>(chars[i]);
+                }
+                else
+                {
+                    result += '?'; // Simple fallback for non-ASCII characters
+                }
+            }
+            return result;
+        }
+    }
+};
+
+// V8InspectorClient implementation
+class V8InspectorClientImpl : public v8_inspector::V8InspectorClient
+{
+public:
+    explicit V8InspectorClientImpl(V8Subsystem* v8Subsystem)
+        : m_v8Subsystem(v8Subsystem)
+    {
+    }
+
+    void runMessageLoopOnPause(int contextGroupId) override
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Paused on context group {}", contextGroupId));
+        // Message loop handling would go here for breakpoint debugging
+    }
+
+    void quitMessageLoopOnPause() override
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Quit message loop on pause"));
+    }
+
+    void runIfWaitingForDebugger(int contextGroupId) override
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Run if waiting for debugger on context group {}", contextGroupId));
+    }
+
+    void consoleAPIMessage(int                             contextGroupId,
+                           v8::Isolate::MessageErrorLevel  level,
+                           const v8_inspector::StringView& message,
+                           const v8_inspector::StringView& url,
+                           unsigned                        lineNumber,
+                           unsigned                        columnNumber,
+                           v8_inspector::V8StackTrace*) override
+    {
+        std::string msg    = StringViewToStdString(message);
+        std::string urlStr = StringViewToStdString(url);
+
+        const char* levelStr = "Unknown";
+        switch (level)
+        {
+        case v8::Isolate::kMessageLog: levelStr = "Log";
+            break;
+        case v8::Isolate::kMessageDebug: levelStr = "Debug";
+            break;
+        case v8::Isolate::kMessageInfo: levelStr = "Info";
+            break;
+        case v8::Isolate::kMessageError: levelStr = "Error";
+            break;
+        case v8::Isolate::kMessageWarning: levelStr = "Warning";
+            break;
+        }
+
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("JS Console [{}]: {} ({}:{}:{})",
+                       levelStr, msg, urlStr, lineNumber, columnNumber));
+    }
+
+    double currentTimeMS() override
+    {
+        return GetCurrentTimeSeconds() * 1000.0;
+    }
+
+private:
+    V8Subsystem* m_v8Subsystem;
+
+    std::string StringViewToStdString(const v8_inspector::StringView& view)
+    {
+        if (view.is8Bit())
+        {
+            return std::string(reinterpret_cast<const char*>(view.characters8()), view.length());
+        }
+        else
+        {
+            // Convert UTF-16 to UTF-8
+            std::string     result;
+            const uint16_t* chars = view.characters16();
+            for (size_t i = 0; i < view.length(); ++i)
+            {
+                if (chars[i] < 128)
+                {
+                    result += static_cast<char>(chars[i]);
+                }
+                else
+                {
+                    result += '?'; // Simple fallback for non-ASCII characters
+                }
+            }
+            return result;
+        }
+    }
+};
 
 //----------------------------------------------------------------------------------------------------
 struct V8Subsystem::V8Implementation
@@ -41,6 +219,13 @@ struct V8Subsystem::V8Implementation
     std::unique_ptr<v8::ArrayBuffer::Allocator> allocator;
     bool                                        isInitialized      = false;
     double                                      lastExecutionStart = 0.0;
+
+    // Chrome DevTools Inspector Components
+    std::unique_ptr<V8InspectorClientImpl>            inspectorClient;
+    std::unique_ptr<v8_inspector::V8Inspector>        inspector;
+    std::unique_ptr<v8_inspector::V8InspectorSession> inspectorSession;
+    std::unique_ptr<V8InspectorChannelImpl>           inspectorChannel;
+    static constexpr int                              kContextGroupId = 1;        // Context group ID for debugging
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -82,6 +267,43 @@ void V8Subsystem::Startup()
 
     SetupV8Bindings();
 
+    // Initialize Chrome DevTools server if inspector is enabled
+    if (m_config.enableInspector)
+    {
+        sChromeDevToolsConfig devToolsConfig;
+        devToolsConfig.enabled     = true;
+        devToolsConfig.host        = m_config.inspectorHost;
+        devToolsConfig.port        = m_config.inspectorPort;
+        devToolsConfig.contextName = "FirstV8 JavaScript Context";
+
+        m_devToolsServer = std::make_unique<ChromeDevToolsServer>(devToolsConfig, this);
+
+        if (m_devToolsServer->Start())
+        {
+            // Connect the DevTools server to the V8 Inspector
+            if (m_impl->inspector && m_impl->inspectorSession)
+            {
+                m_devToolsServer->SetInspector(m_impl->inspector.get(), m_impl->inspectorSession.get());
+            }
+
+            // Update the inspector channel to use the DevTools server
+            if (m_impl->inspectorChannel)
+            {
+                static_cast<V8InspectorChannelImpl*>(m_impl->inspectorChannel.get())->SetDevToolsServer(m_devToolsServer.get());
+            }
+
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
+                       StringFormat("Chrome DevTools server started successfully on {}:{}",
+                           devToolsConfig.host, devToolsConfig.port));
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                       StringFormat("Failed to start Chrome DevTools server on {}:{}",
+                           devToolsConfig.host, devToolsConfig.port));
+        }
+    }
+
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::Startup)(end)"));
 }
 
@@ -94,6 +316,14 @@ void V8Subsystem::Shutdown()
     {
         return;
     }
+
+    // Shutdown Chrome DevTools server first
+    if (m_devToolsServer)
+    {
+        m_devToolsServer->Stop();
+        m_devToolsServer.reset();
+    }
+
     // 清理回呼資料
     m_methodCallbacks.clear();
     m_functionCallbacks.clear();
@@ -121,6 +351,11 @@ void V8Subsystem::Update()
         return;
     }
 
+    // Update Chrome DevTools server if it's running
+    if (m_devToolsServer && m_devToolsServer->IsRunning())
+    {
+        m_devToolsServer->Update();
+    }
 
     // 這裡可以添加定期的 V8 維護工作
     // 例如：垃圾回收、統計更新等
@@ -131,7 +366,7 @@ bool V8Subsystem::ExecuteScript(String const& script)
 {
     if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::ExecuteScript)(V8Subsystem is not initialized)"))
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(start)"));
+    // DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(start)"));
 
     if (script.empty())
     {
@@ -188,7 +423,7 @@ bool V8Subsystem::ExecuteScript(String const& script)
     m_stats.scriptsExecuted++;
     m_stats.totalExecutionTime += static_cast<long long>(executionTime * 1000.0);
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(end)"));
+    // DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScript)(end)"));
 
     return true;
 }
@@ -225,7 +460,74 @@ bool V8Subsystem::ExecuteScriptFile(String const& scriptFilename)
 
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScriptFile)(end)({})", scriptFilename));
 
-    return ExecuteScript(scriptContent);
+    return ExecuteScriptWithOrigin(scriptContent, scriptFilename);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::ExecuteScriptWithOrigin(String const& script, String const& scriptName)
+{
+    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::ExecuteScriptWithOrigin)(V8Subsystem is not initialized)"))
+
+    if (script.empty())
+    {
+        HandleV8Error(StringFormat("Script is empty"));
+        return false;
+    }
+
+    ClearError();
+
+    m_impl->lastExecutionStart = GetCurrentTimeSeconds();
+
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);
+    v8::HandleScope              handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope           contextScope(localContext);
+
+    v8::TryCatch const tryCatch(m_impl->isolate);
+
+    // Compile script with origin information for Chrome DevTools
+    v8::Local<v8::String> const source       = v8::String::NewFromUtf8(m_impl->isolate, script.c_str()).ToLocalChecked();
+    v8::Local<v8::String> const resourceName = v8::String::NewFromUtf8(m_impl->isolate, scriptName.c_str()).ToLocalChecked();
+
+    // Create script origin for Chrome DevTools visibility
+    v8::ScriptOrigin origin(resourceName);
+
+    v8::Local<v8::Script> compiledScript;
+    if (!v8::Script::Compile(localContext, source, &origin).ToLocal(&compiledScript))
+    {
+        // Compile error
+        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
+        HandleV8Error(StringFormat("Script compilation error: {}", String(*error)));
+        return false;
+    }
+
+    // Execute script
+    v8::Local<v8::Value> result;
+    if (!compiledScript->Run(localContext).ToLocal(&result))
+    {
+        // Execute error
+        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
+        HandleV8Error(StringFormat("Script execution error: {}", String(*error)));
+        return false;
+    }
+
+    // Save execute result
+    if (!result->IsUndefined())
+    {
+        v8::String::Utf8Value resultStr(m_impl->isolate, result);
+        m_lastResult = *resultStr;
+    }
+    else
+    {
+        m_lastResult.clear();
+    }
+
+    // Update ExecutionStats
+    double const executionTime = GetCurrentTimeSeconds() - m_impl->lastExecutionStart;
+    m_stats.scriptsExecuted++;
+    m_stats.totalExecutionTime += static_cast<long long>(executionTime * 1000.0);
+
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -495,6 +797,77 @@ bool V8Subsystem::InitializeV8Engine() const
     m_impl->globalContext.Reset(m_impl->isolate, localContext);                     // Convert local context to persistent handle for long-term storage
     m_impl->isInitialized = true;
 
+    // Initialize Chrome DevTools Inspector if enabled
+    if (m_config.enableInspector)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Initializing Chrome DevTools Inspector on {}:{}", m_config.inspectorHost, m_config.inspectorPort));
+
+        // Create inspector client and inspector
+        m_impl->inspectorClient = std::make_unique<V8InspectorClientImpl>(const_cast<V8Subsystem*>(this));
+        m_impl->inspector       = v8_inspector::V8Inspector::create(m_impl->isolate, m_impl->inspectorClient.get());
+
+        // Register the JavaScript context with the inspector
+        v8_inspector::StringView contextName = v8_inspector::StringView(
+            reinterpret_cast<const uint8_t*>("FirstV8 JavaScript Context"), 26
+        );
+
+        v8_inspector::V8ContextInfo contextInfo(localContext, m_impl->kContextGroupId, contextName);
+        contextInfo.hasMemoryOnConsole = true;
+        m_impl->inspector->contextCreated(contextInfo);
+
+        // Create inspector channel and session for Chrome DevTools communication
+        m_impl->inspectorChannel = std::make_unique<V8InspectorChannelImpl>(const_cast<V8Subsystem*>(this), nullptr);
+        m_impl->inspectorSession = m_impl->inspector->connect(
+            m_impl->kContextGroupId,
+            m_impl->inspectorChannel.get(),
+            v8_inspector::StringView(),
+            v8_inspector::V8Inspector::kFullyTrusted
+        );
+
+        // Enable essential Chrome DevTools Protocol domains for proper functionality
+        if (m_impl->inspectorSession)
+        {
+            // Enable Runtime domain for console.log and script evaluation
+            std::string enableRuntime = "{\"id\":1,\"method\":\"Runtime.enable\"}";
+            v8_inspector::StringView runtimeMessage(
+                reinterpret_cast<const uint8_t*>(enableRuntime.c_str()), 
+                enableRuntime.length()
+            );
+            m_impl->inspectorSession->dispatchProtocolMessage(runtimeMessage);
+
+            // Enable Console domain for console message handling
+            std::string enableConsole = "{\"id\":2,\"method\":\"Console.enable\"}";
+            v8_inspector::StringView consoleMessage(
+                reinterpret_cast<const uint8_t*>(enableConsole.c_str()), 
+                enableConsole.length()
+            );
+            m_impl->inspectorSession->dispatchProtocolMessage(consoleMessage);
+
+            // Enable Debugger domain for source visibility and breakpoints
+            std::string enableDebugger = "{\"id\":3,\"method\":\"Debugger.enable\"}";
+            v8_inspector::StringView debuggerMessage(
+                reinterpret_cast<const uint8_t*>(enableDebugger.c_str()), 
+                enableDebugger.length()
+            );
+            m_impl->inspectorSession->dispatchProtocolMessage(debuggerMessage);
+
+            DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Chrome DevTools domains enabled: Runtime, Console, Debugger"));
+        }
+
+        // If configured to wait for debugger, pause execution
+        if (m_config.waitForDebugger)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Waiting for Chrome DevTools debugger connection..."));
+            v8_inspector::StringView reason = v8_inspector::StringView(
+                reinterpret_cast<const uint8_t*>("Waiting for debugger"), 21
+            );
+            m_impl->inspectorSession->schedulePauseOnNextStatement(reason, v8_inspector::StringView());
+        }
+
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Chrome DevTools Inspector initialized successfully"));
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Connect Chrome DevTools to: chrome://inspect or devtools://devtools/bundled/js_app.html?experiments=true&ws={}:{}", m_config.inspectorHost, m_config.inspectorPort));
+    }
+
     DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("(V8Subsystem::InitializeV8Engine)(end)"));
     return true;
 }
@@ -504,7 +877,36 @@ void V8Subsystem::ShutdownV8Engine()
 {
     if (!m_impl->isInitialized) return;
 
-    // 清理 Context
+    // Cleanup Chrome DevTools Inspector if it was enabled
+    if (m_config.enableInspector && m_impl->inspector)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Shutting down Chrome DevTools Inspector..."));
+
+        // Stop inspector session
+        if (m_impl->inspectorSession)
+        {
+            m_impl->inspectorSession->stop();
+            m_impl->inspectorSession.reset();
+        }
+
+        // Notify inspector about context destruction
+        if (!m_impl->globalContext.IsEmpty())
+        {
+            v8::Isolate::Scope     isolateScope(m_impl->isolate);
+            v8::HandleScope        handleScope(m_impl->isolate);
+            v8::Local<v8::Context> localContext = m_impl->globalContext.Get(m_impl->isolate);
+            m_impl->inspector->contextDestroyed(localContext);
+        }
+
+        // Cleanup inspector components
+        m_impl->inspectorChannel.reset();
+        m_impl->inspector.reset();
+        m_impl->inspectorClient.reset();
+
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Chrome DevTools Inspector shutdown complete"));
+    }
+
+    // Context cleanup
     m_impl->globalContext.Reset();
 
     // 清理 Isolate
@@ -531,7 +933,7 @@ void V8Subsystem::ShutdownV8Engine()
 //----------------------------------------------------------------------------------------------------
 void V8Subsystem::SetupV8Bindings()
 {
-    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::SetupV8Bindings)(V8Subsystem is not initialized)"));
+    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::SetupV8Bindings)(V8Subsystem is not initialized)"))
 
     DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("(V8Subsystem::SetupV8Bindings)(start)"));
 
