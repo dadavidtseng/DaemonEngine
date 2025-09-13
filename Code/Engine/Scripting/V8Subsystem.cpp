@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/V8Subsystem.hpp"
 
+#include <chrono>
 #include <fstream>
 #include <sstream>
 
@@ -407,14 +408,11 @@ void V8Subsystem::Update()
 //----------------------------------------------------------------------------------------------------
 bool V8Subsystem::ExecuteScript(String const& script)
 {
-    // Restore the EXACT working approach that showed JSEngine.js and JSGame.js
-    // Delegate ALL ExecuteScript calls to ExecuteScriptWithOrigin with a simple counter
-    // This was the approach that successfully showed scripts in Chrome DevTools
+    // SCRIPT REGISTRY APPROACH: Use unregistered execution for performance
+    // This prevents Chrome DevTools overhead for high-frequency script calls
+    // Use ExecuteRegisteredScript() explicitly for scripts that need debugging
     
-    static int scriptCounter = 0;
-    std::string defaultScriptName = "DynamicScript" + std::to_string(++scriptCounter) + ".js";
-    
-    return ExecuteScriptWithOrigin(script, defaultScriptName);
+    return ExecuteUnregisteredScript(script);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -449,7 +447,100 @@ bool V8Subsystem::ExecuteScriptFile(String const& scriptFilename)
 
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(V8Subsystem::ExecuteScriptFile)(end)({})", scriptFilename));
 
+    // SCRIPT REGISTRY: ExecuteScriptFile always registers scripts for Chrome DevTools debugging
+    // This ensures JSEngine.js, JSGame.js, and other script files are visible in DevTools Sources panel
+    m_registeredScripts.insert(scriptFilename);
+    m_scriptRegistry[scriptFilename] = scriptContent;
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+              StringFormat("SCRIPT REGISTRY: Registered file '{}' for Chrome DevTools debugging", scriptFilename));
+
     return ExecuteScriptWithOrigin(scriptContent, scriptFilename);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::ExecuteRegisteredScript(String const& script, String const& scriptName)
+{
+    // Execute script with full Chrome DevTools integration for debugging
+    // This method is used for important scripts that should be visible in DevTools Sources panel
+    
+    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::ExecuteRegisteredScript)(V8Subsystem is not initialized)"))
+
+    // Register this script for Chrome DevTools debugging
+    m_registeredScripts.insert(scriptName);
+    m_scriptRegistry[scriptName] = script;
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+              StringFormat("SCRIPT REGISTRY: Registered '{}' for Chrome DevTools debugging", scriptName));
+
+    // Execute with full Chrome DevTools integration
+    return ExecuteScriptWithOrigin(script, scriptName);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool V8Subsystem::ExecuteUnregisteredScript(String const& script)
+{
+    // High-performance script execution without Chrome DevTools registration
+    // Used for high-frequency calls to prevent performance overhead
+    
+    if (!m_isInitialized) ERROR_AND_DIE(StringFormat("(V8Subsystem::ExecuteUnregisteredScript)(V8Subsystem is not initialized)"))
+
+    if (script.empty())
+    {
+        HandleV8Error(StringFormat("Script is empty"));
+        return false;
+    }
+
+    ClearError();
+
+    m_impl->lastExecutionStart = GetCurrentTimeSeconds();
+
+    v8::Isolate::Scope isolateScope(m_impl->isolate);
+    v8::HandleScope handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope contextScope(localContext);
+
+    v8::TryCatch const tryCatch(m_impl->isolate);
+
+    // Simple script compilation WITHOUT Chrome DevTools origin information
+    v8::Local<v8::String> const source = v8::String::NewFromUtf8(m_impl->isolate, script.c_str()).ToLocalChecked();
+
+    v8::Local<v8::Script> compiledScript;
+    if (!v8::Script::Compile(localContext, source).ToLocal(&compiledScript))
+    {
+        // Compile error
+        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
+        HandleV8Error(StringFormat("Script compilation error: {}", String(*error)));
+        return false;
+    }
+
+    // Execute script
+    v8::Local<v8::Value> result;
+    if (!compiledScript->Run(localContext).ToLocal(&result))
+    {
+        // Runtime error
+        v8::String::Utf8Value error(m_impl->isolate, tryCatch.Exception());
+        HandleV8Error(StringFormat("Script runtime error: {}", String(*error)));
+        return false;
+    }
+
+    // Store result
+    if (!result->IsUndefined())
+    {
+        v8::String::Utf8Value utf8Result(m_impl->isolate, result);
+        m_lastResult = String(*utf8Result);
+    }
+    else
+    {
+        m_lastResult.clear();
+    }
+
+    // Update execution statistics
+    double executionTime = GetCurrentTimeSeconds() - m_impl->lastExecutionStart;
+    m_stats.scriptsExecuted++;
+    m_stats.totalExecutionTime += static_cast<size_t>(executionTime * 1000); // Convert to milliseconds
+
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -583,6 +674,55 @@ std::string V8Subsystem::GetScriptSourceByURL(const std::string& url)
     DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
               StringFormat("Script source not found for URL: {}", url));
     return "";
+}
+
+//----------------------------------------------------------------------------------------------------
+void V8Subsystem::ForwardConsoleMessageToDevTools(const std::string& message)
+{
+    // Only forward if Chrome DevTools Inspector is enabled and connected
+    if (!m_config.enableInspector || !m_impl->inspector || !m_impl->inspectorSession)
+    {
+        return;
+    }
+
+    // Create Chrome DevTools Runtime.consoleAPICalled notification
+    // This follows the Chrome DevTools Protocol specification for console messages
+    std::string notification = R"({
+        "method": "Runtime.consoleAPICalled",
+        "params": {
+            "type": "log",
+            "args": [
+                {
+                    "type": "string",
+                    "value": ")" + message + R"("
+                }
+            ],
+            "executionContextId": 1,
+            "timestamp": )" + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()) + R"(
+        }
+    })";
+
+    // Send the notification through the Inspector Channel
+    if (m_impl->inspectorChannel)
+    {
+        // Create StringBuffer for the notification
+        std::unique_ptr<v8_inspector::StringBuffer> buffer = 
+            v8_inspector::StringBuffer::create(v8_inspector::StringView(
+                reinterpret_cast<const uint8_t*>(notification.c_str()), 
+                notification.length()
+            ));
+        
+        // Send notification directly through the channel
+        m_impl->inspectorChannel->sendNotification(std::move(buffer));
+        
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+                  StringFormat("Forwarded console message to Chrome DevTools: {}", message));
+    }
+    else
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, 
+                  StringFormat("Cannot forward console message: Inspector channel not available"));
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1339,44 +1479,67 @@ void V8Subsystem::SetupBuiltinObjects()
         // create console object
         v8::Local<v8::Object> const console = v8::Object::New(m_impl->isolate);
 
-        // create console.log callback
-        auto logCallback = [](v8::FunctionCallbackInfo<v8::Value> const& args) {
+        // create console.log callback with Chrome DevTools integration
+        static auto consoleLogCallback = [](v8::FunctionCallbackInfo<v8::Value> const& args) {
             v8::Isolate*    isolate = args.GetIsolate();
             v8::HandleScope scope(isolate);
+            v8::Local<v8::Context> context = isolate->GetCurrentContext();
+            
+            // Get V8Subsystem instance from the data parameter
+            v8::Local<v8::External> external = v8::Local<v8::External>::Cast(args.Data());
+            V8Subsystem* v8Subsystem = static_cast<V8Subsystem*>(external->Value());
 
             String output = "(CONSOLE): ";
+            String consoleMessage = ""; // Message for Chrome DevTools (without prefix)
+            
             for (int i = 0; i < args.Length(); i++)
             {
-                if (i > 0) output += " ";
+                if (i > 0) {
+                    output += " ";
+                    consoleMessage += " ";
+                }
 
                 v8::Local<v8::Value> const arg = args[i];
+                String argString;
 
                 if (arg->IsString())
                 {
                     v8::String::Utf8Value str(isolate, arg);
-                    output += *str;
+                    argString = *str;
                 }
                 else if (arg->IsNumber())
                 {
-                    double const num = arg->NumberValue(isolate->GetCurrentContext()).ToChecked();
-                    output += std::to_string(num);
+                    double const num = arg->NumberValue(context).ToChecked();
+                    argString = std::to_string(num);
                 }
                 else if (arg->IsBoolean())
                 {
                     bool const val = arg->BooleanValue(isolate);
-                    output += val ? "true" : "false";
+                    argString = val ? "true" : "false";
                 }
                 else
                 {
-                    output += "[object]";
+                    argString = "[object]";
                 }
+                
+                output += argString;
+                consoleMessage += argString;
             }
 
+            // Log to C++ logging system
             DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("{}", output));
+            
+            // Forward to Chrome DevTools Console if Inspector is enabled
+            if (v8Subsystem->m_impl->inspector && v8Subsystem->m_impl->inspectorSession) {
+                v8Subsystem->ForwardConsoleMessageToDevTools(consoleMessage);
+            }
         };
 
+        // Create external wrapper for 'this' pointer
+        v8::Local<v8::External> external = v8::External::New(m_impl->isolate, this);
+        
         // 修正：直接創建函式
-        v8::Local<v8::Function> const logFunction = v8::Function::New(localContext, logCallback).ToLocalChecked();
+        v8::Local<v8::Function> const logFunction = v8::Function::New(localContext, consoleLogCallback, external).ToLocalChecked();
         console->Set(localContext,
                      v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(),
                      logFunction).Check();

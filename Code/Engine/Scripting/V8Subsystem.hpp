@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "Engine/Core/StringUtils.hpp"
@@ -66,6 +67,10 @@ public:
     // Execution related
     bool ExecuteScript(String const& script);
     bool ExecuteScriptFile(String const& scriptFilename);
+    
+    // SCRIPT REGISTRY APPROACH: Selective Chrome DevTools integration
+    bool ExecuteRegisteredScript(String const& script, String const& scriptName);
+    bool ExecuteUnregisteredScript(String const& script);
 
     // 執行 JavaScript 程式碼並回傳結果
     std::any ExecuteScriptWithResult(std::string const& script);
@@ -164,6 +169,7 @@ private:
     std::string ConvertToDevToolsURL(const std::string& scriptPath);
     void StoreScriptSource(const std::string& url, const std::string& source);
     std::string GetScriptSourceByURL(const std::string& url);
+    void ForwardConsoleMessageToDevTools(const std::string& message);
 
     // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
@@ -195,6 +201,10 @@ private:
     // Script Source Storage for DevTools
     std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code
     std::unordered_map<std::string, std::string> m_scriptIdToURL; // Script ID -> URL
+    
+    // SCRIPT REGISTRY: Selective Chrome DevTools integration
+    std::unordered_set<std::string> m_registeredScripts; // Scripts that should appear in DevTools
+    std::unordered_map<std::string, std::string> m_scriptRegistry; // Name -> Source code
     
     // Priority-based script notification storage for better Chrome DevTools experience
     std::vector<std::string> m_priorityScriptNotifications; // High-priority scripts (JSEngine.js, JSGame.js)
