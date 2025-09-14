@@ -52,12 +52,10 @@ public:
     void sendResponse(int callId, std::unique_ptr<v8_inspector::StringBuffer> message) override
     {
         std::string response = StringViewToStdString(message->string());
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("V8InspectorChannelImpl::sendResponse [{}]: {}", callId, response));
 
         // Send response to Chrome DevTools client
         if (m_devToolsServer)
         {
-            DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Sending response to Chrome DevTools server"));
             m_devToolsServer->SendToDevTools(response);
         }
         else
@@ -69,7 +67,6 @@ public:
     void sendNotification(std::unique_ptr<v8_inspector::StringBuffer> message) override
     {
         std::string notification = StringViewToStdString(message->string());
-        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools Notification: {}", notification));
 
         // Parse and store script information for replay when new DevTools connects
         if (notification.find("\"method\":\"Debugger.scriptParsed\"") != std::string::npos)
@@ -106,9 +103,6 @@ public:
         {
             // Store the script ID to URL mapping for Debugger.getScriptSource
             m_v8Subsystem->StoreScriptIdMapping(scriptId, url);
-            
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-                      StringFormat("Stored script mapping: ID={} → URL={}", scriptId, url));
         }
         
         // Store the complete notification for replay
@@ -714,9 +708,6 @@ void V8Subsystem::ForwardConsoleMessageToDevTools(const std::string& message)
         
         // Send notification directly through the channel
         m_impl->inspectorChannel->sendNotification(std::move(buffer));
-        
-        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-                  StringFormat("Forwarded console message to Chrome DevTools: {}", message));
     }
     else
     {
@@ -783,8 +774,6 @@ void V8Subsystem::ReplayScriptsToDevTools()
 void V8Subsystem::StoreScriptIdMapping(const std::string& scriptId, const std::string& url)
 {
     m_scriptIdToURL[scriptId] = url;
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-              StringFormat("Stored script ID mapping: {} → {}", scriptId, url));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -797,9 +786,6 @@ void V8Subsystem::StoreScriptNotificationForReplay(const std::string& notificati
     if (isHighPriority)
     {
         m_priorityScriptNotifications.push_back(notification);
-        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-                  StringFormat("Stored HIGH PRIORITY script notification ({} priority, {} regular)", 
-                              m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
     }
     else
     {
@@ -808,9 +794,6 @@ void V8Subsystem::StoreScriptNotificationForReplay(const std::string& notificati
         {
             m_scriptNotifications.push_back(notification);
         }
-        DAEMON_LOG(LogScript, eLogVerbosity::Log, 
-                  StringFormat("Stored script notification for replay ({} priority, {} regular)", 
-                              m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
     }
 }
 
