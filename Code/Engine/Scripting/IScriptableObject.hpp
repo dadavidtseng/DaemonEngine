@@ -4,9 +4,9 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
+#include <any>
 #include <string>
 #include <vector>
-#include <any>
 
 #include "Engine/Core/StringUtils.hpp"
 
@@ -15,11 +15,11 @@
 //----------------------------------------------------------------------------------------------------
 struct ScriptMethodResult
 {
-    bool        success = false;
-    std::any    result;
-    String errorMessage;
+    bool     success = false;
+    std::any result;
+    String   errorMessage;
 
-    static ScriptMethodResult Success(const std::any& value = std::any{})
+    static ScriptMethodResult Success(std::any const& value = std::any{})
     {
         ScriptMethodResult result;
         result.success = true;
@@ -27,7 +27,7 @@ struct ScriptMethodResult
         return result;
     }
 
-    static ScriptMethodResult Error(const String& message)
+    static ScriptMethodResult Error(String const& message)
     {
         ScriptMethodResult result;
         result.success      = false;
@@ -46,7 +46,7 @@ struct ScriptMethodInfo
     std::vector<String> parameterTypes;
     String              returnType;
 
-    explicit ScriptMethodInfo(String                          methodName,
+    explicit ScriptMethodInfo(String                     methodName,
                               String                     desc       = "",
                               std::vector<String> const& params     = {},
                               String                     returnType = "void")

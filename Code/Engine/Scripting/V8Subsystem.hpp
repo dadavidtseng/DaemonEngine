@@ -37,16 +37,16 @@ struct sV8SubsystemConfig
     bool        enableScriptBindings = true;         // Enable script bindings
     std::string scriptPath           = "Data/Scripts/"; // Script file path
     bool        enableConsoleOutput  = true;         // Enable console.log output
-    
+
     // Chrome DevTools Inspector Configuration
 #ifdef _DEBUG
-    bool        enableInspector      = true;         // Enable Chrome DevTools integration (default in Debug)
+    bool enableInspector = true;         // Enable Chrome DevTools integration (default in Debug)
 #else
-    bool        enableInspector      = false;        // Disable Chrome DevTools in Release
+    bool enableInspector = false;        // Disable Chrome DevTools in Release
 #endif
-    int         inspectorPort        = 9229;         // Chrome DevTools connection port
-    std::string inspectorHost        = "127.0.0.1"; // Inspector server bind address (localhost only)
-    bool        waitForDebugger      = false;        // Pause JavaScript execution until debugger connects
+    int         inspectorPort   = 9229;         // Chrome DevTools connection port
+    std::string inspectorHost   = "127.0.0.1"; // Inspector server bind address (localhost only)
+    bool        waitForDebugger = false;        // Pause JavaScript execution until debugger connects
 };
 
 
@@ -67,7 +67,7 @@ public:
     // Execution related
     bool ExecuteScript(String const& script);
     bool ExecuteScriptFile(String const& scriptFilename);
-    
+
     // SCRIPT REGISTRY APPROACH: Selective Chrome DevTools integration
     bool ExecuteRegisteredScript(String const& script, String const& scriptName);
     bool ExecuteUnregisteredScript(String const& script);
@@ -152,9 +152,14 @@ public:
 
     // Chrome DevTools Support
     std::string HandleDebuggerGetScriptSource(const std::string& scriptId);
-    void ReplayScriptsToDevTools();
-    void StoreScriptIdMapping(const std::string& scriptId, const std::string& url);
-    void StoreScriptNotificationForReplay(const std::string& notification);
+    void        ReplayScriptsToDevTools();
+    void        StoreScriptIdMapping(const std::string& scriptId, const std::string& url);
+    void        StoreScriptNotificationForReplay(const std::string& notification);
+
+    // DevTools Panel Event Generation
+    void SendPerformanceTimelineEvent(const std::string& eventType, const std::string& name, double timestamp);
+    void SendNetworkRequestEvent(const std::string& url, const std::string& method, int statusCode);
+    void SendMemoryHeapSnapshot();
 
 private:
     //----------------------------------------------------------------------------------------------------
@@ -164,12 +169,12 @@ private:
 
     // Private helper methods
     bool ExecuteScriptWithOrigin(String const& script, String const& scriptName);
-    
+
     // Chrome DevTools Script Management (Private)
     std::string ConvertToDevToolsURL(const std::string& scriptPath);
-    void StoreScriptSource(const std::string& url, const std::string& source);
+    void        StoreScriptSource(const std::string& url, const std::string& source);
     std::string GetScriptSourceByURL(const std::string& url);
-    void ForwardConsoleMessageToDevTools(const std::string& message);
+    void        ForwardConsoleMessageToDevTools(const std::string& message);
 
     // Pointer to the internal implementation
     std::unique_ptr<V8Implementation> m_impl;
@@ -197,15 +202,15 @@ private:
 
     // Chrome DevTools Integration
     std::unique_ptr<ChromeDevToolsServer> m_devToolsServer;
-    
+
     // Script Source Storage for DevTools
     std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code
     std::unordered_map<std::string, std::string> m_scriptIdToURL; // Script ID -> URL
-    
+
     // SCRIPT REGISTRY: Selective Chrome DevTools integration
-    std::unordered_set<std::string> m_registeredScripts; // Scripts that should appear in DevTools
+    std::unordered_set<std::string>              m_registeredScripts; // Scripts that should appear in DevTools
     std::unordered_map<std::string, std::string> m_scriptRegistry; // Name -> Source code
-    
+
     // Priority-based script notification storage for better Chrome DevTools experience
     std::vector<std::string> m_priorityScriptNotifications; // High-priority scripts (JSEngine.js, JSGame.js)
     std::vector<std::string> m_scriptNotifications;         // Regular script notifications
@@ -224,12 +229,12 @@ private:
     void SetupV8Bindings();
 
     // 創建單一物件綁定 (incremental binding)
-    void CreateSingleObjectBinding(const String&                             objectName,
+    void CreateSingleObjectBinding(String const&                             objectName,
                                    std::shared_ptr<IScriptableObject> const& object);
 
     // 創建單一函式綁定 (incremental binding)
-    void CreateSingleFunctionBinding(const String&         functionName,
-                                     const ScriptFunction& function);
+    void CreateSingleFunctionBinding(String const&         functionName,
+                                     ScriptFunction const& function);
 
     // 設定內建的 JavaScript 物件和函式
     void SetupBuiltinObjects();
