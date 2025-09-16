@@ -47,6 +47,9 @@
     <Filter Include="Scripting">
       <UniqueIdentifier>{17ca8269-39bf-4514-898d-5d621e213ad1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\Noise">
+      <UniqueIdentifier>{8047ccb2-59ef-4007-80e4-04adb8bdd573}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -324,6 +327,15 @@
     </ClCompile>
     <ClCompile Include="Input\InputScriptInterface.cpp">
       <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Noise\RawNoise.cpp">
+      <Filter>ThirdParty\Noise</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Noise\SmoothNoise.cpp">
+      <Filter>ThirdParty\Noise</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\ChromeDevToolsServer.cpp">
+      <Filter>Scripting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -632,6 +644,15 @@
     </ClInclude>
     <ClInclude Include="Input\InputScriptInterface.hpp">
       <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\Noise\RawNoise.hpp">
+      <Filter>ThirdParty\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\Noise\SmoothNoise.hpp">
+      <Filter>ThirdParty\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\ChromeDevToolsServer.hpp">
+      <Filter>Scripting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
