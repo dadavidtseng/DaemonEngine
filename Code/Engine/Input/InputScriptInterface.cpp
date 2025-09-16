@@ -4,11 +4,11 @@
 //----------------------------------------------------------------------------------------------------
 
 #include "Engine/Input/InputScriptInterface.hpp"
-#include "Engine/Input/InputSystem.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/EngineCommon.hpp"
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Input/InputSystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 InputScriptInterface::InputScriptInterface(InputSystem* inputSystem)

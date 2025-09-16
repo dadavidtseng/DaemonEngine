@@ -19,36 +19,36 @@ public:
     explicit InputScriptInterface(InputSystem* inputSystem);
 
     // 實作 IScriptableObject 介面
-    std::string                   GetScriptObjectName() const override;
+    String                        GetScriptObjectName() const override;
     std::vector<ScriptMethodInfo> GetAvailableMethods() const override;
-    ScriptMethodResult            CallMethod(std::string const& methodName, std::vector<std::any> const& args) override;
+    ScriptMethodResult            CallMethod(String const& methodName, std::vector<std::any> const& args) override;
 
     // 實作屬性存取
-    std::any                 GetProperty(const std::string& propertyName) const override;
-    bool                     SetProperty(const std::string& propertyName, const std::any& value) override;
-    std::vector<std::string> GetAvailableProperties() const override;
+    std::any            GetProperty(String const& propertyName) const override;
+    bool                SetProperty(String const& propertyName, const std::any& value) override;
+    std::vector<String> GetAvailableProperties() const override;
 
 private:
     InputSystem* m_inputSystem; // 不擁有，只是參考
 
     // 輔助方法來處理類型轉換和錯誤檢查
     template <typename T>
-    T ExtractArg(const std::any& arg, const std::string& expectedType = "") const;
+    T ExtractArg(std::any const& arg, String const& expectedType = "") const;
 
     // 專門的類型提取方法
-    int         ExtractInt(const std::any& arg) const;
-    std::string ExtractString(const std::any& arg) const;
-    bool        ExtractBool(const std::any& arg) const;
+    int    ExtractInt(const std::any& arg) const;
+    String ExtractString(const std::any& arg) const;
+    bool   ExtractBool(const std::any& arg) const;
 
     // 參數驗證輔助方法
     ScriptMethodResult ValidateArgCount(const std::vector<std::any>& args,
                                         size_t                       expectedCount,
-                                        const std::string&           methodName) const;
+                                        const String&                methodName) const;
 
     ScriptMethodResult ValidateArgCountRange(const std::vector<std::any>& args,
                                              size_t                       minCount,
                                              size_t                       maxCount,
-                                             const std::string&           methodName) const;
+                                             const String&                methodName) const;
 
     // 方法實作
     ScriptMethodResult ExecuteIsKeyDown(const std::vector<std::any>& args);
