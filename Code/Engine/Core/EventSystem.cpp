@@ -5,8 +5,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 
-#include "LogSubsystem.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 EventSystem* g_eventSystem = nullptr;

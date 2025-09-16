@@ -11,15 +11,15 @@
 class DevConsole;
 class EventSystem;
 class InputSystem;
-class V8Subsystem;
+class LogSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
-extern NamedStrings g_gameConfigBlackboard;
-extern EventSystem* g_eventSystem;
-extern DevConsole*  g_devConsole;
-extern InputSystem* g_input;
-extern V8Subsystem* g_v8Subsystem;
+extern NamedStrings  g_gameConfigBlackboard;
+extern EventSystem*  g_eventSystem;
+extern DevConsole*   g_devConsole;
+extern InputSystem*  g_input;
+extern LogSubsystem* g_logSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief
