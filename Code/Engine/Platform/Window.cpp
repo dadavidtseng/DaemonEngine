@@ -14,12 +14,9 @@
 #include "Engine/Math/MathUtils.hpp"
 
 #define CONSOLE_HANDLER
-#define WIN32_LEAN_AND_MEAN
 
 #include <chrono>
 #include <dxgi1_2.h>
-#include <windows.h>
-
 
 //----------------------------------------------------------------------------------------------------
 // 全域控制台控制代碼，供 LogSubsystem 使用
@@ -260,7 +257,7 @@ Vec2 Window::GetClientDimensions() const
     // float const desktopAspect = desktopWidth / desktopHeight;
     // return Vec2(desktopWidth, desktopHeight);
     return m_clientDimensions;
-     // return Vec2(2160,1440);
+    // return Vec2(2160,1440);
 }
 
 Vec2 Window::GetClientPosition() const

@@ -100,8 +100,8 @@ private:
     void                    CreateOSWindow();
     void                    CreateConsole();
     void                    RunMessagePump() const;
-    static LRESULT          GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
-    static LRESULT          GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
     sWindowConfig           m_config;
     void*                   m_windowHandle     = nullptr;          // Actually a Windows HWND (Handle of Window) on the Windows platform
     void*                   m_displayContext   = nullptr;          // Actually a Windows HDC (Handle to Device Context) on the Windows platform
