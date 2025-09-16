@@ -1,3 +1,5 @@
+.spec-workflow/
+
 # Sphinx documentation build output
 Docs/build/
 Docs/source/_build/
