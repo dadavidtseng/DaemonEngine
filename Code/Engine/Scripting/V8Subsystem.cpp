@@ -161,8 +161,8 @@ class V8InspectorClientImpl : public v8_inspector::V8InspectorClient
 {
 public:
     explicit V8InspectorClientImpl(V8Subsystem* v8Subsystem)
-
     {
+        UNUSED(v8Subsystem); // Suppress unreferenced parameter warning
     }
 
     void runMessageLoopOnPause(int contextGroupId) override
@@ -1795,7 +1795,7 @@ void V8Subsystem::SendNetworkRequestEvent(const std::string& url, const std::str
     // Create Network request event notification  
     // This populates the Network panel with request data
     std::string requestId = "req_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    double timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    double timestamp = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
     std::string notification = R"({
         "method": "Network.requestWillBeSent",
