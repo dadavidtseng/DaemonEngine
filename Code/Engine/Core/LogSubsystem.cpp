@@ -471,6 +471,7 @@ void LogSubsystem::Startup()
         }
         catch (std::exception const& e)
         {
+            UNUSED(e)
             // Fallback to regular file output
             if (m_config.enableFile)
             {
@@ -883,9 +884,9 @@ sRotationStats LogSubsystem::GetRotationStats() const
     {
         // Return basic stats
         sRotationStats stats;
-        stats.totalRotations       = 0;
-        stats.totalFilesDeleted    = 0;
-        stats.lastError            = "Using basic logging mode - smart rotation not initialized";
+        stats.totalRotations    = 0;
+        stats.totalFilesDeleted = 0;
+        stats.lastError         = "Using basic logging mode - smart rotation not initialized";
         return stats;
     }
 }
@@ -1133,7 +1134,7 @@ std::filesystem::path SmartFileOutputDevice::GenerateNewLogFilePath()
 {
     // Date-based folder organization: Logs/YYYY-MM-DD/session-HHMMSS-segXXX.log
     std::filesystem::path dateFolderPath = GetDateBasedFolderPath();
-    
+
     String filename = Stringf("%s-%s-seg%03d.log",
                               m_config.sessionPrefix.c_str(),
                               GetTimeOnlySessionId().c_str(),
@@ -1174,7 +1175,7 @@ void SmartFileOutputDevice::ArchiveCurrentFile()
     {
         // Create date-based directory if needed
         CreateDirectoryIfNeeded(archivePath.parent_path());
-        
+
         // Simply move the file to the date-based folder
         std::filesystem::rename(m_currentFilePath, archivePath);
 
@@ -1193,20 +1194,20 @@ std::filesystem::path SmartFileOutputDevice::GetDateBasedFolderPath() const
     {
         return m_logDirectory; // Use base directory if date organization is disabled
     }
-    
+
     // Generate date folder path: Logs/YYYY-MM-DD
-    auto now = std::chrono::system_clock::now();
+    auto now    = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
-    
+
     std::stringstream ss;
-    struct tm timeinfo;
+    struct tm         timeinfo;
 #ifdef _WIN32
     localtime_s(&timeinfo, &time_t);
 #else
     localtime_r(&time_t, &timeinfo);
 #endif
     ss << std::put_time(&timeinfo, "%Y-%m-%d");
-    
+
     return m_logDirectory / ss.str();
 }
 
@@ -1383,6 +1384,7 @@ std::vector<std::filesystem::path> SmartFileOutputDevice::ScanForOldLogs() const
     }
     catch (const std::exception& e)
     {
+		UNUSED(e)
         // Log scan failed, return empty vector
     }
 
@@ -1414,6 +1416,7 @@ bool SmartFileOutputDevice::CreateDirectoryIfNeeded(const std::filesystem::path&
 
 void SmartFileOutputDevice::LogRotationEvent(const String& message)
 {
+    UNUSED(message)
     // Simple logging to console/debug output
     // In a full implementation, this would use the parent LogSubsystem
 #ifdef _DEBUG
