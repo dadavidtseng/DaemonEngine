@@ -1287,7 +1287,7 @@ void Window::DisableGlobalInputCapture()
     DebuggerPrintf("Global input capture disabled\n");
 }
 
-LRESULT CALLBACK Window::GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT  Window::GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode >= 0 && s_mainWindow)
     {
@@ -1333,7 +1333,7 @@ LRESULT CALLBACK Window::GlobalMouseProc(int nCode, WPARAM wParam, LPARAM lParam
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
-LRESULT CALLBACK Window::GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT  Window::GlobalKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode >= 0 && s_mainWindow)
     {
