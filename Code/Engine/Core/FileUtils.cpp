@@ -80,3 +80,48 @@ bool FileReadToString(String& out_string, String const& fileName)
 
     return true;
 }
+
+//----------------------------------------------------------------------------------------------------
+bool FileWriteFromBuffer(std::vector<uint8_t> const& buffer, String const& fileName)
+{
+    return FileWriteBinary(fileName, buffer.data(), buffer.size());
+}
+
+//----------------------------------------------------------------------------------------------------
+bool FileWriteBinary(String const& fileName, void const* data, size_t dataSize)
+{
+    FILE*   file = nullptr;
+    errno_t err  = fopen_s(&file, fileName.c_str(), "wb");
+    
+    if (err != 0 || file == nullptr)
+    {
+        ERROR_RECOVERABLE("Error: Failed to open file for writing.")
+        return false;
+    }
+
+    size_t written = fwrite(data, 1, dataSize, file);
+    fclose(file);
+
+    if (written != dataSize)
+    {
+        ERROR_RECOVERABLE("Error: Failed to write complete data to file.")
+        return false;
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool EnsureDirectoryExists(String const& directoryPath)
+{
+    try
+    {
+        std::filesystem::create_directories(directoryPath);
+        return true;
+    }
+    catch (std::filesystem::filesystem_error const&)
+    {
+        ERROR_RECOVERABLE("Error: Failed to create directory.")
+        return false;
+    }
+}
