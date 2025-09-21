@@ -81,19 +81,19 @@ Quick Navigation
            <div style="border: 2px solid #9b59b6; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
                <h4 style="color: #2c3e50; margin-top: 0;">⚙️ Core Module</h4>
                <p>Essential data structures, vertex definitions, and string management classes that form the foundation of the engine.</p>
-               <a href="core_module.html" style="background: #9b59b6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Core API →</a>
+               <a href="api/modules/core_module.html" style="background: #9b59b6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Core API →</a>
            </div>
 
            <div style="border: 2px solid #f39c12; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
                <h4 style="color: #2c3e50; margin-top: 0;">🎨 Renderer Module</h4>
                <p>DirectX 11 rendering system, graphics pipeline management, and visual effects processing classes.</p>
-               <a href="render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
+               <a href="api/modules/render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
            </div>
 
            <div style="border: 2px solid #f39c12; border-radius: 8px; padding: 20px; text-align: center; background: #f8f9fa;">
                <h4 style="color: #2c3e50; margin-top: 0;">Network Module</h4>
                <p>DirectX 11 rendering system, graphics pipeline management, and visual effects processing classes.</p>
-               <a href="render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
+               <a href="api/modules/render_module.html" style="background: #f39c12; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">Renderer API →</a>
            </div>
        </div>
    </div>
