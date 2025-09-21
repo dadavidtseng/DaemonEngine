@@ -72,7 +72,7 @@ void AudioSystem::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-SoundID AudioSystem::CreateOrGetSound(std::string const&              soundFilePath,
+SoundID AudioSystem::CreateOrGetSound(String const&              soundFilePath,
                                       eAudioSystemSoundDimension const dimension)
 {
     std::map<std::string, SoundID>::iterator found = m_registeredSoundIDs.find(soundFilePath);
