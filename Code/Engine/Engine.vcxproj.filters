@@ -201,6 +201,15 @@
         <ClCompile Include="Core/HeatMaps.cpp">
             <Filter>Engine\Core\Debug</Filter>
         </ClCompile>
+        <ClCompile Include="Core/Job.cpp">
+            <Filter>Engine\Core\Threading</Filter>
+        </ClCompile>
+        <ClCompile Include="Core/JobSystem.cpp">
+            <Filter>Engine\Core\Threading</Filter>
+        </ClCompile>
+        <ClCompile Include="Core/JobWorkerThread.cpp">
+            <Filter>Engine\Core\Threading</Filter>
+        </ClCompile>
         <ClCompile Include="Core/LogSubsystem.cpp">
             <Filter>Engine\Core\Debug</Filter>
         </ClCompile>
@@ -575,6 +584,15 @@
         </ClInclude>
         <ClInclude Include="Core/HeatMaps.hpp">
             <Filter>Engine\Core\Debug</Filter>
+        </ClInclude>
+        <ClInclude Include="Core/Job.hpp">
+            <Filter>Engine\Core\Threading</Filter>
+        </ClInclude>
+        <ClInclude Include="Core/JobSystem.hpp">
+            <Filter>Engine\Core\Threading</Filter>
+        </ClInclude>
+        <ClInclude Include="Core/JobWorkerThread.hpp">
+            <Filter>Engine\Core\Threading</Filter>
         </ClInclude>
         <ClInclude Include="Core/LogSubsystem.hpp">
             <Filter>Engine\Core\Debug</Filter>

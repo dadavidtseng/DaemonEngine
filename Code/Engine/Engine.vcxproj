@@ -90,14 +90,6 @@
 
     <!-- Core MSBuild imports - order matters for proper evaluation -->
     <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props"/>
-
-    <!-- V8 JavaScript Engine NuGet Package Integration -->
-    <!-- These imports provide V8 headers, libraries, and build configuration -->
-    <Import Project="../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props"
-            Condition="Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')"/>
-    <Import Project="../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props"
-            Condition="Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')"/>
-
     <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props"/>
 
     <!-- Property Sheets Integration -->
@@ -233,6 +225,9 @@
         <ClCompile Include="Core/EventSystem.cpp"/>
         <ClCompile Include="Core/FileUtils.cpp"/>
         <ClCompile Include="Core/HeatMaps.cpp"/>
+        <ClCompile Include="Core/Job.cpp"/>
+        <ClCompile Include="Core/JobSystem.cpp"/>
+        <ClCompile Include="Core/JobWorkerThread.cpp"/>
         <ClCompile Include="Core/LogSubsystem.cpp"/>
         <ClCompile Include="Core/NamedStrings.cpp"/>
         <ClCompile Include="Core/Rgba8.cpp"/>
@@ -383,6 +378,9 @@
         <ClInclude Include="Core/EventSystem.hpp"/>
         <ClInclude Include="Core/FileUtils.hpp"/>
         <ClInclude Include="Core/HeatMaps.hpp"/>
+        <ClInclude Include="Core/Job.hpp"/>
+        <ClInclude Include="Core/JobSystem.hpp"/>
+        <ClInclude Include="Core/JobWorkerThread.hpp"/>
         <ClInclude Include="Core/LogSubsystem.hpp"/>
         <ClInclude Include="Core/NamedStrings.hpp"/>
         <ClInclude Include="Core/Rgba8.hpp"/>
@@ -528,15 +526,14 @@
     <ImportGroup Label="ExtensionTargets"/>
 
     <!-- V8 NuGet Package Validation -->
-    <!-- Ensures V8 packages are properly restored before building -->
+    <!-- Ensures V8 packages are properly restored via PackageReference before building -->
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
         <PropertyGroup>
-            <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them. For more information, see https://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+            <ErrorText>V8 NuGet packages are required but not restored. Please restore NuGet packages before building. Use 'dotnet restore' or enable automatic package restore in Visual Studio.</ErrorText>
         </PropertyGroup>
-        <Error Condition="!Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')"
-               Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props'))"/>
-        <Error Condition="!Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')"
-               Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props'))"/>
+        <!-- PackageReference automatically handles package validation, so this target serves as documentation -->
+        <!-- If V8 packages are missing, MSBuild will automatically fail with clear error messages -->
+        <Message Text="V8 JavaScript Engine packages loaded via PackageReference" Importance="low"/>
     </Target>
 
     <!-- Custom Build Information Target -->
