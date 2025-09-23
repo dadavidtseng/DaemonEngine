@@ -31,14 +31,14 @@ public:
     void SetValueAtAllTiles(float value) const;
     void SetValueAtIndex(int tileIndex, float value) const;
     void SetValueAtCoords(IntVec2 const& tileCoords, float value) const;
-    void AddVertsForDebugDraw(VertexList_PCU&  verts,
-                              AABB2 const& totalBounds,
-                              Rgba8 const& lowColor     = Rgba8::BLACK,
-                              Rgba8 const& highColor    = Rgba8::WHITE,
-                              float        specialValue = 999.f,
-                              Rgba8 const& specialColor = Rgba8::RED) const;
+    void AddVertsForDebugDraw(VertexList_PCU& verts,
+                              AABB2 const&    totalBounds,
+                              Rgba8 const&    lowColor     = Rgba8::BLACK,
+                              Rgba8 const&    highColor    = Rgba8::WHITE,
+                              float           specialValue = 999.f,
+                              Rgba8 const&    specialColor = Rgba8::RED) const;
 
-// private:
+    // private:
     IntVec2 m_dimensions   = IntVec2::ZERO;
     float*  m_values       = nullptr;
     float   m_lowestValue  = FLT_MAX;

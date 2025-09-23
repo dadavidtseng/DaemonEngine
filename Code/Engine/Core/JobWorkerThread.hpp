@@ -7,7 +7,8 @@
 #include <thread>
 #include <atomic>
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
+class Job;
 class JobSystem;
 
 //----------------------------------------------------------------------------------------------------
@@ -30,13 +31,19 @@ class JobWorkerThread
 public:
     // Constructor: associates worker with JobSystem and assigns unique ID
     explicit JobWorkerThread(JobSystem* jobSystem, int workerID);
-    
+
     // Destructor: ensures proper thread cleanup
     ~JobWorkerThread();
 
+    // Prevent copying and assignment
+    JobWorkerThread(JobWorkerThread const&)            = delete;
+    JobWorkerThread& operator=(JobWorkerThread const&) = delete;
+    JobWorkerThread(JobWorkerThread&&)                 = delete;
+    JobWorkerThread& operator=(JobWorkerThread&&)      = delete;
+
     // Start the worker thread (creates std::thread and begins ThreadMain)
     void StartThread();
-    
+
     // Signal the worker thread to stop and wait for it to finish
     void StopAndJoin();
 
@@ -68,16 +75,10 @@ private:
 
     // Atomic flag to signal thread shutdown
     std::atomic<bool> m_shouldStop{false};
-    
+
     // Atomic flag indicating if thread is currently running
     std::atomic<bool> m_isRunning{false};
 
     // Currently claimed job (only accessed by this worker thread)
-    class Job* m_currentJob = nullptr;
-
-    // Prevent copying and assignment
-    JobWorkerThread(JobWorkerThread const&) = delete;
-    JobWorkerThread& operator=(JobWorkerThread const&) = delete;
-    JobWorkerThread(JobWorkerThread&&) = delete;
-    JobWorkerThread& operator=(JobWorkerThread&&) = delete;
+    Job* m_currentJob = nullptr;
 };

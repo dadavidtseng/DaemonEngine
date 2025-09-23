@@ -34,13 +34,13 @@ public:
     // Should be thread-safe and not access main-thread-only resources (e.g., DirectX)
     virtual void Execute() = 0;
 
-protected:
-    // Protected constructor prevents direct instantiation of abstract base class
-    Job() = default;
-
     // Prevent copying and assignment (jobs should be unique)
     Job(Job const&)            = delete;
     Job& operator=(Job const&) = delete;
     Job(Job&&)                 = delete;
     Job& operator=(Job&&)      = delete;
+
+protected:
+    // Protected constructor prevents direct instantiation of abstract base class
+    Job() = default;
 };

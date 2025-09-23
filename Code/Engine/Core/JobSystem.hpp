@@ -45,6 +45,12 @@ public:
     // Destructor - ensures proper cleanup of all threads and jobs
     ~JobSystem();
 
+    // Prevent copying and assignment
+    JobSystem(JobSystem const&)            = delete;
+    JobSystem& operator=(JobSystem const&) = delete;
+    JobSystem(JobSystem&&)                 = delete;
+    JobSystem& operator=(JobSystem&&)      = delete;
+
     // Initialize and start N worker threads
     // numThreads: Number of worker threads to create (typically hardware_concurrency() - 1)
     void StartUp(int numThreads);
@@ -96,10 +102,4 @@ private:
 
     // System state
     bool m_isRunning = false;
-
-    // Prevent copying and assignment
-    JobSystem(JobSystem const&)            = delete;
-    JobSystem& operator=(JobSystem const&) = delete;
-    JobSystem(JobSystem&&)                 = delete;
-    JobSystem& operator=(JobSystem&&)      = delete;
 };
