@@ -36,7 +36,7 @@ struct sChromeDevToolsConfig
     bool   enabled     = false;
     String host        = "127.0.0.1";
     int    port        = 9229;
-    String contextName = "FirstV8 JavaScript Context";
+    String contextName = "ProtogameJS3D JavaScript Context";
 };
 
 //----------------------------------------------------------------------------------------------------

@@ -14,6 +14,7 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Scripting/ChromeDevToolsServer.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
@@ -24,12 +25,9 @@
 #pragma warning(disable: 4127)  // conditional expression is constant
 #pragma warning(disable: 4324)  // 'structname': structure was padded due to alignment specifier
 
-#include "v8.h"
 #include "v8-inspector.h"
+#include "v8.h"
 #include "libplatform/libplatform.h"
-
-// Chrome DevTools Server
-#include "Engine/Scripting/ChromeDevToolsServer.hpp"
 
 #pragma warning(pop)            // pops the last warning state pushed onto the stack
 //----------------------------------------------------------------------------------------------------
@@ -218,7 +216,6 @@ public:
     }
 
 private:
-
     std::string StringViewToStdString(const v8_inspector::StringView& view)
     {
         if (view.is8Bit())
@@ -262,7 +259,7 @@ struct V8Subsystem::V8Implementation
     std::unique_ptr<v8_inspector::V8Inspector>        inspector;
     std::unique_ptr<v8_inspector::V8InspectorSession> inspectorSession;
     std::unique_ptr<V8InspectorChannelImpl>           inspectorChannel;
-    static constexpr int                              kContextGroupId = 1;        // Context group ID for debugging
+    static int constexpr                              kContextGroupId = 1;        // Context group ID for debugging
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -303,7 +300,7 @@ void V8Subsystem::Startup()
         devToolsConfig.enabled     = true;
         devToolsConfig.host        = m_config.inspectorHost;
         devToolsConfig.port        = m_config.inspectorPort;
-        devToolsConfig.contextName = "FirstV8 JavaScript Context";
+        devToolsConfig.contextName = "ProtogameJS2D JavaScript Context";
 
         m_devToolsServer = std::make_unique<ChromeDevToolsServer>(devToolsConfig, this);
 
@@ -318,7 +315,7 @@ void V8Subsystem::Startup()
             // Update the inspector channel to use the DevTools server
             if (m_impl->inspectorChannel)
             {
-                static_cast<V8InspectorChannelImpl*>(m_impl->inspectorChannel.get())->SetDevToolsServer(m_devToolsServer.get());
+                m_impl->inspectorChannel.get()->SetDevToolsServer(m_devToolsServer.get());
             }
 
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
@@ -384,7 +381,7 @@ void V8Subsystem::Update()
     if (m_devToolsServer && m_devToolsServer->IsRunning())
     {
         m_devToolsServer->Update();
-        
+
         // THREAD SAFETY FIX: Process queued V8 Inspector messages on main thread
         m_devToolsServer->ProcessQueuedMessages();
 
@@ -397,7 +394,7 @@ void V8Subsystem::Update()
         {
             double timestamp = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now().time_since_epoch()).count());
-            DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Performance event (frame {})", updateCounter));
             SendPerformanceTimelineEvent("ScriptUpdate", "JSEngine.update", timestamp);
         }
@@ -405,15 +402,15 @@ void V8Subsystem::Update()
         // Generate Network request events every 120 frames (~2 seconds)
         if (updateCounter % 120 == 0)
         {
-            DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Network event (frame {})", updateCounter));
             SendNetworkRequestEvent("file:///FirstV8/Scripts/JSEngine.js", "GET", 200);
         }
 
-        // Generate Memory heap snapshots every 300 frames (~5 seconds)  
+        // Generate Memory heap snapshots every 300 frames (~5 seconds)
         if (updateCounter % 300 == 0)
         {
-            DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Memory snapshot (frame {})", updateCounter));
             SendMemoryHeapSnapshot();
         }
@@ -639,7 +636,7 @@ bool V8Subsystem::ExecuteScriptWithOrigin(String const& script, String const& sc
 
         // Performance timeline event for script execution
         SendPerformanceTimelineEvent("ScriptExecution", scriptName, timestamp);
-        
+
         // Network event for script loading (simulate file request)
         std::string scriptURL = "file:///FirstV8/Scripts/" + scriptName;
         SendNetworkRequestEvent(scriptURL, "GET", 200);
@@ -1085,18 +1082,18 @@ bool V8Subsystem::InitializeV8Engine() const
     {
         // Convert MB to bytes and set both old generation and young generation limits
         size_t heapSizeBytes = m_config.heapSizeLimit * 1024 * 1024;
-        
+
         // Set old generation (long-lived objects) to 80% of total heap
         m_impl->createParams.constraints.set_max_old_generation_size_in_bytes(static_cast<size_t>(heapSizeBytes * 0.8));
-        
-        // Set young generation (short-lived objects) to 20% of total heap  
+
+        // Set young generation (short-lived objects) to 20% of total heap
         m_impl->createParams.constraints.set_max_young_generation_size_in_bytes(static_cast<size_t>(heapSizeBytes * 0.2));
-        
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("V8 heap limits set: Total {}MB, Old Gen {}MB, Young Gen {}MB",
-                               m_config.heapSizeLimit,
-                               (heapSizeBytes * 0.8) / (1024 * 1024),
-                               (heapSizeBytes * 0.2) / (1024 * 1024)));
+                       m_config.heapSizeLimit,
+                       (heapSizeBytes * 0.8) / (1024 * 1024),
+                       (heapSizeBytes * 0.2) / (1024 * 1024)));
     }
 
     m_impl->isolate = v8::Isolate::New(m_impl->createParams);
@@ -1168,7 +1165,7 @@ bool V8Subsystem::InitializeV8Engine() const
             );
             m_impl->inspectorSession->dispatchProtocolMessage(debuggerMessage);
 
-            // Enable HeapProfiler domain for Memory Panel visibility  
+            // Enable HeapProfiler domain for Memory Panel visibility
             // This is ESSENTIAL for Chrome DevTools Memory Panel to detect the JavaScript VM instance
             std::string              enableHeapProfiler = "{\"id\":4,\"method\":\"HeapProfiler.enable\"}";
             v8_inspector::StringView heapProfilerMessage(
@@ -1230,10 +1227,10 @@ bool V8Subsystem::InitializeV8Engine() const
                         }
                     }
                 })";
-                
+
                 m_devToolsServer->SendToDevTools(contextCreatedNotification);
-                
-                DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+
+                DAEMON_LOG(LogScript, eLogVerbosity::Display,
                            StringFormat("DEVTOOLS DEBUG: Sent Runtime.executionContextCreated event to DevTools"));
             }
         }
@@ -1732,58 +1729,58 @@ void V8Subsystem::SendPerformanceTimelineEvent(const std::string& eventType, con
     // Create proper Profiler.consoleProfileStarted event for Performance panel
     // This is the correct Chrome DevTools Protocol event for Performance timeline
     std::string notification = std::string("{") +
-        "\"method\": \"Profiler.consoleProfileStarted\"," +
-        "\"params\": {" +
-            "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
-            "\"location\": {" +
-                "\"scriptId\": \"1\"," +
-                "\"lineNumber\": 0" +
-            "}," +
-            "\"title\": \"" + eventType + ": " + name + "\"" +
-        "}" +
+    "\"method\": \"Profiler.consoleProfileStarted\"," +
+    "\"params\": {" +
+    "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
+    "\"location\": {" +
+    "\"scriptId\": \"1\"," +
+    "\"lineNumber\": 0" +
+    "}," +
+    "\"title\": \"" + eventType + ": " + name + "\"" +
+    "}" +
     "}";
 
     // Send via DevTools server
     if (m_devToolsServer && m_devToolsServer->IsRunning())
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("DEVTOOLS DEBUG: Sending Performance event: {} - {}", eventType, name));
         m_devToolsServer->SendToDevTools(notification);
-        
+
         // Also send the corresponding finished event after a short delay
         std::string finishedNotification = std::string("{") +
-            "\"method\": \"Profiler.consoleProfileFinished\"," +
-            "\"params\": {" +
-                "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
-                "\"location\": {" +
-                    "\"scriptId\": \"1\"," +
-                    "\"lineNumber\": 0" +
-                "}," +
-                "\"title\": \"" + eventType + ": " + name + "\"," +
-                "\"profile\": {" +
-                    "\"nodes\": [" +
-                        "{" +
-                            "\"id\": 1," +
-                            "\"callFrame\": {" +
-                                "\"functionName\": \"" + name + "\"," +
-                                "\"scriptId\": \"1\"," +
-                                "\"url\": \"file:///FirstV8/Scripts/" + name + ".js\"," +
-                                "\"lineNumber\": 0," +
-                                "\"columnNumber\": 0" +
-                            "}," +
-                            "\"hitCount\": 1" +
-                        "}" +
-                    "]," +
-                    "\"startTime\": " + std::to_string(timestamp) + "," +
-                    "\"endTime\": " + std::to_string(timestamp + 10) + "," +
-                    "\"samples\": [1]," +
-                    "\"timeDeltas\": [10]" +
-                "}" +
-            "}" +
+        "\"method\": \"Profiler.consoleProfileFinished\"," +
+        "\"params\": {" +
+        "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
+        "\"location\": {" +
+        "\"scriptId\": \"1\"," +
+        "\"lineNumber\": 0" +
+        "}," +
+        "\"title\": \"" + eventType + ": " + name + "\"," +
+        "\"profile\": {" +
+        "\"nodes\": [" +
+        "{" +
+        "\"id\": 1," +
+        "\"callFrame\": {" +
+        "\"functionName\": \"" + name + "\"," +
+        "\"scriptId\": \"1\"," +
+        "\"url\": \"file:///FirstV8/Scripts/" + name + ".js\"," +
+        "\"lineNumber\": 0," +
+        "\"columnNumber\": 0" +
+        "}," +
+        "\"hitCount\": 1" +
+        "}" +
+        "]," +
+        "\"startTime\": " + std::to_string(timestamp) + "," +
+        "\"endTime\": " + std::to_string(timestamp + 10) + "," +
+        "\"samples\": [1]," +
+        "\"timeDeltas\": [10]" +
+        "}" +
+        "}" +
         "}";
-        
+
         m_devToolsServer->SendToDevTools(finishedNotification);
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("DEVTOOLS DEBUG: Sent Performance finished event for: {}", eventType));
     }
 }
@@ -1792,10 +1789,10 @@ void V8Subsystem::SendNetworkRequestEvent(const std::string& url, const std::str
 {
     if (!m_isInitialized || !m_devToolsServer) return;
 
-    // Create Network request event notification  
+    // Create Network request event notification
     // This populates the Network panel with request data
     std::string requestId = "req_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    double timestamp = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+    double      timestamp = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
     std::string notification = R"({
         "method": "Network.requestWillBeSent",
@@ -1820,7 +1817,7 @@ void V8Subsystem::SendNetworkRequestEvent(const std::string& url, const std::str
 
     if (m_devToolsServer && m_devToolsServer->IsRunning())
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("DEVTOOLS DEBUG: Sending Network request: {} {} ({})", method, url, statusCode));
         m_devToolsServer->SendToDevTools(notification);
 
@@ -1845,7 +1842,7 @@ void V8Subsystem::SendNetworkRequestEvent(const std::string& url, const std::str
         })";
 
         m_devToolsServer->SendToDevTools(responseNotification);
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("DEVTOOLS DEBUG: Sent Network response for: {}", url));
     }
 }
@@ -1868,7 +1865,7 @@ void V8Subsystem::SendMemoryHeapSnapshot()
 
     if (m_devToolsServer && m_devToolsServer->IsRunning())
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Display, 
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("DEVTOOLS DEBUG: Sending Memory heap snapshot ({} bytes used)", usage.usedHeapSize));
         m_devToolsServer->SendToDevTools(takeSnapshotCommand);
 
@@ -1881,32 +1878,33 @@ void V8Subsystem::SendMemoryHeapSnapshot()
                 "finished": true
             }
         })";
-        
+
         m_devToolsServer->SendToDevTools(progressNotification);
 
         // STEP 3: Send the actual heap snapshot data chunk
         // Using a simplified but valid V8 heap snapshot format
         std::string snapshotData = std::string("{") +
-            "\"snapshot\": {" +
-                "\"meta\": {" +
-                    "\"node_fields\": [\"type\", \"name\", \"id\", \"self_size\", \"edge_count\", \"trace_node_id\"]," +
-                    "\"node_types\": [[\"hidden\", \"array\", \"string\", \"object\", \"code\", \"closure\", \"regexp\", \"number\", \"native\", \"synthetic\", \"concatenated string\", \"sliced string\"]]," +
-                    "\"edge_fields\": [\"type\", \"name_or_index\", \"to_node\"]," +
-                    "\"edge_types\": [[\"context\", \"element\", \"property\", \"internal\", \"hidden\", \"shortcut\", \"weak\"]]" +
-                "}," +
-                "\"node_count\": 3," +
-                "\"edge_count\": 2" +
-            "}," +
-            "\"nodes\": [9, 0, 1, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 1, 2, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 2, 3, " + std::to_string(usage.usedHeapSize / 3) + ", 0, 0]," +
-            "\"edges\": [1, 1, 2, 1, 2, 3]," +
-            "\"strings\": [\"FirstV8\", \"JSEngine\", \"V8Context\"]" +
+        "\"snapshot\": {" +
+        "\"meta\": {" +
+        "\"node_fields\": [\"type\", \"name\", \"id\", \"self_size\", \"edge_count\", \"trace_node_id\"]," +
+        "\"node_types\": [[\"hidden\", \"array\", \"string\", \"object\", \"code\", \"closure\", \"regexp\", \"number\", \"native\", \"synthetic\", \"concatenated string\", \"sliced string\"]]," +
+        "\"edge_fields\": [\"type\", \"name_or_index\", \"to_node\"]," +
+        "\"edge_types\": [[\"context\", \"element\", \"property\", \"internal\", \"hidden\", \"shortcut\", \"weak\"]]" +
+        "}," +
+        "\"node_count\": 3," +
+        "\"edge_count\": 2" +
+        "}," +
+        "\"nodes\": [9, 0, 1, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 1, 2, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 2, 3, " + std::to_string(usage.usedHeapSize / 3) + ", 0, 0]," +
+        "\"edges\": [1, 1, 2, 1, 2, 3]," +
+        "\"strings\": [\"FirstV8\", \"JSEngine\", \"V8Context\"]" +
         "}";
 
         // Escape the JSON for embedding in the notification
         std::string escapedSnapshot = snapshotData;
         // Replace quotes with escaped quotes
         size_t pos = 0;
-        while ((pos = escapedSnapshot.find("\"", pos)) != std::string::npos) {
+        while ((pos = escapedSnapshot.find("\"", pos)) != std::string::npos)
+        {
             escapedSnapshot.replace(pos, 1, "\\\"");
             pos += 2;
         }
@@ -1921,6 +1919,6 @@ void V8Subsystem::SendMemoryHeapSnapshot()
         m_devToolsServer->SendToDevTools(chunkNotification);
     }
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, 
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
                StringFormat("Sent memory heap snapshot: {} bytes used", usage.usedHeapSize));
 }

@@ -284,12 +284,18 @@ T InputScriptInterface::ExtractArg(const std::any& arg, const std::string& expec
 {
     try
     {
+        // Try direct cast first
+        if (arg.type() == typeid(T))
+        {
+            return std::any_cast<T>(arg);
+        }
+        // Try fallback cast
         return std::any_cast<T>(arg);
     }
     catch (const std::bad_any_cast& e)
     {
         std::string typeInfo = expectedType.empty() ? typeid(T).name() : expectedType;
-        throw std::invalid_argument("參數類型錯誤，期望: " + typeInfo);
+        throw std::invalid_argument("參數類型錯誤，期望: " + typeInfo + ", 實際: " + arg.type().name() + ", 錯誤: " + e.what());
     }
 }
 
@@ -298,25 +304,50 @@ int InputScriptInterface::ExtractInt(const std::any& arg) const
 {
     try
     {
-        return std::any_cast<int>(arg);
-    }
-    catch (const std::bad_any_cast&)
-    {
-        try
+        // V8 always sends JavaScript numbers as double, so check double first
+        if (arg.type() == typeid(double))
+        {
+            return static_cast<int>(std::any_cast<double>(arg));
+        }
+        else if (arg.type() == typeid(int))
+        {
+            return std::any_cast<int>(arg);
+        }
+        else if (arg.type() == typeid(float))
         {
             return static_cast<int>(std::any_cast<float>(arg));
         }
-        catch (const std::bad_any_cast&)
+        else if (arg.type() == typeid(long))
         {
+            return static_cast<int>(std::any_cast<long>(arg));
+        }
+        else if (arg.type() == typeid(unsigned int))
+        {
+            return static_cast<int>(std::any_cast<unsigned int>(arg));
+        }
+        else
+        {
+            // Try direct cast as last resort
             try
             {
-                return static_cast<int>(std::any_cast<double>(arg));
+                return std::any_cast<int>(arg);
             }
             catch (const std::bad_any_cast&)
             {
-                throw std::invalid_argument("無法轉換為 int 類型");
+                try
+                {
+                    return static_cast<int>(std::any_cast<double>(arg));
+                }
+                catch (const std::bad_any_cast&)
+                {
+                    throw std::invalid_argument("無法轉換為 int 類型，類型: " + std::string(arg.type().name()));
+                }
             }
         }
+    }
+    catch (const std::bad_any_cast& e)
+    {
+        throw std::invalid_argument("ExtractInt: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
     }
 }
 
@@ -325,19 +356,48 @@ std::string InputScriptInterface::ExtractString(const std::any& arg) const
 {
     try
     {
-        return std::any_cast<std::string>(arg);
-    }
-    catch (const std::bad_any_cast&)
-    {
-        try
+        // V8 sends JavaScript strings as std::string (using String typedef)
+        if (arg.type() == typeid(std::string))
+        {
+            return std::any_cast<std::string>(arg);
+        }
+        else if (arg.type() == typeid(String))  // Engine's String typedef
+        {
+            return std::any_cast<String>(arg);
+        }
+        else if (arg.type() == typeid(const char*))
         {
             const char* cstr = std::any_cast<const char*>(arg);
             return std::string(cstr);
         }
-        catch (const std::bad_any_cast&)
+        else if (arg.type() == typeid(char*))
         {
-            throw std::invalid_argument("無法轉換為 string 類型");
+            char* cstr = std::any_cast<char*>(arg);
+            return std::string(cstr);
         }
+        else
+        {
+            // Try direct cast as last resort
+            try
+            {
+                return std::any_cast<std::string>(arg);
+            }
+            catch (const std::bad_any_cast&)
+            {
+                try
+                {
+                    return std::any_cast<String>(arg);
+                }
+                catch (const std::bad_any_cast&)
+                {
+                    throw std::invalid_argument("無法轉換為 string 類型，類型: " + std::string(arg.type().name()));
+                }
+            }
+        }
+    }
+    catch (const std::bad_any_cast& e)
+    {
+        throw std::invalid_argument("ExtractString: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
     }
 }
 
@@ -346,19 +406,44 @@ bool InputScriptInterface::ExtractBool(const std::any& arg) const
 {
     try
     {
-        return std::any_cast<bool>(arg);
-    }
-    catch (const std::bad_any_cast&)
-    {
-        try
+        // V8 sends JavaScript booleans as bool type
+        if (arg.type() == typeid(bool))
         {
+            return std::any_cast<bool>(arg);
+        }
+        else if (arg.type() == typeid(int))
+        {
+            // Convert numeric values to boolean (0 = false, non-zero = true)
             int val = std::any_cast<int>(arg);
             return val != 0;
         }
-        catch (const std::bad_any_cast&)
+        else if (arg.type() == typeid(double))
         {
-            throw std::invalid_argument("無法轉換為 bool 類型");
+            // Convert V8 numbers to boolean (0.0 = false, non-zero = true)
+            double val = std::any_cast<double>(arg);
+            return val != 0.0;
         }
+        else if (arg.type() == typeid(float))
+        {
+            float val = std::any_cast<float>(arg);
+            return val != 0.0f;
+        }
+        else
+        {
+            // Try direct cast as last resort
+            try
+            {
+                return std::any_cast<bool>(arg);
+            }
+            catch (const std::bad_any_cast&)
+            {
+                throw std::invalid_argument("無法轉換為 bool 類型，類型: " + std::string(arg.type().name()));
+            }
+        }
+    }
+    catch (const std::bad_any_cast& e)
+    {
+        throw std::invalid_argument("ExtractBool: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
     }
 }
 
