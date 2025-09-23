@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioSystem.hpp"
+
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -72,10 +73,11 @@ void AudioSystem::EndFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-SoundID AudioSystem::CreateOrGetSound(String const&              soundFilePath,
+SoundID AudioSystem::CreateOrGetSound(String const&                    soundFilePath,
                                       eAudioSystemSoundDimension const dimension)
 {
-    std::map<std::string, SoundID>::iterator found = m_registeredSoundIDs.find(soundFilePath);
+    std::map<std::string, SoundID>::iterator const found = m_registeredSoundIDs.find(soundFilePath);
+
     if (found != m_registeredSoundIDs.end())
     {
         return found->second;

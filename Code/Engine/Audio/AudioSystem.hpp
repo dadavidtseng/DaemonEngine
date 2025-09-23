@@ -16,6 +16,7 @@
 ///
 /// @remark Used as a handle to reference loaded sound files. Obtained from CreateOrGetSound().
 /// @see MISSING_SOUND_ID for invalid sound identification
+//----------------------------------------------------------------------------------------------------
 typedef size_t SoundID;
 
 //----------------------------------------------------------------------------------------------------
@@ -24,6 +25,7 @@ typedef size_t SoundID;
 /// @remark Tracks individual playing sound instances. Multiple playbacks can use the same SoundID.
 /// @remark Obtained from StartSound() or StartSoundAt() calls for playback control.
 /// @see MISSING_SOUND_ID for invalid playback identification
+//----------------------------------------------------------------------------------------------------
 typedef size_t SoundPlaybackID;
 
 //----------------------------------------------------------------------------------------------------
@@ -31,6 +33,7 @@ typedef size_t SoundPlaybackID;
 ///
 /// @remark Used for error checking and initialization of sound ID variables.
 /// @remark Equivalent to SIZE_MAX for maximum size_t value as invalid marker.
+//----------------------------------------------------------------------------------------------------
 size_t constexpr MISSING_SOUND_ID = static_cast<size_t>(-1);
 
 //-Forward-Declaration--------------------------------------------------------------------------------
@@ -40,6 +43,7 @@ struct Vec3;
 /// @brief Audio system dimensionality specification for sound processing
 ///
 /// @remark Determines how FMOD processes spatial audio calculations and performance optimizations.
+//----------------------------------------------------------------------------------------------------
 enum class eAudioSystemSoundDimension : int8_t
 {
     /// @brief 2D audio playback without spatial positioning (stereo/mono)
@@ -58,11 +62,12 @@ enum class eAudioSystemSoundDimension : int8_t
 /// @remark Will contain settings like: max channels, sample rate, buffer sizes, device selection.
 ///
 /// @warning Structure reserved for future expansion. Pass default-constructed instance for now.
+//----------------------------------------------------------------------------------------------------
 struct sAudioSystemConfig
 {
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------
 /// @brief High-level audio management system providing FMOD-based sound loading and playback
 ///
 /// @remark Manages sound resource lifecycle, 3D spatial audio, and real-time playback control.
@@ -74,7 +79,7 @@ struct sAudioSystemConfig
 class AudioSystem
 {
 public:
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Construct AudioSystem with specified configuration parameters
     ///
     /// @param config Configuration structure containing audio system initialization settings
@@ -85,16 +90,17 @@ public:
     /// @warning Constructor does not validate FMOD availability. Startup() may fail if FMOD unavailable.
     explicit AudioSystem(sAudioSystemConfig const& config);
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Virtual destructor ensuring proper cleanup of derived audio system classes
     ///
     /// @remark Automatically calls Shutdown() if not explicitly called before destruction.
     /// @remark Virtual to support inheritance and proper polymorphic destruction.
     ///
     /// @warning Ensure Shutdown() called before destruction to avoid FMOD resource leaks.
+    //------------------------------------------------------------------------------------------------
     virtual ~AudioSystem() = default;
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Initialize FMOD audio system and prepare for sound loading/playback
     ///
     /// @remark Initializes FMOD::System, sets up default audio channels, and prepares sound management.
@@ -103,6 +109,7 @@ public:
     /// @warning Failure to call before audio operations will result in undefined behavior.
     /// @warning Multiple Startup() calls without Shutdown() may cause resource leaks.
     /// @see https://fmod.com/docs/2.02/api/core-api-system.html#system_init
+    //----------------------------------------------------------------------------------------------------
     void Startup();
 
     //----------------------------------------------------------------------------------------------------
@@ -305,7 +312,7 @@ public:
     /// @see StartSoundAt() for initial 3D sound positioning, UpdateListener() for listener positioning
     virtual void SetSoundPosition(SoundPlaybackID soundPlaybackID, const Vec3& soundPosition);
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Check if specified sound playback instance is currently active and playing
     ///
     /// @param soundPlaybackID Playback handle to query for active status
@@ -317,9 +324,10 @@ public:
     ///
     /// @warning Invalid soundPlaybackID always returns false - cannot distinguish from stopped sounds.
     /// @see StartSound(), StartSoundAt() for playback initiation, StopSound() for playback termination
+    //------------------------------------------------------------------------------------------------
     bool IsPlaying(SoundPlaybackID soundPlaybackID);
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Convert engine Vec3 to FMOD_VECTOR format for FMOD API compatibility
     ///
     /// @param vectorToCast Engine Vec3 vector to convert to FMOD coordinate system
@@ -331,9 +339,10 @@ public:
     ///
     /// @warning Ensure coordinate system consistency between all Vec3 inputs for proper spatial audio.
     /// @see UpdateListener(), SetSoundPosition() for usage in 3D audio positioning
+    //------------------------------------------------------------------------------------------------
     FMOD_VECTOR CastVec3ToFmodVec(Vec3 const& vectorToCast) const;
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Create zero-initialized FMOD_VECTOR for initialization and default values
     ///
     /// @return FMOD_VECTOR Zero vector {0.0f, 0.0f, 0.0f} in FMOD format
@@ -342,10 +351,11 @@ public:
     /// @remark Const method as it creates new vector without modifying class state.
     ///
     /// @see CastVec3ToFmodVec() for Vec3-to-FMOD conversion, FMOD documentation for vector usage
+    //------------------------------------------------------------------------------------------------
     FMOD_VECTOR CreateZeroVector() const;
 
 protected:
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief FMOD system instance for low-level audio operations and resource management
     ///
     /// @remark Core FMOD interface for sound creation, playback control, and system configuration.
@@ -353,9 +363,10 @@ protected:
     ///
     /// @warning Direct manipulation requires careful FMOD API knowledge - prefer high-level AudioSystem methods.
     /// @see https://fmod.com/docs/2.02/api/core-api-system.html
+    //------------------------------------------------------------------------------------------------
     FMOD::System* m_fmodSystem;
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Cached mapping of sound file paths to loaded SoundID handles for resource management
     ///
     /// @remark Prevents duplicate loading of same sound files - maps file paths to existing SoundIDs.
@@ -364,9 +375,10 @@ protected:
     ///
     /// @warning Manual modification may cause resource leaks or invalid sound references.
     /// @see CreateOrGetSound() for automatic cache management and sound loading
+    //------------------------------------------------------------------------------------------------
     std::map<String, SoundID> m_registeredSoundIDs;
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Sequential storage of loaded FMOD::Sound resources indexed by SoundID
     ///
     /// @remark Vector index corresponds to SoundID value for O(1) sound resource lookup.
@@ -376,10 +388,11 @@ protected:
     /// @warning Direct pointer access requires FMOD API knowledge - invalid operations may crash.
     /// @warning SoundID values must be valid vector indices - bounds checking required for safety.
     /// @see CreateOrGetSound() for sound loading and ID assignment
+    //------------------------------------------------------------------------------------------------
     std::vector<FMOD::Sound*> m_registeredSounds;
 
 private:
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Stored configuration parameters for audio system initialization and behavior
     ///
     /// @remark Contains settings passed to constructor, used during Startup() for FMOD initialization.
@@ -387,5 +400,6 @@ private:
     ///
     /// @warning Currently unused but reserved for future audio system configuration expansion.
     /// @see AudioSystem constructor for configuration parameter passing
+    //------------------------------------------------------------------------------------------------
     sAudioSystemConfig m_audioConfig;
 };
