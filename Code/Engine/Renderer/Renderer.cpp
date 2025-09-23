@@ -33,9 +33,9 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 // Define ENGINE_DEBUG_RENDERER if this is a Debug configuration and link debug libraries if it is.
-#if defined(_DEBUG)
-#define ENGINE_DEBUG_RENDER
-#endif
+// #if defined(_DEBUG)
+// #define ENGINE_DEBUG_RENDER
+// #endif
 
 #if defined(ENGINE_DEBUG_RENDER)
 #include <dxgidebug.h>

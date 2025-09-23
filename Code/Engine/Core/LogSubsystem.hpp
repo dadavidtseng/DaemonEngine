@@ -25,7 +25,7 @@
 //----------------------------------------------------------------------------------------------------
 struct sRotationStats
 {
-    size_t      totalRotations   = 0;
+    size_t      totalRotations    = 0;
     size_t      totalFilesDeleted = 0;
     std::string lastError;
 };
@@ -40,9 +40,9 @@ struct sSmartRotationConfig
     std::chrono::hours maxTimeInterval{2};              // 2 hours default
 
     // File management
-    String logDirectory   = "Logs";                       // Log directory path
-    String currentLogName = "latest.log";               // Current session log name
-    String sessionPrefix  = "session";                   // Archive prefix
+    String logDirectory        = "Logs";                       // Log directory path
+    String currentLogName      = "latest.log";               // Current session log name
+    String sessionPrefix       = "session";                   // Archive prefix
     bool   organizeDateFolders = true;                   // Organize logs in date-based folders
 
     // Cleanup and retention
@@ -61,14 +61,14 @@ struct sSmartRotationConfig
 //----------------------------------------------------------------------------------------------------
 enum class eLogVerbosity : int8_t
 {
-    NoLogging = 0,    // 不記錄任何日誌
-    Fatal,            // 致命錯誤，會導致程式崩潰
-    Error,            // 錯誤但程式可以繼續執行
-    Warning,          // 警告
-    Display,          // 顯示給使用者的重要訊息
-    Log,              // 一般日誌訊息
-    Verbose,          // 詳細資訊
-    VeryVerbose,      // 非常詳細的資訊
+    NoLogging = 0,        // 不記錄任何日誌
+    Fatal = 1,            // 致命錯誤，會導致程式崩潰
+    Error = 2,            // 錯誤但程式可以繼續執行
+    Warning = 3,          // 警告
+    Display = 4,          // 顯示給使用者的重要訊息
+    Log = 5,              // 一般日誌訊息
+    Verbose = 6,          // 詳細資訊
+    VeryVerbose = 7,      // 非常詳細的資訊
 
     All = VeryVerbose // 所有層級
 };
@@ -111,14 +111,14 @@ struct LogCategory
 
     LogCategory() = default;
 
-    LogCategory(const String& categoryName,
-                eLogVerbosity defaultVerb = eLogVerbosity::Log,
-                eLogVerbosity compileVerb = eLogVerbosity::All,
-                eLogOutput    outputs     = eLogOutput::All)
-        : name(categoryName)
-          , defaultVerbosity(defaultVerb)
-          , compileTimeVerbosity(compileVerb)
-          , outputTargets(outputs)
+    explicit LogCategory(String              categoryName,
+                         eLogVerbosity const defaultVerb = eLogVerbosity::Log,
+                         eLogVerbosity const compileVerb = eLogVerbosity::All,
+                         eLogOutput const    outputs     = eLogOutput::All)
+        : name(std::move(categoryName)),
+          defaultVerbosity(defaultVerb),
+          compileTimeVerbosity(compileVerb),
+          outputTargets(outputs)
     {
     }
 };
@@ -249,7 +249,7 @@ private:
     std::filesystem::path GenerateNewLogFilePath();
     String                GenerateSessionId();
     void                  ArchiveCurrentFile();
-    
+
     // Date-based folder organization helpers
     std::filesystem::path GetDateBasedFolderPath() const;
     String                GetTimeOnlySessionId() const;
