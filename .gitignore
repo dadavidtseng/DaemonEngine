@@ -1,4 +1,5 @@
 .spec-workflow/
+.playwright-mcp/
 
 # Sphinx documentation build output
 Docs/build/
