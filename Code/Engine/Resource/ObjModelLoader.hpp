@@ -1,23 +1,22 @@
-// ============================================
-// 更新後的 ObjModelLoader.hpp
-// ============================================
+//----------------------------------------------------------------------------------------------------
+// ObjModelLoader.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Resource/IResourceLoader.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
-#include "Engine/Math/Mat44.hpp"
 #include <unordered_map>
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Math/Mat44.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Resource/IResourceLoader.hpp"
 
-struct Rgba8;
-struct Vertex_PCUTBN;
-
+//----------------------------------------------------------------------------------------------------
 class ObjModelLoader : public IResourceLoader
 {
 public:
-    // IResourceLoader 介面實作
     bool                       CanLoad(String const& extension) const override;
     std::shared_ptr<IResource> Load(String const& path) override;
-    std::vector<std::string>   GetSupportedExtensions() const override;
+    std::vector<String>        GetSupportedExtensions() const override;
 
     // 保留原有的靜態方法供直接使用或內部使用
     static bool Load(const String&      fileName,
