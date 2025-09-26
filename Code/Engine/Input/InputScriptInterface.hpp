@@ -31,25 +31,6 @@ public:
 private:
     InputSystem* m_inputSystem; // 不擁有，只是參考
 
-    // 輔助方法來處理類型轉換和錯誤檢查
-    template <typename T>
-    T ExtractArg(std::any const& arg, String const& expectedType = "") const;
-
-    // 專門的類型提取方法
-    int    ExtractInt(const std::any& arg) const;
-    String ExtractString(const std::any& arg) const;
-    bool   ExtractBool(const std::any& arg) const;
-
-    // 參數驗證輔助方法
-    ScriptMethodResult ValidateArgCount(const std::vector<std::any>& args,
-                                        size_t                       expectedCount,
-                                        const String&                methodName) const;
-
-    ScriptMethodResult ValidateArgCountRange(const std::vector<std::any>& args,
-                                             size_t                       minCount,
-                                             size_t                       maxCount,
-                                             const String&                methodName) const;
-
     // 方法實作
     ScriptMethodResult ExecuteIsKeyDown(const std::vector<std::any>& args);
     ScriptMethodResult ExecuteWasKeyJustPressed(const std::vector<std::any>& args);

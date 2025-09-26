@@ -1,59 +1,15 @@
 //----------------------------------------------------------------------------------------------------
 // IScriptableObject.hpp
-// 通用的腳本化物件介面 - 讓 V8Subsystem 可以與任何物件互動而不需要知道具體類型
-//----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #pragma once
 #include <any>
 #include <string>
 #include <vector>
 
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Scripting/ScriptCommon.hpp"
 
-//----------------------------------------------------------------------------------------------------
-// 腳本方法呼叫的結果類型
-//----------------------------------------------------------------------------------------------------
-struct ScriptMethodResult
-{
-    bool     success = false;
-    std::any result;
-    String   errorMessage;
-
-    static ScriptMethodResult Success(std::any const& value = std::any{})
-    {
-        ScriptMethodResult result;
-        result.success = true;
-        result.result  = value;
-        return result;
-    }
-
-    static ScriptMethodResult Error(String const& message)
-    {
-        ScriptMethodResult result;
-        result.success      = false;
-        result.errorMessage = message;
-        return result;
-    }
-};
-
-//----------------------------------------------------------------------------------------------------
-// 腳本方法的元資料
-//----------------------------------------------------------------------------------------------------
-struct ScriptMethodInfo
-{
-    String              name;
-    String              description;
-    std::vector<String> parameterTypes;
-    String              returnType;
-
-    explicit ScriptMethodInfo(String                     methodName,
-                              String                     desc       = "",
-                              std::vector<String> const& params     = {},
-                              String                     returnType = "void")
-        : name(std::move(methodName)), description(std::move(desc)), parameterTypes(params), returnType(std::move(returnType))
-    {
-    }
-};
 
 //----------------------------------------------------------------------------------------------------
 // 可腳本化物件的抽象介面

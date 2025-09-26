@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include <cstdint>
+#include <thread>
 
 //----------------------------------------------------------------------------------------------------
 // TODO: add more window types, such as WINDOWED_FIXED and WINDOWED_EXPANDABLE, etc...

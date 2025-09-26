@@ -9,6 +9,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Scripting/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
 InputScriptInterface::InputScriptInterface(InputSystem* inputSystem)
@@ -140,20 +141,20 @@ std::any InputScriptInterface::GetProperty(const std::string& propertyName) cons
 bool InputScriptInterface::SetProperty(const std::string& propertyName, const std::any& value)
 {
     // InputSystem 目前沒有可設定的屬性
-    UNUSED(propertyName);
-    UNUSED(value);
+    UNUSED(propertyName)
+    UNUSED(value)
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteIsKeyDown(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 1, "isKeyDown");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "isKeyDown");
     if (!result.success) return result;
 
     try
     {
-        int keyCode = ExtractInt(args[0]);
+        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
         bool isDown = m_inputSystem->IsKeyDown((char)keyCode);
         return ScriptMethodResult::Success(isDown);
     }
@@ -166,12 +167,12 @@ ScriptMethodResult InputScriptInterface::ExecuteIsKeyDown(const std::vector<std:
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustPressed(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 1, "wasKeyJustPressed");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "wasKeyJustPressed");
     if (!result.success) return result;
 
     try
     {
-        int keyCode = ExtractInt(args[0]);
+        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
         bool wasPressed = m_inputSystem->WasKeyJustPressed((char)keyCode);
         return ScriptMethodResult::Success(wasPressed);
     }
@@ -184,12 +185,12 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustPressed(const std::vec
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustReleased(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 1, "wasKeyJustReleased");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "wasKeyJustReleased");
     if (!result.success) return result;
 
     try
     {
-        int keyCode = ExtractInt(args[0]);
+        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
         bool wasReleased = m_inputSystem->WasKeyJustReleased((char)keyCode);
         return ScriptMethodResult::Success(wasReleased);
     }
@@ -202,7 +203,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustReleased(const std::ve
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientDelta(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 0, "getCursorDelta");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getCursorDelta");
     if (!result.success) return result;
 
     try
@@ -220,7 +221,7 @@ ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientDelta(const std::
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientPosition(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 0, "getCursorPosition");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getCursorPosition");
     if (!result.success) return result;
 
     try
@@ -238,12 +239,12 @@ ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientPosition(const st
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteGetController(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 1, "getController");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getController");
     if (!result.success) return result;
 
     try
     {
-        int controllerIndex = ExtractInt(args[0]);
+        int controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
         XboxController const& controller = m_inputSystem->GetController(controllerIndex);
         UNUSED(controller)
         // 簡化的控制器狀態回傳
@@ -259,12 +260,12 @@ ScriptMethodResult InputScriptInterface::ExecuteGetController(const std::vector<
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteSetCursorMode(const std::vector<std::any>& args)
 {
-    auto result = ValidateArgCount(args, 1, "setCursorMode");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "setCursorMode");
     if (!result.success) return result;
 
     try
     {
-        int mode = ExtractInt(args[0]);
+        int mode = ScriptTypeExtractor::ExtractInt(args[0]);
         eCursorMode cursorMode = static_cast<eCursorMode>(mode);
         m_inputSystem->SetCursorMode(cursorMode);
         return ScriptMethodResult::Success(std::string("游標模式已設定為: " + std::to_string(mode)));
@@ -273,205 +274,4 @@ ScriptMethodResult InputScriptInterface::ExecuteSetCursorMode(const std::vector<
     {
         return ScriptMethodResult::Error("設定游標模式失敗: " + std::string(e.what()));
     }
-}
-
-//----------------------------------------------------------------------------------------------------
-// 輔助方法實作
-//----------------------------------------------------------------------------------------------------
-
-template <typename T>
-T InputScriptInterface::ExtractArg(const std::any& arg, const std::string& expectedType) const
-{
-    try
-    {
-        // Try direct cast first
-        if (arg.type() == typeid(T))
-        {
-            return std::any_cast<T>(arg);
-        }
-        // Try fallback cast
-        return std::any_cast<T>(arg);
-    }
-    catch (const std::bad_any_cast& e)
-    {
-        std::string typeInfo = expectedType.empty() ? typeid(T).name() : expectedType;
-        throw std::invalid_argument("參數類型錯誤，期望: " + typeInfo + ", 實際: " + arg.type().name() + ", 錯誤: " + e.what());
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-int InputScriptInterface::ExtractInt(const std::any& arg) const
-{
-    try
-    {
-        // V8 always sends JavaScript numbers as double, so check double first
-        if (arg.type() == typeid(double))
-        {
-            return static_cast<int>(std::any_cast<double>(arg));
-        }
-        else if (arg.type() == typeid(int))
-        {
-            return std::any_cast<int>(arg);
-        }
-        else if (arg.type() == typeid(float))
-        {
-            return static_cast<int>(std::any_cast<float>(arg));
-        }
-        else if (arg.type() == typeid(long))
-        {
-            return static_cast<int>(std::any_cast<long>(arg));
-        }
-        else if (arg.type() == typeid(unsigned int))
-        {
-            return static_cast<int>(std::any_cast<unsigned int>(arg));
-        }
-        else
-        {
-            // Try direct cast as last resort
-            try
-            {
-                return std::any_cast<int>(arg);
-            }
-            catch (const std::bad_any_cast&)
-            {
-                try
-                {
-                    return static_cast<int>(std::any_cast<double>(arg));
-                }
-                catch (const std::bad_any_cast&)
-                {
-                    throw std::invalid_argument("無法轉換為 int 類型，類型: " + std::string(arg.type().name()));
-                }
-            }
-        }
-    }
-    catch (const std::bad_any_cast& e)
-    {
-        throw std::invalid_argument("ExtractInt: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-std::string InputScriptInterface::ExtractString(const std::any& arg) const
-{
-    try
-    {
-        // V8 sends JavaScript strings as std::string (using String typedef)
-        if (arg.type() == typeid(std::string))
-        {
-            return std::any_cast<std::string>(arg);
-        }
-        else if (arg.type() == typeid(String))  // Engine's String typedef
-        {
-            return std::any_cast<String>(arg);
-        }
-        else if (arg.type() == typeid(const char*))
-        {
-            const char* cstr = std::any_cast<const char*>(arg);
-            return std::string(cstr);
-        }
-        else if (arg.type() == typeid(char*))
-        {
-            char* cstr = std::any_cast<char*>(arg);
-            return std::string(cstr);
-        }
-        else
-        {
-            // Try direct cast as last resort
-            try
-            {
-                return std::any_cast<std::string>(arg);
-            }
-            catch (const std::bad_any_cast&)
-            {
-                try
-                {
-                    return std::any_cast<String>(arg);
-                }
-                catch (const std::bad_any_cast&)
-                {
-                    throw std::invalid_argument("無法轉換為 string 類型，類型: " + std::string(arg.type().name()));
-                }
-            }
-        }
-    }
-    catch (const std::bad_any_cast& e)
-    {
-        throw std::invalid_argument("ExtractString: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-bool InputScriptInterface::ExtractBool(const std::any& arg) const
-{
-    try
-    {
-        // V8 sends JavaScript booleans as bool type
-        if (arg.type() == typeid(bool))
-        {
-            return std::any_cast<bool>(arg);
-        }
-        else if (arg.type() == typeid(int))
-        {
-            // Convert numeric values to boolean (0 = false, non-zero = true)
-            int val = std::any_cast<int>(arg);
-            return val != 0;
-        }
-        else if (arg.type() == typeid(double))
-        {
-            // Convert V8 numbers to boolean (0.0 = false, non-zero = true)
-            double val = std::any_cast<double>(arg);
-            return val != 0.0;
-        }
-        else if (arg.type() == typeid(float))
-        {
-            float val = std::any_cast<float>(arg);
-            return val != 0.0f;
-        }
-        else
-        {
-            // Try direct cast as last resort
-            try
-            {
-                return std::any_cast<bool>(arg);
-            }
-            catch (const std::bad_any_cast&)
-            {
-                throw std::invalid_argument("無法轉換為 bool 類型，類型: " + std::string(arg.type().name()));
-            }
-        }
-    }
-    catch (const std::bad_any_cast& e)
-    {
-        throw std::invalid_argument("ExtractBool: bad_any_cast - 類型: " + std::string(arg.type().name()) + ", 錯誤: " + e.what());
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-ScriptMethodResult InputScriptInterface::ValidateArgCount(const std::vector<std::any>& args,
-                                                           size_t                       expectedCount,
-                                                           const std::string&           methodName) const
-{
-    if (args.size() != expectedCount)
-    {
-        std::ostringstream oss;
-        oss << methodName << " needs " << expectedCount << " variables, but receives " << args.size();
-        return ScriptMethodResult::Error(oss.str());
-    }
-    return ScriptMethodResult::Success();
-}
-
-//----------------------------------------------------------------------------------------------------
-ScriptMethodResult InputScriptInterface::ValidateArgCountRange(const std::vector<std::any>& args,
-                                                                size_t                       minCount,
-                                                                size_t                       maxCount,
-                                                                const std::string&           methodName) const
-{
-    if (args.size() < minCount || args.size() > maxCount)
-    {
-        std::ostringstream oss;
-        oss << methodName << " needs " << minCount << "-" << maxCount << " variables, but receives " << args.size();
-        return ScriptMethodResult::Error(oss.str());
-    }
-    return ScriptMethodResult::Success();
 }

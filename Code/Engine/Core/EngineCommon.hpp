@@ -10,16 +10,18 @@
 //-Forward-Declaration--------------------------------------------------------------------------------
 class DevConsole;
 class EventSystem;
+class HotReloadSubsystem;
 class InputSystem;
 class LogSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
-extern NamedStrings  g_gameConfigBlackboard;
-extern EventSystem*  g_eventSystem;
-extern DevConsole*   g_devConsole;
-extern InputSystem*  g_input;
-extern LogSubsystem* g_logSubsystem;
+extern NamedStrings         g_gameConfigBlackboard;
+extern EventSystem*         g_eventSystem;
+extern DevConsole*          g_devConsole;
+extern HotReloadSubsystem*  g_hotReloadSubsystem;
+extern InputSystem*         g_input;
+extern LogSubsystem*        g_logSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief
