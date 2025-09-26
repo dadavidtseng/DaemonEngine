@@ -319,24 +319,24 @@
         <ClCompile Include="Resource/ResourceHandle.cpp"/>
         <ClCompile Include="Resource/ResourceSubsystem.cpp"/>
         <!-- Resource Loaders -->
-        <ClCompile Include="Resource/ResourceLoader/AnimationLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/AudioLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/FontLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/IResourceLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/MaterialLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/ModelLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/ObjModelLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/ShaderLoader.cpp"/>
-        <ClCompile Include="Resource/ResourceLoader/TextureLoader.cpp"/>
+        <ClCompile Include="Resource/AnimationLoader.cpp"/>
+        <ClCompile Include="Resource/AudioLoader.cpp"/>
+        <ClCompile Include="Resource/FontLoader.cpp"/>
+        <ClCompile Include="Resource/IResourceLoader.cpp"/>
+        <ClCompile Include="Resource/MaterialLoader.cpp"/>
+        <ClCompile Include="Resource/ModelLoader.cpp"/>
+        <ClCompile Include="Resource/ObjModelLoader.cpp"/>
+        <ClCompile Include="Resource/ShaderLoader.cpp"/>
+        <ClCompile Include="Resource/TextureLoader.cpp"/>
         <!-- Resource Types -->
-        <ClCompile Include="Resource/Resource/AnimationResource.cpp"/>
-        <ClCompile Include="Resource/Resource/AudioSource.cpp"/>
-        <ClCompile Include="Resource/Resource/FontResource.cpp"/>
-        <ClCompile Include="Resource/Resource/IResource.cpp"/>
-        <ClCompile Include="Resource/Resource/MaterialResource.cpp"/>
-        <ClCompile Include="Resource/Resource/ModelResource.cpp"/>
-        <ClCompile Include="Resource/Resource/ShaderResource.cpp"/>
-        <ClCompile Include="Resource/Resource/TextureResource.cpp"/>
+        <ClCompile Include="Resource/AnimationResource.cpp"/>
+        <ClCompile Include="Resource/AudioSource.cpp"/>
+        <ClCompile Include="Resource/FontResource.cpp"/>
+        <ClCompile Include="Resource/IResource.cpp"/>
+        <ClCompile Include="Resource/MaterialResource.cpp"/>
+        <ClCompile Include="Resource/ModelResource.cpp"/>
+        <ClCompile Include="Resource/ShaderResource.cpp"/>
+        <ClCompile Include="Resource/TextureResource.cpp"/>
     </ItemGroup>
 
     <ItemGroup Label="PlatformSubsystemSources">
@@ -355,6 +355,11 @@
         <!-- V8 JavaScript Scripting System - Enterprise integration -->
         <ClCompile Include="Scripting/ChromeDevToolsServer.cpp"/>
         <ClCompile Include="Scripting/IScriptableObject.cpp"/>
+        <ClCompile Include="Scripting/ScriptTypeExtractor.cpp"/>
+        <ClCompile Include="Scripting/ScriptCommon.cpp"/>
+        <ClCompile Include="Scripting/ScriptReloader.cpp"/>
+        <ClCompile Include="Scripting/FileWatcher.cpp"/>
+        <ClCompile Include="Scripting/HotReloadSubsystem.cpp"/>
         <ClCompile Include="Scripting/V8Subsystem.cpp"/>
     </ItemGroup>
 
@@ -473,24 +478,24 @@
         <ClInclude Include="Resource/ResourceHandle.hpp"/>
         <ClInclude Include="Resource/ResourceSubsystem.hpp"/>
         <!-- Resource Loader Headers -->
-        <ClInclude Include="Resource/ResourceLoader/AnimationLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/AudioLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/FontLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/IResourceLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/MaterialLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/ModelLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/ObjModelLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/ShaderLoader.hpp"/>
-        <ClInclude Include="Resource/ResourceLoader/TextureLoader.hpp"/>
+        <ClInclude Include="Resource/AnimationLoader.hpp"/>
+        <ClInclude Include="Resource/AudioLoader.hpp"/>
+        <ClInclude Include="Resource/FontLoader.hpp"/>
+        <ClInclude Include="Resource/IResourceLoader.hpp"/>
+        <ClInclude Include="Resource/MaterialLoader.hpp"/>
+        <ClInclude Include="Resource/ModelLoader.hpp"/>
+        <ClInclude Include="Resource/ObjModelLoader.hpp"/>
+        <ClInclude Include="Resource/ShaderLoader.hpp"/>
+        <ClInclude Include="Resource/TextureLoader.hpp"/>
         <!-- Resource Type Headers -->
-        <ClInclude Include="Resource/Resource/AnimationResource.hpp"/>
-        <ClInclude Include="Resource/Resource/AudioSource.hpp"/>
-        <ClInclude Include="Resource/Resource/FontResource.hpp"/>
-        <ClInclude Include="Resource/Resource/IResource.hpp"/>
-        <ClInclude Include="Resource/Resource/MaterialResource.hpp"/>
-        <ClInclude Include="Resource/Resource/ModelResource.hpp"/>
-        <ClInclude Include="Resource/Resource/ShaderResource.hpp"/>
-        <ClInclude Include="Resource/Resource/TextureResource.hpp"/>
+        <ClInclude Include="Resource/AnimationResource.hpp"/>
+        <ClInclude Include="Resource/AudioSource.hpp"/>
+        <ClInclude Include="Resource/FontResource.hpp"/>
+        <ClInclude Include="Resource/IResource.hpp"/>
+        <ClInclude Include="Resource/MaterialResource.hpp"/>
+        <ClInclude Include="Resource/ModelResource.hpp"/>
+        <ClInclude Include="Resource/ShaderResource.hpp"/>
+        <ClInclude Include="Resource/TextureResource.hpp"/>
     </ItemGroup>
 
     <ItemGroup Label="PlatformSubsystemHeaders">
@@ -509,7 +514,12 @@
         <!-- V8 JavaScript Scripting System Headers -->
         <ClInclude Include="Scripting/ChromeDevToolsServer.hpp"/>
         <ClInclude Include="Scripting/IScriptableObject.hpp"/>
+        <ClInclude Include="Scripting/ScriptTypeExtractor.hpp"/>
+        <ClInclude Include="Scripting/ScriptCommon.hpp"/>
         <ClInclude Include="Scripting/V8Subsystem.hpp"/>
+        <ClInclude Include="Scripting/FileWatcher.hpp"/>
+        <ClInclude Include="Scripting/ScriptReloader.hpp"/>
+        <ClInclude Include="Scripting/HotReloadSubsystem.hpp"/>
     </ItemGroup>
 
     <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->

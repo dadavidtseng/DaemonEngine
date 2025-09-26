@@ -174,6 +174,9 @@
         <ClCompile Include="Core/EngineCommon.cpp">
             <Filter>Engine\Core</Filter>
         </ClCompile>
+        <ClCompile Include="Core/HotReloadSubsystem.cpp">
+            <Filter>Engine\Core</Filter>
+        </ClCompile>
         <ClCompile Include="Core/StringUtils.cpp">
             <Filter>Engine\Core\Utilities</Filter>
         </ClCompile>
@@ -420,56 +423,56 @@
             <Filter>Engine\Resource</Filter>
         </ClCompile>
         <!-- Loaders -->
-        <ClCompile Include="Resource/ResourceLoader/IResourceLoader.cpp">
+        <ClCompile Include="Resource/IResourceLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/AnimationLoader.cpp">
+        <ClCompile Include="Resource/AnimationLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/AudioLoader.cpp">
+        <ClCompile Include="Resource/AudioLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/FontLoader.cpp">
+        <ClCompile Include="Resource/FontLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/MaterialLoader.cpp">
+        <ClCompile Include="Resource/MaterialLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/ModelLoader.cpp">
+        <ClCompile Include="Resource/ModelLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/ObjModelLoader.cpp">
+        <ClCompile Include="Resource/ObjModelLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/ShaderLoader.cpp">
+        <ClCompile Include="Resource/ShaderLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/ResourceLoader/TextureLoader.cpp">
+        <ClCompile Include="Resource/TextureLoader.cpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClCompile>
         <!-- Resource Types -->
-        <ClCompile Include="Resource/Resource/IResource.cpp">
+        <ClCompile Include="Resource/IResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/AnimationResource.cpp">
+        <ClCompile Include="Resource/AnimationResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/AudioSource.cpp">
+        <ClCompile Include="Resource/AudioSource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/FontResource.cpp">
+        <ClCompile Include="Resource/FontResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/MaterialResource.cpp">
+        <ClCompile Include="Resource/MaterialResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/ModelResource.cpp">
+        <ClCompile Include="Resource/ModelResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/ShaderResource.cpp">
+        <ClCompile Include="Resource/ShaderResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
-        <ClCompile Include="Resource/Resource/TextureResource.cpp">
+        <ClCompile Include="Resource/TextureResource.cpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClCompile>
     </ItemGroup>
@@ -498,6 +501,21 @@
     <ItemGroup Label="ScriptingSubsystemSources">
         <ClCompile Include="Scripting/IScriptableObject.cpp">
             <Filter>Engine\Scripting</Filter>
+        </ClCompile>
+        <ClCompile Include="Scripting/ScriptTypeExtractor.cpp">
+            <Filter>Engine\Scripting</Filter>
+        </ClCompile>
+        <ClCompile Include="Scripting/ScriptCommon.cpp">
+        	<Filter>Engine\Scripting</Filter>
+        </ClCompile>
+        <ClCompile Include="Scripting/FileWatcher.cpp">
+            <Filter>Engine\Scripting</Filter>
+        </ClCompile>
+        <ClCompile Include="Scripting/ScriptReloader.cpp">
+        	<Filter>Engine\Scripting</Filter>
+        </ClCompile>
+		<ClCompile Include="Scripting/HotReloadSubsystem.cpp">
+        	<Filter>Engine\Scripting</Filter>
         </ClCompile>
         <ClCompile Include="Scripting/V8Subsystem.cpp">
             <Filter>Engine\Scripting\V8</Filter>
@@ -556,6 +574,9 @@
     <!-- Core Engine Headers -->
     <ItemGroup Label="CoreSubsystemHeaders">
         <ClInclude Include="Core/EngineCommon.hpp">
+            <Filter>Engine\Core</Filter>
+        </ClInclude>
+        <ClInclude Include="Core/HotReloadSubsystem.hpp">
             <Filter>Engine\Core</Filter>
         </ClInclude>
         <ClInclude Include="Core/StringUtils.hpp">
@@ -807,56 +828,56 @@
             <Filter>Engine\Resource</Filter>
         </ClInclude>
         <!-- Loader Headers -->
-        <ClInclude Include="Resource/ResourceLoader/IResourceLoader.hpp">
+        <ClInclude Include="Resource/IResourceLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/AnimationLoader.hpp">
+        <ClInclude Include="Resource/AnimationLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/AudioLoader.hpp">
+        <ClInclude Include="Resource/AudioLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/FontLoader.hpp">
+        <ClInclude Include="Resource/FontLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/MaterialLoader.hpp">
+        <ClInclude Include="Resource/MaterialLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/ModelLoader.hpp">
+        <ClInclude Include="Resource/ModelLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/ObjModelLoader.hpp">
+        <ClInclude Include="Resource/ObjModelLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/ShaderLoader.hpp">
+        <ClInclude Include="Resource/ShaderLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/ResourceLoader/TextureLoader.hpp">
+        <ClInclude Include="Resource/TextureLoader.hpp">
             <Filter>Engine\Resource\Loaders</Filter>
         </ClInclude>
         <!-- Resource Type Headers -->
-        <ClInclude Include="Resource/Resource/IResource.hpp">
+        <ClInclude Include="Resource/IResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/AnimationResource.hpp">
+        <ClInclude Include="Resource/AnimationResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/AudioSource.hpp">
+        <ClInclude Include="Resource/AudioSource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/FontResource.hpp">
+        <ClInclude Include="Resource/FontResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/MaterialResource.hpp">
+        <ClInclude Include="Resource/MaterialResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/ModelResource.hpp">
+        <ClInclude Include="Resource/ModelResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/ShaderResource.hpp">
+        <ClInclude Include="Resource/ShaderResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
-        <ClInclude Include="Resource/Resource/TextureResource.hpp">
+        <ClInclude Include="Resource/TextureResource.hpp">
             <Filter>Engine\Resource\Types</Filter>
         </ClInclude>
     </ItemGroup>
@@ -885,6 +906,21 @@
     <ItemGroup Label="ScriptingSubsystemHeaders">
         <ClInclude Include="Scripting/IScriptableObject.hpp">
             <Filter>Engine\Scripting</Filter>
+        </ClInclude>
+        <ClInclude Include="Scripting/ScriptTypeExtractor.hpp">
+            <Filter>Engine\Scripting</Filter>
+        </ClInclude>
+        <ClInclude Include="Scripting/ScriptCommon.hpp">
+            <Filter>Engine\Scripting</Filter>
+        </ClInclude>
+        <ClInclude Include="Scripting/FileWatcher.hpp">
+            <Filter>Engine\Scripting</Filter>
+        </ClInclude>
+        <ClInclude Include="Scripting/HotReloadSubsystem.hpp">
+        	<Filter>Engine\Scripting</Filter>
+        </ClInclude>
+        <ClInclude Include="Scripting/ScriptReloader.hpp">
+        	<Filter>Engine\Scripting</Filter>
         </ClInclude>
         <ClInclude Include="Scripting/V8Subsystem.hpp">
             <Filter>Engine\Scripting\V8</Filter>
