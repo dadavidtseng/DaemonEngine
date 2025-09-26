@@ -12,9 +12,9 @@
 #include <thread>
 #include <vector>
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Resource/ResourceLoader/IResourceLoader.hpp"
 #include "Engine/Resource/ResourceCache.hpp"
 #include "Engine/Resource/ResourceHandle.hpp"
+#include "Engine/Resource/IResourceLoader.hpp"
 
 struct sResourceSubsystemConfig
 {

@@ -6,7 +6,7 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include <filesystem>
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
+#include "Engine/Resource/ObjModelLoader.hpp"
 
 //----------------------------------------------------------------------------------------------------
 ResourceSubsystem::ResourceSubsystem(sResourceSubsystemConfig const& config)

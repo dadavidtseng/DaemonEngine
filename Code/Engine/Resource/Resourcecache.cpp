@@ -2,7 +2,7 @@
 // ResourceCache.cpp
 // ============================================
 #include "Engine/Resource/ResourceCache.hpp"
-#include "Engine/Resource/Resource/IResource.hpp"
+#include "Engine/Resource/IResource.hpp"
 
 void ResourceCache::Add(const std::string& path, ResourcePtr resource)
 {
