@@ -23,7 +23,6 @@ latex/
 .vs/
 .qodo/
 .claude/
-packages/
 /[Tt]emporary/
 
 # Prerequisites
@@ -52,7 +51,6 @@ packages/
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
@@ -85,7 +83,7 @@ packages/
 *.lai
 *.la
 *.a
-*.lib
+
 
 # Executables
 *.exe
