@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>v8.redist-v143-x64</id>
+    <version>13.0.245.25</version>
+    <authors>The V8 JavaScript Engine Authors</authors>
+    <owners>The V8 NuGet package Authors</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://raw.githubusercontent.com/v8/v8/master/LICENSE.v8</licenseUrl>
+    <projectUrl>https://github.com/pmed/v8-nuget</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/wiki/v8/v8/images/v8logo.png</iconUrl>
+    <description>Prebuild binaries for V8 JavaScript Engine.</description>
+    <tags>V8 javascript embedded native nativepackage</tags>
+  </metadata>
+</package>
