@@ -149,10 +149,10 @@
     <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp">
       <Filter>ThirdParty\Utilities\TinyXML2</Filter>
     </ClCompile>
-    <ClCompile Include="Network\NetworkWebsocketSubsystem.cpp">
+    <ClCompile Include="Network\NetworkTCPSubsystem.cpp">
       <Filter>Engine\Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\NetworkTCPSubsystem.cpp">
+    <ClCompile Include="Network\NetworkWebSocketSubsystem.cpp">
       <Filter>Engine\Network</Filter>
     </ClCompile>
   </ItemGroup>
@@ -534,10 +534,10 @@
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
       <Filter>ThirdParty\Utilities\Noise</Filter>
     </ClInclude>
-    <ClInclude Include="Network\NetworkWebsocketSubsystem.hpp">
+    <ClInclude Include="Network\NetworkTCPSubsystem.hpp">
       <Filter>Engine\Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\NetworkTCPSubsystem.hpp">
+    <ClInclude Include="Network\NetworkWebSocketSubsystem.hpp">
       <Filter>Engine\Network</Filter>
     </ClInclude>
   </ItemGroup>

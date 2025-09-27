@@ -16,7 +16,7 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
-#include "Engine/Network/NetworkWebsocketSubsystem.hpp"
+#include "Engine/Network/NetworkWebSocketSubsystem.hpp"
 #include "Engine/Scripting/FileWatcher.hpp"
 #include "Engine/Scripting/ScriptReloader.hpp"
 

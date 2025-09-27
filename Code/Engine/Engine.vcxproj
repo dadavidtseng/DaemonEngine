@@ -249,7 +249,7 @@
   </ItemGroup>
   <ItemGroup Label="RendererSubsystemSources">
     <!-- Rendering System - DirectX-based graphics pipeline -->
-    <ClCompile Include="Network\NetworkWebsocketSubsystem.cpp" />
+    <ClCompile Include="Network\NetworkWebSocketSubsystem.cpp" />
     <ClCompile Include="Renderer/BitmapFont.cpp" />
     <ClCompile Include="Renderer/Camera.cpp" />
     <ClCompile Include="Renderer/ConstantBuffer.cpp" />
@@ -396,7 +396,7 @@
   </ItemGroup>
   <ItemGroup Label="RendererSubsystemHeaders">
     <!-- Rendering System Headers -->
-    <ClInclude Include="Network\NetworkWebsocketSubsystem.hpp" />
+    <ClInclude Include="Network\NetworkWebSocketSubsystem.hpp" />
     <ClInclude Include="Renderer/BitmapFont.hpp" />
     <ClInclude Include="Renderer/Camera.hpp" />
     <ClInclude Include="Renderer/ConstantBuffer.hpp" />

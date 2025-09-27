@@ -3,7 +3,7 @@
 // Chrome DevTools WebSocket/HTTP Server Implementation using Direct Windows Sockets
 //----------------------------------------------------------------------------------------------------
 
-#include "Engine/Network/NetworkWebsocketSubsystem.hpp"
+#include "Engine/Network/NetworkWebSocketSubsystem.hpp"
 
 #include <sstream>
 #include <iomanip>
