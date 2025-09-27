@@ -359,8 +359,7 @@
         <ClCompile Include="Scripting/ScriptCommon.cpp"/>
         <ClCompile Include="Scripting/ScriptReloader.cpp"/>
         <ClCompile Include="Scripting/FileWatcher.cpp"/>
-        <ClCompile Include="Scripting/HotReloadSubsystem.cpp"/>
-        <ClCompile Include="Scripting/V8Subsystem.cpp"/>
+        <ClCompile Include="Scripting/ScriptSubsystem.cpp"/>
     </ItemGroup>
 
     <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -516,10 +515,9 @@
         <ClInclude Include="Scripting/IScriptableObject.hpp"/>
         <ClInclude Include="Scripting/ScriptTypeExtractor.hpp"/>
         <ClInclude Include="Scripting/ScriptCommon.hpp"/>
-        <ClInclude Include="Scripting/V8Subsystem.hpp"/>
+        <ClInclude Include="Scripting/ScriptSubsystem.hpp"/>
         <ClInclude Include="Scripting/FileWatcher.hpp"/>
         <ClInclude Include="Scripting/ScriptReloader.hpp"/>
-        <ClInclude Include="Scripting/HotReloadSubsystem.hpp"/>
     </ItemGroup>
 
     <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -527,7 +525,7 @@
     <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
 
     <!-- Modern PackageReference approach for V8 JavaScript Engine -->
-    <!-- Engine owns these dependencies as it contains the V8Subsystem implementation -->
+    <!-- Engine owns these dependencies as it contains the ScriptSubsystem implementation -->
     <ItemGroup Label="PackageDependencies">
         <PackageReference Include="v8-v143-x64" Version="13.0.245.25">
             <PrivateAssets>all</PrivateAssets>

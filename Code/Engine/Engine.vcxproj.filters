@@ -174,9 +174,6 @@
         <ClCompile Include="Core/EngineCommon.cpp">
             <Filter>Engine\Core</Filter>
         </ClCompile>
-        <ClCompile Include="Core/HotReloadSubsystem.cpp">
-            <Filter>Engine\Core</Filter>
-        </ClCompile>
         <ClCompile Include="Core/StringUtils.cpp">
             <Filter>Engine\Core\Utilities</Filter>
         </ClCompile>
@@ -514,11 +511,8 @@
         <ClCompile Include="Scripting/ScriptReloader.cpp">
         	<Filter>Engine\Scripting</Filter>
         </ClCompile>
-		<ClCompile Include="Scripting/HotReloadSubsystem.cpp">
-        	<Filter>Engine\Scripting</Filter>
-        </ClCompile>
-        <ClCompile Include="Scripting/V8Subsystem.cpp">
-            <Filter>Engine\Scripting\V8</Filter>
+		<ClCompile Include="Scripting/ScriptSubsystem.cpp">
+            <Filter>Engine\Scripting</Filter>
         </ClCompile>
         <ClCompile Include="Scripting/ChromeDevToolsServer.cpp">
             <Filter>Engine\Scripting\Debug</Filter>
@@ -574,9 +568,6 @@
     <!-- Core Engine Headers -->
     <ItemGroup Label="CoreSubsystemHeaders">
         <ClInclude Include="Core/EngineCommon.hpp">
-            <Filter>Engine\Core</Filter>
-        </ClInclude>
-        <ClInclude Include="Core/HotReloadSubsystem.hpp">
             <Filter>Engine\Core</Filter>
         </ClInclude>
         <ClInclude Include="Core/StringUtils.hpp">
@@ -916,14 +907,11 @@
         <ClInclude Include="Scripting/FileWatcher.hpp">
             <Filter>Engine\Scripting</Filter>
         </ClInclude>
-        <ClInclude Include="Scripting/HotReloadSubsystem.hpp">
+        <ClInclude Include="Scripting/ScriptSubsystem.hpp">
         	<Filter>Engine\Scripting</Filter>
         </ClInclude>
         <ClInclude Include="Scripting/ScriptReloader.hpp">
         	<Filter>Engine\Scripting</Filter>
-        </ClInclude>
-        <ClInclude Include="Scripting/V8Subsystem.hpp">
-            <Filter>Engine\Scripting\V8</Filter>
         </ClInclude>
         <ClInclude Include="Scripting/ChromeDevToolsServer.hpp">
             <Filter>Engine\Scripting\Debug</Filter>
