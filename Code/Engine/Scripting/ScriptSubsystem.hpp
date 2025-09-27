@@ -19,7 +19,7 @@
 #include "Engine/Scripting/IScriptableObject.hpp"
 
 // Forward declarations
-class ChromeDevToolsServer;
+class NetworkWebSocketSubsystem;
 class FileWatcher;
 class ScriptReloader;
 
@@ -278,7 +278,7 @@ private:
     std::set<String> m_boundFunctions;  // Bound functions
 
     // Chrome DevTools Integration
-    std::unique_ptr<ChromeDevToolsServer> m_devToolsServer;
+    std::unique_ptr<NetworkWebSocketSubsystem> m_devToolsServer;
 
     // Script Source Storage for DevTools
     std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code

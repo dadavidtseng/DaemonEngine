@@ -16,7 +16,7 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
-#include "Engine/Scripting/ChromeDevToolsServer.hpp"
+#include "Engine/Network/NetworkWebsocketSubsystem.hpp"
 #include "Engine/Scripting/FileWatcher.hpp"
 #include "Engine/Scripting/ScriptReloader.hpp"
 
@@ -44,7 +44,7 @@
 class V8InspectorChannelImpl : public v8_inspector::V8Inspector::Channel
 {
 public:
-    explicit V8InspectorChannelImpl(ScriptSubsystem* scriptSubsystem, ChromeDevToolsServer* devToolsServer)
+    explicit V8InspectorChannelImpl(ScriptSubsystem* scriptSubsystem, NetworkWebSocketSubsystem* devToolsServer)
         : m_scriptSubsystem(scriptSubsystem), m_devToolsServer(devToolsServer)
     {
     }
@@ -88,7 +88,7 @@ public:
     }
 
     // Set the Chrome DevTools server after it's created
-    void SetDevToolsServer(ChromeDevToolsServer* devToolsServer)
+    void SetDevToolsServer(NetworkWebSocketSubsystem* devToolsServer)
     {
         m_devToolsServer = devToolsServer;
     }
@@ -112,7 +112,7 @@ public:
 
 private:
     ScriptSubsystem*      m_scriptSubsystem;
-    ChromeDevToolsServer* m_devToolsServer;
+    NetworkWebSocketSubsystem* m_devToolsServer;
 
     std::string StringViewToStdString(const v8_inspector::StringView& view)
     {
@@ -313,7 +313,7 @@ void ScriptSubsystem::Startup()
         devToolsConfig.port        = m_config.inspectorPort;
         devToolsConfig.contextName = "ProtogameJS2D JavaScript Context";
 
-        m_devToolsServer = std::make_unique<ChromeDevToolsServer>(devToolsConfig, this);
+        m_devToolsServer = std::make_unique<NetworkWebSocketSubsystem>(devToolsConfig, this);
 
         if (m_devToolsServer->Start())
         {
