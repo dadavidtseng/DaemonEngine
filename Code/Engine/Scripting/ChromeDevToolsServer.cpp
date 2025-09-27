@@ -13,7 +13,7 @@
 
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Scripting/V8Subsystem.hpp"
+#include "Engine/Scripting/ScriptSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
@@ -156,8 +156,8 @@ private:
 };
 
 //----------------------------------------------------------------------------------------------------
-ChromeDevToolsServer::ChromeDevToolsServer(sChromeDevToolsConfig config, V8Subsystem* v8Subsystem)
-    : m_config(std::move(config)), m_v8Subsystem(v8Subsystem), m_serverSocket(INVALID_SOCKET_VALUE)
+ChromeDevToolsServer::ChromeDevToolsServer(sChromeDevToolsConfig config, ScriptSubsystem* scriptSubsystem)
+    : m_config(std::move(config)), m_scriptSubsystem(scriptSubsystem), m_serverSocket(INVALID_SOCKET_VALUE)
 {
     // Generate unique session ID
     m_sessionId = GenerateUUID();
@@ -450,11 +450,11 @@ void ChromeDevToolsServer::ClientHandlerThread(SOCKET const clientSocket)
                         m_activeConnections.push_back(clientSocket);
 
                         // Replay all loaded scripts to the newly connected DevTools client
-                        if (m_v8Subsystem)
+                        if (m_scriptSubsystem)
                         {
                             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                                        "Replaying scripts to newly connected Chrome DevTools client");
-                            m_v8Subsystem->ReplayScriptsToDevTools();
+                            m_scriptSubsystem->ReplayScriptsToDevTools();
                         }
                     }
                     else
@@ -752,9 +752,9 @@ bool ChromeDevToolsServer::HandleCustomCommand(const std::string& message)
             scriptId             = message.substr(scriptIdStart, scriptIdEnd - scriptIdStart);
         }
 
-        if (!callId.empty() && !scriptId.empty() && m_v8Subsystem)
+        if (!callId.empty() && !scriptId.empty() && m_scriptSubsystem)
         {
-            std::string scriptSource = m_v8Subsystem->HandleDebuggerGetScriptSource(scriptId);
+            std::string scriptSource = m_scriptSubsystem->HandleDebuggerGetScriptSource(scriptId);
 
             // Create response
             std::string response =
@@ -1060,7 +1060,7 @@ void ChromeDevToolsServer::QueueInspectorMessage(const std::string& message)
 void ChromeDevToolsServer::ProcessQueuedMessages()
 {
     // Process all queued V8 Inspector messages on the main thread
-    // This method must be called from the main thread (e.g., in V8Subsystem::Update())
+    // This method must be called from the main thread (e.g., in ScriptSubsystem::Update())
     
     if (!m_inspectorSession)
     {

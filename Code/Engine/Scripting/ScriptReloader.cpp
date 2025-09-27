@@ -12,7 +12,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Scripting/V8Subsystem.hpp"
+#include "Engine/Scripting/ScriptSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 ScriptReloader::ScriptReloader()
@@ -27,15 +27,15 @@ ScriptReloader::~ScriptReloader()
 }
 
 
-bool ScriptReloader::Initialize(V8Subsystem* v8System)
+bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem)
 {
-    if (!v8System)
+    if (!scriptSystem)
     {
-        SetError("V8Subsystem pointer is null");
+        SetError("ScriptSubsystem pointer is null");
         return false;
     }
 
-    m_v8System          = v8System;
+    m_scriptSystem          = scriptSystem;
     m_reloadCount       = 0;
     m_successfulReloads = 0;
     m_failedReloads     = 0;
@@ -53,7 +53,7 @@ void ScriptReloader::Shutdown()
     }
 
     ClearPreservedState();
-    m_v8System               = nullptr;
+    m_scriptSystem               = nullptr;
     m_reloadCompleteCallback = nullptr;
 
     LogReloadEvent("ScriptReloader shutdown completed");
@@ -73,9 +73,9 @@ bool ScriptReloader::ReloadScripts(const std::vector<std::string>& scriptPaths)
         return false;
     }
 
-    if (!m_v8System)
+    if (!m_scriptSystem)
     {
-        SetError("V8Subsystem not initialized");
+        SetError("ScriptSubsystem not initialized");
         return false;
     }
 
@@ -135,7 +135,7 @@ bool ScriptReloader::PreserveJavaScriptState()
         std::string preservationScript = CreateStatePreservationScript();
 
         // Execute preservation script in V8
-        if (m_v8System->ExecuteScript(preservationScript))
+        if (m_scriptSystem->ExecuteScript(preservationScript))
         {
             // Note: ExecuteScript doesn't return the result, so we'll use a simpler approach
             // For now, we'll assume preservation succeeded if execution succeeded
@@ -172,7 +172,7 @@ bool ScriptReloader::RestoreJavaScriptState()
         std::string restorationScript = CreateStateRestorationScript();
 
         // Execute restoration script in V8
-        if (m_v8System->ExecuteScript(restorationScript))
+        if (m_scriptSystem->ExecuteScript(restorationScript))
         {
             LogReloadEvent("JavaScript state restored successfully");
             return true;
@@ -255,7 +255,7 @@ bool ScriptReloader::ExecuteScript(const std::string& scriptPath)
         }
 
         // For other scripts, use the original approach
-        if (m_v8System->ExecuteScript(scriptContent))
+        if (m_scriptSystem->ExecuteScript(scriptContent))
         {
             LogReloadEvent("Script executed successfully: " + scriptPath);
             return true;
@@ -337,7 +337,7 @@ bool ScriptReloader::ReloadInputSystemScript(const std::string& scriptContent)
 )";
 
         // Execute the reload script in V8
-        if (m_v8System->ExecuteScript(reloadScript))
+        if (m_scriptSystem->ExecuteScript(reloadScript))
         {
             LogReloadEvent("InputSystem.js reloaded successfully");
             return true;

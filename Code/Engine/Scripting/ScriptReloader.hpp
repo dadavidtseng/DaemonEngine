@@ -5,7 +5,7 @@
 #include <vector>
 
 //-Forward-Declaration--------------------------------------------------------------------------------
-class V8Subsystem;
+class ScriptSubsystem;
 
 /**
  * ScriptReloader - V8 Script Hot-Reload Management
@@ -18,7 +18,7 @@ class V8Subsystem;
  * - Safe V8 script reloading without context recreation
  * - JavaScript state preservation and restoration
  * - Error handling and rollback on reload failures
- * - Integration with existing V8Subsystem
+ * - Integration with existing ScriptSubsystem
  */
 class ScriptReloader
 {
@@ -29,7 +29,7 @@ public:
     ~ScriptReloader();
 
     // Core functionality
-    bool Initialize(V8Subsystem* v8System);
+    bool Initialize(ScriptSubsystem* scriptSystem);
     void Shutdown();
 
     // Reload operations
@@ -71,8 +71,8 @@ private:
     void LogReloadEvent(const std::string& message);
 
 private:
-    // V8 integration
-    V8Subsystem* m_v8System{nullptr};
+    // Script subsystem integration
+    ScriptSubsystem* m_scriptSystem{nullptr};
 
     // Reload state
     bool        m_isReloading{false};

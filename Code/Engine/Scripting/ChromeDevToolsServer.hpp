@@ -27,7 +27,7 @@ namespace v8_inspector
     class V8InspectorClient;
 } // namespace v8_inspector
 
-class V8Subsystem;
+class ScriptSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 // Chrome DevTools Server Configuration
@@ -68,7 +68,7 @@ struct sWebSocketConnection
 class ChromeDevToolsServer
 {
 public:
-    explicit ChromeDevToolsServer(sChromeDevToolsConfig config, V8Subsystem* v8Subsystem);
+    explicit ChromeDevToolsServer(sChromeDevToolsConfig config, ScriptSubsystem* scriptSubsystem);
     ~ChromeDevToolsServer();
 
     // Lifecycle
@@ -130,7 +130,7 @@ private:
     void QueueInspectorMessage(const String& message);
 
     sChromeDevToolsConfig m_config;
-    V8Subsystem*          m_v8Subsystem;
+    ScriptSubsystem*      m_scriptSubsystem;
 
     // Socket server components
     SOCKET                   m_serverSocket;
