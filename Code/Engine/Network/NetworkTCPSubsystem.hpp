@@ -25,11 +25,11 @@ struct sNetworkSubsystemConfig
 };
 
 //----------------------------------------------------------------------------------------------------
-class NetworkSubsystem
+class NetworkTCPSubsystem
 {
 public:
-    explicit NetworkSubsystem(sNetworkSubsystemConfig config);
-    ~NetworkSubsystem();
+    explicit NetworkTCPSubsystem(sNetworkSubsystemConfig config);
+    ~NetworkTCPSubsystem();
 
     void StartUp();
     void Update();

@@ -2,7 +2,7 @@
 // NetworkSubsystem.cpp
 //----------------------------------------------------------------------------------------------------
 
-#include "Engine/Network/NetworkSubsystem.hpp"
+#include "Engine/Network/NetworkTCPSubsystem.hpp"
 
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -20,20 +20,20 @@
 #pragma comment(lib, "ws2_32.lib")
 
 //----------------------------------------------------------------------------------------------------
-NetworkSubsystem::NetworkSubsystem(sNetworkSubsystemConfig config)
+NetworkTCPSubsystem::NetworkTCPSubsystem(sNetworkSubsystemConfig config)
     : m_config(std::move(config))
 {
     m_networkClock = new Clock(Clock::GetSystemClock());
 }
 
 //----------------------------------------------------------------------------------------------------
-NetworkSubsystem::~NetworkSubsystem()
+NetworkTCPSubsystem::~NetworkTCPSubsystem()
 {
     ShutDown();
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::StartUp()
+void NetworkTCPSubsystem::StartUp()
 {
     // Allocate buffers
     m_recvBuffer = static_cast<char*>(malloc(m_config.recvBufferSize));
@@ -62,7 +62,7 @@ void NetworkSubsystem::StartUp()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::BeginFrame()
+void NetworkTCPSubsystem::BeginFrame()
 {
     if (m_mode == eNetworkMode::NONE) return;
 
@@ -149,13 +149,13 @@ void NetworkSubsystem::BeginFrame()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::EndFrame()
+void NetworkTCPSubsystem::EndFrame()
 {
     // Nothing specific needed for end frame currently
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::Update()
+void NetworkTCPSubsystem::Update()
 {
     if (m_mode == eNetworkMode::NONE) return;
 
@@ -169,7 +169,7 @@ void NetworkSubsystem::Update()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ShutDown()
+void NetworkTCPSubsystem::ShutDown()
 {
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -185,7 +185,7 @@ void NetworkSubsystem::ShutDown()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ProcessIncomingConnections()
+void NetworkTCPSubsystem::ProcessIncomingConnections()
 {
     if (m_listenSocket == ~0ull) return;
 
@@ -223,7 +223,7 @@ void NetworkSubsystem::ProcessIncomingConnections()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CheckClientConnections()
+void NetworkTCPSubsystem::CheckClientConnections()
 {
     // Remove disconnected clients
     for (auto it = m_clientList.begin(); it != m_clientList.end();)
@@ -256,7 +256,7 @@ void NetworkSubsystem::CheckClientConnections()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendRawDataToSocket(uintptr_t const socket,
+bool NetworkTCPSubsystem::SendRawDataToSocket(uintptr_t const socket,
                                            String const&   data)
 {
     int const result = send(socket, data.c_str(), (int)data.length() + 1, 0);
@@ -270,7 +270,7 @@ bool NetworkSubsystem::SendRawDataToSocket(uintptr_t const socket,
 }
 
 //----------------------------------------------------------------------------------------------------
-String NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
+String NetworkTCPSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
 {
     int const result = recv(socket, m_recvBuffer, m_config.recvBufferSize - 1, 0);
 
@@ -300,7 +300,7 @@ String NetworkSubsystem::ReceiveRawDataFromSocket(uintptr_t const socket)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
+void NetworkTCPSubsystem::ExecuteReceivedMessage(String const& message,
                                               int const     fromClientId)
 {
     // Try to deserialize as NetworkMessage first
@@ -360,13 +360,13 @@ void NetworkSubsystem::ExecuteReceivedMessage(String const& message,
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::QueueIncomingMessage(sNetworkMessage const& message)
+void NetworkTCPSubsystem::QueueIncomingMessage(sNetworkMessage const& message)
 {
     m_incomingMessages.push_back(message);
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
+bool NetworkTCPSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
 {
     UNUSED(clientId)
     int const error = WSAGetLastError();
@@ -409,7 +409,7 @@ bool NetworkSubsystem::DealWithSocketError(uintptr_t socket, int clientId)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CloseClientConnection(int clientId)
+void NetworkTCPSubsystem::CloseClientConnection(int clientId)
 {
     for (auto& client : m_clientList)
     {
@@ -428,7 +428,7 @@ void NetworkSubsystem::CloseClientConnection(int clientId)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CloseAllConnections()
+void NetworkTCPSubsystem::CloseAllConnections()
 {
     for (auto& client : m_clientList)
     {
@@ -442,7 +442,7 @@ void NetworkSubsystem::CloseAllConnections()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ProcessHeartbeat(float const deltaSeconds)
+void NetworkTCPSubsystem::ProcessHeartbeat(float const deltaSeconds)
 {
     m_heartbeatTimer += deltaSeconds;
     m_lastHeartbeatReceived += deltaSeconds;
@@ -463,7 +463,7 @@ void NetworkSubsystem::ProcessHeartbeat(float const deltaSeconds)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::SendHeartbeat()
+void NetworkTCPSubsystem::SendHeartbeat()
 {
     sNetworkMessage heartbeat("Heartbeat", "", -1);
     std::string     serialized = SerializeMessage(heartbeat);
@@ -485,7 +485,7 @@ void NetworkSubsystem::SendHeartbeat()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ProcessHeartbeatMessage(int const fromClientId)
+void NetworkTCPSubsystem::ProcessHeartbeatMessage(int const fromClientId)
 {
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -506,7 +506,7 @@ void NetworkSubsystem::ProcessHeartbeatMessage(int const fromClientId)
 }
 
 //----------------------------------------------------------------------------------------------------
-std::string NetworkSubsystem::SerializeMessage(const sNetworkMessage& message)
+std::string NetworkTCPSubsystem::SerializeMessage(const sNetworkMessage& message)
 {
     // 清理訊息內容，移除可能造成問題的字符
     std::string cleanData = message.m_data;
@@ -529,7 +529,7 @@ std::string NetworkSubsystem::SerializeMessage(const sNetworkMessage& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-sNetworkMessage NetworkSubsystem::DeserializeMessage(String const& data, int const fromClientId)
+sNetworkMessage NetworkTCPSubsystem::DeserializeMessage(String const& data, int const fromClientId)
 {
     // 移除尾部的 null terminator 和換行符
     std::string cleanData = data;
@@ -567,7 +567,7 @@ sNetworkMessage NetworkSubsystem::DeserializeMessage(String const& data, int con
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::string& out_IP, unsigned short& out_port) const
+void NetworkTCPSubsystem::ParseHostAddress(const std::string& hostString, std::string& out_IP, unsigned short& out_port) const
 {
     StringList ipAndPort;
     SplitStringOnDelimiter(ipAndPort, hostString, ':');
@@ -585,7 +585,7 @@ void NetworkSubsystem::ParseHostAddress(const std::string& hostString, std::stri
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::LogMessage(const std::string& message)
+void NetworkTCPSubsystem::LogMessage(const std::string& message)
 {
     if (m_config.enableConsoleOutput && g_devConsole)
     {
@@ -594,7 +594,7 @@ void NetworkSubsystem::LogMessage(const std::string& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::LogError(const std::string& error)
+void NetworkTCPSubsystem::LogError(const std::string& error)
 {
     if (m_config.enableConsoleOutput && g_devConsole)
     {
@@ -633,25 +633,25 @@ void NetworkSubsystem::LogError(const std::string& error)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::IsEnabled() const
+bool NetworkTCPSubsystem::IsEnabled() const
 {
     return m_connectionState != eConnectionState::DISABLED && m_mode != eNetworkMode::NONE;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::IsServer() const
+bool NetworkTCPSubsystem::IsServer() const
 {
     return m_mode == eNetworkMode::SERVER;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::IsClient() const
+bool NetworkTCPSubsystem::IsClient() const
 {
     return m_mode == eNetworkMode::CLIENT;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::IsConnected() const
+bool NetworkTCPSubsystem::IsConnected() const
 {
     if (m_mode == eNetworkMode::CLIENT)
     {
@@ -665,18 +665,18 @@ bool NetworkSubsystem::IsConnected() const
 }
 
 //----------------------------------------------------------------------------------------------------
-eNetworkMode NetworkSubsystem::GetNetworkMode() const
+eNetworkMode NetworkTCPSubsystem::GetNetworkMode() const
 {
     return m_mode;
 }
 
 //----------------------------------------------------------------------------------------------------
-eConnectionState NetworkSubsystem::GetConnectionState() const
+eConnectionState NetworkTCPSubsystem::GetConnectionState() const
 {
     return m_connectionState;
 }
 
-String NetworkSubsystem::GetCurrentIP() const
+String NetworkTCPSubsystem::GetCurrentIP() const
 {
     String         currentIP;
     unsigned short currentPort;
@@ -684,7 +684,7 @@ String NetworkSubsystem::GetCurrentIP() const
     return currentIP;
 }
 
-unsigned short NetworkSubsystem::GetCurrentPort() const
+unsigned short NetworkTCPSubsystem::GetCurrentPort() const
 {
     String         currentIP;
     unsigned short currentPort;
@@ -692,12 +692,12 @@ unsigned short NetworkSubsystem::GetCurrentPort() const
     return currentPort;
 }
 
-String NetworkSubsystem::GetHostAddressString() const
+String NetworkTCPSubsystem::GetHostAddressString() const
 {
     return m_config.hostAddressString;
 }
 
-void NetworkSubsystem::SetCurrentIP(String const& newIP)
+void NetworkTCPSubsystem::SetCurrentIP(String const& newIP)
 {
     if (m_mode != eNetworkMode::NONE)
     {
@@ -713,7 +713,7 @@ void NetworkSubsystem::SetCurrentIP(String const& newIP)
     LogMessage(Stringf("IP set to %s (port remains %d)", newIP.c_str(), currentPort));
 }
 
-void NetworkSubsystem::SetCurrentPort(unsigned short newPort)
+void NetworkTCPSubsystem::SetCurrentPort(unsigned short newPort)
 {
     if (m_mode != eNetworkMode::NONE)
     {
@@ -729,7 +729,7 @@ void NetworkSubsystem::SetCurrentPort(unsigned short newPort)
     LogMessage(Stringf("Port set to %d (IP remains %s)", newPort, currentIP.c_str()));
 }
 
-void NetworkSubsystem::SetHostAddressString(String const& newHostAddress)
+void NetworkTCPSubsystem::SetHostAddressString(String const& newHostAddress)
 {
     if (m_mode != eNetworkMode::NONE)
     {
@@ -742,7 +742,7 @@ void NetworkSubsystem::SetHostAddressString(String const& newHostAddress)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::StartServer(int const newPort)
+bool NetworkTCPSubsystem::StartServer(int const newPort)
 {
     if (m_mode != eNetworkMode::NONE)
     {
@@ -772,7 +772,7 @@ bool NetworkSubsystem::StartServer(int const newPort)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::StopServer()
+void NetworkTCPSubsystem::StopServer()
 {
     if (m_mode != eNetworkMode::SERVER) return;
 
@@ -792,7 +792,7 @@ void NetworkSubsystem::StopServer()
 }
 
 //----------------------------------------------------------------------------------------------------
-int NetworkSubsystem::GetConnectedClientCount() const
+int NetworkTCPSubsystem::GetConnectedClientCount() const
 {
     if (m_mode != eNetworkMode::SERVER) return 0;
 
@@ -805,7 +805,7 @@ int NetworkSubsystem::GetConnectedClientCount() const
 }
 
 //----------------------------------------------------------------------------------------------------
-std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
+std::vector<int> NetworkTCPSubsystem::GetConnectedClientIds() const
 {
     std::vector<int> clientIds;
 
@@ -820,7 +820,7 @@ std::vector<int> NetworkSubsystem::GetConnectedClientIds() const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::ConnectToServer(const std::string& address, int port)
+bool NetworkTCPSubsystem::ConnectToServer(const std::string& address, int port)
 {
     if (m_mode != eNetworkMode::NONE)
     {
@@ -841,7 +841,7 @@ bool NetworkSubsystem::ConnectToServer(const std::string& address, int port)
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::DisconnectFromServer()
+void NetworkTCPSubsystem::DisconnectFromServer()
 {
     if (m_mode != eNetworkMode::CLIENT) return;
 
@@ -859,13 +859,13 @@ void NetworkSubsystem::DisconnectFromServer()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::SendRawData(const std::string& data)
+void NetworkTCPSubsystem::SendRawData(const std::string& data)
 {
     m_sendQueue.push_back(data);
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClientId)
+void NetworkTCPSubsystem::SendGameData(const std::string& gameData, int targetClientId)
 {
     sNetworkMessage message("GameData", gameData, targetClientId);
     std::string     serialized = SerializeMessage(message);
@@ -896,7 +896,7 @@ void NetworkSubsystem::SendGameData(const std::string& gameData, int targetClien
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::SendChatMessage(const std::string& message, int targetClientId)
+void NetworkTCPSubsystem::SendChatMessage(const std::string& message, int targetClientId)
 {
     sNetworkMessage chatMsg("ChatMessage", message, targetClientId);
     std::string     serialized = SerializeMessage(chatMsg);
@@ -926,7 +926,7 @@ void NetworkSubsystem::SendChatMessage(const std::string& message, int targetCli
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToClient(int const clientId, const sNetworkMessage& message)
+bool NetworkTCPSubsystem::SendMessageToClient(int const clientId, const sNetworkMessage& message)
 {
     if (m_mode != eNetworkMode::SERVER) return false;
 
@@ -942,7 +942,7 @@ bool NetworkSubsystem::SendMessageToClient(int const clientId, const sNetworkMes
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToAllClients(sNetworkMessage const& message)
+bool NetworkTCPSubsystem::SendMessageToAllClients(sNetworkMessage const& message)
 {
     if (m_mode != eNetworkMode::SERVER) return false;
 
@@ -963,7 +963,7 @@ bool NetworkSubsystem::SendMessageToAllClients(sNetworkMessage const& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SendMessageToServer(sNetworkMessage const& message)
+bool NetworkTCPSubsystem::SendMessageToServer(sNetworkMessage const& message)
 {
     if (m_mode != eNetworkMode::CLIENT || m_connectionState != eConnectionState::CONNECTED) return false;
 
@@ -973,13 +973,13 @@ bool NetworkSubsystem::SendMessageToServer(sNetworkMessage const& message)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::HasPendingMessages() const
+bool NetworkTCPSubsystem::HasPendingMessages() const
 {
     return !m_incomingMessages.empty();
 }
 
 //----------------------------------------------------------------------------------------------------
-sNetworkMessage NetworkSubsystem::GetNextMessage()
+sNetworkMessage NetworkTCPSubsystem::GetNextMessage()
 {
     if (m_incomingMessages.empty()) return sNetworkMessage{};
 
@@ -989,7 +989,7 @@ sNetworkMessage NetworkSubsystem::GetNextMessage()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::ClearMessageQueue()
+void NetworkTCPSubsystem::ClearMessageQueue()
 {
     m_incomingMessages.clear();
 }
@@ -997,7 +997,7 @@ void NetworkSubsystem::ClearMessageQueue()
 //----------------------------------------------------------------------------------------------------
 // Engage the network adapter and start a network interface instance for this program.
 // Windows Sockets API Version 2.2 (0x00000202)
-void NetworkSubsystem::InitializeWinsock()
+void NetworkTCPSubsystem::InitializeWinsock()
 {
     if (m_winsockInitialized) return;
 
@@ -1010,7 +1010,7 @@ void NetworkSubsystem::InitializeWinsock()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CleanupWinsock()
+void NetworkTCPSubsystem::CleanupWinsock()
 {
     if (m_winsockInitialized)
     {
@@ -1020,7 +1020,7 @@ void NetworkSubsystem::CleanupWinsock()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CreateClientSocket()
+void NetworkTCPSubsystem::CreateClientSocket()
 {
     m_clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (m_clientSocket == INVALID_SOCKET)
@@ -1044,7 +1044,7 @@ void NetworkSubsystem::CreateClientSocket()
 }
 
 //----------------------------------------------------------------------------------------------------
-void NetworkSubsystem::CreateServerSocket()
+void NetworkTCPSubsystem::CreateServerSocket()
 {
     m_listenSocket = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (m_listenSocket == (uintptr_t)INVALID_SOCKET)
@@ -1084,14 +1084,14 @@ void NetworkSubsystem::CreateServerSocket()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::SetSocketNonBlocking(uintptr_t const socket) const
+bool NetworkTCPSubsystem::SetSocketNonBlocking(uintptr_t const socket) const
 {
     unsigned long blockingMode = 1;
     return ioctlsocket(socket, FIONBIO, &blockingMode) == 0;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::ProcessClientMessages()
+bool NetworkTCPSubsystem::ProcessClientMessages()
 {
     // Send queued messages
     while (!m_sendQueue.empty())
@@ -1182,7 +1182,7 @@ bool NetworkSubsystem::ProcessClientMessages()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool NetworkSubsystem::ProcessServerMessages()
+bool NetworkTCPSubsystem::ProcessServerMessages()
 {
     bool constexpr allSuccess = true;
 
