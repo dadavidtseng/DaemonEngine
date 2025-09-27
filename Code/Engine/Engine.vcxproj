@@ -3,565 +3,513 @@
 <!-- Engine.vcxproj - Static Library(.lib) Project Configuration -->
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////// -->
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- PROJECT CONFIGURATIONS -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <ItemGroup Label="ProjectConfigurations">
-        <ProjectConfiguration Include="Debug|Win32">
-            <Configuration>Debug</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|Win32">
-            <Configuration>Release</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Debug|x64">
-            <Configuration>Debug</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|x64">
-            <Configuration>Release</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-    </ItemGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- GLOBAL PROJECT PROPERTIES                                                           -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <PropertyGroup Label="Globals">
-        <VCProjectVersion>17.0</VCProjectVersion>
-        <Keyword>Win32Proj</Keyword>
-        <ProjectGuid>{d80656f3-b024-489f-b7b3-8bf35b25c423}</ProjectGuid>
-        <RootNamespace>Engine</RootNamespace>
-        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-        <ProjectName>Engine</ProjectName>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- PROJECT CONFIGURATIONS -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- GLOBAL PROJECT PROPERTIES                                                           -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{d80656f3-b024-489f-b7b3-8bf35b25c423}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Engine</ProjectName>
+  </PropertyGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- CONFIGURATION-SPECIFIC PROPERTIES -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Debug Win32 Configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <LanguageStandard>stdcpp20</LanguageStandard>
+    <ConformanceMode>true</ConformanceMode>
+  </PropertyGroup>
+  <!-- Release Win32 Configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="ReleaseWin32">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <LanguageStandard>stdcpp20</LanguageStandard>
+    <ConformanceMode>true</ConformanceMode>
+  </PropertyGroup>
+  <!-- Debug x64 Configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="DebugX64">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <LanguageStandard>stdcpp20</LanguageStandard>
+    <ConformanceMode>true</ConformanceMode>
+  </PropertyGroup>
+  <!-- Release x64 Configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="ReleaseX64">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <LanguageStandard>stdcpp20</LanguageStandard>
+    <ConformanceMode>true</ConformanceMode>
+  </PropertyGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- EXTERNAL DEPENDENCIES AND IMPORTS -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Core MSBuild imports - order matters for proper evaluation -->
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
+  <!-- V8 JavaScript Engine integration via local packages -->
+  <!-- Import V8 build configuration from local package location -->
+  <Import Project="../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props" Condition="Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')" />
+  <Import Project="../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props" Condition="Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')" />
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props" />
+  <!-- Property Sheets Integration -->
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)/Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)/Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- OUTPUT DIRECTORIES AND PATHS -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Centralized output management for clean build organization -->
+  <PropertyGroup Label="OutputDirectories">
+    <OutDir>$(SolutionDir)Temporary/$(ProjectName)_$(PlatformShortName)_$(Configuration)/</OutDir>
+    <IntDir>$(SolutionDir)Temporary/$(ProjectName)_$(PlatformShortName)_$(Configuration)/</IntDir>
+    <TargetName>$(ProjectName)_$(PlatformShortName)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- COMPILER AND LINKER CONFIGURATION -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Debug Win32 Configuration Settings -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32Settings">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <!-- Release Win32 Configuration Settings -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="ReleaseWin32Settings">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <!-- Debug x64 Configuration Settings -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="DebugX64Settings">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <!-- Release x64 Configuration Settings -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="ReleaseX64Settings">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- SOURCE FILES - ORGANIZED BY SUBSYSTEM -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <ItemGroup Label="ThirdPartySourceFiles">
+    <!-- Third-Party Library Source Files -->
+    <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp" />
+    <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp" />
+    <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="CoreSubsystemSources">
+    <!-- Core Engine Systems - Foundation layer -->
+    <ClCompile Include="Core/Clock.cpp" />
+    <ClCompile Include="Core/DevConsole.cpp" />
+    <ClCompile Include="Core/EngineCommon.cpp" />
+    <ClCompile Include="Core/ErrorWarningAssert.cpp" />
+    <ClCompile Include="Core/EventSystem.cpp" />
+    <ClCompile Include="Core/FileUtils.cpp" />
+    <ClCompile Include="Core/HeatMaps.cpp" />
+    <ClCompile Include="Core/Job.cpp" />
+    <ClCompile Include="Core/JobSystem.cpp" />
+    <ClCompile Include="Core/JobWorkerThread.cpp" />
+    <ClCompile Include="Core/LogSubsystem.cpp" />
+    <ClCompile Include="Core/NamedStrings.cpp" />
+    <ClCompile Include="Core/Rgba8.cpp" />
+    <ClCompile Include="Core/SimpleTriangleFont.cpp" />
+    <ClCompile Include="Core/StringUtils.cpp" />
+    <ClCompile Include="Core/Time.cpp" />
+    <ClCompile Include="Core/Timer.cpp" />
+    <ClCompile Include="Core/XmlUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="MathSubsystemSources">
+    <!-- Mathematics Library - Optimized for game development -->
+    <ClCompile Include="Math/AABB2.cpp" />
+    <ClCompile Include="Math/AABB3.cpp" />
+    <ClCompile Include="Math/Capsule2.cpp" />
+    <ClCompile Include="Math/Curve2D.cpp" />
+    <ClCompile Include="Math/Cylinder3.cpp" />
+    <ClCompile Include="Math/Disc2.cpp" />
+    <ClCompile Include="Math/EulerAngles.cpp" />
+    <ClCompile Include="Math/FloatRange.cpp" />
+    <ClCompile Include="Math/IntRange.cpp" />
+    <ClCompile Include="Math/IntVec2.cpp" />
+    <ClCompile Include="Math/IntVec3.cpp" />
+    <ClCompile Include="Math/LineSegment2.cpp" />
+    <ClCompile Include="Math/Mat44.cpp" />
+    <ClCompile Include="Math/MathUtils.cpp" />
+    <ClCompile Include="Math/OBB2.cpp" />
+    <ClCompile Include="Math/OBB3.cpp" />
+    <ClCompile Include="Math/Plane2.cpp" />
+    <ClCompile Include="Math/Plane3.cpp" />
+    <ClCompile Include="Math/RandomNumberGenerator.cpp" />
+    <ClCompile Include="Math/RaycastUtils.cpp" />
+    <ClCompile Include="Math/Sphere3.cpp" />
+    <ClCompile Include="Math/Triangle2.cpp" />
+    <ClCompile Include="Math/Vec2.cpp" />
+    <ClCompile Include="Math/Vec3.cpp" />
+    <ClCompile Include="Math/Vec4.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="RendererSubsystemSources">
+    <!-- Rendering System - DirectX-based graphics pipeline -->
+    <ClCompile Include="Network\NetworkWebsocketSubsystem.cpp" />
+    <ClCompile Include="Renderer/BitmapFont.cpp" />
+    <ClCompile Include="Renderer/Camera.cpp" />
+    <ClCompile Include="Renderer/ConstantBuffer.cpp" />
+    <ClCompile Include="Renderer/DebugRenderSystem.cpp" />
+    <ClCompile Include="Renderer/Image.cpp" />
+    <ClCompile Include="Renderer/IndexBuffer.cpp" />
+    <ClCompile Include="Renderer/Light.cpp" />
+    <ClCompile Include="Renderer/LightSubsystem.cpp" />
+    <ClCompile Include="Renderer/RenderCommon.cpp" />
+    <ClCompile Include="Renderer/Renderer.cpp" />
+    <ClCompile Include="Renderer/Shader.cpp" />
+    <ClCompile Include="Renderer/SpriteAnimDefinition.cpp" />
+    <ClCompile Include="Renderer/SpriteDefinition.cpp" />
+    <ClCompile Include="Renderer/SpriteSheet.cpp" />
+    <ClCompile Include="Renderer/Texture.cpp" />
+    <ClCompile Include="Renderer/VertexBuffer.cpp" />
+    <ClCompile Include="Renderer/VertexUtils.cpp" />
+    <ClCompile Include="Renderer/Vertex_PCU.cpp" />
+    <ClCompile Include="Renderer/Vertex_PCUTBN.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="InputSubsystemSources">
+    <!-- Input Handling System - Multi-device support -->
+    <ClCompile Include="Input/AnalogJoystick.cpp" />
+    <ClCompile Include="Input/InputScriptInterface.cpp" />
+    <ClCompile Include="Input/InputSystem.cpp" />
+    <ClCompile Include="Input/KeyButtonState.cpp" />
+    <ClCompile Include="Input/XboxController.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="AudioSubsystemSources">
+    <!-- Audio System - FMOD-based audio engine -->
+    <ClCompile Include="Audio/AudioSystem.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="ResourceSubsystemSources">
+    <!-- Resource Management System - Asset pipeline -->
+    <ClCompile Include="Resource/ResourceCache.cpp" />
+    <ClCompile Include="Resource/ResourceCommon.cpp" />
+    <ClCompile Include="Resource/ResourceHandle.cpp" />
+    <ClCompile Include="Resource/ResourceSubsystem.cpp" />
+    <!-- Resource Loaders -->
+    <ClCompile Include="Resource/AnimationLoader.cpp" />
+    <ClCompile Include="Resource/AudioLoader.cpp" />
+    <ClCompile Include="Resource/FontLoader.cpp" />
+    <ClCompile Include="Resource/IResourceLoader.cpp" />
+    <ClCompile Include="Resource/MaterialLoader.cpp" />
+    <ClCompile Include="Resource/ModelLoader.cpp" />
+    <ClCompile Include="Resource/ObjModelLoader.cpp" />
+    <ClCompile Include="Resource/ShaderLoader.cpp" />
+    <ClCompile Include="Resource/TextureLoader.cpp" />
+    <!-- Resource Types -->
+    <ClCompile Include="Resource/AnimationResource.cpp" />
+    <ClCompile Include="Resource/AudioSource.cpp" />
+    <ClCompile Include="Resource/FontResource.cpp" />
+    <ClCompile Include="Resource/IResource.cpp" />
+    <ClCompile Include="Resource/MaterialResource.cpp" />
+    <ClCompile Include="Resource/ModelResource.cpp" />
+    <ClCompile Include="Resource/ShaderResource.cpp" />
+    <ClCompile Include="Resource/TextureResource.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="PlatformSubsystemSources">
+    <!-- Platform Abstraction Layer -->
+    <ClCompile Include="Platform/Window.cpp" />
+    <ClCompile Include="Platform/WindowCommon.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="NetworkSubsystemSources">
+    <!-- Network Subsystem -->
+    <ClCompile Include="Network/NetworkCommon.cpp" />
+    <ClCompile Include="Network\NetworkTCPSubsystem.cpp" />
+  </ItemGroup>
+  <ItemGroup Label="ScriptingSubsystemSources">
+    <!-- V8 JavaScript Scripting System - Enterprise integration -->
+    <ClCompile Include="Scripting/IScriptableObject.cpp" />
+    <ClCompile Include="Scripting/ScriptTypeExtractor.cpp" />
+    <ClCompile Include="Scripting/ScriptCommon.cpp" />
+    <ClCompile Include="Scripting/ScriptReloader.cpp" />
+    <ClCompile Include="Scripting/FileWatcher.cpp" />
+    <ClCompile Include="Scripting/ScriptSubsystem.cpp" />
+  </ItemGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- HEADER FILES - ORGANIZED BY SUBSYSTEM -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <ItemGroup Label="ThirdPartyHeaders">
+    <!-- Third-Party Library Headers -->
+    <ClInclude Include="../ThirdParty/fmod/fmod.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod.hpp" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_codec.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_common.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_dsp.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_dsp_effects.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_errors.h" />
+    <ClInclude Include="../ThirdParty/fmod/fmod_output.h" />
+    <ClInclude Include="../ThirdParty/Noise/RawNoise.hpp" />
+    <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp" />
+    <ClInclude Include="../ThirdParty/stb/stb_image.h" />
+    <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h" />
+  </ItemGroup>
+  <ItemGroup Label="CoreSubsystemHeaders">
+    <!-- Core Engine System Headers -->
+    <ClInclude Include="Core/Clock.hpp" />
+    <ClInclude Include="Core/DevConsole.hpp" />
+    <ClInclude Include="Core/EngineCommon.hpp" />
+    <ClInclude Include="Core/ErrorWarningAssert.hpp" />
+    <ClInclude Include="Core/EventSystem.hpp" />
+    <ClInclude Include="Core/FileUtils.hpp" />
+    <ClInclude Include="Core/HeatMaps.hpp" />
+    <ClInclude Include="Core/Job.hpp" />
+    <ClInclude Include="Core/JobSystem.hpp" />
+    <ClInclude Include="Core/JobWorkerThread.hpp" />
+    <ClInclude Include="Core/LogSubsystem.hpp" />
+    <ClInclude Include="Core/NamedStrings.hpp" />
+    <ClInclude Include="Core/Rgba8.hpp" />
+    <ClInclude Include="Core/SimpleTriangleFont.hpp" />
+    <ClInclude Include="Core/StringUtils.hpp" />
+    <ClInclude Include="Core/Time.hpp" />
+    <ClInclude Include="Core/Timer.hpp" />
+    <ClInclude Include="Core/XmlUtils.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="MathSubsystemHeaders">
+    <!-- Mathematics Library Headers -->
+    <ClInclude Include="Math/AABB2.hpp" />
+    <ClInclude Include="Math/AABB3.hpp" />
+    <ClInclude Include="Math/Capsule2.hpp" />
+    <ClInclude Include="Math/Curve2D.hpp" />
+    <ClInclude Include="Math/Cylinder3.hpp" />
+    <ClInclude Include="Math/Disc2.hpp" />
+    <ClInclude Include="Math/EulerAngles.hpp" />
+    <ClInclude Include="Math/FloatRange.hpp" />
+    <ClInclude Include="Math/IntRange.hpp" />
+    <ClInclude Include="Math/IntVec2.hpp" />
+    <ClInclude Include="Math/IntVec3.hpp" />
+    <ClInclude Include="Math/LineSegment2.hpp" />
+    <ClInclude Include="Math/Mat44.hpp" />
+    <ClInclude Include="Math/MathUtils.hpp" />
+    <ClInclude Include="Math/OBB2.hpp" />
+    <ClInclude Include="Math/OBB3.hpp" />
+    <ClInclude Include="Math/Plane2.hpp" />
+    <ClInclude Include="Math/Plane3.hpp" />
+    <ClInclude Include="Math/RandomNumberGenerator.hpp" />
+    <ClInclude Include="Math/RaycastUtils.hpp" />
+    <ClInclude Include="Math/Sphere3.hpp" />
+    <ClInclude Include="Math/Triangle2.hpp" />
+    <ClInclude Include="Math/Vec2.hpp" />
+    <ClInclude Include="Math/Vec3.hpp" />
+    <ClInclude Include="Math/Vec4.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="RendererSubsystemHeaders">
+    <!-- Rendering System Headers -->
+    <ClInclude Include="Network\NetworkWebsocketSubsystem.hpp" />
+    <ClInclude Include="Renderer/BitmapFont.hpp" />
+    <ClInclude Include="Renderer/Camera.hpp" />
+    <ClInclude Include="Renderer/ConstantBuffer.hpp" />
+    <ClInclude Include="Renderer/DebugRenderSystem.hpp" />
+    <ClInclude Include="Renderer/DefaultShader.hpp" />
+    <ClInclude Include="Renderer/Image.hpp" />
+    <ClInclude Include="Renderer/IndexBuffer.hpp" />
+    <ClInclude Include="Renderer/Light.hpp" />
+    <ClInclude Include="Renderer/LightSubsystem.hpp" />
+    <ClInclude Include="Renderer/RenderCommon.hpp" />
+    <ClInclude Include="Renderer/Renderer.hpp" />
+    <ClInclude Include="Renderer/Shader.hpp" />
+    <ClInclude Include="Renderer/SpriteAnimDefinition.hpp" />
+    <ClInclude Include="Renderer/SpriteDefinition.hpp" />
+    <ClInclude Include="Renderer/SpriteSheet.hpp" />
+    <ClInclude Include="Renderer/Texture.hpp" />
+    <ClInclude Include="Renderer/VertexBuffer.hpp" />
+    <ClInclude Include="Renderer/VertexUtils.hpp" />
+    <ClInclude Include="Renderer/Vertex_PCU.hpp" />
+    <ClInclude Include="Renderer/Vertex_PCUTBN.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="InputSubsystemHeaders">
+    <!-- Input Handling System Headers -->
+    <ClInclude Include="Input/AnalogJoystick.hpp" />
+    <ClInclude Include="Input/InputScriptInterface.hpp" />
+    <ClInclude Include="Input/InputSystem.hpp" />
+    <ClInclude Include="Input/KeyButtonState.hpp" />
+    <ClInclude Include="Input/XboxController.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="AudioSubsystemHeaders">
+    <!-- Audio System Headers -->
+    <ClInclude Include="Audio/AudioSystem.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="ResourceSubsystemHeaders">
+    <!-- Resource Management System Headers -->
+    <ClInclude Include="Resource/ResourceCache.hpp" />
+    <ClInclude Include="Resource/ResourceCommon.hpp" />
+    <ClInclude Include="Resource/ResourceHandle.hpp" />
+    <ClInclude Include="Resource/ResourceSubsystem.hpp" />
+    <!-- Resource Loader Headers -->
+    <ClInclude Include="Resource/AnimationLoader.hpp" />
+    <ClInclude Include="Resource/AudioLoader.hpp" />
+    <ClInclude Include="Resource/FontLoader.hpp" />
+    <ClInclude Include="Resource/IResourceLoader.hpp" />
+    <ClInclude Include="Resource/MaterialLoader.hpp" />
+    <ClInclude Include="Resource/ModelLoader.hpp" />
+    <ClInclude Include="Resource/ObjModelLoader.hpp" />
+    <ClInclude Include="Resource/ShaderLoader.hpp" />
+    <ClInclude Include="Resource/TextureLoader.hpp" />
+    <!-- Resource Type Headers -->
+    <ClInclude Include="Resource/AnimationResource.hpp" />
+    <ClInclude Include="Resource/AudioSource.hpp" />
+    <ClInclude Include="Resource/FontResource.hpp" />
+    <ClInclude Include="Resource/IResource.hpp" />
+    <ClInclude Include="Resource/MaterialResource.hpp" />
+    <ClInclude Include="Resource/ModelResource.hpp" />
+    <ClInclude Include="Resource/ShaderResource.hpp" />
+    <ClInclude Include="Resource/TextureResource.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="PlatformSubsystemHeaders">
+    <!-- Platform Abstraction Layer Headers -->
+    <ClInclude Include="Platform/Window.hpp" />
+    <ClInclude Include="Platform/WindowCommon.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="NetworkSubsystemHeaders">
+    <!-- Network Subsystem Headers -->
+    <ClInclude Include="Network/NetworkCommon.hpp" />
+    <ClInclude Include="Network\NetworkTCPSubsystem.hpp" />
+  </ItemGroup>
+  <ItemGroup Label="ScriptingSubsystemHeaders">
+    <!-- V8 JavaScript Scripting System Headers -->
+    <ClInclude Include="Scripting/IScriptableObject.hpp" />
+    <ClInclude Include="Scripting/ScriptTypeExtractor.hpp" />
+    <ClInclude Include="Scripting/ScriptCommon.hpp" />
+    <ClInclude Include="Scripting/ScriptSubsystem.hpp" />
+    <ClInclude Include="Scripting/FileWatcher.hpp" />
+    <ClInclude Include="Scripting/ScriptReloader.hpp" />
+  </ItemGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- NUGET PACKAGE DEPENDENCIES -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Modern PackageReference approach for V8 JavaScript Engine -->
+  <!-- Engine owns these dependencies as it contains the ScriptSubsystem implementation -->
+  <ItemGroup Label="PackageDependencies">
+    <PackageReference Include="v8-v143-x64" Version="13.0.245.25">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="v8.redist-v143-x64" Version="13.0.245.25">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- BUILD TARGETS AND VALIDATION -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <!-- Import NuGet generated targets for PackageReference -->
+    <Import Project="$(MSBuildThisFileDirectory)$(MSBuildProjectName).targets" Condition="Exists('$(MSBuildThisFileDirectory)$(MSBuildProjectName).targets')" />
+  </ImportGroup>
+  <!-- V8 NuGet Package Validation -->
+  <!-- Validate local V8 package imports -->
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>V8 NuGet packages are missing. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- CONFIGURATION-SPECIFIC PROPERTIES -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-
-    <!-- Debug Win32 Configuration -->
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>true</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <CharacterSet>Unicode</CharacterSet>
-        <LanguageStandard>stdcpp20</LanguageStandard>
-        <ConformanceMode>true</ConformanceMode>
-    </PropertyGroup>
-
-    <!-- Release Win32 Configuration -->
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="ReleaseWin32">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>false</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <CharacterSet>Unicode</CharacterSet>
-        <LanguageStandard>stdcpp20</LanguageStandard>
-        <ConformanceMode>true</ConformanceMode>
-    </PropertyGroup>
-
-    <!-- Debug x64 Configuration -->
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="DebugX64">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>true</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <CharacterSet>Unicode</CharacterSet>
-        <LanguageStandard>stdcpp20</LanguageStandard>
-        <ConformanceMode>true</ConformanceMode>
-    </PropertyGroup>
-
-    <!-- Release x64 Configuration -->
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="ReleaseX64">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>false</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <CharacterSet>Unicode</CharacterSet>
-        <LanguageStandard>stdcpp20</LanguageStandard>
-        <ConformanceMode>true</ConformanceMode>
-    </PropertyGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- EXTERNAL DEPENDENCIES AND IMPORTS -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-
-    <!-- Core MSBuild imports - order matters for proper evaluation -->
-    <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props"/>
-    
-    <!-- V8 JavaScript Engine integration via local packages -->
-    <!-- Import V8 build configuration from local package location -->
-    <Import Project="../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props"
-            Condition="Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')"/>
-    <Import Project="../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props"
-            Condition="Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')"/>
-    
-    <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props"/>
-
-    <!-- Property Sheets Integration -->
-    <ImportGroup Label="ExtensionSettings">
-    </ImportGroup>
-    <ImportGroup Label="Shared">
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets">
-        <Import Project="$(UserRootDir)/Microsoft.Cpp.$(Platform).user.props"
-                Condition="exists('$(UserRootDir)/Microsoft.Cpp.$(Platform).user.props')"
-                Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-
-    <PropertyGroup Label="UserMacros"/>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- OUTPUT DIRECTORIES AND PATHS -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-
-    <!-- Centralized output management for clean build organization -->
-    <PropertyGroup Label="OutputDirectories">
-        <OutDir>$(SolutionDir)Temporary/$(ProjectName)_$(PlatformShortName)_$(Configuration)/</OutDir>
-        <IntDir>$(SolutionDir)Temporary/$(ProjectName)_$(PlatformShortName)_$(Configuration)/</IntDir>
-        <TargetName>$(ProjectName)_$(PlatformShortName)_$(Configuration)</TargetName>
-    </PropertyGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- COMPILER AND LINKER CONFIGURATION -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-
-    <!-- Debug Win32 Configuration Settings -->
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32Settings">
-        <ClCompile>
-            <WarningLevel>Level4</WarningLevel>
-            <SDLCheck>true</SDLCheck>
-            <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-            <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-        </ClCompile>
-        <Link>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-
-    <!-- Release Win32 Configuration Settings -->
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="ReleaseWin32Settings">
-        <ClCompile>
-            <WarningLevel>Level4</WarningLevel>
-            <SDLCheck>true</SDLCheck>
-            <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-            <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-        </ClCompile>
-        <Link>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <OptimizeReferences>true</OptimizeReferences>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-
-    <!-- Debug x64 Configuration Settings -->
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="DebugX64Settings">
-        <ClCompile>
-            <WarningLevel>Level4</WarningLevel>
-            <SDLCheck>true</SDLCheck>
-            <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-            <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-        </ClCompile>
-        <Link>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-
-    <!-- Release x64 Configuration Settings -->
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="ReleaseX64Settings">
-        <ClCompile>
-            <WarningLevel>Level4</WarningLevel>
-            <SDLCheck>true</SDLCheck>
-            <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-            <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-        </ClCompile>
-        <Link>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <OptimizeReferences>true</OptimizeReferences>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- SOURCE FILES - ORGANIZED BY SUBSYSTEM -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <ItemGroup Label="ThirdPartySourceFiles">
-        <!-- Third-Party Library Source Files -->
-        <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp"/>
-        <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp"/>
-        <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="CoreSubsystemSources">
-        <!-- Core Engine Systems - Foundation layer -->
-        <ClCompile Include="Core/Clock.cpp"/>
-        <ClCompile Include="Core/DevConsole.cpp"/>
-        <ClCompile Include="Core/EngineCommon.cpp"/>
-        <ClCompile Include="Core/ErrorWarningAssert.cpp"/>
-        <ClCompile Include="Core/EventSystem.cpp"/>
-        <ClCompile Include="Core/FileUtils.cpp"/>
-        <ClCompile Include="Core/HeatMaps.cpp"/>
-        <ClCompile Include="Core/Job.cpp"/>
-        <ClCompile Include="Core/JobSystem.cpp"/>
-        <ClCompile Include="Core/JobWorkerThread.cpp"/>
-        <ClCompile Include="Core/LogSubsystem.cpp"/>
-        <ClCompile Include="Core/NamedStrings.cpp"/>
-        <ClCompile Include="Core/Rgba8.cpp"/>
-        <ClCompile Include="Core/SimpleTriangleFont.cpp"/>
-        <ClCompile Include="Core/StringUtils.cpp"/>
-        <ClCompile Include="Core/Time.cpp"/>
-        <ClCompile Include="Core/Timer.cpp"/>
-        <ClCompile Include="Core/XmlUtils.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="MathSubsystemSources">
-        <!-- Mathematics Library - Optimized for game development -->
-        <ClCompile Include="Math/AABB2.cpp"/>
-        <ClCompile Include="Math/AABB3.cpp"/>
-        <ClCompile Include="Math/Capsule2.cpp"/>
-        <ClCompile Include="Math/Curve2D.cpp"/>
-        <ClCompile Include="Math/Cylinder3.cpp"/>
-        <ClCompile Include="Math/Disc2.cpp"/>
-        <ClCompile Include="Math/EulerAngles.cpp"/>
-        <ClCompile Include="Math/FloatRange.cpp"/>
-        <ClCompile Include="Math/IntRange.cpp"/>
-        <ClCompile Include="Math/IntVec2.cpp"/>
-        <ClCompile Include="Math/IntVec3.cpp"/>
-        <ClCompile Include="Math/LineSegment2.cpp"/>
-        <ClCompile Include="Math/Mat44.cpp"/>
-        <ClCompile Include="Math/MathUtils.cpp"/>
-        <ClCompile Include="Math/OBB2.cpp"/>
-        <ClCompile Include="Math/OBB3.cpp"/>
-        <ClCompile Include="Math/Plane2.cpp"/>
-        <ClCompile Include="Math/Plane3.cpp"/>
-        <ClCompile Include="Math/RandomNumberGenerator.cpp"/>
-        <ClCompile Include="Math/RaycastUtils.cpp"/>
-        <ClCompile Include="Math/Sphere3.cpp"/>
-        <ClCompile Include="Math/Triangle2.cpp"/>
-        <ClCompile Include="Math/Vec2.cpp"/>
-        <ClCompile Include="Math/Vec3.cpp"/>
-        <ClCompile Include="Math/Vec4.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="RendererSubsystemSources">
-        <!-- Rendering System - DirectX-based graphics pipeline -->
-        <ClCompile Include="Renderer/BitmapFont.cpp"/>
-        <ClCompile Include="Renderer/Camera.cpp"/>
-        <ClCompile Include="Renderer/ConstantBuffer.cpp"/>
-        <ClCompile Include="Renderer/DebugRenderSystem.cpp"/>
-        <ClCompile Include="Renderer/Image.cpp"/>
-        <ClCompile Include="Renderer/IndexBuffer.cpp"/>
-        <ClCompile Include="Renderer/Light.cpp"/>
-        <ClCompile Include="Renderer/LightSubsystem.cpp"/>
-        <ClCompile Include="Renderer/RenderCommon.cpp"/>
-        <ClCompile Include="Renderer/Renderer.cpp"/>
-        <ClCompile Include="Renderer/Shader.cpp"/>
-        <ClCompile Include="Renderer/SpriteAnimDefinition.cpp"/>
-        <ClCompile Include="Renderer/SpriteDefinition.cpp"/>
-        <ClCompile Include="Renderer/SpriteSheet.cpp"/>
-        <ClCompile Include="Renderer/Texture.cpp"/>
-        <ClCompile Include="Renderer/VertexBuffer.cpp"/>
-        <ClCompile Include="Renderer/VertexUtils.cpp"/>
-        <ClCompile Include="Renderer/Vertex_PCU.cpp"/>
-        <ClCompile Include="Renderer/Vertex_PCUTBN.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="InputSubsystemSources">
-        <!-- Input Handling System - Multi-device support -->
-        <ClCompile Include="Input/AnalogJoystick.cpp"/>
-        <ClCompile Include="Input/InputScriptInterface.cpp"/>
-        <ClCompile Include="Input/InputSystem.cpp"/>
-        <ClCompile Include="Input/KeyButtonState.cpp"/>
-        <ClCompile Include="Input/XboxController.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="AudioSubsystemSources">
-        <!-- Audio System - FMOD-based audio engine -->
-        <ClCompile Include="Audio/AudioSystem.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="ResourceSubsystemSources">
-        <!-- Resource Management System - Asset pipeline -->
-        <ClCompile Include="Resource/ResourceCache.cpp"/>
-        <ClCompile Include="Resource/ResourceCommon.cpp"/>
-        <ClCompile Include="Resource/ResourceHandle.cpp"/>
-        <ClCompile Include="Resource/ResourceSubsystem.cpp"/>
-        <!-- Resource Loaders -->
-        <ClCompile Include="Resource/AnimationLoader.cpp"/>
-        <ClCompile Include="Resource/AudioLoader.cpp"/>
-        <ClCompile Include="Resource/FontLoader.cpp"/>
-        <ClCompile Include="Resource/IResourceLoader.cpp"/>
-        <ClCompile Include="Resource/MaterialLoader.cpp"/>
-        <ClCompile Include="Resource/ModelLoader.cpp"/>
-        <ClCompile Include="Resource/ObjModelLoader.cpp"/>
-        <ClCompile Include="Resource/ShaderLoader.cpp"/>
-        <ClCompile Include="Resource/TextureLoader.cpp"/>
-        <!-- Resource Types -->
-        <ClCompile Include="Resource/AnimationResource.cpp"/>
-        <ClCompile Include="Resource/AudioSource.cpp"/>
-        <ClCompile Include="Resource/FontResource.cpp"/>
-        <ClCompile Include="Resource/IResource.cpp"/>
-        <ClCompile Include="Resource/MaterialResource.cpp"/>
-        <ClCompile Include="Resource/ModelResource.cpp"/>
-        <ClCompile Include="Resource/ShaderResource.cpp"/>
-        <ClCompile Include="Resource/TextureResource.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="PlatformSubsystemSources">
-        <!-- Platform Abstraction Layer -->
-        <ClCompile Include="Platform/Window.cpp"/>
-        <ClCompile Include="Platform/WindowCommon.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="NetworkSubsystemSources">
-        <!-- Network Subsystem -->
-        <ClCompile Include="Network/NetworkCommon.cpp"/>
-        <ClCompile Include="Network/NetworkSubsystem.cpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="ScriptingSubsystemSources">
-        <!-- V8 JavaScript Scripting System - Enterprise integration -->
-        <ClCompile Include="Scripting/ChromeDevToolsServer.cpp"/>
-        <ClCompile Include="Scripting/IScriptableObject.cpp"/>
-        <ClCompile Include="Scripting/ScriptTypeExtractor.cpp"/>
-        <ClCompile Include="Scripting/ScriptCommon.cpp"/>
-        <ClCompile Include="Scripting/ScriptReloader.cpp"/>
-        <ClCompile Include="Scripting/FileWatcher.cpp"/>
-        <ClCompile Include="Scripting/ScriptSubsystem.cpp"/>
-    </ItemGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- HEADER FILES - ORGANIZED BY SUBSYSTEM -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <ItemGroup Label="ThirdPartyHeaders">
-        <!-- Third-Party Library Headers -->
-        <ClInclude Include="../ThirdParty/fmod/fmod.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod.hpp"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_codec.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_common.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_dsp.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_dsp_effects.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_errors.h"/>
-        <ClInclude Include="../ThirdParty/fmod/fmod_output.h"/>
-        <ClInclude Include="../ThirdParty/Noise/RawNoise.hpp"/>
-        <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp"/>
-        <ClInclude Include="../ThirdParty/stb/stb_image.h"/>
-        <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h"/>
-    </ItemGroup>
-
-    <ItemGroup Label="CoreSubsystemHeaders">
-        <!-- Core Engine System Headers -->
-        <ClInclude Include="Core/Clock.hpp"/>
-        <ClInclude Include="Core/DevConsole.hpp"/>
-        <ClInclude Include="Core/EngineCommon.hpp"/>
-        <ClInclude Include="Core/ErrorWarningAssert.hpp"/>
-        <ClInclude Include="Core/EventSystem.hpp"/>
-        <ClInclude Include="Core/FileUtils.hpp"/>
-        <ClInclude Include="Core/HeatMaps.hpp"/>
-        <ClInclude Include="Core/Job.hpp"/>
-        <ClInclude Include="Core/JobSystem.hpp"/>
-        <ClInclude Include="Core/JobWorkerThread.hpp"/>
-        <ClInclude Include="Core/LogSubsystem.hpp"/>
-        <ClInclude Include="Core/NamedStrings.hpp"/>
-        <ClInclude Include="Core/Rgba8.hpp"/>
-        <ClInclude Include="Core/SimpleTriangleFont.hpp"/>
-        <ClInclude Include="Core/StringUtils.hpp"/>
-        <ClInclude Include="Core/Time.hpp"/>
-        <ClInclude Include="Core/Timer.hpp"/>
-        <ClInclude Include="Core/XmlUtils.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="MathSubsystemHeaders">
-        <!-- Mathematics Library Headers -->
-        <ClInclude Include="Math/AABB2.hpp"/>
-        <ClInclude Include="Math/AABB3.hpp"/>
-        <ClInclude Include="Math/Capsule2.hpp"/>
-        <ClInclude Include="Math/Curve2D.hpp"/>
-        <ClInclude Include="Math/Cylinder3.hpp"/>
-        <ClInclude Include="Math/Disc2.hpp"/>
-        <ClInclude Include="Math/EulerAngles.hpp"/>
-        <ClInclude Include="Math/FloatRange.hpp"/>
-        <ClInclude Include="Math/IntRange.hpp"/>
-        <ClInclude Include="Math/IntVec2.hpp"/>
-        <ClInclude Include="Math/IntVec3.hpp"/>
-        <ClInclude Include="Math/LineSegment2.hpp"/>
-        <ClInclude Include="Math/Mat44.hpp"/>
-        <ClInclude Include="Math/MathUtils.hpp"/>
-        <ClInclude Include="Math/OBB2.hpp"/>
-        <ClInclude Include="Math/OBB3.hpp"/>
-        <ClInclude Include="Math/Plane2.hpp"/>
-        <ClInclude Include="Math/Plane3.hpp"/>
-        <ClInclude Include="Math/RandomNumberGenerator.hpp"/>
-        <ClInclude Include="Math/RaycastUtils.hpp"/>
-        <ClInclude Include="Math/Sphere3.hpp"/>
-        <ClInclude Include="Math/Triangle2.hpp"/>
-        <ClInclude Include="Math/Vec2.hpp"/>
-        <ClInclude Include="Math/Vec3.hpp"/>
-        <ClInclude Include="Math/Vec4.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="RendererSubsystemHeaders">
-        <!-- Rendering System Headers -->
-        <ClInclude Include="Renderer/BitmapFont.hpp"/>
-        <ClInclude Include="Renderer/Camera.hpp"/>
-        <ClInclude Include="Renderer/ConstantBuffer.hpp"/>
-        <ClInclude Include="Renderer/DebugRenderSystem.hpp"/>
-        <ClInclude Include="Renderer/DefaultShader.hpp"/>
-        <ClInclude Include="Renderer/Image.hpp"/>
-        <ClInclude Include="Renderer/IndexBuffer.hpp"/>
-        <ClInclude Include="Renderer/Light.hpp"/>
-        <ClInclude Include="Renderer/LightSubsystem.hpp"/>
-        <ClInclude Include="Renderer/RenderCommon.hpp"/>
-        <ClInclude Include="Renderer/Renderer.hpp"/>
-        <ClInclude Include="Renderer/Shader.hpp"/>
-        <ClInclude Include="Renderer/SpriteAnimDefinition.hpp"/>
-        <ClInclude Include="Renderer/SpriteDefinition.hpp"/>
-        <ClInclude Include="Renderer/SpriteSheet.hpp"/>
-        <ClInclude Include="Renderer/Texture.hpp"/>
-        <ClInclude Include="Renderer/VertexBuffer.hpp"/>
-        <ClInclude Include="Renderer/VertexUtils.hpp"/>
-        <ClInclude Include="Renderer/Vertex_PCU.hpp"/>
-        <ClInclude Include="Renderer/Vertex_PCUTBN.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="InputSubsystemHeaders">
-        <!-- Input Handling System Headers -->
-        <ClInclude Include="Input/AnalogJoystick.hpp"/>
-        <ClInclude Include="Input/InputScriptInterface.hpp"/>
-        <ClInclude Include="Input/InputSystem.hpp"/>
-        <ClInclude Include="Input/KeyButtonState.hpp"/>
-        <ClInclude Include="Input/XboxController.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="AudioSubsystemHeaders">
-        <!-- Audio System Headers -->
-        <ClInclude Include="Audio/AudioSystem.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="ResourceSubsystemHeaders">
-        <!-- Resource Management System Headers -->
-        <ClInclude Include="Resource/ResourceCache.hpp"/>
-        <ClInclude Include="Resource/ResourceCommon.hpp"/>
-        <ClInclude Include="Resource/ResourceHandle.hpp"/>
-        <ClInclude Include="Resource/ResourceSubsystem.hpp"/>
-        <!-- Resource Loader Headers -->
-        <ClInclude Include="Resource/AnimationLoader.hpp"/>
-        <ClInclude Include="Resource/AudioLoader.hpp"/>
-        <ClInclude Include="Resource/FontLoader.hpp"/>
-        <ClInclude Include="Resource/IResourceLoader.hpp"/>
-        <ClInclude Include="Resource/MaterialLoader.hpp"/>
-        <ClInclude Include="Resource/ModelLoader.hpp"/>
-        <ClInclude Include="Resource/ObjModelLoader.hpp"/>
-        <ClInclude Include="Resource/ShaderLoader.hpp"/>
-        <ClInclude Include="Resource/TextureLoader.hpp"/>
-        <!-- Resource Type Headers -->
-        <ClInclude Include="Resource/AnimationResource.hpp"/>
-        <ClInclude Include="Resource/AudioSource.hpp"/>
-        <ClInclude Include="Resource/FontResource.hpp"/>
-        <ClInclude Include="Resource/IResource.hpp"/>
-        <ClInclude Include="Resource/MaterialResource.hpp"/>
-        <ClInclude Include="Resource/ModelResource.hpp"/>
-        <ClInclude Include="Resource/ShaderResource.hpp"/>
-        <ClInclude Include="Resource/TextureResource.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="PlatformSubsystemHeaders">
-        <!-- Platform Abstraction Layer Headers -->
-        <ClInclude Include="Platform/Window.hpp"/>
-        <ClInclude Include="Platform/WindowCommon.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="NetworkSubsystemHeaders">
-        <!-- Network Subsystem Headers -->
-        <ClInclude Include="Network/NetworkCommon.hpp"/>
-        <ClInclude Include="Network/NetworkSubsystem.hpp"/>
-    </ItemGroup>
-
-    <ItemGroup Label="ScriptingSubsystemHeaders">
-        <!-- V8 JavaScript Scripting System Headers -->
-        <ClInclude Include="Scripting/ChromeDevToolsServer.hpp"/>
-        <ClInclude Include="Scripting/IScriptableObject.hpp"/>
-        <ClInclude Include="Scripting/ScriptTypeExtractor.hpp"/>
-        <ClInclude Include="Scripting/ScriptCommon.hpp"/>
-        <ClInclude Include="Scripting/ScriptSubsystem.hpp"/>
-        <ClInclude Include="Scripting/FileWatcher.hpp"/>
-        <ClInclude Include="Scripting/ScriptReloader.hpp"/>
-    </ItemGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- NUGET PACKAGE DEPENDENCIES -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-
-    <!-- Modern PackageReference approach for V8 JavaScript Engine -->
-    <!-- Engine owns these dependencies as it contains the ScriptSubsystem implementation -->
-    <ItemGroup Label="PackageDependencies">
-        <PackageReference Include="v8-v143-x64" Version="13.0.245.25">
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="v8.redist-v143-x64" Version="13.0.245.25">
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-    </ItemGroup>
-
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <!-- BUILD TARGETS AND VALIDATION -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-    <Import Project="$(VCTargetsPath)/Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-        <!-- Import NuGet generated targets for PackageReference -->
-        <Import Project="$(MSBuildThisFileDirectory)$(MSBuildProjectName).targets" 
-                Condition="Exists('$(MSBuildThisFileDirectory)$(MSBuildProjectName).targets')" />
-    </ImportGroup>
-
-    <!-- V8 NuGet Package Validation -->
-    <!-- Validate local V8 package imports -->
-    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-        <PropertyGroup>
-            <ErrorText>V8 NuGet packages are missing. The missing file is {0}.</ErrorText>
-        </PropertyGroup>
-        <!-- Check for local package imports -->
-        <Error Condition="!Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')"
-               Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props'))"/>
-        <Error Condition="!Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')"
-               Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props'))"/>
-        <Message Text="V8 JavaScript Engine packages loaded from local packages directory" Importance="normal"/>
-    </Target>
-
-    <!-- Custom Build Information Target -->
-    <Target Name="ShowBuildInfo" BeforeTargets="Build">
-        <Message Text="Building Engine Library - Configuration: $(Configuration), Platform: $(Platform)" Importance="high"/>
-        <Message Text="Output: $(TargetPath)" Importance="normal"/>
-    </Target>
+    <!-- Check for local package imports -->
+    <Error Condition="!Exists('../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props')" Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8.redist-v143-x64.13.0.245.25/build/native/v8.redist-v143-x64.props'))" />
+    <Error Condition="!Exists('../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props')" Text="$([System.String]::Format('$(ErrorText)', '../ThirdParty/packages/v8-v143-x64.13.0.245.25/build/native/v8-v143-x64.props'))" />
+    <Message Text="V8 JavaScript Engine packages loaded from local packages directory" Importance="normal" />
+  </Target>
+  <!-- Custom Build Information Target -->
+  <Target Name="ShowBuildInfo" BeforeTargets="Build">
+    <Message Text="Building Engine Library - Configuration: $(Configuration), Platform: $(Platform)" Importance="high" />
+    <Message Text="Output: $(TargetPath)" Importance="normal" />
+  </Target>
 </Project>
