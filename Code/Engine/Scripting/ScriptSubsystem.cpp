@@ -1759,6 +1759,128 @@ void ScriptSubsystem::SetupV8Bindings()
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("(ScriptSubsystem::SetupV8Bindings)(end)"));
 }
 
+//----------------------------------------------------------------------------------------------------
+// V8 Property Accessor Callbacks
+//----------------------------------------------------------------------------------------------------
+
+// Property getter callback - called when JavaScript reads object.property
+void PropertyGetterCallback(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value>& info)
+{
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::HandleScope scope(isolate);
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Build verification"));
+    
+    // Get property callback data
+    v8::Local<v8::External> external = v8::Local<v8::External>::Cast(info.Data());
+    auto* callbackData = static_cast<PropertyCallbackData*>(external->Value());
+    
+    v8::String::Utf8Value propertyName(isolate, property);
+    std::string propName(*propertyName);
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Getting property '{}' from C++ object", propName));
+    
+    try {
+        // Call C++ GetProperty method
+        std::any result = callbackData->object->GetProperty(callbackData->propertyName);
+        
+        // Convert result to V8 value based on type
+        if (result.type() == typeid(std::string)) {
+            std::string str = std::any_cast<std::string>(result);
+            info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned string value: '{}'", str));
+        }
+        else if (result.type() == typeid(String)) {
+            String str = std::any_cast<String>(result);
+            info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned String value: '{}'", str.c_str()));
+        }
+        else if (result.type() == typeid(int)) {
+            int value = std::any_cast<int>(result);
+            info.GetReturnValue().Set(v8::Integer::New(isolate, value));
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned int value: {}", value));
+        }
+        else if (result.type() == typeid(double)) {
+            double value = std::any_cast<double>(result);
+            info.GetReturnValue().Set(v8::Number::New(isolate, value));
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned double value: {}", value));
+        }
+        else if (result.type() == typeid(bool)) {
+            bool value = std::any_cast<bool>(result);
+            info.GetReturnValue().Set(v8::Boolean::New(isolate, value));
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned bool value: {}", value));
+        }
+        else {
+            DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertyGetterCallback: Unknown type returned from GetProperty, using undefined"));
+            info.GetReturnValue().Set(v8::Undefined(isolate));
+        }
+    }
+    catch (const std::exception& e) {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("PropertyGetterCallback: Exception in GetProperty: {}", e.what()));
+        info.GetReturnValue().Set(v8::Undefined(isolate));
+    }
+}
+
+// Property setter callback - called when JavaScript writes object.property = value
+void PropertySetterCallback(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const v8::PropertyCallbackInfo<void>& info)
+{
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::HandleScope scope(isolate);
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Build verification"));
+    
+    // Get property callback data
+    v8::Local<v8::External> external = v8::Local<v8::External>::Cast(info.Data());
+    auto* callbackData = static_cast<PropertyCallbackData*>(external->Value());
+    
+    v8::String::Utf8Value propertyName(isolate, property);
+    std::string propName(*propertyName);
+    
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting property '{}' on C++ object", propName));
+    
+    try {
+        std::any cppValue;
+        
+        // Convert V8 value to C++ std::any based on JavaScript type
+        if (value->IsString()) {
+            v8::String::Utf8Value str(isolate, value);
+            cppValue = std::string(*str);
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting string value: '{}'", *str));
+        }
+        else if (value->IsNumber()) {
+            double num = value->NumberValue(isolate->GetCurrentContext()).ToChecked();
+            // Check if it's an integer
+            if (num == floor(num)) {
+                cppValue = static_cast<int>(num);
+                DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting int value: {}", static_cast<int>(num)));
+            } else {
+                cppValue = num;
+                DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting double value: {}", num));
+            }
+        }
+        else if (value->IsBoolean()) {
+            bool boolVal = value->BooleanValue(isolate);
+            cppValue = boolVal;
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting bool value: {}", boolVal));
+        }
+        else {
+            DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertySetterCallback: Unsupported value type for property '{}'", propName));
+            return;
+        }
+        
+        // Call C++ SetProperty method
+        bool success = callbackData->object->SetProperty(callbackData->propertyName, cppValue);
+        if (success) {
+            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Successfully set property '{}'", propName));
+        } else {
+            DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertySetterCallback: Failed to set property '{}'", propName));
+        }
+    }
+    catch (const std::exception& e) {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("PropertySetterCallback: Exception in SetProperty: {}", e.what()));
+    }
+}
+
 void ScriptSubsystem::CreateSingleObjectBinding(String const&                             objectName,
                                                 std::shared_ptr<IScriptableObject> const& object)
 {
@@ -1877,6 +1999,36 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
 
         // Store callback data to prevent destruction
         m_methodCallbacks.push_back(std::move(callbackData));
+    }
+
+    // Register V8 property accessors for each property in GetAvailableProperties()
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Build verification"));
+    auto properties = object->GetAvailableProperties();
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Object '{}' has {} properties", objectName.c_str(), properties.size()));
+    
+    for (const auto& propertyName : properties) {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Registering property '{}.{}'", objectName.c_str(), propertyName.c_str()));
+        
+        // Create property callback data
+        auto propertyCallbackData = std::make_unique<PropertyCallbackData>();
+        propertyCallbackData->object = object;
+        propertyCallbackData->propertyName = propertyName;
+        
+        v8::Local<v8::External> propertyExternal = v8::External::New(m_impl->isolate, propertyCallbackData.get());
+        
+        // Register property accessor with V8
+        jsObject->SetNativeDataProperty(
+            localContext,
+            v8::String::NewFromUtf8(m_impl->isolate, propertyName.c_str()).ToLocalChecked(),
+            PropertyGetterCallback,     // Called when JavaScript reads object.property
+            PropertySetterCallback,     // Called when JavaScript writes object.property = value
+            propertyExternal           // Property callback data
+        ).Check();
+        
+        // Store property callback data to prevent destruction
+        m_propertyCallbacks.push_back(std::move(propertyCallbackData));
+        
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Successfully registered property accessor for '{}.{}'", objectName.c_str(), propertyName.c_str()));
     }
 
     // Bind object to global scope

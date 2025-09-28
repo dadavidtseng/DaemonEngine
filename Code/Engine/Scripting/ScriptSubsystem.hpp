@@ -33,6 +33,12 @@ struct MethodCallbackData
     std::string                        methodName;
 };
 
+struct PropertyCallbackData
+{
+    std::shared_ptr<IScriptableObject> object;
+    std::string                        propertyName;
+};
+
 //----------------------------------------------------------------------------------------------------
 struct sScriptSubsystemConfig
 {
@@ -293,8 +299,9 @@ private:
     std::vector<std::string> m_scriptNotifications;         // Regular script notifications
 
     // Callback data storage (avoid memory leaks)
-    std::vector<std::unique_ptr<MethodCallbackData>> m_methodCallbacks;
-    std::vector<std::unique_ptr<ScriptFunction>>     m_functionCallbacks;
+    std::vector<std::unique_ptr<MethodCallbackData>>   m_methodCallbacks;
+    std::vector<std::unique_ptr<PropertyCallbackData>> m_propertyCallbacks;
+    std::vector<std::unique_ptr<ScriptFunction>>       m_functionCallbacks;
 
     //------------------------------------------------------------------------------------------------
     // Hot-reload components and state
