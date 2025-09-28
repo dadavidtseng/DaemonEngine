@@ -1,11 +1,12 @@
 //----------------------------------------------------------------------------------------------------
 // InputScriptInterface.cpp
-// InputSystem 的腳本介面包裝器實作
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Input/InputScriptInterface.hpp"
+
 #include <sstream>
-#include <stdexcept>
+
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
@@ -19,52 +20,129 @@ InputScriptInterface::InputScriptInterface(InputSystem* inputSystem)
     {
         ERROR_AND_DIE("InputScriptInterface: InputSystem pointer cannot be null")
     }
+
+    // Initialize method registry for efficient dispatch
+    InitializeMethodRegistry();
+}
+
+//----------------------------------------------------------------------------------------------------
+void InputScriptInterface::InitializeMethodRegistry()
+{
+    m_methodRegistry["isKeyPressed"]              = [this](const std::vector<std::any>& args) { return ExecuteIsKeyPressed(args); };
+    m_methodRegistry["wasKeyJustPressed"]         = [this](const std::vector<std::any>& args) { return ExecuteWasKeyJustPressed(args); };
+    m_methodRegistry["wasKeyJustReleased"]        = [this](const std::vector<std::any>& args) { return ExecuteWasKeyJustReleased(args); };
+    m_methodRegistry["getMousePosition"]          = [this](const std::vector<std::any>& args) { return ExecuteGetMousePosition(args); };
+    m_methodRegistry["isMouseButtonPressed"]      = [this](const std::vector<std::any>& args) { return ExecuteIsMouseButtonPressed(args); };
+    m_methodRegistry["wasMouseButtonJustPressed"] = [this](const std::vector<std::any>& args) { return ExecuteWasMouseButtonJustPressed(args); };
+    m_methodRegistry["getMouseDelta"]             = [this](const std::vector<std::any>& args) { return ExecuteGetMouseDelta(args); };
+    m_methodRegistry["isControllerConnected"]     = [this](const std::vector<std::any>& args) { return ExecuteIsControllerConnected(args); };
+    m_methodRegistry["getControllerAxis"]         = [this](const std::vector<std::any>& args) { return ExecuteGetControllerAxis(args); };
+    m_methodRegistry["isControllerButtonPressed"] = [this](const std::vector<std::any>& args) { return ExecuteIsControllerButtonPressed(args); };
+
+    // === LEGACY METHODS (for backward compatibility) ===
+    m_methodRegistry["isKeyDown"]               = [this](const std::vector<std::any>& args) { return ExecuteIsKeyDown(args); };
+    m_methodRegistry["getCursorClientDelta"]    = [this](const std::vector<std::any>& args) { return ExecuteGetCursorClientDelta(args); };
+    m_methodRegistry["getCursorClientPosition"] = [this](const std::vector<std::any>& args) { return ExecuteGetCursorClientPosition(args); };
+    m_methodRegistry["getController"]           = [this](const std::vector<std::any>& args) { return ExecuteGetController(args); };
+    m_methodRegistry["setCursorMode"]           = [this](const std::vector<std::any>& args) { return ExecuteSetCursorMode(args); };
 }
 
 //----------------------------------------------------------------------------------------------------
 std::string InputScriptInterface::GetScriptObjectName() const
 {
-    return "input";
+    return "daemon";
 }
 
 //----------------------------------------------------------------------------------------------------
 std::vector<ScriptMethodInfo> InputScriptInterface::GetAvailableMethods() const
 {
     return {
-        ScriptMethodInfo("isKeyDown",
-                         "檢查指定按鍵是否正在被按下",
+        // === NEW DAEMON.INPUT API (following security whitelist) ===
+        ScriptMethodInfo("isKeyPressed",
+                         "Check if a key is currently being held down",
                          {"int"},
                          "bool"),
 
         ScriptMethodInfo("wasKeyJustPressed",
-                         "檢查指定按鍵是否剛被按下",
+                         "Check if a key was just pressed this frame",
                          {"int"},
                          "bool"),
 
         ScriptMethodInfo("wasKeyJustReleased",
-                         "檢查指定按鍵是否剛被釋放",
+                         "Check if a key was just released this frame",
                          {"int"},
                          "bool"),
 
-        ScriptMethodInfo("getCursorDelta",
-                         "取得滑鼠游標移動增量",
+        ScriptMethodInfo("getMousePosition",
+                         "Get current mouse position as {x, y} object",
                          {},
                          "object"),
 
-        ScriptMethodInfo("getCursorPosition",
-                         "取得滑鼠游標目前位置",
+        ScriptMethodInfo("isMouseButtonPressed",
+                         "Check if a mouse button is currently pressed",
+                         {"int"},
+                         "bool"),
+
+        ScriptMethodInfo("wasMouseButtonJustPressed",
+                         "Check if a mouse button was just pressed this frame",
+                         {"int"},
+                         "bool"),
+
+        ScriptMethodInfo("getMouseDelta",
+                         "Get mouse movement delta since last frame as {x, y} object",
                          {},
                          "object"),
 
-        ScriptMethodInfo("getController",
-                         "取得指定索引的控制器",
+        ScriptMethodInfo("isControllerConnected",
+                         "Check if a controller is connected",
                          {"int"},
-                         "object"),
+                         "bool"),
 
-        ScriptMethodInfo("setCursorMode",
-                         "設定游標模式 (0=POINTER, 1=FPS)",
-                         {"int"},
-                         "void")
+        ScriptMethodInfo("getControllerAxis",
+                         "Get controller axis value (-1.0 to 1.0)",
+                         {"int", "int"},
+                         "number"),
+
+        ScriptMethodInfo("isControllerButtonPressed",
+                         "Check if a controller button is pressed",
+                         {"int", "int"},
+                         "bool"),
+
+        // // === LEGACY METHODS (for backward compatibility) ===
+        // ScriptMethodInfo("isKeyDown",
+        //                  "檢查指定按鍵是否正在被按下",
+        //                  {"int"},
+        //                  "bool"),
+        //
+        // ScriptMethodInfo("wasKeyJustPressed",
+        //                  "檢查指定按鍵是否剛被按下",
+        //                  {"int"},
+        //                  "bool"),
+        //
+        // ScriptMethodInfo("wasKeyJustReleased",
+        //                  "檢查指定按鍵是否剛被釋放",
+        //                  {"int"},
+        //                  "bool"),
+        //
+        // ScriptMethodInfo("getCursorDelta",
+        //                  "取得滑鼠游標移動增量",
+        //                  {},
+        //                  "object"),
+        //
+        // ScriptMethodInfo("getCursorPosition",
+        //                  "取得滑鼠游標目前位置",
+        //                  {},
+        //                  "object"),
+        //
+        // ScriptMethodInfo("getController",
+        //                  "取得指定索引的控制器",
+        //                  {"int"},
+        //                  "object"),
+        //
+        // ScriptMethodInfo("setCursorMode",
+        //                  "設定游標模式 (0=POINTER, 1=FPS)",
+        //                  {"int"},
+        //                  "void")
     };
 }
 
@@ -72,58 +150,54 @@ std::vector<ScriptMethodInfo> InputScriptInterface::GetAvailableMethods() const
 std::vector<std::string> InputScriptInterface::GetAvailableProperties() const
 {
     return {
-        "cursorDelta",
+        "input",             // The input sub-object
+        "cursorDelta",       // Legacy properties
         "cursorPosition"
     };
 }
 
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::CallMethod(std::string const&           methodName,
-                                                     std::vector<std::any> const& args)
+                                                    std::vector<std::any> const& args)
 {
     try
     {
-        if (methodName == "isKeyDown")
+        // Use method registry for O(1) lookup instead of O(n) if-else chain
+        auto it = m_methodRegistry.find(methodName);
+        if (it != m_methodRegistry.end())
         {
-            return ExecuteIsKeyDown(args);
-        }
-        else if (methodName == "wasKeyJustPressed")
-        {
-            return ExecuteWasKeyJustPressed(args);
-        }
-        else if (methodName == "wasKeyJustReleased")
-        {
-            return ExecuteWasKeyJustReleased(args);
-        }
-        else if (methodName == "getCursorDelta")
-        {
-            return ExecuteGetCursorClientDelta(args);
-        }
-        else if (methodName == "getCursorPosition")
-        {
-            return ExecuteGetCursorClientPosition(args);
-        }
-        else if (methodName == "getController")
-        {
-            return ExecuteGetController(args);
-        }
-        else if (methodName == "setCursorMode")
-        {
-            return ExecuteSetCursorMode(args);
+            return it->second(args);
         }
 
-        return ScriptMethodResult::Error("未知的方法: " + methodName);
+        return ScriptMethodResult::Error("Unknown method: " + methodName);
     }
     catch (std::exception const& e)
     {
-        return ScriptMethodResult::Error("方法執行時發生例外: " + std::string(e.what()));
+        return ScriptMethodResult::Error("Method execution failed: " + std::string(e.what()));
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 std::any InputScriptInterface::GetProperty(const std::string& propertyName) const
 {
-    if (propertyName == "cursorDelta")
+    if (propertyName == "input")
+    {
+        // Return a string representation of the input object
+        // This approach might need to be changed depending on how the scripting system handles nested objects
+        return std::string("{ "
+            "isKeyPressed: function(keyCode) { return daemon['input.isKeyPressed'](keyCode); }, "
+            "wasKeyJustPressed: function(keyCode) { return daemon['input.wasKeyJustPressed'](keyCode); }, "
+            "wasKeyJustReleased: function(keyCode) { return daemon['input.wasKeyJustReleased'](keyCode); }, "
+            "getMousePosition: function() { return daemon['input.getMousePosition'](); }, "
+            "isMouseButtonPressed: function(button) { return daemon['input.isMouseButtonPressed'](button); }, "
+            "wasMouseButtonJustPressed: function(button) { return daemon['input.wasMouseButtonJustPressed'](button); }, "
+            "getMouseDelta: function() { return daemon['input.getMouseDelta'](); }, "
+            "isControllerConnected: function(index) { return daemon['input.isControllerConnected'](index); }, "
+            "getControllerAxis: function(index, axis) { return daemon['input.getControllerAxis'](index, axis); }, "
+            "isControllerButtonPressed: function(index, button) { return daemon['input.isControllerButtonPressed'](index, button); } "
+            "}");
+    }
+    else if (propertyName == "cursorDelta")
     {
         Vec2 delta = m_inputSystem->GetCursorClientDelta();
         return std::string("{ x: " + std::to_string(delta.x) + ", y: " + std::to_string(delta.y) + " }");
@@ -154,8 +228,8 @@ ScriptMethodResult InputScriptInterface::ExecuteIsKeyDown(const std::vector<std:
 
     try
     {
-        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
-        bool isDown = m_inputSystem->IsKeyDown((char)keyCode);
+        int  keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
+        bool isDown  = m_inputSystem->IsKeyDown((char)keyCode);
         return ScriptMethodResult::Success(isDown);
     }
     catch (const std::exception& e)
@@ -172,7 +246,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustPressed(const std::vec
 
     try
     {
-        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
+        int  keyCode    = ScriptTypeExtractor::ExtractInt(args[0]);
         bool wasPressed = m_inputSystem->WasKeyJustPressed((char)keyCode);
         return ScriptMethodResult::Success(wasPressed);
     }
@@ -190,7 +264,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustReleased(const std::ve
 
     try
     {
-        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
+        int  keyCode     = ScriptTypeExtractor::ExtractInt(args[0]);
         bool wasReleased = m_inputSystem->WasKeyJustReleased((char)keyCode);
         return ScriptMethodResult::Success(wasReleased);
     }
@@ -208,7 +282,7 @@ ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientDelta(const std::
 
     try
     {
-        Vec2 delta = m_inputSystem->GetCursorClientDelta();
+        Vec2        delta    = m_inputSystem->GetCursorClientDelta();
         std::string deltaStr = "{ x: " + std::to_string(delta.x) + ", y: " + std::to_string(delta.y) + " }";
         return ScriptMethodResult::Success(deltaStr);
     }
@@ -226,7 +300,7 @@ ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientPosition(const st
 
     try
     {
-        Vec2 position = m_inputSystem->GetCursorClientPosition();
+        Vec2        position    = m_inputSystem->GetCursorClientPosition();
         std::string positionStr = "{ x: " + std::to_string(position.x) + ", y: " + std::to_string(position.y) + " }";
         return ScriptMethodResult::Success(positionStr);
     }
@@ -244,8 +318,8 @@ ScriptMethodResult InputScriptInterface::ExecuteGetController(const std::vector<
 
     try
     {
-        int controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
-        XboxController const& controller = m_inputSystem->GetController(controllerIndex);
+        int                   controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
+        XboxController const& controller      = m_inputSystem->GetController(controllerIndex);
         UNUSED(controller)
         // 簡化的控制器狀態回傳
         std::string controllerStr = "{ index: " + std::to_string(controllerIndex) + ", connected: true }";
@@ -265,7 +339,7 @@ ScriptMethodResult InputScriptInterface::ExecuteSetCursorMode(const std::vector<
 
     try
     {
-        int mode = ScriptTypeExtractor::ExtractInt(args[0]);
+        int         mode       = ScriptTypeExtractor::ExtractInt(args[0]);
         eCursorMode cursorMode = static_cast<eCursorMode>(mode);
         m_inputSystem->SetCursorMode(cursorMode);
         return ScriptMethodResult::Success(std::string("游標模式已設定為: " + std::to_string(mode)));
@@ -274,4 +348,330 @@ ScriptMethodResult InputScriptInterface::ExecuteSetCursorMode(const std::vector<
     {
         return ScriptMethodResult::Error("設定游標模式失敗: " + std::string(e.what()));
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+// === NEW DAEMON.INPUT API IMPLEMENTATIONS ===
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteIsKeyPressed(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "isKeyPressed");
+    if (!result.success) return result;
+
+    try
+    {
+        int keyCode = ScriptTypeExtractor::ExtractInt(args[0]);
+        if (!ValidateKeyCode(keyCode))
+        {
+            return ScriptMethodResult::Error("Invalid key code: " + std::to_string(keyCode));
+        }
+
+        bool isPressed = m_inputSystem->IsKeyDown(static_cast<unsigned char>(keyCode));
+        return ScriptMethodResult::Success(isPressed);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to check key pressed state: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteGetMousePosition(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getMousePosition");
+    if (!result.success) return result;
+
+    try
+    {
+        Vec2        position    = m_inputSystem->GetCursorClientPosition();
+        std::string positionStr = "{ x: " + std::to_string(position.x) + ", y: " + std::to_string(position.y) + " }";
+        return ScriptMethodResult::Success(positionStr);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to get mouse position: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteIsMouseButtonPressed(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "isMouseButtonPressed");
+    if (!result.success) return result;
+
+    try
+    {
+        int button = ScriptTypeExtractor::ExtractInt(args[0]);
+        if (!ValidateMouseButton(button))
+        {
+            return ScriptMethodResult::Error("Invalid mouse button: " + std::to_string(button));
+        }
+
+        unsigned char keyCode = KEYCODE_LEFT_MOUSE;
+        switch (button)
+        {
+        case 0: keyCode = KEYCODE_LEFT_MOUSE;
+            break;
+        case 1: keyCode = KEYCODE_RIGHT_MOUSE;
+            break;
+        case 2:
+            // Middle mouse button not supported in current InputSystem
+            return ScriptMethodResult::Error("Middle mouse button not supported");
+        default:
+            return ScriptMethodResult::Error("Invalid mouse button: " + std::to_string(button));
+        }
+
+        bool isPressed = m_inputSystem->IsKeyDown(keyCode);
+        return ScriptMethodResult::Success(isPressed);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to check mouse button state: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteWasMouseButtonJustPressed(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "wasMouseButtonJustPressed");
+    if (!result.success) return result;
+
+    try
+    {
+        int button = ScriptTypeExtractor::ExtractInt(args[0]);
+        if (!ValidateMouseButton(button))
+        {
+            return ScriptMethodResult::Error("Invalid mouse button: " + std::to_string(button));
+        }
+
+        unsigned char keyCode = KEYCODE_LEFT_MOUSE;
+        switch (button)
+        {
+        case 0: keyCode = KEYCODE_LEFT_MOUSE;
+            break;
+        case 1: keyCode = KEYCODE_RIGHT_MOUSE;
+            break;
+        case 2:
+            return ScriptMethodResult::Error("Middle mouse button not supported");
+        default:
+            return ScriptMethodResult::Error("Invalid mouse button: " + std::to_string(button));
+        }
+
+        bool wasPressed = m_inputSystem->WasKeyJustPressed(keyCode);
+        return ScriptMethodResult::Success(wasPressed);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to check mouse button just pressed: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteGetMouseDelta(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getMouseDelta");
+    if (!result.success) return result;
+
+    try
+    {
+        Vec2        delta    = m_inputSystem->GetCursorClientDelta();
+        std::string deltaStr = "{ x: " + std::to_string(delta.x) + ", y: " + std::to_string(delta.y) + " }";
+        return ScriptMethodResult::Success(deltaStr);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to get mouse delta: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteIsControllerConnected(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "isControllerConnected");
+    if (!result.success) return result;
+
+    try
+    {
+        int controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
+        if (!ValidateControllerIndex(controllerIndex))
+        {
+            return ScriptMethodResult::Error("Invalid controller index: " + std::to_string(controllerIndex));
+        }
+
+        const XboxController& controller  = m_inputSystem->GetController(controllerIndex);
+        bool                  isConnected = controller.IsConnected();
+        return ScriptMethodResult::Success(isConnected);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to check controller connection: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteGetControllerAxis(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 2, "getControllerAxis");
+    if (!result.success) return result;
+
+    try
+    {
+        int controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
+        int axis            = ScriptTypeExtractor::ExtractInt(args[1]);
+
+        if (!ValidateControllerIndex(controllerIndex))
+        {
+            return ScriptMethodResult::Error("Invalid controller index: " + std::to_string(controllerIndex));
+        }
+
+        if (!ValidateControllerAxis(axis))
+        {
+            return ScriptMethodResult::Error("Invalid controller axis: " + std::to_string(axis));
+        }
+
+        const XboxController& controller = m_inputSystem->GetController(controllerIndex);
+        if (!controller.IsConnected())
+        {
+            return ScriptMethodResult::Success(0.0f);
+        }
+
+        float axisValue = 0.0f;
+        switch (axis)
+        {
+        case 0: // LEFT_STICK_X
+            axisValue = controller.GetLeftStick().GetPosition().x;
+            break;
+        case 1: // LEFT_STICK_Y
+            axisValue = controller.GetLeftStick().GetPosition().y;
+            break;
+        case 2: // RIGHT_STICK_X
+            axisValue = controller.GetRightStick().GetPosition().x;
+            break;
+        case 3: // RIGHT_STICK_Y
+            axisValue = controller.GetRightStick().GetPosition().y;
+            break;
+        case 4: // LEFT_TRIGGER
+            axisValue = controller.GetLeftTrigger();
+            break;
+        case 5: // RIGHT_TRIGGER
+            axisValue = controller.GetRightTrigger();
+            break;
+        default:
+            return ScriptMethodResult::Error("Invalid axis: " + std::to_string(axis));
+        }
+
+        return ScriptMethodResult::Success(axisValue);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to get controller axis: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult InputScriptInterface::ExecuteIsControllerButtonPressed(const std::vector<std::any>& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 2, "isControllerButtonPressed");
+    if (!result.success) return result;
+
+    try
+    {
+        int controllerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
+        int button          = ScriptTypeExtractor::ExtractInt(args[1]);
+
+        if (!ValidateControllerIndex(controllerIndex))
+        {
+            return ScriptMethodResult::Error("Invalid controller index: " + std::to_string(controllerIndex));
+        }
+
+        if (!ValidateControllerButton(button))
+        {
+            return ScriptMethodResult::Error("Invalid controller button: " + std::to_string(button));
+        }
+
+        const XboxController& controller = m_inputSystem->GetController(controllerIndex);
+        if (!controller.IsConnected())
+        {
+            return ScriptMethodResult::Success(false);
+        }
+
+        // Map our button enum to XboxButtonID
+        eXboxButtonID buttonId = XBOX_BUTTON_INVALID;
+        switch (button)
+        {
+        case 0: buttonId = XBOX_BUTTON_A;
+            break;
+        case 1: buttonId = XBOX_BUTTON_B;
+            break;
+        case 2: buttonId = XBOX_BUTTON_X;
+            break;
+        case 3: buttonId = XBOX_BUTTON_Y;
+            break;
+        case 4: buttonId = XBOX_BUTTON_LSHOULDER;
+            break;
+        case 5: buttonId = XBOX_BUTTON_RSHOULDER;
+            break;
+        case 6: buttonId = XBOX_BUTTON_BACK;
+            break;
+        case 7: buttonId = XBOX_BUTTON_START;
+            break;
+        case 8: buttonId = XBOX_BUTTON_LTHUMB;
+            break;
+        case 9: buttonId = XBOX_BUTTON_RTHUMB;
+            break;
+        case 10: buttonId = XBOX_BUTTON_DPAD_UP;
+            break;
+        case 11: buttonId = XBOX_BUTTON_DPAD_DOWN;
+            break;
+        case 12: buttonId = XBOX_BUTTON_DPAD_LEFT;
+            break;
+        case 13: buttonId = XBOX_BUTTON_DPAD_RIGHT;
+            break;
+        default:
+            return ScriptMethodResult::Error("Invalid button: " + std::to_string(button));
+        }
+
+        bool isPressed = controller.IsButtonDown(buttonId);
+        return ScriptMethodResult::Success(isPressed);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to check controller button: " + std::string(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// === VALIDATION AND SECURITY METHODS ===
+//----------------------------------------------------------------------------------------------------
+
+bool InputScriptInterface::ValidateKeyCode(int keyCode) const
+{
+    // Allow standard ASCII range and common special keys
+    return (keyCode >= 0 && keyCode <= 255);
+}
+
+bool InputScriptInterface::ValidateMouseButton(int button) const
+{
+    // 0 = Left, 1 = Right, 2 = Middle (not fully supported)
+    return (button >= 0 && button <= 2);
+}
+
+bool InputScriptInterface::ValidateControllerIndex(int index) const
+{
+    // Xbox controllers 0-3
+    return (index >= 0 && index < NUM_XBOX_CONTROLLERS);
+}
+
+bool InputScriptInterface::ValidateControllerAxis(int axis) const
+{
+    // 0-5: LEFT_STICK_X, LEFT_STICK_Y, RIGHT_STICK_X, RIGHT_STICK_Y, LEFT_TRIGGER, RIGHT_TRIGGER
+    return (axis >= 0 && axis <= 5);
+}
+
+bool InputScriptInterface::ValidateControllerButton(int button) const
+{
+    // 0-13: A, B, X, Y, LShoulder, RShoulder, Back, Start, LThumb, RThumb, DPad_Up, DPad_Down, DPad_Left, DPad_Right
+    return (button >= 0 && button <= 13);
 }
