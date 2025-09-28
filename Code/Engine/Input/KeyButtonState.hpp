@@ -6,7 +6,7 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
-struct KeyButtonState
+struct sKeyButtonState
 {
     bool m_isKeyDown           = false;
     bool m_wasKeyDownLastFrame = false;

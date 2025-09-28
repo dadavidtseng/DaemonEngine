@@ -6,12 +6,8 @@
 #include "Engine/Input/InputSystem.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 
 //----------------------------------------------------------------------------------------------------
 unsigned char const NUMCODE_0             = 0x30;
@@ -174,14 +170,14 @@ void InputSystem::BeginFrame()
 void InputSystem::EndFrame()
 {
     //Copy current-frame key state to "previous" in preparation of new WM_KEYDOWN, etc. messages
-    for (int keyCode = 0; keyCode < NUM_KEYCODES; ++keyCode)
+    for (sKeyButtonState& keyState : m_keyStates)
     {
-        m_keyStates[keyCode].m_wasKeyDownLastFrame = m_keyStates[keyCode].m_isKeyDown;
+        keyState.m_wasKeyDownLastFrame = keyState.m_isKeyDown;
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-bool InputSystem::WasKeyJustPressed(const unsigned char keyCode) const
+bool InputSystem::WasKeyJustPressed(unsigned char const keyCode) const
 {
     return
         m_keyStates[keyCode].m_isKeyDown &&
@@ -189,7 +185,7 @@ bool InputSystem::WasKeyJustPressed(const unsigned char keyCode) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool InputSystem::WasKeyJustReleased(const unsigned char keyCode) const
+bool InputSystem::WasKeyJustReleased(unsigned char const keyCode) const
 {
     return
         !m_keyStates[keyCode].m_isKeyDown &&
@@ -197,13 +193,13 @@ bool InputSystem::WasKeyJustReleased(const unsigned char keyCode) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool InputSystem::IsKeyDown(const unsigned char keyCode) const
+bool InputSystem::IsKeyDown(unsigned char const keyCode) const
 {
     return m_keyStates[keyCode].m_isKeyDown;
 }
 
 //----------------------------------------------------------------------------------------------------
-void InputSystem::HandleKeyPressed(const unsigned char keyCode)
+void InputSystem::HandleKeyPressed(unsigned char const keyCode)
 {
     m_keyStates[keyCode].m_isKeyDown = true;
 }

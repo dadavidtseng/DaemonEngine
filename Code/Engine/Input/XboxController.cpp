@@ -70,19 +70,19 @@ float XboxController::GetRightTrigger() const
 }
 
 //----------------------------------------------------------------------------------------------------
-KeyButtonState const& XboxController::GetButton(XboxButtonID const buttonID) const
+sKeyButtonState const& XboxController::GetButton(eXboxButtonID const buttonID) const
 {
     return m_buttons[static_cast<int>(buttonID)];
 }
 
 //----------------------------------------------------------------------------------------------------
-bool XboxController::IsButtonDown(XboxButtonID const buttonID) const
+bool XboxController::IsButtonDown(eXboxButtonID const buttonID) const
 {
     return m_buttons[static_cast<int>(buttonID)].m_isKeyDown;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool XboxController::WasButtonJustPressed(XboxButtonID const buttonID) const
+bool XboxController::WasButtonJustPressed(eXboxButtonID const buttonID) const
 {
     return
         m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
@@ -90,7 +90,7 @@ bool XboxController::WasButtonJustPressed(XboxButtonID const buttonID) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool XboxController::WasButtonJustReleased(XboxButtonID const buttonID) const
+bool XboxController::WasButtonJustReleased(eXboxButtonID const buttonID) const
 {
     return
         !m_buttons[static_cast<int>(buttonID)].m_isKeyDown &&
@@ -150,7 +150,7 @@ void XboxController::Update()
 //----------------------------------------------------------------------------------------------------
 void XboxController::Reset()
 {
-    for (KeyButtonState& button : m_buttons)
+    for (sKeyButtonState& button : m_buttons)
     {
         button.m_isKeyDown           = false;
         button.m_wasKeyDownLastFrame = false;
@@ -183,11 +183,11 @@ void XboxController::UpdateTrigger(float&              out_triggerValue,
 }
 
 //----------------------------------------------------------------------------------------------------
-void XboxController::UpdateButton(XboxButtonID const   buttonID,
+void XboxController::UpdateButton(eXboxButtonID const   buttonID,
                                   unsigned short const buttonFlags,
                                   unsigned short const buttonFlag)
 {
-    KeyButtonState& button = m_buttons[buttonID];
+    sKeyButtonState& button = m_buttons[buttonID];
 
     button.m_wasKeyDownLastFrame = button.m_isKeyDown;
     button.m_isKeyDown           = (buttonFlags & buttonFlag) != 0;

@@ -10,7 +10,7 @@
 #include "Engine/Input/KeyButtonState.hpp"
 
 //----------------------------------------------------------------------------------------------------
-enum XboxButtonID : int8_t
+enum eXboxButtonID : int8_t
 {
     XBOX_BUTTON_INVALID = -1,
     XBOX_BUTTON_A,
@@ -41,30 +41,30 @@ public:
     explicit XboxController(int id);
     ~XboxController() = default;
 
-    bool                  IsConnected() const;
-    int                   GetControllerID() const;
-    AnalogJoystick const& GetLeftStick() const;
-    AnalogJoystick const& GetRightStick() const;
-    float                 GetLeftTrigger() const;
-    float                 GetRightTrigger() const;
-    KeyButtonState const& GetButton(XboxButtonID buttonID) const;
-    bool                  IsButtonDown(XboxButtonID buttonID) const;
-    bool                  WasButtonJustPressed(XboxButtonID buttonID) const;
-    bool                  WasButtonJustReleased(XboxButtonID buttonID) const;
-    void                  SetVibration( unsigned short leftSpeed, unsigned short rightSpeed) const;
+    bool                   IsConnected() const;
+    int                    GetControllerID() const;
+    AnalogJoystick const&  GetLeftStick() const;
+    AnalogJoystick const&  GetRightStick() const;
+    float                  GetLeftTrigger() const;
+    float                  GetRightTrigger() const;
+    sKeyButtonState const& GetButton(eXboxButtonID buttonID) const;
+    bool                   IsButtonDown(eXboxButtonID buttonID) const;
+    bool                   WasButtonJustPressed(eXboxButtonID buttonID) const;
+    bool                   WasButtonJustReleased(eXboxButtonID buttonID) const;
+    void                   SetVibration(unsigned short leftSpeed, unsigned short rightSpeed) const;
 
 private:
     void Update();
     void Reset();
     void UpdateJoystick(AnalogJoystick& out_joystick, short rawX, short rawY);
     void UpdateTrigger(float& out_triggerValue, unsigned char rawValue);
-    void UpdateButton(XboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag);
+    void UpdateButton(eXboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag);
 
-    int            m_id           = -1;
-    bool           m_isConnected  = false;
-    float          m_leftTrigger  = 0.f;
-    float          m_rightTrigger = 0.f;
-    KeyButtonState m_buttons[static_cast<int>(XBOX_BUTTON_NUM)];
-    AnalogJoystick m_leftStick;
-    AnalogJoystick m_rightStick;
+    int             m_id           = -1;
+    bool            m_isConnected  = false;
+    float           m_leftTrigger  = 0.f;
+    float           m_rightTrigger = 0.f;
+    sKeyButtonState m_buttons[static_cast<int>(XBOX_BUTTON_NUM)];
+    AnalogJoystick  m_leftStick;
+    AnalogJoystick  m_rightStick;
 };

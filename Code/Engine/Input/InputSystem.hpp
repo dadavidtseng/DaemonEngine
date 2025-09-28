@@ -92,14 +92,14 @@ enum class eCursorMode : int8_t
 };
 
 //----------------------------------------------------------------------------------------------------
-struct CursorState
+struct sCursorState
 {
-    IntVec2 m_cursorClientDelta;
-    IntVec2 m_cursorClientPosition;
-
-    eCursorMode m_cursorMode = eCursorMode::POINTER;
+    IntVec2     m_cursorClientDelta    = IntVec2::ZERO;
+    IntVec2     m_cursorClientPosition = IntVec2::ZERO;
+    eCursorMode m_cursorMode           = eCursorMode::POINTER;
 };
 
+//----------------------------------------------------------------------------------------------------
 struct sInputSystemConfig
 {
 };
@@ -110,29 +110,33 @@ class InputSystem
 public:
     explicit InputSystem(sInputSystemConfig const& config);
     ~InputSystem() = default;
-    void                  Startup();
-    void                  Shutdown();
-    void                  BeginFrame();
-    void                  EndFrame();
-    bool                  WasKeyJustPressed(unsigned char keyCode) const;
-    bool                  WasKeyJustReleased(unsigned char keyCode) const;
-    bool                  IsKeyDown(unsigned char keyCode) const;
-    void                  HandleKeyPressed(unsigned char keyCode);
-    void                  HandleKeyReleased(unsigned char keyCode);
+
+    void Startup();
+    void Shutdown();
+    void BeginFrame();
+    void EndFrame();
+
+    bool WasKeyJustPressed(unsigned char keyCode) const;
+    bool WasKeyJustReleased(unsigned char keyCode) const;
+    bool IsKeyDown(unsigned char keyCode) const;
+
+    void HandleKeyPressed(unsigned char keyCode);
+    void HandleKeyReleased(unsigned char keyCode);
+
     XboxController const& GetController(int controllerID);
+    Vec2                  GetCursorClientDelta() const;
+    Vec2                  GetCursorClientPosition() const;
+    Vec2                  GetCursorNormalizedPosition() const;
 
     void SetCursorMode(eCursorMode mode);
-    Vec2 GetCursorClientDelta() const;
-    Vec2 GetCursorClientPosition() const;
-    Vec2 GetCursorNormalizedPosition() const;
 
     static bool OnWindowKeyPressed(EventArgs& args);
     static bool OnWindowKeyReleased(EventArgs& args);
 
 protected:
-    KeyButtonState m_keyStates[NUM_KEYCODES];
-    XboxController m_controllers[NUM_XBOX_CONTROLLERS];
-    CursorState    m_cursorState;
+    sKeyButtonState m_keyStates[NUM_KEYCODES];
+    XboxController  m_controllers[NUM_XBOX_CONTROLLERS];
+    sCursorState    m_cursorState;
 
 private:
     sInputSystemConfig m_inputConfig;
