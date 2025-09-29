@@ -8,13 +8,13 @@
 #include <vector>
 
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
-#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/RenderCommon.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------

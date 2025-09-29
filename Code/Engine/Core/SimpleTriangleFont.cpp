@@ -3,11 +3,13 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
+#include <algorithm>
+
 #include "Engine/Core/SimpleTriangleFont.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Renderer/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Renderer/Vertex_PCU.hpp"
 
 //------------------------------------------------------------------------------------------------
 // A simple utility file for creating basic 5x9 pixel fonts out of pure triangles, i.e. does not
@@ -27,7 +29,7 @@ constexpr int TRITEXT_NUM_PIXELS    = TRITEXT_NUM_ASCIIS * TRITEXT_PIX_PER_GLYPH
 //------------------------------------------------------------------------------------------------
 // 5x7 "pixel" data for each ASCII character from 32 (space) through 126 (~ tilde)
 // Note: indexes are offset by -32 from ASCII value, so space(32) is at [0] at A(65) is at [33]
-const char* g_triTextFontData[TRITEXT_NUM_ROWS] =
+char const* g_triTextFontData[TRITEXT_NUM_ROWS] =
 {
     //SPACE	  33 !     34 "     35 #     36 $     37 %     38 &     39 '     40 (     41 )     42 *     43 +     44 ,     45 -     46 .     47 /     48 '0'   49 '1'   50 '2'   51 '3'   52 '4'   53 '5'   54 '6'   55 '7'   56 '8'   57 '9'   58 :     59 ;     60 <     61 =     62 >     63 ?     64 @     65 A     66 B     67 C     68 D     69 E     70 F     71 G     72 H     73 I     74 J     75 K     76 L     77 M     78 N     79 O     80 P     81 Q     82 R     83 S     84 T     85 U     86 V     87 W     88 X     89 Y     90 Z     91 [     92 \     93 ]     94 ^     95 _     96 `     97 a     98 b     99 c     100 d    101 e    102 f    103 g    104 h    105 i    106 j    107 k    108 l    109 m    110 n    111 o    112 p    113 q    114 r    115 s    116 t    117 u    118 v    119 w    120 x    121 y    122 z    123 {    124 |    125 }    126 ~   
     ".....", "..O..", ".O.O.", ".O.O.", "..O..", "OO..O", ".OO..", "..O..", "...O.", ".O...", "..O..", ".....", ".....",
@@ -106,8 +108,10 @@ const char* g_triTextFontData[TRITEXT_NUM_ROWS] =
 
 
 //------------------------------------------------------------------------------------------------
-void SimpleTriangleFont_AddVertsForAABB2D(std::vector<Vertex_PCU>& mesh, const AABB2&    bounds, const Rgba8& tint,
-                                          const Vec2&              uvAtMins, const Vec2& uvAtMaxs)
+void SimpleTriangleFont_AddVertsForAABB2D(VertexList_PCU& mesh, AABB2 const& bounds,
+                                          Rgba8 const&    tint,
+                                          Vec2 const&     uvAtMins,
+                                          Vec2 const&     uvAtMaxs)
 {
     Vec3 pos0(bounds.m_mins.x, bounds.m_mins.y, 0.f);
     Vec3 pos1(bounds.m_maxs.x, bounds.m_mins.y, 0.f);
@@ -125,11 +129,13 @@ void SimpleTriangleFont_AddVertsForAABB2D(std::vector<Vertex_PCU>& mesh, const A
 
 // #TODO: BOLD and italic
 //------------------------------------------------------------------------------------------------
-void AddVertsForGlyphTriangles2D(std::vector<Vertex_PCU>& verts, char glyph, const Vec2& cellMins, const Vec2& pixelSize,
-                                 const Rgba8&             color)
+void AddVertsForGlyphTriangles2D(VertexList_PCU& verts,
+                                 char const      glyph,
+                                 Vec2 const&     cellMins,
+                                 Vec2 const&     pixelSize,
+                                 Rgba8 const&    color)
 {
-    if (glyph < TRITEXT_FIRST_ASCII || glyph > TRITEXT_LAST_ASCII)
-        return;
+    if (glyph < TRITEXT_FIRST_ASCII || glyph > TRITEXT_LAST_ASCII) return;
 
     int triTextGlyphIndex = glyph - TRITEXT_FIRST_ASCII;
 
@@ -142,8 +148,7 @@ void AddVertsForGlyphTriangles2D(std::vector<Vertex_PCU>& verts, char glyph, con
 
         for (int triTextCellIndex = 0; triTextCellIndex < TRITEXT_PIX_WIDE; ++triTextCellIndex)
         {
-            if (rowText[triTextCellIndex] == '.')
-                continue;
+            if (rowText[triTextCellIndex] == '.') continue;
 
             float minX = cellMins.x + pixelSize.x * static_cast<float>(triTextCellIndex);
             float maxX = minX + pixelSize.x;
@@ -159,9 +164,14 @@ void AddVertsForGlyphTriangles2D(std::vector<Vertex_PCU>& verts, char glyph, con
 
 
 //------------------------------------------------------------------------------------------------
-void AddVertsForTextTriangles2D(std::vector<Vertex_PCU>& verts, const std::string& text, const Vec2& startMins,
-                                float                    cellHeight, const Rgba8&  color, float      cellAspect, bool isFlipped,
-                                float                    spacingFraction)
+void AddVertsForTextTriangles2D(VertexList_PCU& verts,
+                                String const&   text,
+                                Vec2 const&     startMins,
+                                float const     cellHeight,
+                                Rgba8 const&    color,
+                                float const     cellAspect,
+                                bool const      isFlipped,
+                                float const     spacingFraction)
 {
     // #ToDo: Support flipped triangle fonts (e.g. when +Y is down)
     UNUSED(isFlipped)
@@ -169,15 +179,15 @@ void AddVertsForTextTriangles2D(std::vector<Vertex_PCU>& verts, const std::strin
     //	size_t estimatedNumberOfNewVerts = text.length() * TRITEXT_PIX_WIDE * TRITEXT_PIX_HIGH * (6 / 2); // assumes (liberally) that fewer than half of a glyph's pixels are lit on average
     //	verts.reserve( verts.size() + estimatedNumberOfNewVerts );
 
-    float cellWidth    = cellHeight * cellAspect;
-    float pixelWidth   = cellWidth * (1.f / static_cast<float>(TRITEXT_PIX_WIDE));
-    float pixelHeight  = cellHeight * (1.f / static_cast<float>(TRITEXT_PIX_HIGH));
-    float spacingWidth = cellWidth * spacingFraction;
-    Vec2  cellSize(cellWidth, cellHeight);
-    Vec2  pixelSize(pixelWidth, pixelHeight);
+    float const cellWidth    = cellHeight * cellAspect;
+    float const pixelWidth   = cellWidth * (1.f / static_cast<float>(TRITEXT_PIX_WIDE));
+    float const pixelHeight  = cellHeight * (1.f / static_cast<float>(TRITEXT_PIX_HIGH));
+    float const spacingWidth = cellWidth * spacingFraction;
+    Vec2  const cellSize(cellWidth, cellHeight);
+    Vec2  const pixelSize(pixelWidth, pixelHeight);
     Vec2  cellMins = startMins;
 
-    int numGlyphs = static_cast<int>(text.length());
+    int const numGlyphs = static_cast<int>(text.length());
 
     for (int i = 0; i < numGlyphs; ++i)
     {
@@ -190,17 +200,19 @@ void AddVertsForTextTriangles2D(std::vector<Vertex_PCU>& verts, const std::strin
 
 
 //------------------------------------------------------------------------------------------------
-float GetSimpleTriangleStringWidth(const std::string& text, float cellHeight, float cellAspect, float spacingFraction)
+float GetSimpleTriangleStringWidth(String const& text,
+                                   float const   cellHeight,
+                                   float const   cellAspect,
+                                   float const   spacingFraction)
 {
-    float cellWidth = cellHeight * cellAspect;
-    float gapWidth  = cellWidth * spacingFraction;
-    float numCells  = static_cast<float>(text.length());
-    float numGaps   = numCells - 1.f;
+    float const cellWidth = cellHeight * cellAspect;
+    float const gapWidth  = cellWidth * spacingFraction;
+    float const numCells  = static_cast<float>(text.length());
+    float       numGaps   = numCells - 1.f;
 
-    if (numGaps < 0.f)
-        numGaps = 0.f;
+    numGaps = std::max(numGaps, 0.f);
 
-    float totalWidth = numCells * cellWidth + numGaps * gapWidth;
+    float const totalWidth = numCells * cellWidth + numGaps * gapWidth;
 
     return totalWidth;
 }

@@ -4,63 +4,57 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Scripting/IScriptableObject.hpp"
 #include <functional>
 #include <unordered_map>
+
+#include "Engine/Scripting/IScriptableObject.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class InputSystem;
 
-//----------------------------------------------------------------------------------------------------
-// InputSystem 的腳本介面包裝器
-// 這個類別作為 InputSystem 物件與 ScriptSubsystem 之間的橋樑
-// 實現了計畫中的安全白名單方法
 //----------------------------------------------------------------------------------------------------
 class InputScriptInterface : public IScriptableObject
 {
 public:
     explicit InputScriptInterface(InputSystem* inputSystem);
 
-    // 實作 IScriptableObject 介面
-    String                        GetScriptObjectName() const override;
     std::vector<ScriptMethodInfo> GetAvailableMethods() const override;
-    ScriptMethodResult            CallMethod(String const& methodName, std::vector<std::any> const& args) override;
+    StringList                    GetAvailableProperties() const override;
 
-    // 實作屬性存取
-    std::any            GetProperty(String const& propertyName) const override;
-    bool                SetProperty(String const& propertyName, const std::any& value) override;
-    std::vector<String> GetAvailableProperties() const override;
+    ScriptMethodResult CallMethod(String const& methodName, ScriptArgs const& args) override;
+    std::any           GetProperty(String const& propertyName) const override;
+    bool               SetProperty(String const& propertyName, std::any const& value) override;
 
 private:
-    InputSystem* m_inputSystem; // 不擁有，只是參考
+    InputSystem* m_inputSystem;
 
     // === METHOD REGISTRY FOR EFFICIENT DISPATCH ===
-    using MethodFunction = std::function<ScriptMethodResult(const std::vector<std::any>&)>;
+    using MethodFunction = std::function<ScriptMethodResult(ScriptArgs const&)>;
     std::unordered_map<String, MethodFunction> m_methodRegistry;
     void                                       InitializeMethodRegistry();
 
     // === KEYBOARD INPUT METHODS ===
-    ScriptMethodResult ExecuteIsKeyPressed(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteWasKeyJustPressed(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteWasKeyJustReleased(const std::vector<std::any>& args);
+    ScriptMethodResult ExecuteIsKeyPressed(ScriptArgs const& args);
+    ScriptMethodResult ExecuteWasKeyJustPressed(ScriptArgs const& args);
+    ScriptMethodResult ExecuteWasKeyJustReleased(ScriptArgs const& args);
 
     // === MOUSE INPUT METHODS ===
-    ScriptMethodResult ExecuteGetMousePosition(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteIsMouseButtonPressed(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteWasMouseButtonJustPressed(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteGetMouseDelta(const std::vector<std::any>& args);
+    ScriptMethodResult ExecuteGetMousePosition(ScriptArgs const& args);
+    ScriptMethodResult ExecuteIsMouseButtonPressed(ScriptArgs const& args);
+    ScriptMethodResult ExecuteWasMouseButtonJustPressed(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetMouseDelta(ScriptArgs const& args);
 
     // === CONTROLLER INPUT METHODS ===
-    ScriptMethodResult ExecuteIsControllerConnected(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteGetControllerAxis(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteIsControllerButtonPressed(const std::vector<std::any>& args);
+    ScriptMethodResult ExecuteIsControllerConnected(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetControllerAxis(ScriptArgs const& args);
+    ScriptMethodResult ExecuteIsControllerButtonPressed(ScriptArgs const& args);
 
     // === LEGACY METHODS (for backward compatibility) ===
-    ScriptMethodResult ExecuteIsKeyDown(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteGetCursorClientDelta(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteGetCursorClientPosition(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteGetController(const std::vector<std::any>& args);
-    ScriptMethodResult ExecuteSetCursorMode(const std::vector<std::any>& args);
+    ScriptMethodResult ExecuteIsKeyDown(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetCursorClientDelta(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetCursorClientPosition(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetController(ScriptArgs const& args);
+    ScriptMethodResult ExecuteSetCursorMode(ScriptArgs const& args);
 
     // === VALIDATION AND SECURITY ===
     bool ValidateKeyCode(int keyCode) const;
