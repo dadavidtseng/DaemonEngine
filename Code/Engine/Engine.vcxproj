@@ -200,6 +200,7 @@
   </ItemGroup>
   <ItemGroup Label="CoreSubsystemSources">
     <!-- Core Engine Systems - Foundation layer -->
+    <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Core/Clock.cpp" />
     <ClCompile Include="Core/DevConsole.cpp" />
     <ClCompile Include="Core/EngineCommon.cpp" />
@@ -347,6 +348,7 @@
   </ItemGroup>
   <ItemGroup Label="CoreSubsystemHeaders">
     <!-- Core Engine System Headers -->
+    <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Core/Clock.hpp" />
     <ClInclude Include="Core/DevConsole.hpp" />
     <ClInclude Include="Core/EngineCommon.hpp" />
