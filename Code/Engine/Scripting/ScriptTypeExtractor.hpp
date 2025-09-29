@@ -29,8 +29,9 @@ public:
     ScriptTypeExtractor& operator=(ScriptTypeExtractor const&) = delete;
 
     // Type extraction methods
-    static Vec3   ExtractVec3(std::vector<std::any> const& args, size_t startIndex);
+    static Vec3   ExtractVec3(ScriptArgs const& args, size_t startIndex);
     static float  ExtractFloat(std::any const& arg);
+    static double ExtractDouble(std::any const& arg);
     static int    ExtractInt(std::any const& arg);
     static String ExtractString(std::any const& arg);
     static bool   ExtractBool(std::any const& arg);

@@ -6,47 +6,34 @@
 #include "Engine/Scripting/IScriptableObject.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 
-std::any IScriptableObject::GetProperty(std::string const& propertyName) const
+//----------------------------------------------------------------------------------------------------
+bool IScriptableObject::HasMethod(String const& methodName) const
 {
-    UNUSED(propertyName)
-    return std::any{};
-}
+    std::vector<ScriptMethodInfo> methods = GetAvailableMethods();
 
-bool IScriptableObject::SetProperty(const std::string& propertyName, const std::any& value)
-{
-    UNUSED(propertyName)
-    UNUSED(value)
-    return false;
-}
+    bool const found = std::ranges::find(methods, methodName, &ScriptMethodInfo::name) != methods.end();
 
-std::vector<std::string> IScriptableObject::GetAvailableProperties() const
-{
-    return {};
-}
-
-bool IScriptableObject::HasMethod(std::string const& methodName) const
-{
-    auto methods = GetAvailableMethods();
-    for (const auto& method : methods)
+    if (!found)
     {
-        if (method.name == methodName)
-        {
-            return true;
-        }
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("(IScriptableObject::HasMethod) Method '{}' not found", methodName));
     }
-    return false;
+
+    return found;
 }
 
-bool IScriptableObject::HasProperty(const std::string& propertyName) const
+//----------------------------------------------------------------------------------------------------
+bool IScriptableObject::HasProperty(String const& propertyName) const
 {
-    auto properties = GetAvailableProperties();
-    for (const auto& prop : properties)
+    StringList properties = GetAvailableProperties();
+
+    bool const found = std::ranges::find(properties, propertyName) != properties.end();
+
+    if (!found)
     {
-        if (prop == propertyName)
-        {
-            return true;
-        }
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("(IScriptableObject::HasProperty) Property '{}' not found", propertyName));
     }
-    return false;
+
+    return found;
 }

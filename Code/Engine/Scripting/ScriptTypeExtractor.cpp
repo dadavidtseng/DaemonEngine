@@ -56,6 +56,34 @@ float ScriptTypeExtractor::ExtractFloat(std::any const& arg)
 }
 
 //----------------------------------------------------------------------------------------------------
+double ScriptTypeExtractor::ExtractDouble(std::any const& arg)
+{
+    // Try multiple numeric type conversions
+    try
+    {
+        return std::any_cast<double>(arg);
+    }
+    catch (const std::bad_any_cast&)
+    {
+        try
+        {
+            return static_cast<double>(std::any_cast<float>(arg));
+        }
+        catch (const std::bad_any_cast&)
+        {
+            try
+            {
+                return static_cast<double>(std::any_cast<int>(arg));
+            }
+            catch (const std::bad_any_cast&)
+            {
+                throw std::invalid_argument("Unable to convert to double type");
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 int ScriptTypeExtractor::ExtractInt(std::any const& arg)
 {
     try
