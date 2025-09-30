@@ -8,8 +8,8 @@
 #include "Engine/Renderer/Renderer.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Shader::Shader(ShaderConfig const& config)
-    : m_config(config)
+Shader::Shader(sShaderConfig config)
+    : m_config(std::move(config))
 {
 }
 

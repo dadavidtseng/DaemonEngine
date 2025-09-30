@@ -11,11 +11,11 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 //----------------------------------------------------------------------------------------------------
-SpriteAnimDefinition::SpriteAnimDefinition(SpriteSheet const&           sheet,
-                                           int const                    startSpriteIndex,
-                                           int const                    endSpriteIndex,
-                                           float const                  framesPerSecond,
-                                           SpriteAnimPlaybackType const playbackType)
+SpriteAnimDefinition::SpriteAnimDefinition(SpriteSheet const&            sheet,
+                                           int const                     startSpriteIndex,
+                                           int const                     endSpriteIndex,
+                                           float const                   framesPerSecond,
+                                           eSpriteAnimPlaybackType const playbackType)
     : m_spriteSheet(sheet),
       m_startSpriteIndex(startSpriteIndex),
       m_endSpriteIndex(endSpriteIndex),
@@ -38,15 +38,15 @@ SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime(float const sec
     // 根據播放類型選擇動畫邏輯
     switch (m_playbackType)
     {
-    case SpriteAnimPlaybackType::ONCE:
+    case eSpriteAnimPlaybackType::ONCE:
         currentFrame = std::min(totalFrameCount, totalFrames - 1);
         break;
 
-    case SpriteAnimPlaybackType::LOOP:
+    case eSpriteAnimPlaybackType::LOOP:
         currentFrame = totalFrameCount % totalFrames;
         break;
 
-    case SpriteAnimPlaybackType::PINGPONG:
+    case eSpriteAnimPlaybackType::PINGPONG:
         {
             // 計算單個往返週期的長度
             int pingpongCycleLength = (totalFrames * 2) - 2; // 去掉最後一幀的重複
@@ -89,11 +89,11 @@ int SpriteAnimDefinition::GetTotalFrameInCycle() const
 
     switch (m_playbackType)
     {
-    case SpriteAnimPlaybackType::ONCE:
-    case SpriteAnimPlaybackType::LOOP:
+    case eSpriteAnimPlaybackType::ONCE:
+    case eSpriteAnimPlaybackType::LOOP:
         return totalFrames;
 
-    case SpriteAnimPlaybackType::PINGPONG:
+    case eSpriteAnimPlaybackType::PINGPONG:
         return (totalFrames * 2) - 2; // 前後各一次，中間的幀不重複
 
     default: ERROR_AND_DIE("Unknown SpriteAnimPlaybackType")
