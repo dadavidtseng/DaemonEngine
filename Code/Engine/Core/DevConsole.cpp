@@ -73,6 +73,7 @@ void DevConsole::Shutdown()
 //----------------------------------------------------------------------------------------------------
 void DevConsole::BeginFrame()
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
     m_frameNumber++;
 }
 
@@ -145,6 +146,8 @@ void DevConsole::Execute(String const& consoleCommandText,
 //
 void DevConsole::AddLine(Rgba8 const& color, String const& text)
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
+
     sDevConsoleLine line;
     line.m_color              = color;
     line.m_text               = text;
@@ -226,12 +229,15 @@ void DevConsole::PasteFromClipboard()
 //----------------------------------------------------------------------------------------------------
 eDevConsoleMode DevConsole::GetMode() const
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
     return m_mode;
 }
 
 //----------------------------------------------------------------------------------------------------
 void DevConsole::SetMode(eDevConsoleMode const mode)
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
+
     m_mode = mode;
 
     if (m_mode == HIDDEN)
@@ -249,6 +255,8 @@ void DevConsole::SetMode(eDevConsoleMode const mode)
 /// Toggles between open and closed.
 void DevConsole::ToggleMode(eDevConsoleMode const mode)
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
+
     if (m_mode == mode)
     {
         m_mode   = HIDDEN; // Hide console if already in that mode
@@ -264,6 +272,7 @@ void DevConsole::ToggleMode(eDevConsoleMode const mode)
 //----------------------------------------------------------------------------------------------------
 bool DevConsole::IsOpen() const
 {
+    std::lock_guard<std::mutex> lock(m_consoleMutex);
     return m_isOpen;
 }
 
@@ -277,148 +286,156 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 
     if (keyCode == KEYCODE_TILDE)
     {
-        g_devConsole->ToggleMode(OPEN_FULL);
+        g_devConsole->ToggleMode(OPEN_FULL);  // Already mutex-protected
     }
 
-    if (g_devConsole->m_isOpen == false)
+    // Need to check m_isOpen with mutex protection
+    bool isOpen;
+    {
+        std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
+        isOpen = g_devConsole->m_isOpen;
+    }
+
+    if (!isOpen)
     {
         return false;
     }
 
-    if (keyCode == KEYCODE_ENTER)
+    // Check if ENTER key needs special handling (Execute must be called without mutex)
+    bool needsExecute = false;
+    String commandToExecute;
+
     {
-        if (g_devConsole->m_inputText.empty() == true)
+        // All modifications to console state need mutex protection
+        std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
+
+        if (keyCode == KEYCODE_ENTER)
         {
-            g_devConsole->SetMode(HIDDEN);
-        }
-        else
-        {
-            g_devConsole->m_commandHistory.push_back(g_devConsole->m_inputText);
-            g_devConsole->Execute(g_devConsole->m_inputText);
-            g_devConsole->m_inputText.clear();
-            g_devConsole->m_historyIndex           = -1;
-            g_devConsole->m_insertionPointPosition = 0;
-        }
-    }
-
-    if (keyCode == KEYCODE_BACKSPACE &&
-        !g_devConsole->m_inputText.empty())
-    {
-        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
-        //
-        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
-        // {
-        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
-        //     g_theDevConsole->m_inputTextPosition += lineWidth;
-        //     g_theDevConsole->m_insertionPointPosition += 1;
-        // }
-        if (g_devConsole->m_insertionPointPosition == 0)
-        {
-            return false;
-        }
-
-        g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition - 1, 1);
-        g_devConsole->m_insertionPointPosition -= 1;
-        g_devConsole->m_historyIndex = -1;
-    }
-
-    if (keyCode == KEYCODE_DELETE &&
-        !g_devConsole->m_inputText.empty())
-    {
-        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
-        //
-        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
-        // {
-        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
-        //     g_theDevConsole->m_inputTextPosition += lineWidth;
-        //     g_theDevConsole->m_insertionPointPosition += 1;
-        // }
-
-        g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition, 1);
-        g_devConsole->m_historyIndex = -1;
-    }
-
-    if (keyCode == KEYCODE_UPARROW)
-    {
-        if (g_devConsole->m_historyIndex + 1 < (int)g_devConsole->m_commandHistory.size())
-        {
-            g_devConsole->m_historyIndex += 1;
-            g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
-            g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
-        }
-    }
-
-    if (keyCode == KEYCODE_DOWNARROW)
-    {
-        if (g_devConsole->m_historyIndex != -1)
-        {
-            g_devConsole->m_historyIndex -= 1;
-
-            if (g_devConsole->m_historyIndex == -1)
+            if (g_devConsole->m_inputText.empty() == true)
             {
-                g_devConsole->m_inputText              = "";
-                g_devConsole->m_insertionPointPosition = 0;
+                g_devConsole->m_mode = HIDDEN;
+                g_devConsole->m_isOpen = false;
             }
             else
             {
+                g_devConsole->m_commandHistory.push_back(g_devConsole->m_inputText);
+                commandToExecute = g_devConsole->m_inputText;  // Copy for execution
+                needsExecute = true;
+                g_devConsole->m_inputText.clear();
+                g_devConsole->m_historyIndex           = -1;
+                g_devConsole->m_insertionPointPosition = 0;
+            }
+        }
+
+        if (keyCode == KEYCODE_BACKSPACE &&
+            !g_devConsole->m_inputText.empty())
+        {
+            if (g_devConsole->m_insertionPointPosition == 0)
+            {
+                return false;
+            }
+
+            g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition - 1, 1);
+            g_devConsole->m_insertionPointPosition -= 1;
+            g_devConsole->m_historyIndex = -1;
+        }
+
+        if (keyCode == KEYCODE_DELETE &&
+            !g_devConsole->m_inputText.empty())
+        {
+            g_devConsole->m_inputText.erase(g_devConsole->m_insertionPointPosition, 1);
+            g_devConsole->m_historyIndex = -1;
+        }
+
+        if (keyCode == KEYCODE_UPARROW)
+        {
+            if (g_devConsole->m_historyIndex + 1 < (int)g_devConsole->m_commandHistory.size())
+            {
+                g_devConsole->m_historyIndex += 1;
                 g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
                 g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
             }
         }
-    }
 
-    if (keyCode == KEYCODE_LEFTARROW)
-    {
-        if (g_devConsole->m_insertionPointPosition != 0)
+        if (keyCode == KEYCODE_DOWNARROW)
         {
-            g_devConsole->m_insertionPointPosition -= 1;
+            if (g_devConsole->m_historyIndex != -1)
+            {
+                g_devConsole->m_historyIndex -= 1;
+
+                if (g_devConsole->m_historyIndex == -1)
+                {
+                    g_devConsole->m_inputText              = "";
+                    g_devConsole->m_insertionPointPosition = 0;
+                }
+                else
+                {
+                    g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
+                    g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
+                }
+            }
         }
-    }
 
-    if (keyCode == KEYCODE_RIGHTARROW)
-    {
-        if (g_devConsole->m_insertionPointPosition != (int)g_devConsole->m_inputText.size())
+        if (keyCode == KEYCODE_LEFTARROW)
         {
-            g_devConsole->m_insertionPointPosition += 1;
+            if (g_devConsole->m_insertionPointPosition != 0)
+            {
+                g_devConsole->m_insertionPointPosition -= 1;
+            }
         }
-    }
 
-    if (keyCode == KEYCODE_HOME)
-    {
-        g_devConsole->m_insertionPointPosition = 0;
-    }
-
-    if (keyCode == KEYCODE_END)
-    {
-        g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
-    }
-
-    if (keyCode == KEYCODE_ESC)
-    {
-        if (g_devConsole->m_inputText.empty() == true)
+        if (keyCode == KEYCODE_RIGHTARROW)
         {
-            g_devConsole->SetMode(HIDDEN);
+            if (g_devConsole->m_insertionPointPosition != (int)g_devConsole->m_inputText.size())
+            {
+                g_devConsole->m_insertionPointPosition += 1;
+            }
         }
-        else
+
+        if (keyCode == KEYCODE_HOME)
         {
-            g_devConsole->m_inputText.clear();
-            g_devConsole->m_historyIndex           = -1;
             g_devConsole->m_insertionPointPosition = 0;
         }
-    }
 
-    if (keyCode == KEYCODE_CONTROL)
+        if (keyCode == KEYCODE_END)
+        {
+            g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
+        }
+
+        if (keyCode == KEYCODE_ESC)
+        {
+            if (g_devConsole->m_inputText.empty() == true)
+            {
+                g_devConsole->m_mode = HIDDEN;
+                g_devConsole->m_isOpen = false;
+            }
+            else
+            {
+                g_devConsole->m_inputText.clear();
+                g_devConsole->m_historyIndex           = -1;
+                g_devConsole->m_insertionPointPosition = 0;
+            }
+        }
+
+        if (keyCode == KEYCODE_CONTROL)
+        {
+            g_devConsole->m_isCtrlPressed = true;
+        }
+
+        if (g_devConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
+        {
+            g_devConsole->PasteFromClipboard();
+        }
+
+        g_devConsole->m_insertionPointBlinkTimer->Start();
+        g_devConsole->m_insertionPointVisible = true;
+    }  // Mutex released here
+
+    // Execute command after releasing mutex (Execute calls AddLine which needs mutex)
+    if (needsExecute)
     {
-        g_devConsole->m_isCtrlPressed = true;
+        g_devConsole->Execute(commandToExecute);
     }
-
-    if (g_devConsole->m_isCtrlPressed && keyCode == KEYCODE_V)
-    {
-        g_devConsole->PasteFromClipboard();
-    }
-
-    g_devConsole->m_insertionPointBlinkTimer->Start();
-    g_devConsole->m_insertionPointVisible = true;
 
     return true;
 }
@@ -428,7 +445,13 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
 //
 STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
 {
-    if (g_devConsole->m_isOpen == false)
+    bool isOpen;
+    {
+        std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
+        isOpen = g_devConsole->m_isOpen;
+    }
+
+    if (!isOpen)
     {
         return false;
     }
@@ -441,8 +464,9 @@ STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
         keyCode != '~' &&
         keyCode != '`')
     {
-        float const lineWidth = 800.f / g_devConsole->m_config.m_maxLinesDisplay;
+        std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
 
+        float const lineWidth = 800.f / g_devConsole->m_config.m_maxLinesDisplay;
 
         if (static_cast<float>(g_devConsole->m_inputText.size()) * lineWidth >= 1600.f)
         {
@@ -453,17 +477,6 @@ STATIC bool DevConsole::OnWindowCharInput(EventArgs& args)
         g_devConsole->m_insertionPointPosition += 1;
         g_devConsole->m_historyIndex = -1;
         g_devConsole->m_insertionPointBlinkTimer->Start();
-
-        // float const lineWidth = 800.f / g_theDevConsole->m_config.m_maxLinesDisplay;
-        //
-        //
-        // if ((float)g_theDevConsole->m_inputText.size() * lineWidth > 1600.f)
-        // {
-        //     DebuggerPrintf("m_inputTextPosition: %f\n", g_theDevConsole->m_inputTextPosition);
-        //     g_theDevConsole->m_inputTextPosition -= lineWidth;
-        //     g_theDevConsole->m_insertionPointPosition -= 1;
-        //
-        // }
     }
 
     return true;
@@ -476,6 +489,7 @@ STATIC bool DevConsole::Command_Clear(EventArgs& args)
 {
     UNUSED(args)
 
+    std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
     g_devConsole->m_lines.clear();
 
     return true;

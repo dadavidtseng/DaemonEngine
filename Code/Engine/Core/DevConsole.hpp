@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+#include <mutex>
+
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 
@@ -121,4 +123,7 @@ protected:
     int m_historyIndex = -1;
 
     bool m_isCtrlPressed = false;
+
+    // Thread-safe access to console state
+    mutable std::mutex m_consoleMutex;
 };
