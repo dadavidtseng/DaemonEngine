@@ -6,6 +6,7 @@
 #pragma once
 #include <thread>
 #include <atomic>
+#include "Engine/Core/Job.hpp"  // Need JobType and WorkerThreadType definitions
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Job;
@@ -17,9 +18,10 @@ class JobSystem;
 // Each worker thread:
 // 1. Continuously looks for available jobs in the JobSystem's queued jobs
 // 2. Claims jobs in a thread-safe manner, moving them to executing queue
-// 3. Executes the job's Execute() method (potentially slow operation)
-// 4. Moves completed jobs to the completed queue in a thread-safe manner
-// 5. Repeats until signaled to stop
+// 3. Only claims jobs matching its worker type (e.g., I/O thread only claims I/O jobs)
+// 4. Executes the job's Execute() method (potentially slow operation)
+// 5. Moves completed jobs to the completed queue in a thread-safe manner
+// 6. Repeats until signaled to stop
 //
 // Thread Safety:
 // - All job queue operations are protected by mutexes in JobSystem
@@ -29,8 +31,8 @@ class JobSystem;
 class JobWorkerThread
 {
 public:
-    // Constructor: associates worker with JobSystem and assigns unique ID
-    explicit JobWorkerThread(JobSystem* jobSystem, int workerID);
+    // Constructor: associates worker with JobSystem, assigns unique ID and worker type
+    explicit JobWorkerThread(JobSystem* jobSystem, int workerID, WorkerThreadType workerType = JOB_TYPE_GENERIC);
 
     // Destructor: ensures proper thread cleanup
     ~JobWorkerThread();
@@ -49,6 +51,9 @@ public:
 
     // Get this worker's unique ID
     int GetWorkerID() const { return m_workerID; }
+
+    // Get this worker's type (which jobs it can claim)
+    WorkerThreadType GetWorkerType() const { return m_workerType; }
 
     // Check if the worker thread is currently running
     bool IsRunning() const { return m_isRunning.load(); }
@@ -69,6 +74,9 @@ private:
 
     // Unique identifier for this worker thread
     int m_workerID = -1;
+
+    // Worker type determines which jobs this worker can claim
+    WorkerThreadType m_workerType = JOB_TYPE_GENERIC;
 
     // The actual std::thread object
     std::thread m_thread;

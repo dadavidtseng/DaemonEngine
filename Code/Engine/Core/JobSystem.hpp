@@ -8,6 +8,8 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include <condition_variable>  // For efficient worker thread sleeping
+#include "Engine/Core/Job.hpp"  // Need JobType and WorkerThreadType definitions
 
 //----------------------------------------------------------------------------------------------------
 class Job;
@@ -51,9 +53,10 @@ public:
     JobSystem(JobSystem&&)                 = delete;
     JobSystem& operator=(JobSystem&&)      = delete;
 
-    // Initialize and start N worker threads
-    // numThreads: Number of worker threads to create (typically hardware_concurrency() - 1)
-    void StartUp(int numThreads);
+    // Initialize and start worker threads with specified types
+    // numGenericThreads: Number of general-purpose worker threads (for terrain generation, etc.)
+    // numIOThreads: Number of dedicated I/O worker threads (for load/save operations, default 1)
+    void StartUp(int numGenericThreads, int numIOThreads = 1);
 
     // Stop all worker threads and clean up resources
     void ShutDown();
@@ -86,7 +89,7 @@ private:
     friend class JobWorkerThread;
 
     // Thread-safe job queue operations (called by worker threads)
-    bool ClaimJobFromQueue(Job*& outJob);      // Move job: queued -> executing
+    bool ClaimJobFromQueue(Job*& outJob, WorkerThreadType workerType);      // Move job: queued -> executing (filtered by type)
     void MoveJobToCompleted(Job* job);         // Move job: executing -> completed
 
     // Job queues protected by mutex
@@ -96,6 +99,11 @@ private:
 
     // Mutex for protecting all job queue operations
     mutable std::mutex m_jobQueuesMutex;
+
+    // Condition variable for efficient worker thread waiting
+    // Workers sleep on this and are notified when jobs are submitted
+    std::condition_variable m_jobAvailableCondition;
+    std::mutex m_conditionMutex;  // Separate mutex for condition variable
 
     // Worker thread management
     std::vector<std::unique_ptr<JobWorkerThread>> m_workerThreads;

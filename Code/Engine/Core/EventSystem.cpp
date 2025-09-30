@@ -27,6 +27,7 @@ void EventSystem::Startup()
 //----------------------------------------------------------------------------------------------------
 void EventSystem::Shutdown()
 {
+    std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
     m_subscriptionsByEventName.clear();
 }
 
@@ -43,6 +44,8 @@ void EventSystem::EndFrame()
 //----------------------------------------------------------------------------------------------------
 void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
+    std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
+
     EventSubscription const newSubscription = {functionPtr};
 
     SubscriptionList& subscriptions = m_subscriptionsByEventName[eventName];
@@ -53,6 +56,8 @@ void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventC
 //----------------------------------------------------------------------------------------------------
 void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
+    std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
+
     auto const iter = m_subscriptionsByEventName.find(eventName);
 
     if (iter != m_subscriptionsByEventName.end())
@@ -79,18 +84,23 @@ void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, Even
 //----------------------------------------------------------------------------------------------------
 void EventSystem::FireEvent(String const& eventName, EventArgs& args)
 {
-    std::map<std::string, std::vector<EventSubscription>>::iterator const iter = m_subscriptionsByEventName.find(eventName);
-
-    if (iter != m_subscriptionsByEventName.end())
+    // Make a local copy of the subscription list to avoid holding mutex during callback execution
+    SubscriptionList subscriptionsCopy;
     {
-        SubscriptionList const& subscriptions = iter->second;
-
-        for (EventSubscription const& subscription : subscriptions)
+        std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
+        auto const iter = m_subscriptionsByEventName.find(eventName);
+        if (iter != m_subscriptionsByEventName.end())
         {
-             if (subscription.callbackFunction(args))
-             {
-                 break; // Event consumed; stop notifying further subscribers
-             }
+            subscriptionsCopy = iter->second;  // Copy the subscription list
+        }
+    }
+
+    // Execute callbacks without holding the mutex (callbacks might subscribe/unsubscribe)
+    for (EventSubscription const& subscription : subscriptionsCopy)
+    {
+        if (subscription.callbackFunction(args))
+        {
+            break; // Event consumed; stop notifying further subscribers
         }
     }
 }
@@ -105,6 +115,8 @@ void EventSystem::FireEvent(String const& eventName)
 //----------------------------------------------------------------------------------------------------
 StringList EventSystem::GetAllRegisteredEventNames() const
 {
+    std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
+
     std::vector<String> eventNames;
     eventNames.reserve(m_subscriptionsByEventName.size());
 
@@ -119,10 +131,12 @@ StringList EventSystem::GetAllRegisteredEventNames() const
 //----------------------------------------------------------------------------------------------------
 void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
-    if (g_eventSystem)
+    if (!g_eventSystem)
     {
-        g_eventSystem->SubscribeEventCallbackFunction(eventName, functionPtr);
+        DAEMON_LOG(LogEvent, eLogVerbosity::Error, "EventSystem::SubscribeEventCallbackFunction()");
+        return;
     }
+    g_eventSystem->SubscribeEventCallbackFunction(eventName, functionPtr);
 }
 
 //----------------------------------------------------------------------------------------------------

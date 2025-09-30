@@ -4,6 +4,19 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include <cstdint>
+
+//----------------------------------------------------------------------------------------------------
+// Job type bitfield - allows categorizing jobs for worker thread specialization
+// Workers filter jobs based on their assigned type(s)
+//----------------------------------------------------------------------------------------------------
+typedef uint32_t JobType;
+typedef JobType WorkerThreadType;
+
+// Standard job types
+constexpr JobType JOB_TYPE_GENERIC = 0x01;  // General computation jobs (terrain generation, etc.)
+constexpr JobType JOB_TYPE_IO      = 0x02;  // File I/O jobs (load/save chunks)
+constexpr JobType JOB_TYPE_ALL     = 0xFF;  // Worker accepts any job type
 
 //----------------------------------------------------------------------------------------------------
 // Job - Abstract base class for all job types in the JobSystem
@@ -26,6 +39,9 @@
 class Job
 {
 public:
+    // Constructor: Allows derived classes to specify job type
+    explicit Job(JobType jobType = JOB_TYPE_GENERIC) : m_jobType(jobType) {}
+
     // Virtual destructor ensures proper cleanup of derived classes
     virtual ~Job() = default;
 
@@ -34,13 +50,16 @@ public:
     // Should be thread-safe and not access main-thread-only resources (e.g., DirectX)
     virtual void Execute() = 0;
 
+    // Get the job type (used by workers to filter claimable jobs)
+    JobType GetJobType() const { return m_jobType; }
+
     // Prevent copying and assignment (jobs should be unique)
     Job(Job const&)            = delete;
     Job& operator=(Job const&) = delete;
     Job(Job&&)                 = delete;
     Job& operator=(Job&&)      = delete;
 
-protected:
-    // Protected constructor prevents direct instantiation of abstract base class
-    Job() = default;
+private:
+    // Job type determines which workers can claim this job
+    JobType m_jobType = JOB_TYPE_GENERIC;
 };

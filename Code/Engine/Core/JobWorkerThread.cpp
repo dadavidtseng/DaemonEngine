@@ -10,11 +10,13 @@
 
 //----------------------------------------------------------------------------------------------------
 JobWorkerThread::JobWorkerThread(JobSystem* jobSystem,
-                                 int const  workerID)
+                                 int const  workerID,
+                                 WorkerThreadType const workerType)
     : m_jobSystem(jobSystem),
-      m_workerID(workerID)
+      m_workerID(workerID),
+      m_workerType(workerType)
 {
-    // Constructor just stores the reference and ID
+    // Constructor stores the reference, ID, and worker type
     // Thread is not started until StartThread() is called
 }
 
@@ -71,12 +73,17 @@ void JobWorkerThread::ThreadMain()
         }
         else
         {
-            // No work available - sleep for 1 microsecond to be cooperative
-            // This prevents the thread from consuming excessive CPU while waiting
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
-
-            // Yield the current time slice to other threads
-            std::this_thread::yield();
+            // No work available - wait on condition variable instead of spinning
+            // This is much more efficient than sleeping/yielding in a tight loop
+            std::unique_lock<std::mutex> lock(m_jobSystem->m_conditionMutex);
+            m_jobSystem->m_jobAvailableCondition.wait_for(
+                lock,
+                std::chrono::milliseconds(10),  // Timeout after 10ms to check m_shouldStop
+                [this] {
+                    // Predicate: wake up if stopping or if there are jobs available
+                    return m_shouldStop.load() || m_jobSystem->GetQueuedJobCount() > 0;
+                }
+            );
         }
     }
 }
@@ -85,7 +92,8 @@ void JobWorkerThread::ThreadMain()
 bool JobWorkerThread::ClaimJob()
 {
     // Attempt to claim a job from the JobSystem's queued jobs
-    return m_jobSystem->ClaimJobFromQueue(m_currentJob);
+    // Pass our worker type so we only claim jobs matching our type
+    return m_jobSystem->ClaimJobFromQueue(m_currentJob, m_workerType);
 }
 
 //----------------------------------------------------------------------------------------------------

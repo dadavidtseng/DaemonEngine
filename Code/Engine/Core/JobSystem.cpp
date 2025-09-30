@@ -31,7 +31,7 @@ JobSystem::~JobSystem()
 }
 
 //----------------------------------------------------------------------------------------------------
-void JobSystem::StartUp(int numThreads)
+void JobSystem::StartUp(int numGenericThreads, int numIOThreads)
 {
     if (m_isRunning)
     {
@@ -44,15 +44,38 @@ void JobSystem::StartUp(int numThreads)
     {
         hardwareConcurrency = 2; // Fallback if hardware_concurrency() returns 0 or 1
     }
-    
-    // Clamp to reasonable bounds
-    numThreads = std::max(1, std::min(numThreads, hardwareConcurrency - 1));
 
-    // Create and start worker threads
-    m_workerThreads.reserve(numThreads);
-    for (int i = 0; i < numThreads; ++i)
+    // Calculate total threads needed
+    int totalThreads = numGenericThreads + numIOThreads;
+
+    // Ensure we don't exceed hardware capabilities (reserve 1 core for main thread)
+    if (totalThreads > hardwareConcurrency - 1)
     {
-        auto workerThread = std::make_unique<JobWorkerThread>(this, i);
+        // Reduce generic threads first, but keep at least 1
+        numGenericThreads = hardwareConcurrency - 1 - numIOThreads;
+        if (numGenericThreads < 1)
+        {
+            numGenericThreads = 1;
+        }
+        totalThreads = numGenericThreads + numIOThreads;
+    }
+
+    // Reserve space for all worker threads
+    m_workerThreads.reserve(totalThreads);
+
+    // Create I/O worker threads first (dedicated to file operations)
+    for (int i = 0; i < numIOThreads; ++i)
+    {
+        auto workerThread = std::make_unique<JobWorkerThread>(this, i, JOB_TYPE_IO);
+        workerThread->StartThread();
+        m_workerThreads.push_back(std::move(workerThread));
+    }
+
+    // Create generic worker threads (for terrain generation, etc.)
+    for (int i = 0; i < numGenericThreads; ++i)
+    {
+        int workerID = numIOThreads + i;  // Offset ID after I/O threads
+        auto workerThread = std::make_unique<JobWorkerThread>(this, workerID, JOB_TYPE_GENERIC);
         workerThread->StartThread();
         m_workerThreads.push_back(std::move(workerThread));
     }
@@ -120,6 +143,10 @@ void JobSystem::SubmitJob(Job* job)
         std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
         m_queuedJobs.push_back(job);
     }
+
+    // Notify one waiting worker thread that work is available
+    // This wakes up sleeping workers efficiently instead of spin-waiting
+    m_jobAvailableCondition.notify_one();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -194,26 +221,35 @@ int JobSystem::GetCompletedJobCount() const
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-bool JobSystem::ClaimJobFromQueue(Job*& outJob)
+bool JobSystem::ClaimJobFromQueue(Job*& outJob, WorkerThreadType workerType)
 {
     std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
-    
-    if (m_queuedJobs.empty())
+
+    // Find first job that matches worker type (bitfield check)
+    for (auto it = m_queuedJobs.begin(); it != m_queuedJobs.end(); ++it)
     {
-        outJob = nullptr;
-        return false; // No jobs available to claim
+        Job* job = *it;
+
+        // Check if worker can handle this job type (bitwise AND)
+        // Example: If worker is JOB_TYPE_IO (0x02) and job is JOB_TYPE_IO (0x02), then (0x02 & 0x02) = 0x02 != 0
+        // Example: If worker is JOB_TYPE_GENERIC (0x01) and job is JOB_TYPE_IO (0x02), then (0x01 & 0x02) = 0x00 == 0
+        if ((job->GetJobType() & workerType) != 0)
+        {
+            // Remove job from queued jobs
+            m_queuedJobs.erase(it);
+
+            // Add job to executing jobs
+            m_executingJobs.push_back(job);
+
+            // Return the claimed job
+            outJob = job;
+            return true;
+        }
     }
 
-    // Remove job from queued jobs
-    Job* claimedJob = m_queuedJobs.front();
-    m_queuedJobs.pop_front();
-    
-    // Add job to executing jobs
-    m_executingJobs.push_back(claimedJob);
-    
-    // Return the claimed job
-    outJob = claimedJob;
-    return true;
+    // No matching job found
+    outJob = nullptr;
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------

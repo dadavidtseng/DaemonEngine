@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include <map>
+#include <mutex>
 
 #include "Engine/Core/StringUtils.hpp"
 
@@ -51,6 +52,7 @@ public:
 protected:
     sEventSystemConfig m_config;
     std::map<String, SubscriptionList> m_subscriptionsByEventName;
+    mutable std::mutex m_subscriptionsMutex;  // Thread-safe access to m_subscriptionsByEventName
 };
 
 //----------------------------------------------------------------------------------------------------
