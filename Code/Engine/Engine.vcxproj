@@ -222,6 +222,7 @@
   </ItemGroup>
   <ItemGroup Label="MathSubsystemSources">
     <!-- Mathematics Library - Optimized for game development -->
+    <ClCompile Include="Input\InputCommon.cpp" />
     <ClCompile Include="Math/AABB2.cpp" />
     <ClCompile Include="Math/AABB3.cpp" />
     <ClCompile Include="Math/Capsule2.cpp" />
@@ -370,6 +371,7 @@
   </ItemGroup>
   <ItemGroup Label="MathSubsystemHeaders">
     <!-- Mathematics Library Headers -->
+    <ClInclude Include="Input\InputCommon.hpp" />
     <ClInclude Include="Math/AABB2.hpp" />
     <ClInclude Include="Math/AABB3.hpp" />
     <ClInclude Include="Math/Capsule2.hpp" />

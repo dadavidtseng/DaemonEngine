@@ -158,6 +158,9 @@
     <ClCompile Include="Audio\AudioScriptInterface.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="Input\InputCommon.cpp">
+      <Filter>Engine\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <!-- Core Engine Sources -->
   <ItemGroup Label="CoreSubsystemSources">
@@ -545,6 +548,9 @@
     </ClInclude>
     <ClInclude Include="Audio\AudioScriptInterface.hpp">
       <Filter>Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputCommon.hpp">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <!-- Core Engine Headers -->

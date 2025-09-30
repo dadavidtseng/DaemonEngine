@@ -17,12 +17,12 @@ class FontLoader : public IResourceLoader
 {
 public:
     explicit FontLoader(Renderer* renderer);
-    virtual ~FontLoader();
+    ~FontLoader() override;
 
     // IResourceLoader interface implementation
-    bool                           CanLoad(String const& extension) const override;
-    std::shared_ptr<IResource>     Load(String const& path) override;
-    StringList                     GetSupportedExtensions() const override;
+    bool                       CanLoad(String const& extension) const override;
+    std::shared_ptr<IResource> Load(String const& path) override;
+    StringList                 GetSupportedExtensions() const override;
 
 private:
     Renderer* m_renderer = nullptr;
