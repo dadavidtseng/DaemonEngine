@@ -12,9 +12,16 @@
 #include <thread>
 #include <vector>
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Resource/IResourceLoader.hpp"
 #include "Engine/Resource/ResourceCache.hpp"
 #include "Engine/Resource/ResourceHandle.hpp"
-#include "Engine/Resource/IResourceLoader.hpp"
+#include "Engine/Renderer/RenderCommon.hpp"
+
+//----------------------------------------------------------------------------------------------------
+class Texture;
+class BitmapFont;
+class Shader;
+class Renderer;
 
 struct sResourceSubsystemConfig
 {
@@ -75,8 +82,22 @@ public:
     // 設定記憶體限制
     void SetMemoryLimit(size_t bytes) { m_memoryLimit = bytes; }
 
+    // Global singleton access methods
+    static void Initialize(Renderer* renderer, sResourceSubsystemConfig const& config = sResourceSubsystemConfig());
+    static void GlobalShutdown();
+    static ResourceSubsystem* Get() { return s_instance; }
+
+    // Global resource access methods - delegates to Renderer for actual loading
+    static Texture* CreateOrGetTextureFromFile(String const& path);
+    static BitmapFont* CreateOrGetBitmapFontFromFile(String const& path);
+    static Shader* CreateOrGetShaderFromFile(String const& path, eVertexType vertexType = eVertexType::VERTEX_PCU);
+
 private:
     sResourceSubsystemConfig m_config;
+
+    // Singleton instance
+    static ResourceSubsystem* s_instance;
+    static Renderer* s_renderer;
 
     // 禁止複製
     ResourceSubsystem( ResourceSubsystem const&)            = delete;

@@ -16,7 +16,6 @@ public:
 
     virtual ~IResource() = default;
 
-    // 子類必須實作的介面
     virtual bool Load() = 0;
     virtual void Unload() = 0;
     virtual size_t CalculateMemorySize() const = 0;
