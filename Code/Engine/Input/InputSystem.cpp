@@ -93,8 +93,8 @@ InputSystem::InputSystem(sInputSystemConfig const& config)
 //----------------------------------------------------------------------------------------------------
 void InputSystem::Startup()
 {
-    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
-    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
+    SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
 
     for (int controllerIndex = 0; controllerIndex < NUM_XBOX_CONTROLLERS; ++controllerIndex)
     {
