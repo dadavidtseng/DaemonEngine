@@ -54,6 +54,8 @@ struct sRendererConfig
 //----------------------------------------------------------------------------------------------------
 class Renderer
 {
+    friend class ResourceSubsystem;
+
 public:
     explicit Renderer(sRendererConfig const& config);
 

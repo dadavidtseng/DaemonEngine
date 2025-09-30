@@ -750,16 +750,6 @@ Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderFilePath,
         return existingShader;
     }
 
-    // String const   textureFilePath = Stringf("%s.hlsl", shaderName);
-    // Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
-    //
-    // if (!newTexture)
-    // {
-    //     // Handle error: texture could not be created or retrieved
-    //     return nullptr;
-    // }
-
-    // Consider using smart pointers for better memory management
     Shader* newShader = CreateShader(shaderFilePath, vertexType);
     m_loadedShaders.push_back(newShader);
 
@@ -1034,7 +1024,7 @@ Shader* Renderer::CreateShader(char const*       shaderName,
                                char const*       shaderSource,
                                eVertexType const vertexType)
 {
-    ShaderConfig shaderConfig;
+    sShaderConfig shaderConfig;
     shaderConfig.m_name = shaderName;
     Shader* shader      = new Shader(shaderConfig);
 
