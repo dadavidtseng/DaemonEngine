@@ -10,8 +10,10 @@ The Input module provides comprehensive input handling for keyboard, mouse, and 
 
 ### Primary Entry Point
 - `InputSystem.hpp` - Main input system and device management
+- `InputCommon.hpp` - Shared input constants and utilities
 - `XboxController.hpp` - Xbox controller abstraction
 - `KeyButtonState.hpp` - Key/button state tracking
+- `AnalogJoystick.hpp` - Analog joystick with dead zone correction
 
 ### Initialization Pattern
 ```cpp
@@ -240,6 +242,7 @@ A: Yes, `BeginFrame()` updates all input states, ensuring consistent input timin
 
 ### Core Implementation
 - `InputSystem.cpp` - Main input system implementation and event handling
+- `InputCommon.cpp` - Shared input constants and utility functions
 - `XboxController.cpp` - Xbox controller state management and XInput integration
 - `KeyButtonState.cpp` - Button state tracking logic
 - `AnalogJoystick.cpp` - Analog input processing with deadzone handling
@@ -263,5 +266,7 @@ The Input module integrates closely with:
 
 ## Changelog
 
+- 2025-09-30: Added InputCommon module for shared input constants and utilities
+- 2025-09-30: Enhanced AnalogJoystick and KeyButtonState with comprehensive documentation
 - 2025-09-06 21:17:11: Initial Input module documentation created
 - Recent developments: InputScriptInterface for V8 integration, enhanced cursor management, comprehensive Xbox controller support

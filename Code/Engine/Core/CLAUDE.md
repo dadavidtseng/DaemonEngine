@@ -13,16 +13,21 @@ The Core module provides fundamental engine systems and utilities that serve as 
 - `EventSystem.hpp` - Event-driven communication system
 - `LogSubsystem.hpp` - Centralized logging system
 - `Clock.hpp` - Time management and timing utilities
+- `JobSystem.hpp` - Multi-threaded job system with specialized worker threads
+- `DevConsole.hpp` - Developer console for debugging and command execution
 
 ### Initialization Pattern
 ```cpp
 // Global system instances declared in EngineCommon.hpp
 extern EventSystem* g_eventSystem;
 extern DevConsole*  g_devConsole;
+extern JobSystem*   g_jobSystem;
 
 // Typical startup in application
 g_eventSystem = new EventSystem(eventConfig);
 g_devConsole = new DevConsole(consoleConfig);
+g_jobSystem = new JobSystem();
+g_jobSystem->StartUp(4, 1); // 4 generic threads, 1 I/O thread
 ```
 
 ## External Interfaces
@@ -46,6 +51,18 @@ FireEvent("KeyPressed", args);
 void AddLine(Rgba8 const& color, String const& text);
 void ToggleDisplay();
 bool IsOpen() const;
+void ExecuteCommand(String const& command);
+```
+
+### JobSystem API
+```cpp
+// Multi-threaded job system with specialized workers
+void StartUp(int numGenericThreads, int numIOThreads = 1);
+void QueueJob(Job* job);
+void QueueGenericJob(JobCallback callback, void* userData = nullptr);
+void QueueIOJob(JobCallback callback, void* userData = nullptr);
+bool AreAllJobsCompleted() const;
+void ShutDown();
 ```
 
 ### Timing and Clock System
@@ -149,6 +166,9 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 - `Clock.cpp` - Time management implementation
 - `Timer.cpp` - Timer utilities
 - `DevConsole.cpp` - Developer console system
+- `JobSystem.cpp` - Multi-threaded job system implementation
+- `JobWorkerThread.cpp` - Worker thread management
+- `Job.cpp` - Job definition and execution
 - `StringUtils.cpp` - String manipulation utilities
 - `FileUtils.cpp` - File I/O operations
 - `XmlUtils.cpp` - XML parsing utilities
@@ -164,5 +184,7 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 
 ## Changelog
 
+- 2025-09-30: Enhanced JobSystem with thread type specialization and I/O threading support
+- 2025-09-30: Improved DevConsole with enhanced functionality and comprehensive documentation
 - 2025-09-06 19:54:50: Initial module documentation created
 - Recent developments: LogSubsystem integration with DevConsole, StringUtils enhancements for naming conventions
