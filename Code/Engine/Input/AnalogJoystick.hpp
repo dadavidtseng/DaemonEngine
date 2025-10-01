@@ -7,8 +7,6 @@
 #include "Engine/Math/Vec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------------------------
 /// @brief Analog joystick input handler with dead zone correction and position tracking
 ///
 /// @details Manages analog stick input from game controllers (Xbox, PlayStation, etc.) with
@@ -25,7 +23,7 @@
 class AnalogJoystick
 {
 public:
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Get the dead zone-corrected joystick position
     ///
     /// @return Vec2 Corrected 2D position in normalized space [-1, 1] for both axes
@@ -34,10 +32,10 @@ public:
     /// @remark Returns Vec2(0,0) when joystick is within inner dead zone threshold.
     ///
     /// @see GetRawUncorrectedPosition() for raw hardware values without correction
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     Vec2  GetPosition() const;
 
-    //----------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
     /// @brief Get the magnitude (length) of the corrected joystick position vector
     ///
     /// @return float Corrected magnitude in range [0, 1] representing distance from center

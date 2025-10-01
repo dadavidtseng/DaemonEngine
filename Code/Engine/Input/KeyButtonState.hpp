@@ -6,8 +6,6 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------------------------
 /// @brief Tracks the current and previous frame state of a keyboard key or button input
 ///
 /// @details This structure maintains state information for detecting key/button press events,

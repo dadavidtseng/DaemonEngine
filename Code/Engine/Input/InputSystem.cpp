@@ -6,88 +6,15 @@
 #include "Engine/Input/InputSystem.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
-
-//----------------------------------------------------------------------------------------------------
-unsigned char const NUMCODE_0             = 0x30;
-unsigned char const NUMCODE_1             = 0x31;
-unsigned char const NUMCODE_2             = 0x32;
-unsigned char const NUMCODE_3             = 0x33;
-unsigned char const NUMCODE_4             = 0x34;
-unsigned char const NUMCODE_5             = 0x35;
-unsigned char const NUMCODE_6             = 0x36;
-unsigned char const NUMCODE_7             = 0x37;
-unsigned char const NUMCODE_8             = 0x38;
-unsigned char const NUMCODE_9             = 0x39;
-unsigned char const KEYCODE_A             = 0x41;
-unsigned char const KEYCODE_B             = 0x42;
-unsigned char const KEYCODE_C             = 0x43;
-unsigned char const KEYCODE_D             = 0x44;
-unsigned char const KEYCODE_E             = 0x45;
-unsigned char const KEYCODE_F             = 0x46;
-unsigned char const KEYCODE_G             = 0x47;
-unsigned char const KEYCODE_H             = 0x48;
-unsigned char const KEYCODE_I             = 0x49;
-unsigned char const KEYCODE_J             = 0x4A;
-unsigned char const KEYCODE_K             = 0x4B;
-unsigned char const KEYCODE_L             = 0x4C;
-unsigned char const KEYCODE_M             = 0x4D;
-unsigned char const KEYCODE_N             = 0x4E;
-unsigned char const KEYCODE_O             = 0x4F;
-unsigned char const KEYCODE_P             = 0x50;
-unsigned char const KEYCODE_Q             = 0x51;
-unsigned char const KEYCODE_R             = 0x52;
-unsigned char const KEYCODE_S             = 0x53;
-unsigned char const KEYCODE_T             = 0x54;
-unsigned char const KEYCODE_U             = 0x55;
-unsigned char const KEYCODE_V             = 0x56;
-unsigned char const KEYCODE_W             = 0x57;
-unsigned char const KEYCODE_X             = 0x58;
-unsigned char const KEYCODE_Y             = 0x59;
-unsigned char const KEYCODE_Z             = 0x5A;
-unsigned char const KEYCODE_F1            = VK_F1;
-unsigned char const KEYCODE_F2            = VK_F2;
-unsigned char const KEYCODE_F3            = VK_F3;
-unsigned char const KEYCODE_F4            = VK_F4;
-unsigned char const KEYCODE_F5            = VK_F5;
-unsigned char const KEYCODE_F6            = VK_F6;
-unsigned char const KEYCODE_F7            = VK_F7;
-unsigned char const KEYCODE_F8            = VK_F8;
-unsigned char const KEYCODE_F9            = VK_F9;
-unsigned char const KEYCODE_F10           = VK_F10;
-unsigned char const KEYCODE_F11           = VK_F11;
-unsigned char const KEYCODE_F12           = VK_F12;
-unsigned char const KEYCODE_F13           = VK_F13;
-unsigned char const KEYCODE_F14           = VK_F14;
-unsigned char const KEYCODE_F15           = VK_F15;
-unsigned char const KEYCODE_ESC           = VK_ESCAPE;
-unsigned char const KEYCODE_UPARROW       = VK_UP;
-unsigned char const KEYCODE_DOWNARROW     = VK_DOWN;
-unsigned char const KEYCODE_LEFTARROW     = VK_LEFT;
-unsigned char const KEYCODE_RIGHTARROW    = VK_RIGHT;
-unsigned char const KEYCODE_ENTER         = VK_RETURN;
-unsigned char const KEYCODE_SPACE         = VK_SPACE;
-unsigned char const KEYCODE_BACKSPACE     = VK_BACK;
-unsigned char const KEYCODE_LEFT_MOUSE    = VK_LBUTTON;
-unsigned char const KEYCODE_RIGHT_MOUSE   = VK_RBUTTON;
-unsigned char const KEYCODE_INSERT        = VK_INSERT;
-unsigned char const KEYCODE_DELETE        = VK_DELETE;
-unsigned char const KEYCODE_HOME          = VK_HOME;
-unsigned char const KEYCODE_END           = VK_END;
-unsigned char const KEYCODE_TILDE         = VK_OEM_3;
-unsigned char const KEYCODE_LEFT_BRACKET  = VK_OEM_4;
-unsigned char const KEYCODE_RIGHT_BRACKET = VK_OEM_6;
-unsigned char const KEYCODE_SHIFT         = VK_SHIFT;
-unsigned char const KEYCODE_CONTROL       = VK_CONTROL;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_input = nullptr;
 
 //----------------------------------------------------------------------------------------------------
 InputSystem::InputSystem(sInputSystemConfig const& config)
+    : m_config(config)
 {
-    m_inputConfig = config;
 }
 
 //----------------------------------------------------------------------------------------------------
