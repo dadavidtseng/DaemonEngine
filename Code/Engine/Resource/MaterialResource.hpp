@@ -4,14 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Resource/IResource.hpp"
-#include "Engine/Math/Vec4.hpp"
-#include "Engine/Core/Rgba8.hpp"
-#include <unordered_map>
-#include <string>
 #include <d3d11.h>
-
+#include <string>
+#include <unordered_map>
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec4.hpp"
+#include "Engine/Resource/IResource.hpp"
 
 // Forward declarations
 class TextureResource;
