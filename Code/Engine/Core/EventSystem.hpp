@@ -4,20 +4,21 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
 #include <map>
 #include <mutex>
-
-#include "Engine/Core/StringUtils.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class NamedStrings;
 
 //----------------------------------------------------------------------------------------------------
-typedef NamedStrings EventArgs;
-typedef bool (*EventCallbackFunction)(EventArgs& args);
+using EventArgs = NamedStrings;
+using EventCallbackFunction = bool (*)(EventArgs& args);
 
 //----------------------------------------------------------------------------------------------------
-struct EventSubscription
+struct sEventSubscription
 {
     EventCallbackFunction callbackFunction;
 };
@@ -28,7 +29,7 @@ struct sEventSystemConfig
 };
 
 //----------------------------------------------------------------------------------------------------
-typedef std::vector<EventSubscription> SubscriptionList;
+using SubscriptionList = std::vector<sEventSubscription>;
 
 //----------------------------------------------------------------------------------------------------
 class EventSystem
@@ -50,9 +51,9 @@ public:
     StringList GetAllRegisteredEventNames() const;
 
 protected:
-    sEventSystemConfig m_config;
+    sEventSystemConfig                 m_config;
     std::map<String, SubscriptionList> m_subscriptionsByEventName;
-    mutable std::mutex m_subscriptionsMutex;  // Thread-safe access to m_subscriptionsByEventName
+    mutable std::mutex                 m_subscriptionsMutex;  // Thread-safe access to m_subscriptionsByEventName
 };
 
 //----------------------------------------------------------------------------------------------------

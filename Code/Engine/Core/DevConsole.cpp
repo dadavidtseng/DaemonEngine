@@ -4,19 +4,16 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/DevConsole.hpp"
-
-#include <algorithm>
-#include <iostream>
-#include <sstream>
-
-#include "ErrorWarningAssert.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <sstream>
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
@@ -36,10 +33,10 @@ STATIC Rgba8 const DevConsole::INPUT_TEXT            = Rgba8(255, 255, 255);
 STATIC Rgba8 const DevConsole::INPUT_INSERTION_POINT = Rgba8(255, 255, 255, 200);
 
 //----------------------------------------------------------------------------------------------------
-DevConsole::DevConsole(sDevConsoleConfig const& config)
-    : m_config(config)
+DevConsole::DevConsole(sDevConsoleConfig config)
+    : m_config(std::move(config))
 {
-    AddLine(INFO_MINOR, "<Welcome to DevConsole v0.2.0>");
+    AddLine(INFO_MINOR, "<Welcome to DevConsole v0.3.0>");
     AddLine(INFO_MINOR, "<Please type `help` to see all available commands.>");
 }
 

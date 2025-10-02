@@ -4,16 +4,16 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/HeatMaps.hpp"
-
-#include <cmath>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <cmath>
 
 //----------------------------------------------------------------------------------------------------
 TileHeatMap::TileHeatMap(IntVec2 const& dimensions, float const initialValue)
@@ -78,8 +78,7 @@ FloatRange TileHeatMap::GetRangeOfValuesExcludingSpecial(float const specialValu
     {
         float const value = m_values[i];
 
-        if (std::fabs(value - specialValueToIgnore) > FLOAT_MIN)
-            rangeOfNonSpecialValues.ExpandToInclude(m_values[i]);
+        if (std::fabs(value - specialValueToIgnore) > FLOAT_MIN) rangeOfNonSpecialValues.ExpandToInclude(m_values[i]);
     }
 
     return rangeOfNonSpecialValues;
@@ -142,12 +141,12 @@ void TileHeatMap::SetValueAtCoords(IntVec2 const& tileCoords, float const value)
 }
 
 //----------------------------------------------------------------------------------------------------
-void TileHeatMap::AddVertsForDebugDraw(VertexList_PCU&  verts,
-                                       AABB2 const& totalBounds,
-                                       Rgba8 const& lowColor,
-                                       Rgba8 const& highColor,
-                                       float const  specialValue,
-                                       Rgba8 const& specialColor) const
+void TileHeatMap::AddVertsForDebugDraw(VertexList_PCU& verts,
+                                       AABB2 const&    totalBounds,
+                                       Rgba8 const&    lowColor,
+                                       Rgba8 const&    highColor,
+                                       float const     specialValue,
+                                       Rgba8 const&    specialColor) const
 {
     for (int tileY = 0; tileY < m_dimensions.y; tileY++)
     {
@@ -175,5 +174,4 @@ void TileHeatMap::AddVertsForDebugDraw(VertexList_PCU&  verts,
             AddVertsForAABB2D(verts, tileBounds, color);
         }
     }
-
 }

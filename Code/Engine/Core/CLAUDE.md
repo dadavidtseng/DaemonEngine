@@ -4,24 +4,33 @@
 
 ## Module Responsibilities
 
-The Core module provides fundamental engine systems and utilities that serve as the foundation for all other engine modules. It handles essential services like event management, time systems, logging, developer tools, and basic data structures.
+The Core module provides fundamental engine systems and utilities that serve as the foundation for all other engine modules. It handles essential services like event management, time systems, modular logging with output devices, developer tools, centralized engine singleton (GEngine), and basic data structures.
 
 ## Entry and Startup
 
 ### Primary Headers
+- `Engine.hpp` - Global engine singleton providing centralized access to subsystems
 - `EngineCommon.hpp` - Global engine declarations and utilities
 - `EventSystem.hpp` - Event-driven communication system
-- `LogSubsystem.hpp` - Centralized logging system
+- `LogSubsystem.hpp` - Modular logging system with pluggable output devices
+- `ILogOutputDevice.hpp` - Interface for custom log output destinations
 - `Clock.hpp` - Time management and timing utilities
 - `JobSystem.hpp` - Multi-threaded job system with specialized worker threads
 - `DevConsole.hpp` - Developer console for debugging and command execution
 
 ### Initialization Pattern
 ```cpp
-// Global system instances declared in EngineCommon.hpp
+// Global system instances (legacy approach)
 extern EventSystem* g_eventSystem;
 extern DevConsole*  g_devConsole;
 extern JobSystem*   g_jobSystem;
+
+// Modern GEngine singleton approach (recommended)
+GEngine& engine = GEngine::Get();
+engine.Initialize(g_jobSystem);
+
+// Access subsystems via singleton
+JobSystem* jobSystem = GEngine::GetJobSystem();
 
 // Typical startup in application
 g_eventSystem = new EventSystem(eventConfig);
@@ -52,6 +61,50 @@ void AddLine(Rgba8 const& color, String const& text);
 void ToggleDisplay();
 bool IsOpen() const;
 void ExecuteCommand(String const& command);
+```
+
+### Logging System API
+```cpp
+// Modular logging with pluggable output devices
+class LogSubsystem {
+    // Add custom output devices
+    void AddOutputDevice(ILogOutputDevice* device);
+    void RemoveOutputDevice(ILogOutputDevice* device);
+
+    // Logging operations
+    void LogMessage(eLogLevel level, String const& message, String const& category = "");
+    void LogError(String const& message, String const& category = "");
+    void LogWarning(String const& message, String const& category = "");
+    void LogInfo(String const& message, String const& category = "");
+
+    // Device management
+    void FlushAllDevices();
+};
+
+// Output device implementations
+class FileOutputDevice : public ILogOutputDevice {
+    // Writes logs to file
+};
+
+class ConsoleOutputDevice : public ILogOutputDevice {
+    // Writes to standard console
+};
+
+class DevConsoleOutputDevice : public ILogOutputDevice {
+    // Integrates with in-game developer console
+};
+
+class DebugOutputDevice : public ILogOutputDevice {
+    // Writes to Visual Studio debug output
+};
+
+class OnScreenOutputDevice : public ILogOutputDevice {
+    // Displays logs on-screen during gameplay
+};
+
+class SmartFileOutputDevice : public ILogOutputDevice {
+    // Advanced file logging with rotation and management
+};
 ```
 
 ### JobSystem API
@@ -160,9 +213,21 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 ## Related Files
 
 ### Core Implementation Files
+- `Engine.cpp` - Global engine singleton implementation
 - `EngineCommon.cpp` - Global variable definitions
 - `EventSystem.cpp` - Event management implementation
-- `LogSubsystem.cpp` - Logging system implementation
+- `LogSubsystem.cpp` - Core logging system implementation
+
+### Logging Output Devices
+- `ILogOutputDevice.hpp` - Abstract interface for log output devices
+- `FileOutputDevice.cpp` - File-based logging implementation
+- `SmartFileOutputDevice.cpp` - Advanced file logging with rotation
+- `ConsoleOutputDevice.cpp` - Console output implementation
+- `DebugOutputDevice.cpp` - Visual Studio debug output
+- `DevConsoleOutputDevice.cpp` - Developer console integration
+- `OnScreenOutputDevice.cpp` - On-screen log display
+
+### Core Systems
 - `Clock.cpp` - Time management implementation
 - `Timer.cpp` - Timer utilities
 - `DevConsole.cpp` - Developer console system
@@ -184,6 +249,18 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 
 ## Changelog
 
+- 2025-10-01: **Major LogSubsystem Refactoring** (SOLID Principles Applied)
+  - Extracted 7 output devices from monolithic 2,033-line implementation into separate modular files
+  - Created `ILogOutputDevice.hpp` base interface following Interface Segregation Principle
+  - Split implementations: `ConsoleOutputDevice`, `FileOutputDevice`, `SmartFileOutputDevice`, `DebugOutputDevice`, `OnScreenOutputDevice`, `DevConsoleOutputDevice`
+  - Reduced `LogSubsystem.hpp` from 567 lines to ~120 lines (79% reduction)
+  - Reduced `LogSubsystem.cpp` from 1,466 lines to 616 lines (58% reduction)
+  - Fixed race condition in `SmartFileOutputDevice` shutdown sequence (Minecraft-style latest.log persistence)
+  - Removed duplicate symbol definitions between LogSubsystem.cpp and SmartFileOutputDevice.cpp
+  - Updated Visual Studio project files (Engine.vcxproj, Engine.vcxproj.filters) with new modular structure
+- 2025-10-01: Introduced GEngine singleton for centralized subsystem access and reduced global namespace pollution
+- 2025-10-01: Refactored LogSubsystem to modular output device architecture with ILogOutputDevice interface
+- 2025-10-01: Added multiple log output device implementations (File, Console, Debug, DevConsole, OnScreen, SmartFile)
 - 2025-09-30: Enhanced JobSystem with thread type specialization and I/O threading support
 - 2025-09-30: Improved DevConsole with enhanced functionality and comprehensive documentation
 - 2025-09-06 19:54:50: Initial module documentation created

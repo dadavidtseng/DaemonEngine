@@ -3,17 +3,17 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/ErrorWarningAssert.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <cstdarg>
+#include <iostream>
 #ifdef _WIN32
 #define PLATFORM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <windows.h>
 #endif
-
-//----------------------------------------------------------------------------------------------------
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include <cstdarg>
-#include <iostream>
-#include "Engine/Core/StringUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 bool IsDebuggerAvailable()
@@ -41,7 +41,7 @@ bool IsDebuggerAvailable()
     static BOOL isDebuggerAvailable = isDebuggerPresentFunc();
     return isDebuggerAvailable == TRUE;
 #else
-	return false;
+    return false;
 #endif
 }
 
@@ -70,14 +70,14 @@ void DebuggerPrintf(char const* messageFormat, ...)
 // Converts a SeverityLevel to a Windows MessageBox icon type (MB_etc)
 //
 #if defined( PLATFORM_WINDOWS )
-UINT GetWindowsMessageBoxIconFlagForSeverityLevel(MsgSeverityLevel const severity)
+UINT GetWindowsMessageBoxIconFlagForSeverityLevel(eMsgSeverityLevel const severity)
 {
     switch (severity)
     {
-    case MsgSeverityLevel::INFORMATION: return MB_ICONASTERISK; // blue circle with 'i' in Windows 7
-    case MsgSeverityLevel::QUESTION: return MB_ICONQUESTION;    // blue circle with '?' in Windows 7
-    case MsgSeverityLevel::WARNING: return MB_ICONEXCLAMATION;  // yellow triangle with '!' in Windows 7
-    case MsgSeverityLevel::FATAL: return MB_ICONHAND;           // red circle with 'x' in Windows 7
+    case eMsgSeverityLevel::INFORMATION: return MB_ICONASTERISK; // blue circle with 'i' in Windows 7
+    case eMsgSeverityLevel::QUESTION: return MB_ICONQUESTION;    // blue circle with '?' in Windows 7
+    case eMsgSeverityLevel::WARNING: return MB_ICONEXCLAMATION;  // yellow triangle with '!' in Windows 7
+    case eMsgSeverityLevel::FATAL: return MB_ICONHAND;           // red circle with 'x' in Windows 7
     default: return MB_ICONEXCLAMATION;
     }
 }
@@ -109,9 +109,9 @@ char const* FindStartOfFileNameWithinFilePath(char const* filePath)
 }
 
 //----------------------------------------------------------------------------------------------------
-void SystemDialogue_Okay(std::string const&     messageTitle,
-                         std::string const&     messageText,
-                         MsgSeverityLevel const severity)
+void SystemDialogue_Okay(std::string const&      messageTitle,
+                         std::string const&      messageText,
+                         eMsgSeverityLevel const severity)
 {
 #if defined( PLATFORM_WINDOWS )
     {
@@ -126,9 +126,9 @@ void SystemDialogue_Okay(std::string const&     messageTitle,
 //----------------------------------------------------------------------------------------------------
 // Returns true if OKAY was chosen, false if CANCEL was chosen.
 //
-bool SystemDialogue_OkayCancel(std::string const&     messageTitle,
-                               std::string const&     messageText,
-                               MsgSeverityLevel const severity)
+bool SystemDialogue_OkayCancel(std::string const&      messageTitle,
+                               std::string const&      messageText,
+                               eMsgSeverityLevel const severity)
 {
     bool isAnswerOkay = true;
 
@@ -149,9 +149,9 @@ bool SystemDialogue_OkayCancel(std::string const&     messageTitle,
 //----------------------------------------------------------------------------------------------------
 // Returns true if YES was chosen, false if NO was chosen.
 //
-bool SystemDialogue_YesNo(std::string const&     messageTitle,
-                          std::string const&     messageText,
-                          MsgSeverityLevel const severity)
+bool SystemDialogue_YesNo(std::string const&      messageTitle,
+                          std::string const&      messageText,
+                          eMsgSeverityLevel const severity)
 {
     bool isAnswerYes = true;
 
@@ -172,9 +172,9 @@ bool SystemDialogue_YesNo(std::string const&     messageTitle,
 //----------------------------------------------------------------------------------------------------
 // Returns 1 if YES was chosen, 0 if NO was chosen, -1 if CANCEL was chosen.
 //
-int SystemDialogue_YesNoCancel(std::string const&     messageTitle,
-                               std::string const&     messageText,
-                               MsgSeverityLevel const severity)
+int SystemDialogue_YesNoCancel(std::string const&      messageTitle,
+                               std::string const&      messageText,
+                               eMsgSeverityLevel const severity)
 {
     int answerCode = 1;
 
@@ -251,7 +251,7 @@ __declspec(noreturn) void FatalError(char const*        filePath,
 
     if (isDebuggerPresent)
     {
-        const bool isAnswerYes = SystemDialogue_YesNo(fullMessageTitle, fullMessageText, MsgSeverityLevel::FATAL);
+        const bool isAnswerYes = SystemDialogue_YesNo(fullMessageTitle, fullMessageText, eMsgSeverityLevel::FATAL);
         ShowCursor(TRUE);
 
         if (isAnswerYes)
@@ -261,7 +261,7 @@ __declspec(noreturn) void FatalError(char const*        filePath,
     }
     else
     {
-        SystemDialogue_Okay(fullMessageTitle, fullMessageText, MsgSeverityLevel::FATAL);
+        SystemDialogue_Okay(fullMessageTitle, fullMessageText, eMsgSeverityLevel::FATAL);
         ShowCursor(TRUE);
     }
 
@@ -328,7 +328,7 @@ void RecoverableWarning(char const*        filePath,
 
     if (isDebuggerPresent)
     {
-        const int answerCode = SystemDialogue_YesNoCancel(fullMessageTitle, fullMessageText, MsgSeverityLevel::WARNING);
+        const int answerCode = SystemDialogue_YesNoCancel(fullMessageTitle, fullMessageText, eMsgSeverityLevel::WARNING);
 
         ShowCursor(TRUE);
 
@@ -343,7 +343,7 @@ void RecoverableWarning(char const*        filePath,
     }
     else
     {
-        const bool isAnswerYes = SystemDialogue_YesNo(fullMessageTitle, fullMessageText, MsgSeverityLevel::WARNING);
+        const bool isAnswerYes = SystemDialogue_YesNo(fullMessageTitle, fullMessageText, eMsgSeverityLevel::WARNING);
 
         ShowCursor(TRUE);
 

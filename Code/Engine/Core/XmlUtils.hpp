@@ -4,16 +4,16 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "ThirdParty/TinyXML2/tinyxml2.h"
 
 //----------------------------------------------------------------------------------------------------
-typedef tinyxml2::XMLDocument  XmlDocument;
-typedef tinyxml2::XMLElement   XmlElement;
-typedef tinyxml2::XMLAttribute XmlAttribute;
-typedef tinyxml2::XMLError     XmlResult;
+using XmlDocument  = tinyxml2::XMLDocument;
+using XmlElement   = tinyxml2::XMLElement;
+using XmlAttribute = tinyxml2::XMLAttribute;
+using XmlResult    = tinyxml2::XMLError;
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct EulerAngles;

@@ -4,12 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <vector>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class TileHeatMap

@@ -2,6 +2,7 @@
 // ErrorWarningAssert.hpp
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #pragma once
 // Summary of error and assertion macros:
 //	#define ERROR_AND_DIE( errorText )						// "MUST not reach this point"; Show error dialogue, then shut down the app
@@ -13,26 +14,26 @@
 //
 
 //----------------------------------------------------------------------------------------------------
-#include <string>
+#include <cstdint>
 
 //----------------------------------------------------------------------------------------------------
-enum class MsgSeverityLevel
+enum class eMsgSeverityLevel : uint8_t
 {
-	INFORMATION,
-	QUESTION,
-	WARNING,
-	FATAL
+    INFORMATION,
+    QUESTION,
+    WARNING,
+    FATAL
 };
 
 //----------------------------------------------------------------------------------------------------
-void DebuggerPrintf(char const* messageFormat, ...);
-bool IsDebuggerAvailable();
+void                      DebuggerPrintf(char const* messageFormat, ...);
+bool                      IsDebuggerAvailable();
 __declspec(noreturn) void FatalError(char const* filePath, char const* functionName, int lineNum, std::string const& reasonForError, char const* conditionText = nullptr);
-void RecoverableWarning(char const* filePath, char const* functionName, int lineNum, std::string const& reasonForWarning, char const* conditionText = nullptr);
-void SystemDialogue_Okay(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
-bool SystemDialogue_YesNo(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
-bool SystemDialogue_OkayCancel(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
-int SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string const& messageText, MsgSeverityLevel severity);
+void                      RecoverableWarning(char const* filePath, char const* functionName, int lineNum, std::string const& reasonForWarning, char const* conditionText = nullptr);
+void                      SystemDialogue_Okay(std::string const& messageTitle, std::string const& messageText, eMsgSeverityLevel severity);
+bool                      SystemDialogue_YesNo(std::string const& messageTitle, std::string const& messageText, eMsgSeverityLevel severity);
+bool                      SystemDialogue_OkayCancel(std::string const& messageTitle, std::string const& messageText, eMsgSeverityLevel severity);
+int                       SystemDialogue_YesNoCancel(std::string const& messageTitle, std::string const& messageText, eMsgSeverityLevel severity);
 
 //----------------------------------------------------------------------------------------------------
 // ERROR_AND_DIE

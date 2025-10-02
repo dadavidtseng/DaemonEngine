@@ -4,8 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/FileUtils.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/ErrorWarningAssert.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <filesystem>
 
 //----------------------------------------------------------------------------------------------------
 bool FileReadToBuffer(std::vector<uint8_t>& out_buffer, String const& fileName)
@@ -92,7 +94,7 @@ bool FileWriteBinary(String const& fileName, void const* data, size_t dataSize)
 {
     FILE*   file = nullptr;
     errno_t err  = fopen_s(&file, fileName.c_str(), "wb");
-    
+
     if (err != 0 || file == nullptr)
     {
         ERROR_RECOVERABLE("Error: Failed to open file for writing.")

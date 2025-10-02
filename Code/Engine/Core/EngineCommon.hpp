@@ -4,7 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/NamedStrings.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
@@ -12,6 +12,7 @@ class DevConsole;
 class EventSystem;
 class HotReloadSubsystem;
 class InputSystem;
+class JobSystem;
 class LogSubsystem;
 
 //----------------------------------------------------------------------------------------------------
@@ -21,6 +22,7 @@ extern EventSystem*         g_eventSystem;
 extern DevConsole*          g_devConsole;
 extern HotReloadSubsystem*  g_hotReloadSubsystem;
 extern InputSystem*         g_input;
+extern JobSystem*           g_jobSystem;
 extern LogSubsystem*        g_logSubsystem;
 
 //----------------------------------------------------------------------------------------------------

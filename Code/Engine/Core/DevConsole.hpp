@@ -4,16 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-
-#include <mutex>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
-
-//----------------------------------------------------------------------------------------------------
-#if defined ERROR
-#undef ERROR
-#endif
 
 //----------------------------------------------------------------------------------------------------
 class BitmapFont;
@@ -66,7 +59,7 @@ struct sDevConsoleConfig
 class DevConsole
 {
 public:
-    explicit DevConsole(sDevConsoleConfig const& config);
+    explicit DevConsole(sDevConsoleConfig config);
     ~DevConsole() = default;
     void StartUp();
     void Shutdown();

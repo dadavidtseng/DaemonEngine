@@ -7,8 +7,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -19,42 +17,9 @@
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
-
-//----------------------------------------------------------------------------------------------------
-// Simple rotation statistics (basic implementation)
-//----------------------------------------------------------------------------------------------------
-struct sRotationStats
-{
-    size_t      totalRotations    = 0;
-    size_t      totalFilesDeleted = 0;
-    std::string lastError;
-};
-
-//----------------------------------------------------------------------------------------------------
-// Smart log rotation configuration - Minecraft-style log management
-//----------------------------------------------------------------------------------------------------
-struct sSmartRotationConfig
-{
-    // File rotation thresholds
-    size_t             maxFileSizeBytes = 100 * 1024 * 1024;       // 100MB default
-    std::chrono::hours maxTimeInterval{2};              // 2 hours default
-
-    // File management
-    String logDirectory        = "Logs";                       // Log directory path
-    String currentLogName      = "latest.log";               // Current session log name
-    String sessionPrefix       = "session";                   // Archive prefix
-    bool   organizeDateFolders = true;                   // Organize logs in date-based folders
-
-    // Cleanup and retention
-    std::chrono::hours retentionHours{720};            // 30 days default (720 hours)
-    size_t             maxArchivedFiles      = 200;                     // Maximum archived files
-    size_t             maxTotalArchiveSizeMB = 500;                // Maximum total archive size
-
-    // Emergency disk space thresholds (in GB)
-    double diskSpaceWarningGB   = 5.0;                   // Warning threshold
-    double diskSpaceCriticalGB  = 2.0;                  // Critical threshold
-    double diskSpaceEmergencyGB = 0.5;                 // Emergency threshold
-};
+#include "Engine/Core/ILogOutputDevice.hpp"
+#include "Engine/Core/SmartFileOutputDevice.hpp"
+#include "ThirdParty/json/json.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // 日誌詳細程度層級 (按照 UE 的方式定義)
@@ -143,176 +108,6 @@ struct LogEntry
 };
 
 //----------------------------------------------------------------------------------------------------
-// 日誌輸出裝置介面 (類似 UE 的 FOutputDevice)
-//----------------------------------------------------------------------------------------------------
-class ILogOutputDevice
-{
-public:
-    virtual      ~ILogOutputDevice() = default;
-    virtual void WriteLog(const LogEntry& entry) = 0;
-
-    virtual void Flush()
-    {
-    }
-
-    virtual bool IsAvailable() const { return true; }
-};
-
-//----------------------------------------------------------------------------------------------------
-// 控制台輸出裝置
-//----------------------------------------------------------------------------------------------------
-class ConsoleOutputDevice : public ILogOutputDevice
-{
-public:
-    void  WriteLog(const LogEntry& entry) override;
-    Rgba8 GetVerbosityColor(eLogVerbosity verbosity) const;
-};
-
-//----------------------------------------------------------------------------------------------------
-// 檔案輸出裝置
-//----------------------------------------------------------------------------------------------------
-class FileOutputDevice : public ILogOutputDevice
-{
-private:
-    std::ofstream      m_logFile;
-    String             m_filePath;
-    mutable std::mutex m_fileMutex;
-
-public:
-    explicit FileOutputDevice(const String& filePath);
-    ~FileOutputDevice();
-
-    void WriteLog(const LogEntry& entry) override;
-    void Flush() override;
-    bool IsAvailable() const override;
-};
-
-//----------------------------------------------------------------------------------------------------
-// Smart file output device with Minecraft-style rotation
-//----------------------------------------------------------------------------------------------------
-class SmartFileOutputDevice : public ILogOutputDevice
-{
-private:
-    std::ofstream         m_currentFile;
-    std::filesystem::path m_logDirectory;
-    std::filesystem::path m_currentFilePath;
-    sSmartRotationConfig  m_config;
-
-    // Session tracking
-    String                                m_sessionId;
-    std::chrono::system_clock::time_point m_sessionStartTime;
-    std::chrono::system_clock::time_point m_lastRotationTime;
-    int                                   m_currentSegmentNumber;
-
-    // File size and statistics
-    size_t         m_currentFileSize;
-    sRotationStats m_stats;
-
-    // Thread safety
-    mutable std::mutex m_fileMutex;
-    mutable std::mutex m_rotationMutex;
-
-    // Background processing
-    std::thread       m_rotationThread;
-    std::atomic<bool> m_shouldStop{false};
-    std::atomic<bool> m_rotationPending{false};
-
-public:
-    explicit SmartFileOutputDevice(String const& logDirectory, sSmartRotationConfig const& config = sSmartRotationConfig{});
-    ~SmartFileOutputDevice();
-
-    // ILogOutputDevice interface
-    void WriteLog(const LogEntry& entry) override;
-    void Flush() override;
-    bool IsAvailable() const override;
-
-    // Rotation control
-    void ForceRotation();
-    bool ShouldRotateBySize() const;
-    bool ShouldRotateByTime() const;
-
-    // Statistics and monitoring
-    const sRotationStats& GetStats() const { return m_stats; }
-    size_t                GetCurrentFileSize() const { return m_currentFileSize; }
-    String                GetCurrentSessionId() const { return m_sessionId; }
-
-    // Configuration
-    void                        UpdateConfig(const sSmartRotationConfig& config);
-    const sSmartRotationConfig& GetConfig() const { return m_config; }
-
-private:
-    // Internal rotation logic
-    void PerformRotation();
-    void RotationThreadMain();
-
-    // File management
-    std::filesystem::path GenerateNewLogFilePath();
-    String                GenerateSessionId();
-    void                  ArchiveCurrentFile();
-
-    // Date-based folder organization helpers
-    std::filesystem::path GetDateBasedFolderPath() const;
-    String                GetTimeOnlySessionId() const;
-
-    // Cleanup and maintenance
-    void                               PerformRetentionCleanup();
-    void                               EmergencyCleanup();
-    std::vector<std::filesystem::path> ScanForOldLogs() const;
-
-    // Utility functions
-    bool   CreateDirectoryIfNeeded(const std::filesystem::path& path);
-    void   LogRotationEvent(const String& message);
-    double GetAvailableDiskSpaceGB() const;
-};
-
-//----------------------------------------------------------------------------------------------------
-// Visual Studio 輸出視窗裝置
-//----------------------------------------------------------------------------------------------------
-class DebugOutputDevice : public ILogOutputDevice
-{
-public:
-    void WriteLog(const LogEntry& entry) override;
-    bool IsAvailable() const override;
-};
-
-//----------------------------------------------------------------------------------------------------
-// 螢幕輸出裝置
-//----------------------------------------------------------------------------------------------------
-class OnScreenOutputDevice : public ILogOutputDevice
-{
-private:
-    struct OnScreenMessage
-    {
-        String message;
-        float  displayTime;
-        float  remainingTime;
-        Rgba8  color;
-        int    uniqueId;
-    };
-
-    std::vector<OnScreenMessage> m_messages;
-    mutable std::mutex           m_messagesMutex;
-    int                          m_nextUniqueId = 0;
-
-public:
-    void WriteLog(const LogEntry& entry) override;
-    void Update(float deltaTime);
-    void RenderMessages(); // 需要與 Renderer 整合
-    void AddMessage(const String& message, float displayTime, const Rgba8& color, int uniqueId = -1);
-    void ClearMessages();
-};
-
-//----------------------------------------------------------------------------------------------------
-// DaemonEngine 開發者控制台輸出裝置
-//----------------------------------------------------------------------------------------------------
-class DevConsoleOutputDevice : public ILogOutputDevice
-{
-public:
-    void WriteLog(const LogEntry& entry) override;
-    bool IsAvailable() const override;
-};
-
-//----------------------------------------------------------------------------------------------------
 // 日誌子系統設定 (Enhanced with rotation support)
 //----------------------------------------------------------------------------------------------------
 struct sLogSubsystemConfig
@@ -333,6 +128,46 @@ struct sLogSubsystemConfig
     bool                 enableSmartRotation = true;                  // 啟用智能日誌輪轉
     String               rotationConfigPath  = "Data/Config/LogRotation.json"; // 輪轉配置檔案路徑
     sSmartRotationConfig smartRotationConfig;                  // Smart rotation configuration
+
+    // JSON Parsing
+    static sLogSubsystemConfig FromJSON(nlohmann::json const& j)
+    {
+        sLogSubsystemConfig config;
+
+        // Basic logging settings
+        if (j.contains("logFilePath"))
+            config.logFilePath = j["logFilePath"].get<std::string>();
+        if (j.contains("enableConsole"))
+            config.enableConsole = j["enableConsole"].get<bool>();
+        if (j.contains("enableFile"))
+            config.enableFile = j["enableFile"].get<bool>();
+        if (j.contains("enableDebugOut"))
+            config.enableDebugOut = j["enableDebugOut"].get<bool>();
+        if (j.contains("enableOnScreen"))
+            config.enableOnScreen = j["enableOnScreen"].get<bool>();
+        if (j.contains("enableDevConsole"))
+            config.enableDevConsole = j["enableDevConsole"].get<bool>();
+        if (j.contains("asyncLogging"))
+            config.asyncLogging = j["asyncLogging"].get<bool>();
+        if (j.contains("maxLogEntries"))
+            config.maxLogEntries = j["maxLogEntries"].get<int>();
+        if (j.contains("timestampEnabled"))
+            config.timestampEnabled = j["timestampEnabled"].get<bool>();
+        if (j.contains("threadIdEnabled"))
+            config.threadIdEnabled = j["threadIdEnabled"].get<bool>();
+        if (j.contains("autoFlush"))
+            config.autoFlush = j["autoFlush"].get<bool>();
+
+        // Rotation settings (path only - SmartFileOutputDevice will load the actual config)
+        if (j.contains("enableSmartRotation"))
+            config.enableSmartRotation = j["enableSmartRotation"].get<bool>();
+        if (j.contains("rotationConfigPath"))
+            config.rotationConfigPath = j["rotationConfigPath"].get<std::string>();
+
+        // Note: smartRotationConfig is NOT parsed here - SmartFileOutputDevice loads it from rotationConfigPath
+
+        return config;
+    }
 };
 
 //----------------------------------------------------------------------------------------------------

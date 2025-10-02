@@ -46,7 +46,7 @@ void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventC
 {
     std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
 
-    EventSubscription const newSubscription = {functionPtr};
+    sEventSubscription const newSubscription = {functionPtr};
 
     SubscriptionList& subscriptions = m_subscriptionsByEventName[eventName];
 
@@ -66,7 +66,7 @@ void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, Even
 
         subscriptions.erase(
             std::remove_if(subscriptions.begin(), subscriptions.end(),
-                           [functionPtr](EventSubscription const& subscription)
+                           [functionPtr](sEventSubscription const& subscription)
                            {
                                return subscription.callbackFunction == functionPtr;
                            }),
@@ -96,7 +96,7 @@ void EventSystem::FireEvent(String const& eventName, EventArgs& args)
     }
 
     // Execute callbacks without holding the mutex (callbacks might subscribe/unsubscribe)
-    for (EventSubscription const& subscription : subscriptionsCopy)
+    for (sEventSubscription const& subscription : subscriptionsCopy)
     {
         if (subscription.callbackFunction(args))
         {
