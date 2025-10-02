@@ -2,20 +2,20 @@
 // NetworkSubsystem.cpp
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Network/NetworkTCPSubsystem.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
-
+//----------------------------------------------------------------------------------------------------
 // Windows networking headers - only in .cpp file
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-#include "Engine/Core/EngineCommon.hpp"
 
 #pragma comment(lib, "ws2_32.lib")
 

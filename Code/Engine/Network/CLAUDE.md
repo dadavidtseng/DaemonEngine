@@ -4,40 +4,42 @@
 
 ## Module Responsibilities
 
-The Network module provides a comprehensive TCP/UDP networking foundation with client-server architecture, message queuing, heartbeat systems, connection management, and event-driven communication for multiplayer game development and networked applications.
+The Network module provides comprehensive networking capabilities including TCP/UDP networking foundation, WebSocket support for modern protocols, Chrome DevTools Protocol integration for debugging, and Model Context Protocol (MCP) support for AI integration. It handles client-server architecture, message queuing, heartbeat systems, connection management, and event-driven communication for multiplayer game development and networked applications.
 
 ## Entry and Startup
 
 ### Primary Entry Points
-- `NetworkSubsystem.hpp` - Main networking system and connection management
+- `NetworkTCPSubsystem.hpp` - TCP networking system and connection management
+- `BaseWebSocketSubsystem.hpp` - WebSocket protocol base implementation
+- `ChromeDevToolsWebSocketSubsystem.hpp` - Chrome DevTools Protocol WebSocket client
+- `MCPWebSocketSubsystem.hpp` - Model Context Protocol WebSocket support
 - `NetworkCommon.hpp` - Shared networking constants, enums, and data structures
 
 ### Initialization Pattern
 ```cpp
-// Server setup
-sNetworkSubsystemConfig serverConfig;
+// TCP Server setup
+sNetworkTCPSubsystemConfig serverConfig;
 serverConfig.m_mode = eNetworkMode::SERVER;
 serverConfig.hostAddressString = "127.0.0.1:7777";
 serverConfig.maxClients = 8;
 serverConfig.enableHeartbeat = true;
 serverConfig.heartbeatInterval = 2.0f;
 
-NetworkSubsystem* networkSystem = new NetworkSubsystem(serverConfig);
-networkSystem->StartUp();
-networkSystem->StartServer(7777);
+NetworkTCPSubsystem* tcpNetwork = new NetworkTCPSubsystem(serverConfig);
+tcpNetwork->StartUp();
+tcpNetwork->StartServer(7777);
 
-// Client setup
-sNetworkSubsystemConfig clientConfig;
-clientConfig.m_mode = eNetworkMode::CLIENT;
-clientConfig.hostAddressString = "127.0.0.1:7777";
+// WebSocket client setup (Chrome DevTools)
+ChromeDevToolsWebSocketSubsystem* cdpClient = new ChromeDevToolsWebSocketSubsystem();
+cdpClient->Connect("ws://localhost:9222/devtools/browser");
 
-NetworkSubsystem* clientNetwork = new NetworkSubsystem(clientConfig);
-clientNetwork->StartUp();
-clientNetwork->ConnectToServer("127.0.0.1", 7777);
+// WebSocket client setup (MCP)
+MCPWebSocketSubsystem* mcpClient = new MCPWebSocketSubsystem();
+mcpClient->Connect("ws://localhost:3000/mcp");
 
 // Message handling loop
-while (networkSystem->HasPendingMessages()) {
-    sNetworkMessage message = networkSystem->GetNextMessage();
+while (tcpNetwork->HasPendingMessages()) {
+    sNetworkMessage message = tcpNetwork->GetNextMessage();
     ProcessGameMessage(message);
 }
 ```
@@ -46,14 +48,15 @@ while (networkSystem->HasPendingMessages()) {
 
 ### Core Network API
 ```cpp
-class NetworkSubsystem {
+// TCP Networking API
+class NetworkTCPSubsystem {
     // System lifecycle
     void StartUp();
     void Update();
     void BeginFrame();
     void EndFrame();
     void ShutDown();
-    
+
     // Connection status
     bool IsEnabled() const;
     bool IsServer() const;
@@ -61,7 +64,7 @@ class NetworkSubsystem {
     bool IsConnected() const;
     eNetworkMode GetNetworkMode() const;
     eConnectionState GetConnectionState() const;
-    
+
     // Server operations
     bool StartServer(int newPort = -1);
     void StopServer();
@@ -69,11 +72,48 @@ class NetworkSubsystem {
     std::vector<int> GetConnectedClientIds() const;
     bool SendMessageToClient(int clientId, sNetworkMessage const& message);
     bool SendMessageToAllClients(sNetworkMessage const& message);
-    
+
     // Client operations
     bool ConnectToServer(String const& address, int port);
     void DisconnectFromServer();
     bool SendMessageToServer(sNetworkMessage const& message);
+};
+
+// WebSocket API
+class BaseWebSocketSubsystem {
+    // Connection management
+    bool Connect(String const& url);
+    void Disconnect();
+    bool IsConnected() const;
+
+    // Message sending
+    bool SendTextMessage(String const& message);
+    bool SendBinaryMessage(std::vector<uint8_t> const& data);
+
+    // Message handling (override in derived classes)
+    virtual void OnMessage(String const& message);
+    virtual void OnBinaryMessage(std::vector<uint8_t> const& data);
+    virtual void OnConnectionEstablished();
+    virtual void OnConnectionClosed();
+};
+
+// Chrome DevTools Protocol API
+class ChromeDevToolsWebSocketSubsystem : public BaseWebSocketSubsystem {
+    // CDP command execution
+    void SendCommand(String const& method, String const& params = "{}");
+    void EnableDomain(String const& domain);
+
+    // Event handling
+    virtual void OnCDPEvent(String const& method, String const& params);
+};
+
+// Model Context Protocol API
+class MCPWebSocketSubsystem : public BaseWebSocketSubsystem {
+    // MCP-specific operations
+    void SendMCPRequest(String const& request);
+
+    // MCP event handling
+    virtual void OnMCPResponse(String const& response);
 };
 ```
 
@@ -260,7 +300,10 @@ A: Message queues are thread-safe, but network operations should primarily occur
 ## Related Files
 
 ### Core Implementation
-- `NetworkSubsystem.cpp` - Main networking implementation with socket management
+- `NetworkTCPSubsystem.cpp` - TCP networking implementation with socket management
+- `BaseWebSocketSubsystem.cpp` - WebSocket protocol base implementation
+- `ChromeDevToolsWebSocketSubsystem.cpp` - Chrome DevTools Protocol integration
+- `MCPWebSocketSubsystem.cpp` - Model Context Protocol support
 - `NetworkCommon.cpp` - Shared utilities, message serialization, and constants
 
 ### Message Processing
@@ -276,6 +319,9 @@ The Network module includes comprehensive message handling:
 
 ### Protocol Support
 - **TCP**: Reliable connection-oriented communication for critical game data
+- **WebSocket**: Modern protocol for real-time bidirectional communication
+- **Chrome DevTools Protocol (CDP)**: Browser debugging and automation support
+- **Model Context Protocol (MCP)**: AI integration and context management
 - **Connection Management**: Automatic client tracking and connection health monitoring
 - **Message Framing**: Proper message boundaries and data integrity
 
@@ -289,5 +335,14 @@ The Network module includes comprehensive message handling:
 
 ## Changelog
 
+- 2025-10-01: **Major Network Module Refactoring** - Modular WebSocket Architecture
+  - Removed monolithic `NetworkWebsocketSubsystem` (1,274 lines deleted)
+  - Created modular WebSocket architecture with base class and specialized implementations
+  - Added `BaseWebSocketSubsystem` - Abstract base for WebSocket connections
+  - Added `ChromeDevToolsWebSocketSubsystem` - Chrome DevTools Protocol support
+  - Added `MCPWebSocketSubsystem` - Model Context Protocol integration for AI systems
+  - Renamed `NetworkSubsystem` → `NetworkTCPSubsystem` for clarity (TCP-specific implementation)
+  - Improved separation of concerns between TCP and WebSocket protocols
+  - Updated Visual Studio project files with new modular structure
 - 2025-09-06 21:17:11: Initial Network module documentation created
 - Recent developments: Comprehensive client-server architecture, heartbeat system, message queue management, connection state tracking
