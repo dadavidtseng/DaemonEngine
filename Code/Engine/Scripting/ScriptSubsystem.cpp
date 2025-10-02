@@ -19,6 +19,7 @@
 #include "Engine/Network/ChromeDevToolsWebSocketSubsystem.hpp"
 #include "Engine/Scripting/FileWatcher.hpp"
 #include "Engine/Scripting/ScriptReloader.hpp"
+#include "Engine/Scripting/ModuleLoader.hpp"  // NEW: ES6 module loader
 #include "ThirdParty/json/json.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -384,6 +385,24 @@ void ScriptSubsystem::Startup()
             DAEMON_LOG(LogScript, eLogVerbosity::Error,
                        StringFormat("Failed to start Chrome DevTools server on {}:{}",
                            devToolsConfig.host, devToolsConfig.port));
+        }
+    }
+
+    // Initialize ES6 module loader if enabled
+    if (m_config.enableModules)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptSubsystem: Initializing ES6 module loader..."));
+
+        m_moduleLoader = std::make_unique<ModuleLoader>(this, m_config.scriptPath);
+
+        if (m_moduleLoader)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
+                       StringFormat("ES6 module system initialized with base path: {}", m_config.scriptPath));
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("Failed to initialize ES6 module loader"));
         }
     }
 
@@ -2332,4 +2351,101 @@ String ScriptSubsystem::ValidateScriptPath(const String& filename) const
     }
 
     return fullPath;
+}
+//----------------------------------------------------------------------------------------------------
+// ES6 Module System Implementation
+//----------------------------------------------------------------------------------------------------
+
+bool ScriptSubsystem::ExecuteModule(String const& modulePath)
+{
+    if (!m_isInitialized)
+    {
+        HandleV8Error("Cannot execute module: V8 not initialized");
+        return false;
+    }
+
+    if (!AreModulesEnabled())
+    {
+        HandleV8Error("Cannot execute module: ES6 modules not enabled");
+        return false;
+    }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+               StringFormat("ScriptSubsystem: Executing ES6 module: {}", modulePath));
+
+    // Delegate to ModuleLoader
+    bool success = m_moduleLoader->LoadModule(modulePath);
+
+    if (!success)
+    {
+        std::string error = m_moduleLoader->GetLastError();
+        HandleV8Error(StringFormat("Module execution failed: {}", error));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+// V8 Internal Access Implementation
+//----------------------------------------------------------------------------------------------------
+
+void* ScriptSubsystem::GetV8Isolate()
+{
+    if (!m_impl || !m_impl->isolate)
+    {
+        return nullptr;
+    }
+    return m_impl->isolate;
+}
+
+//----------------------------------------------------------------------------------------------------
+void* ScriptSubsystem::GetV8Context()
+{
+    if (!m_impl || m_impl->globalContext.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    // Return Local<Context> by creating from Global
+    v8::Isolate* isolate = m_impl->isolate;
+    if (!isolate)
+    {
+        return nullptr;
+    }
+
+    // Create a persistent pointer to the Local<Context>
+    // Note: This is a workaround - we'll need to handle this carefully
+    static thread_local v8::Local<v8::Context> contextCache;
+    contextCache = m_impl->globalContext.Get(isolate);
+    return &contextCache;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool ScriptSubsystem::ExecuteModuleFromSource(String const& moduleCode, String const& moduleName)
+{
+    if (!m_isInitialized)
+    {
+        HandleV8Error("Cannot execute module: V8 not initialized");
+        return false;
+    }
+
+    if (!AreModulesEnabled())
+    {
+        HandleV8Error("Cannot execute module: ES6 modules not enabled");
+        return false;
+    }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+               StringFormat("ScriptSubsystem: Executing ES6 module from source: {}", moduleName));
+
+    // Delegate to ModuleLoader
+    bool success = m_moduleLoader->LoadModuleFromSource(moduleCode, moduleName);
+
+    if (!success)
+    {
+        std::string error = m_moduleLoader->GetLastError();
+        HandleV8Error(StringFormat("Module execution failed: {}", error));
+    }
+
+    return success;
 }

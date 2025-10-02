@@ -17,6 +17,7 @@
 class ChromeDevToolsWebSocketSubsystem;
 class FileWatcher;
 class ScriptReloader;
+class ModuleLoader;  // NEW: ES6 module loader
 
 //----------------------------------------------------------------------------------------------------
 using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
@@ -55,6 +56,9 @@ struct sScriptSubsystemConfig
 
     // Hot-reload configuration
     bool enableHotReload = true;         // Enable hot-reload functionality
+
+    // ES6 module configuration
+    bool enableModules = true;           // Enable ES6 module support
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -76,7 +80,7 @@ public:
     void Update();
 
     //------------------------------------------------------------------------------------------------
-    // Script execution
+    // Script execution (Classic Scripts)
     //------------------------------------------------------------------------------------------------
     bool ExecuteScript(String const& script);
     bool ExecuteScriptFile(String const& scriptFilename);
@@ -87,6 +91,51 @@ public:
 
     // Execute JavaScript code and return result
     std::any ExecuteScriptWithResult(std::string const& script);
+
+    //------------------------------------------------------------------------------------------------
+    // ES6 Module execution (NEW)
+    //------------------------------------------------------------------------------------------------
+
+    /// @brief Load and execute ES6 module from file
+    ///
+    /// @param modulePath Absolute or relative path to module file
+    ///
+    /// @return true if module loaded and executed successfully
+    ///
+    /// @remark Automatically detects if file contains import/export for module vs. script
+    bool ExecuteModule(String const& modulePath);
+
+    /// @brief Load and execute ES6 module from source code
+    ///
+    /// @param moduleCode JavaScript source with import/export
+    /// @param moduleName Module name/URL for caching and debugging
+    ///
+    /// @return true if module loaded and executed successfully
+    bool ExecuteModuleFromSource(String const& moduleCode, String const& moduleName);
+
+    /// @brief Get module loader instance
+    ///
+    /// @return Pointer to ModuleLoader, or nullptr if not initialized
+    ModuleLoader* GetModuleLoader() { return m_moduleLoader.get(); }
+
+    /// @brief Check if ES6 modules are enabled
+    bool AreModulesEnabled() const { return m_config.enableModules && m_moduleLoader != nullptr; }
+
+    //------------------------------------------------------------------------------------------------
+    // V8 Internal Access (for ModuleLoader)
+    //------------------------------------------------------------------------------------------------
+
+    /// @brief Get V8 isolate (internal use only)
+    ///
+    /// @return Pointer to V8 isolate, or nullptr if not initialized
+    /// @remark For use by ModuleLoader - not part of public API
+    void* GetV8Isolate();
+
+    /// @brief Get V8 context (internal use only)
+    ///
+    /// @return Pointer to V8 context, or nullptr if not initialized
+    /// @remark For use by ModuleLoader - not part of public API
+    void* GetV8Context();
 
     //------------------------------------------------------------------------------------------------
     // Error handling and status queries
@@ -313,4 +362,11 @@ private:
     // Thread-safe event queue for main thread processing
     std::queue<std::string> m_pendingFileChanges;
     mutable std::mutex      m_fileChangeQueueMutex;
+
+    //------------------------------------------------------------------------------------------------
+    // ES6 Module system components (NEW)
+    //------------------------------------------------------------------------------------------------
+
+    /// @brief ES6 module loader
+    std::unique_ptr<ModuleLoader> m_moduleLoader;
 };
