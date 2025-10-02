@@ -339,6 +339,10 @@
     <ClCompile Include="Scripting/ScriptReloader.cpp" />
     <ClCompile Include="Scripting/FileWatcher.cpp" />
     <ClCompile Include="Scripting/ScriptSubsystem.cpp" />
+    <!-- ES6 Module System -->
+    <ClCompile Include="Scripting/ModuleResolver.cpp" />
+    <ClCompile Include="Scripting/ModuleRegistry.cpp" />
+    <ClCompile Include="Scripting/ModuleLoader.cpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- HEADER FILES - ORGANIZED BY SUBSYSTEM -->
@@ -502,6 +506,10 @@
     <ClInclude Include="Scripting/ScriptSubsystem.hpp" />
     <ClInclude Include="Scripting/FileWatcher.hpp" />
     <ClInclude Include="Scripting/ScriptReloader.hpp" />
+    <!-- ES6 Module System Headers -->
+    <ClInclude Include="Scripting/ModuleResolver.hpp" />
+    <ClInclude Include="Scripting/ModuleRegistry.hpp" />
+    <ClInclude Include="Scripting/ModuleLoader.hpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- NUGET PACKAGE DEPENDENCIES -->
