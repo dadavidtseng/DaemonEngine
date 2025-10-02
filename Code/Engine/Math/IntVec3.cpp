@@ -8,6 +8,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC IntVec3 IntVec3::ZERO         = IntVec3(0, 0, 0);
