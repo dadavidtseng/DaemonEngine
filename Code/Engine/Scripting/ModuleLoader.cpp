@@ -47,9 +47,9 @@ bool ModuleLoader::LoadModule(std::string const& modulePath)
         return false;
     }
 
-    // Load from source with resolved path
-    std::string resolvedPath = m_resolver->Resolve(modulePath, m_basePath);
-    return LoadModuleFromSource(code, resolvedPath);
+    // Use modulePath as-is (it's already the full path)
+    // Don't resolve it again to avoid path doubling
+    return LoadModuleFromSource(code, modulePath);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -57,18 +57,31 @@ bool ModuleLoader::LoadModuleFromSource(std::string const& moduleCode, std::stri
 {
     ClearError();
 
-    // Get V8 isolate and context from ScriptSubsystem
+    // Get V8 isolate from ScriptSubsystem
     void* isolatePtr = m_scriptSystem->GetV8Isolate();
-    void* contextPtr = m_scriptSystem->GetV8Context();
 
-    if (!isolatePtr || !contextPtr)
+    if (!isolatePtr)
     {
-        SetError("ModuleLoader: V8 isolate or context not available");
+        SetError("ModuleLoader: V8 isolate not available");
         return false;
     }
 
     v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
+
+    // CRITICAL: Create V8 scopes (required for all V8 operations)
+    v8::Isolate::Scope isolateScope(isolate);
+    v8::HandleScope handleScope(isolate);
+
+    // Get context AFTER creating scopes
+    void* contextPtr = m_scriptSystem->GetV8Context();
+    if (!contextPtr)
+    {
+        SetError("ModuleLoader: V8 context not available");
+        return false;
+    }
+
     v8::Local<v8::Context> context = *static_cast<v8::Local<v8::Context>*>(contextPtr);
+    v8::Context::Scope contextScope(context);
 
     // Ensure registry is initialized
     if (!m_registry)
@@ -282,12 +295,23 @@ v8::MaybeLocal<v8::Module> ModuleLoader::ResolveModuleCallback(v8::Local<v8::Con
         StringFormat("ResolveModuleCallback: Resolving import '{}'", specifierStr));
 
     // Get the referrer module's URL for relative path resolution
-    // For now, use a simplified approach: treat all paths as relative to base path
-    // In future, we can use referrer->GetIdentityHash() to track referrer module
-    UNUSED(referrer);
+    std::string referrerPath = loader->m_basePath;
+
+    // If we have a referrer module, look up its path in the registry
+    if (!referrer.IsEmpty() && loader->m_registry)
+    {
+        // Look up the referrer's path in registry using the module instance
+        std::string foundPath = loader->m_registry->FindModulePath(referrer);
+        if (!foundPath.empty())
+        {
+            referrerPath = foundPath;
+            DAEMON_LOG(LogScript, eLogVerbosity::Log,
+                StringFormat("ResolveModuleCallback: Using referrer path '{}'", referrerPath));
+        }
+    }
 
     // Resolve the specifier to an absolute path
-    std::string resolvedPath = loader->m_resolver->Resolve(specifierStr, loader->m_basePath);
+    std::string resolvedPath = loader->m_resolver->Resolve(specifierStr, referrerPath);
 
     DAEMON_LOG(LogScript, eLogVerbosity::Log,
         StringFormat("ResolveModuleCallback: Resolved '{}' to '{}'", specifierStr, resolvedPath));

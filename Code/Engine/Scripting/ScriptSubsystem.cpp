@@ -516,7 +516,7 @@ void ScriptSubsystem::Update()
         {
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Network event (frame {})", updateCounter));
-            SendNetworkRequestEvent("file:///FirstV8/Scripts/JSEngine.js", "GET", 200);
+            SendNetworkRequestEvent("file:///FirstV8/Scripts/main.mjs", "GET", 200);
         }
 
         // Generate Memory heap snapshots every 300 frames (~5 seconds)
@@ -571,10 +571,19 @@ bool ScriptSubsystem::InitializeHotReload(const std::string& projectRoot)
             OnReloadComplete(success, error);
         });
 
-        // Add default watched files
-        m_fileWatcher->AddWatchedFile("Data/Scripts/JSEngine.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/JSGame.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/InputSystem.js");
+        // Add default watched files - Phase 4 ES6 Module System
+        // Watch all ES6 module files for hot-reload support
+        m_fileWatcher->AddWatchedFile("Data/Scripts/main.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/InputSystemCommon.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/JSEngine.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/JSGame.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/core/SystemComponent.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CppBridgeSystem.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/InputSystem.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/AudioSystem.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CubeSpawner.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/PropMover.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CameraShaker.mjs");
 
         // Start the file watching thread
         m_fileWatcher->StartWatching();
@@ -2419,6 +2428,9 @@ void* ScriptSubsystem::GetV8Context()
     {
         return nullptr;
     }
+
+    // CRITICAL: Must be in Isolate scope to safely call Get() on Persistent<Context>
+    v8::Isolate::Scope isolateScope(isolate);
 
     // Create a persistent pointer to the Local<Context>
     // Note: This is a workaround - we'll need to handle this carefully
