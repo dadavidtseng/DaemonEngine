@@ -4,13 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/IntVec2.hpp"
-
-#include <cmath>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Math/Vec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC IntVec2 IntVec2::ZERO         = IntVec2(0, 0);

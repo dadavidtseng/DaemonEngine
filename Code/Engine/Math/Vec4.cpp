@@ -4,33 +4,42 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Vec4.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include <cmath>
 
 //----------------------------------------------------------------------------------------------------
 Vec4 Vec4::ZERO = Vec4(0.f, 0.f, 0.f, 0.f);
-Vec4 Vec4::ONE = Vec4(1.f, 1.f, 1.f, 1.f);
+Vec4 Vec4::ONE  = Vec4(1.f, 1.f, 1.f, 1.f);
 
-// Constructor
-Vec4::Vec4(float initialX, float initialY, float initialZ, float initialW)
-    : x(initialX), y(initialY), z(initialZ), w(initialW) {}
+//----------------------------------------------------------------------------------------------------
+Vec4::Vec4(float const initialX,
+           float const initialY,
+           float const initialZ,
+           float const initialW)
+    : x(initialX),
+      y(initialY),
+      z(initialZ),
+      w(initialW)
+{
+}
 
-// Accessors
+//----------------------------------------------------------------------------------------------------
 float Vec4::GetLength() const
 {
-    return std::sqrt(x * x + y * y + z * z + w * w);
+    return
+        std::sqrt(x * x + y * y + z * z + w * w);
 }
 
 float Vec4::GetLengthSquared() const
 {
-    return x * x + y * y + z * z + w * w;
+    return
+        x * x + y * y + z * z + w * w;
 }
 
 Vec4 Vec4::GetNormalized() const
 {
     float length = GetLength();
-    if (length == 0.f)
-        return Vec4::ZERO;
+    if (length == 0.f) return Vec4::ZERO;
     return *this / length;
 }
 

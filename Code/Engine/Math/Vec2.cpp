@@ -4,14 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Vec2.hpp"
-
-#include <cmath>
-
-#include "Vec3.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC Vec2 Vec2::ZERO = Vec2(0.f, 0.f);

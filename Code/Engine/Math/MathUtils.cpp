@@ -5,10 +5,6 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/MathUtils.hpp"
 
-#include <cmath>
-
-#include "OBB3.hpp"
-#include "Plane3.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -16,9 +12,8 @@
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Mat44.hpp"
-#include "Engine/Math/Vec2.hpp"
-#include "Engine/Math/Vec3.hpp"
-#include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/OBB3.hpp"
+#include "Engine/Math/Plane3.hpp"
 
 //-Start-of-Clamp-and-Lerp----------------------------------------------------------------------------
 

@@ -4,18 +4,15 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/RaycastUtils.hpp"
-
-#include <algorithm>
-#include <cmath>
-
-#include "Mat44.hpp"
-#include "OBB3.hpp"
-#include "Plane3.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/FloatRange.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/OBB3.hpp"
+#include "Engine/Math/Plane3.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Ray2::Ray2(Vec2 const& startPosition,

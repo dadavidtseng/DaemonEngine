@@ -4,9 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Math/Vec2.hpp"
-#include "Engine/Renderer/Vertex_PCU.hpp"
-#include <vector>
+#include "Engine/Renderer/VertexUtils.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class CubicHermiteCurve2D;
@@ -63,7 +63,7 @@ public:
     CubicHermiteCurve2D const& GetCubicHermiteCurveAtIndex(int index) const;
     Vec2                       GetVelocityAtIndex(int index) const;
 
-    void AddVertsForCurve2D(std::vector<Vertex_PCU>& verts, float thickness, Rgba8 const& color, int numSubdivisions = 64) const;
+    void AddVertsForCurve2D(VertexList_PCU& verts, float thickness, Rgba8 const& color, int numSubdivisions = 64) const;
 
 private:
     std::vector<CubicHermiteCurve2D> m_curves;

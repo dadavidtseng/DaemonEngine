@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+//-Forward-Declaration--------------------------------------------------------------------------------
 struct Vec3;
 struct IntVec2;
 
@@ -37,18 +38,18 @@ struct IntVec3
     void SetFromText(char const* text);
 
     // Operators (const)
-    bool operator==(IntVec3 const& compare) const;         // IntVec3 == IntVec3
-    bool operator!=(IntVec3 const& compare) const;         // IntVec3 != IntVec3
-    bool operator<(IntVec3 const& compare) const;          // IntVec3 < IntVec3 (for ordering/containers)
+    bool          operator==(IntVec3 const& compare) const;         // IntVec3 == IntVec3
+    bool          operator!=(IntVec3 const& compare) const;         // IntVec3 != IntVec3
+    bool          operator<(IntVec3 const& compare) const;          // IntVec3 < IntVec3 (for ordering/containers)
     IntVec3 const operator+(IntVec3 const& vecToAdd) const;       // IntVec3 + IntVec3
     IntVec3 const operator-(IntVec3 const& vecToSubtract) const;  // IntVec3 - IntVec3
-    IntVec3 operator-() const;                             // -IntVec3, i.e. "unary negation"
+    IntVec3       operator-() const;                             // -IntVec3, i.e. "unary negation"
     IntVec3 const operator*(int uniformScale) const;              // IntVec3 * int
 
     // Operators (self-mutating / non-const)
-    void operator+=(IntVec3 const& vecToAdd);         // IntVec3 += IntVec3
-    void operator-=(IntVec3 const& vecToSubtract);    // IntVec3 -= IntVec3
-    void operator*=(int uniformScale);                // IntVec3 *= int
+    void     operator+=(IntVec3 const& vecToAdd);         // IntVec3 += IntVec3
+    void     operator-=(IntVec3 const& vecToSubtract);    // IntVec3 -= IntVec3
+    void     operator*=(int uniformScale);                // IntVec3 *= int
     IntVec3& operator=(IntVec3 const& copyFrom);      // IntVec3 = IntVec3
 
     // Standalone "friend" functions that are conceptually, but not actually, part of IntVec3::

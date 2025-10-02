@@ -4,17 +4,18 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Math/Vec2.hpp"
+//----------------------------------------------------------------------------------------------------
 #include <cstdint>
 
-#include "Engine/Math/Vec2.hpp"
-
-struct Plane3;
-struct OBB3;
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct AABB2;
 struct AABB3;
 struct FloatRange;
 struct IntVec2;
+struct OBB3;
+struct Plane3;
 struct Vec2;
 struct Vec3;
 struct Vec4;
