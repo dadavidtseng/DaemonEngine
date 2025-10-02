@@ -197,6 +197,10 @@
     <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp" />
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp" />
     <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp" />
+    <ClCompile Include="Core\ConsoleOutputDevice.cpp" />
+    <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Widget\IWidget.cpp" />
+    <ClCompile Include="Widget\WidgetSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup Label="CoreSubsystemSources">
     <!-- Core Engine Systems - Foundation layer -->
@@ -212,6 +216,11 @@
     <ClCompile Include="Core/JobSystem.cpp" />
     <ClCompile Include="Core/JobWorkerThread.cpp" />
     <ClCompile Include="Core/LogSubsystem.cpp" />
+    <ClCompile Include="Core/DebugOutputDevice.cpp" />
+    <ClCompile Include="Core/DevConsoleOutputDevice.cpp" />
+    <ClCompile Include="Core/FileOutputDevice.cpp" />
+    <ClCompile Include="Core/OnScreenOutputDevice.cpp" />
+    <ClCompile Include="Core/SmartFileOutputDevice.cpp" />
     <ClCompile Include="Core/NamedStrings.cpp" />
     <ClCompile Include="Core/Rgba8.cpp" />
     <ClCompile Include="Core/SimpleTriangleFont.cpp" />
@@ -251,7 +260,9 @@
   </ItemGroup>
   <ItemGroup Label="RendererSubsystemSources">
     <!-- Rendering System - DirectX-based graphics pipeline -->
-    <ClCompile Include="Network\NetworkWebSocketSubsystem.cpp" />
+    <ClCompile Include="Network\BaseWebSocketSubsystem.cpp" />
+    <ClCompile Include="Network\ChromeDevToolsWebSocketSubsystem.cpp" />
+    <ClCompile Include="Network\MCPWebSocketSubsystem.cpp" />
     <ClCompile Include="Renderer/BitmapFont.cpp" />
     <ClCompile Include="Renderer/Camera.cpp" />
     <ClCompile Include="Renderer/ConstantBuffer.cpp" />
@@ -346,6 +357,11 @@
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp" />
     <ClInclude Include="../ThirdParty/stb/stb_image.h" />
     <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h" />
+    <ClInclude Include="..\ThirdParty\json\json.hpp" />
+    <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
+    <ClInclude Include="Core\Engine.hpp" />
+    <ClInclude Include="Widget\IWidget.hpp" />
+    <ClInclude Include="Widget\WidgetSubsystem.hpp" />
   </ItemGroup>
   <ItemGroup Label="CoreSubsystemHeaders">
     <!-- Core Engine System Headers -->
@@ -361,6 +377,12 @@
     <ClInclude Include="Core/JobSystem.hpp" />
     <ClInclude Include="Core/JobWorkerThread.hpp" />
     <ClInclude Include="Core/LogSubsystem.hpp" />
+    <ClInclude Include="Core/ILogOutputDevice.hpp" />
+    <ClInclude Include="Core/DebugOutputDevice.hpp" />
+    <ClInclude Include="Core/DevConsoleOutputDevice.hpp" />
+    <ClInclude Include="Core/FileOutputDevice.hpp" />
+    <ClInclude Include="Core/OnScreenOutputDevice.hpp" />
+    <ClInclude Include="Core/SmartFileOutputDevice.hpp" />
     <ClInclude Include="Core/NamedStrings.hpp" />
     <ClInclude Include="Core/Rgba8.hpp" />
     <ClInclude Include="Core/SimpleTriangleFont.hpp" />
@@ -400,7 +422,9 @@
   </ItemGroup>
   <ItemGroup Label="RendererSubsystemHeaders">
     <!-- Rendering System Headers -->
-    <ClInclude Include="Network\NetworkWebSocketSubsystem.hpp" />
+    <ClInclude Include="Network\BaseWebSocketSubsystem.hpp" />
+    <ClInclude Include="Network\ChromeDevToolsWebSocketSubsystem.hpp" />
+    <ClInclude Include="Network\MCPWebSocketSubsystem.hpp" />
     <ClInclude Include="Renderer/BitmapFont.hpp" />
     <ClInclude Include="Renderer/Camera.hpp" />
     <ClInclude Include="Renderer/ConstantBuffer.hpp" />

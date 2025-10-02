@@ -20,12 +20,6 @@
     <Filter Include="ThirdParty\Utilities">
       <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\Utilities\STB">
-      <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities\TinyXML2">
-      <UniqueIdentifier>{f9eda815-7ba5-4c1d-975c-8ac067052fe6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ThirdParty\Utilities\Noise">
       <UniqueIdentifier>{8047ccb2-59ef-4007-80e4-04adb8bdd573}</UniqueIdentifier>
     </Filter>
@@ -134,6 +128,21 @@
     <Filter Include="Engine\Scripting">
       <UniqueIdentifier>{17ca8269-39bf-4514-898d-5d621e213ad1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\Utilities\STB">
+      <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Utilities\TinyXML2">
+      <UniqueIdentifier>{f9eda815-7ba5-4c1d-975c-8ac067052fe6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Utilities\JSON">
+      <UniqueIdentifier>{10a4b5dc-d5be-4859-90a4-b2ddef428635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Log">
+      <UniqueIdentifier>{4fffe5f3-2600-4f69-80dd-57fcf101a1ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Widget">
+      <UniqueIdentifier>{45393e0e-5cf2-435d-8c68-94d845821954}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- SOURCE FILE ORGANIZATION - BY SUBSYSTEM -->
@@ -152,14 +161,50 @@
     <ClCompile Include="Network\NetworkTCPSubsystem.cpp">
       <Filter>Engine\Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\NetworkWebSocketSubsystem.cpp">
-      <Filter>Engine\Network</Filter>
-    </ClCompile>
     <ClCompile Include="Audio\AudioScriptInterface.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
     <ClCompile Include="Input\InputCommon.cpp">
       <Filter>Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\BaseWebSocketSubsystem.cpp">
+      <Filter>Engine\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ChromeDevToolsWebSocketSubsystem.cpp">
+      <Filter>Engine\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\MCPWebSocketSubsystem.cpp">
+      <Filter>Engine\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Engine.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/SmartFileOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/OnScreenOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/LogSubsystem.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/FileOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/DevConsoleOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/DebugOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ConsoleOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Widget\IWidget.cpp">
+      <Filter>Engine\Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="Widget\WidgetSubsystem.cpp">
+      <Filter>Engine\Widget</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- Core Engine Sources -->
@@ -202,9 +247,6 @@
     </ClCompile>
     <ClCompile Include="Core/JobWorkerThread.cpp">
       <Filter>Engine\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/LogSubsystem.cpp">
-      <Filter>Engine\Core\Debug</Filter>
     </ClCompile>
     <ClCompile Include="Core/EventSystem.cpp">
       <Filter>Engine\Core\Events</Filter>
@@ -543,14 +585,56 @@
     <ClInclude Include="Network\NetworkTCPSubsystem.hpp">
       <Filter>Engine\Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\NetworkWebSocketSubsystem.hpp">
-      <Filter>Engine\Network</Filter>
-    </ClInclude>
     <ClInclude Include="Audio\AudioScriptInterface.hpp">
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="Input\InputCommon.hpp">
       <Filter>Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\BaseWebSocketSubsystem.hpp">
+      <Filter>Engine\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ChromeDevToolsWebSocketSubsystem.hpp">
+      <Filter>Engine\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MCPWebSocketSubsystem.hpp">
+      <Filter>Engine\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\json\json.hpp">
+      <Filter>ThirdParty\Utilities\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Engine.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/SmartFileOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/OnScreenOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/LogSubsystem.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/ILogOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/FileOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/DevConsoleOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/DebugOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ConsoleOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Widget\IWidget.hpp">
+      <Filter>Engine\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Widget\WidgetSubsystem.hpp">
+      <Filter>Engine\Widget</Filter>
     </ClInclude>
   </ItemGroup>
   <!-- Core Engine Headers -->
@@ -593,9 +677,6 @@
     </ClInclude>
     <ClInclude Include="Core/JobWorkerThread.hpp">
       <Filter>Engine\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/LogSubsystem.hpp">
-      <Filter>Engine\Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="Core/EventSystem.hpp">
       <Filter>Engine\Core\Events</Filter>
