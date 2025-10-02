@@ -1598,6 +1598,13 @@ bool ScriptSubsystem::InitializeV8Engine() const
     m_impl->globalContext.Reset(m_impl->isolate, localContext);                     // Convert local context to persistent handle for long-term storage
     m_impl->isInitialized = true;
 
+    // PHASE 3: Register dynamic import callback for import() function support
+    if (m_config.enableModules)
+    {
+        m_impl->isolate->SetHostImportModuleDynamicallyCallback(ModuleLoader::HostImportModuleDynamicallyCallback);
+        DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Phase 3: Dynamic import() callback registered"));
+    }
+
     // Initialize Chrome DevTools Inspector if enabled
     if (m_config.enableInspector)
     {

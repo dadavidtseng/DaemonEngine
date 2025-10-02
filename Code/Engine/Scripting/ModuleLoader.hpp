@@ -131,6 +131,25 @@ public:
                                             v8::Local<v8::Module>  module,
                                             v8::Local<v8::Object>  meta);
 
+    /// @brief Dynamic import callback (Phase 3)
+    ///
+    /// @remark Called by V8 when import() function is used
+    ///         Returns a Promise that resolves to the imported module's namespace
+    ///
+    /// @param context V8 context
+    /// @param host_defined_options Additional options (unused)
+    /// @param resource_name Module resource name
+    /// @param specifier Import specifier (module path)
+    /// @param import_attributes Import attributes (unused)
+    ///
+    /// @return Promise that resolves to module namespace
+    static v8::MaybeLocal<v8::Promise> HostImportModuleDynamicallyCallback(
+        v8::Local<v8::Context>    context,
+        v8::Local<v8::Data>       host_defined_options,
+        v8::Local<v8::Value>      resource_name,
+        v8::Local<v8::String>     specifier,
+        v8::Local<v8::FixedArray> import_attributes);
+
     //------------------------------------------------------------------------------------------------
     // Registry and Resolver Access
     //------------------------------------------------------------------------------------------------

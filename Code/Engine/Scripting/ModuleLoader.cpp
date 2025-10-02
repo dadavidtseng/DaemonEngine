@@ -355,6 +355,126 @@ void ModuleLoader::InitializeImportMetaCallback(v8::Local<v8::Context> context,
 }
 
 //----------------------------------------------------------------------------------------------------
+// Phase 3: Dynamic Import Support
+//----------------------------------------------------------------------------------------------------
+v8::MaybeLocal<v8::Promise> ModuleLoader::HostImportModuleDynamicallyCallback(
+    v8::Local<v8::Context>    context,
+    v8::Local<v8::Data>       host_defined_options,
+    v8::Local<v8::Value>      resource_name,
+    v8::Local<v8::String>     specifier,
+    v8::Local<v8::FixedArray> import_attributes)
+{
+    UNUSED(host_defined_options);
+    UNUSED(resource_name);
+    UNUSED(import_attributes);
+
+    v8::Isolate* isolate = context->GetIsolate();
+    v8::EscapableHandleScope handleScope(isolate);
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log, "HostImportModuleDynamicallyCallback: Dynamic import() called");
+
+    // Get ModuleLoader instance from context embedder data
+    void* loaderPtr = context->GetAlignedPointerFromEmbedderData(1);
+    if (!loaderPtr)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            "HostImportModuleDynamicallyCallback: ModuleLoader not found in context embedder data");
+
+        // Create rejected promise
+        v8::Local<v8::Promise::Resolver> resolver = v8::Promise::Resolver::New(context).ToLocalChecked();
+        v8::Local<v8::String> errorMsg = v8::String::NewFromUtf8Literal(isolate,
+            "Dynamic import failed: ModuleLoader not available");
+        resolver->Reject(context, errorMsg).Check();
+        return handleScope.Escape(resolver->GetPromise());
+    }
+
+    ModuleLoader* loader = static_cast<ModuleLoader*>(loaderPtr);
+
+    // Convert specifier to std::string
+    v8::String::Utf8Value specifierUtf8(isolate, specifier);
+    std::string specifierStr(*specifierUtf8);
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("HostImportModuleDynamicallyCallback: Importing '{}'", specifierStr));
+
+    // Create promise resolver
+    v8::Local<v8::Promise::Resolver> resolver = v8::Promise::Resolver::New(context).ToLocalChecked();
+    v8::Local<v8::Promise> promise = resolver->GetPromise();
+
+    // Resolve the module path
+    std::string resolvedPath = loader->m_resolver->Resolve(specifierStr, loader->m_basePath);
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("HostImportModuleDynamicallyCallback: Resolved '{}' to '{}'", specifierStr, resolvedPath));
+
+    // Check if module is already loaded
+    v8::Local<v8::Module> module;
+    if (loader->m_registry->HasModule(resolvedPath))
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            StringFormat("HostImportModuleDynamicallyCallback: Module '{}' found in cache", resolvedPath));
+        module = loader->m_registry->GetModule(resolvedPath);
+    }
+    else
+    {
+        // Load module from disk
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            StringFormat("HostImportModuleDynamicallyCallback: Loading module '{}' from disk", resolvedPath));
+
+        std::string code;
+        if (!loader->ReadModuleFile(resolvedPath, code))
+        {
+            v8::Local<v8::String> errorMsg = v8::String::NewFromUtf8(isolate,
+                StringFormat("Dynamic import failed: Cannot read file '{}'", resolvedPath).c_str()).ToLocalChecked();
+            resolver->Reject(context, errorMsg).Check();
+            return handleScope.Escape(promise);
+        }
+
+        // Compile the module
+        v8::MaybeLocal<v8::Module> maybeModule = loader->CompileModule(isolate, context, code, resolvedPath);
+        if (maybeModule.IsEmpty())
+        {
+            v8::Local<v8::String> errorMsg = v8::String::NewFromUtf8(isolate,
+                StringFormat("Dynamic import failed: Compilation error for '{}'", resolvedPath).c_str()).ToLocalChecked();
+            resolver->Reject(context, errorMsg).Check();
+            return handleScope.Escape(promise);
+        }
+
+        module = maybeModule.ToLocalChecked();
+
+        // Instantiate the module
+        if (!loader->InstantiateModule(isolate, context, module))
+        {
+            v8::Local<v8::String> errorMsg = v8::String::NewFromUtf8(isolate,
+                StringFormat("Dynamic import failed: Instantiation error for '{}'", resolvedPath).c_str()).ToLocalChecked();
+            resolver->Reject(context, errorMsg).Check();
+            return handleScope.Escape(promise);
+        }
+
+        // Evaluate the module
+        v8::MaybeLocal<v8::Value> maybeResult = loader->EvaluateModule(isolate, context, module);
+        if (maybeResult.IsEmpty())
+        {
+            v8::Local<v8::String> errorMsg = v8::String::NewFromUtf8(isolate,
+                StringFormat("Dynamic import failed: Evaluation error for '{}'", resolvedPath).c_str()).ToLocalChecked();
+            resolver->Reject(context, errorMsg).Check();
+            return handleScope.Escape(promise);
+        }
+    }
+
+    // Get module namespace
+    v8::Local<v8::Object> moduleNamespace = module->GetModuleNamespace().As<v8::Object>();
+
+    // Resolve promise with module namespace
+    resolver->Resolve(context, moduleNamespace).Check();
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Display,
+        StringFormat("HostImportModuleDynamicallyCallback: Successfully imported '{}'", resolvedPath));
+
+    return handleScope.Escape(promise);
+}
+
+//----------------------------------------------------------------------------------------------------
 bool ModuleLoader::ReadModuleFile(std::string const& filePath, std::string& outCode)
 {
     std::ifstream file(filePath);
