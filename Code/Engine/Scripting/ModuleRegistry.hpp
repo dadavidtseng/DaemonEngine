@@ -97,6 +97,15 @@ public:
     /// @return true if module exists in registry
     bool HasModule(std::string const& url) const;
 
+    /// @brief Find module path by V8 module instance
+    ///
+    /// @param module V8 module instance to look up
+    ///
+    /// @return Module URL/path if found, empty string otherwise
+    ///
+    /// @remark Used for resolving relative imports from referrer modules
+    std::string FindModulePath(v8::Local<v8::Module> module) const;
+
     /// @brief Get module information
     ///
     /// @param url Module URL/path

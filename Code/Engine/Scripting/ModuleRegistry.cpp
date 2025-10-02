@@ -60,6 +60,24 @@ bool ModuleRegistry::HasModule(std::string const& url) const
 }
 
 //----------------------------------------------------------------------------------------------------
+std::string ModuleRegistry::FindModulePath(v8::Local<v8::Module> module) const
+{
+    // Search through all registered modules to find matching instance
+    for (auto const& pair : m_modules)
+    {
+        if (pair.second)
+        {
+            v8::Local<v8::Module> cachedModule = pair.second->Get(m_isolate);
+            if (cachedModule == module)
+            {
+                return pair.first; // Return the URL/path
+            }
+        }
+    }
+    return ""; // Not found
+}
+
+//----------------------------------------------------------------------------------------------------
 ModuleInfo const* ModuleRegistry::GetModuleInfo(std::string const& url) const
 {
     auto it = m_moduleInfo.find(url);
