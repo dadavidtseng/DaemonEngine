@@ -619,7 +619,7 @@ bool AudioScriptInterface::ValidateSoundPath(String const& soundPath) const
 
     // Check for valid audio file extensions
     String lowerPath = soundPath;
-    std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
+    std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), [](unsigned char c) { return static_cast<char>(::tolower(c)); });
 
     return (lowerPath.ends_with(".mp3") ||
         lowerPath.ends_with(".wav") ||
