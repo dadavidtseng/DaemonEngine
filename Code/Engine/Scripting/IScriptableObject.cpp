@@ -4,7 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/IScriptableObject.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 

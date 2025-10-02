@@ -4,12 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <map>
-#include <string>
-#include <vector>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
 #include "ThirdParty/fmod/fmod.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <map>
+#include <vector>
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Unique identifier for loaded sound resources in the audio system
@@ -17,7 +17,7 @@
 /// @remark Used as a handle to reference loaded sound files. Obtained from CreateOrGetSound().
 /// @see MISSING_SOUND_ID for invalid sound identification
 //----------------------------------------------------------------------------------------------------
-typedef size_t SoundID;
+using SoundID = size_t;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Unique identifier for active sound playback instances
@@ -26,7 +26,7 @@ typedef size_t SoundID;
 /// @remark Obtained from StartSound() or StartSoundAt() calls for playback control.
 /// @see MISSING_SOUND_ID for invalid playback identification
 //----------------------------------------------------------------------------------------------------
-typedef size_t SoundPlaybackID;
+using SoundPlaybackID = size_t;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Sentinel value indicating invalid or missing sound/playback IDs

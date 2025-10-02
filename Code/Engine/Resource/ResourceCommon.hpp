@@ -10,13 +10,12 @@ enum class ResourceType
 {
     Unknown,
     Model,
-    Texture,
-    Shader,
+    TEXTURE,
+    SHADER,
     Material,
-    Audio,
-    Font,
-    Animation,
-    Particle
+    AUDIO,
+    FONT,
+    Animation
 };
 
 // 資源狀態

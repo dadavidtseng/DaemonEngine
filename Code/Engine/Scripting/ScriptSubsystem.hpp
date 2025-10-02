@@ -4,22 +4,17 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <any>
-#include <functional>
-#include <memory>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <queue>
-#include <mutex>
-
-#include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/IScriptableObject.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <functional>
+#include <mutex>
+#include <queue>
+#include <set>
+#include <unordered_set>
 
 // Forward declarations
-class NetworkWebSocketSubsystem;
+class ChromeDevToolsWebSocketSubsystem;
 class FileWatcher;
 class ScriptReloader;
 
@@ -284,7 +279,7 @@ private:
     std::set<String> m_boundFunctions;  // Bound functions
 
     // Chrome DevTools Integration
-    std::unique_ptr<NetworkWebSocketSubsystem> m_devToolsServer;
+    std::unique_ptr<ChromeDevToolsWebSocketSubsystem> m_devToolsServer;
 
     // Script Source Storage for DevTools
     std::unordered_map<std::string, std::string> m_scriptSources; // URL -> Source Code

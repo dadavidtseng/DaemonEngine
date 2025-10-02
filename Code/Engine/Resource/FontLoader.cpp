@@ -51,7 +51,7 @@ bool FontLoader::CanLoad(String const& extension) const
 //----------------------------------------------------------------------------------------------------
 std::shared_ptr<IResource> FontLoader::Load(String const& path)
 {
-    auto fontResource = std::make_shared<FontResource>(path, ResourceType::Font);
+    auto fontResource = std::make_shared<FontResource>(path, ResourceType::FONT);
 
     if (LoadFontFromFile(path, fontResource.get()))
     {

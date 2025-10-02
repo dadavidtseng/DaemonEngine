@@ -16,9 +16,10 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
-#include "Engine/Network/NetworkWebSocketSubsystem.hpp"
+#include "Engine/Network/ChromeDevToolsWebSocketSubsystem.hpp"
 #include "Engine/Scripting/FileWatcher.hpp"
 #include "Engine/Scripting/ScriptReloader.hpp"
+#include "ThirdParty/json/json.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
@@ -44,7 +45,7 @@
 class V8InspectorChannelImpl : public v8_inspector::V8Inspector::Channel
 {
 public:
-    explicit V8InspectorChannelImpl(ScriptSubsystem* scriptSubsystem, NetworkWebSocketSubsystem* devToolsServer)
+    explicit V8InspectorChannelImpl(ScriptSubsystem* scriptSubsystem, ChromeDevToolsWebSocketSubsystem* devToolsServer)
         : m_scriptSubsystem(scriptSubsystem), m_devToolsServer(devToolsServer)
     {
     }
@@ -88,7 +89,7 @@ public:
     }
 
     // Set the Chrome DevTools server after it's created
-    void SetDevToolsServer(NetworkWebSocketSubsystem* devToolsServer)
+    void SetDevToolsServer(ChromeDevToolsWebSocketSubsystem* devToolsServer)
     {
         m_devToolsServer = devToolsServer;
     }
@@ -112,7 +113,7 @@ public:
 
 private:
     ScriptSubsystem*      m_scriptSubsystem;
-    NetworkWebSocketSubsystem* m_devToolsServer;
+    ChromeDevToolsWebSocketSubsystem* m_devToolsServer;
 
     std::string StringViewToStdString(const v8_inspector::StringView& view)
     {
@@ -307,13 +308,58 @@ void ScriptSubsystem::Startup()
     // Initialize Chrome DevTools server if inspector is enabled
     if (m_config.enableInspector)
     {
+        // Load Chrome DevTools configuration from JSON file
         sChromeDevToolsConfig devToolsConfig;
-        devToolsConfig.enabled     = true;
-        devToolsConfig.host        = m_config.inspectorHost;
-        devToolsConfig.port        = m_config.inspectorPort;
-        devToolsConfig.contextName = "ProtogameJS2D JavaScript Context";
 
-        m_devToolsServer = std::make_unique<NetworkWebSocketSubsystem>(devToolsConfig, this);
+        try
+        {
+            std::ifstream configFile("Data/Config/WebSocketConfig.json");
+            if (configFile.is_open())
+            {
+                nlohmann::json jsonConfig;
+                configFile >> jsonConfig;
+
+                if (jsonConfig.contains("chromeDevTools"))
+                {
+                    devToolsConfig = sChromeDevToolsConfig::FromJSON(jsonConfig["chromeDevTools"]);
+                    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+                               StringFormat("Loaded Chrome DevTools config from JSON: {}:{}",
+                                   devToolsConfig.host, devToolsConfig.port));
+                }
+                else
+                {
+                    DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                               StringFormat("chromeDevTools section not found in WebSocketConfig.json, using defaults"));
+                    // Use defaults from m_config
+                    devToolsConfig.enabled = true;
+                    devToolsConfig.host = m_config.inspectorHost;
+                    devToolsConfig.port = m_config.inspectorPort;
+                    devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+                }
+            }
+            else
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                           StringFormat("WebSocketConfig.json not found, using defaults from sScriptSubsystemConfig"));
+                // Fallback to existing hardcoded values
+                devToolsConfig.enabled = true;
+                devToolsConfig.host = m_config.inspectorHost;
+                devToolsConfig.port = m_config.inspectorPort;
+                devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+            }
+        }
+        catch (nlohmann::json::exception const& e)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                       StringFormat("JSON parsing error in WebSocketConfig.json: {}", e.what()));
+            // Fallback to existing hardcoded values
+            devToolsConfig.enabled = true;
+            devToolsConfig.host = m_config.inspectorHost;
+            devToolsConfig.port = m_config.inspectorPort;
+            devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+        }
+
+        m_devToolsServer = std::make_unique<ChromeDevToolsWebSocketSubsystem>(devToolsConfig, this);
 
         if (m_devToolsServer->Start())
         {

@@ -5,12 +5,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioScriptInterface.hpp"
 
-#include <sstream>
-
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Scripting/ScriptTypeExtractor.hpp"
 
@@ -32,27 +31,27 @@ void AudioScriptInterface::InitializeMethodRegistry()
 {
     // === SOUND LOADING AND MANAGEMENT ===
     m_methodRegistry["createOrGetSound"] = [this](ScriptArgs const& args) { return ExecuteCreateOrGetSound(args); };
-    
+
     // === 2D SOUND PLAYBACK METHODS ===
-    m_methodRegistry["startSound"] = [this](ScriptArgs const& args) { return ExecuteStartSound(args); };
+    m_methodRegistry["startSound"]         = [this](ScriptArgs const& args) { return ExecuteStartSound(args); };
     m_methodRegistry["startSoundAdvanced"] = [this](ScriptArgs const& args) { return ExecuteStartSoundAdvanced(args); };
-    
+
     // === 3D SPATIAL SOUND METHODS ===
-    m_methodRegistry["startSoundAt"] = [this](ScriptArgs const& args) { return ExecuteStartSoundAt(args); };
+    m_methodRegistry["startSoundAt"]         = [this](ScriptArgs const& args) { return ExecuteStartSoundAt(args); };
     m_methodRegistry["startSoundAtAdvanced"] = [this](ScriptArgs const& args) { return ExecuteStartSoundAtAdvanced(args); };
-    
+
     // === PLAYBACK CONTROL METHODS ===
-    m_methodRegistry["stopSound"] = [this](ScriptArgs const& args) { return ExecuteStopSound(args); };
-    m_methodRegistry["setSoundVolume"] = [this](ScriptArgs const& args) { return ExecuteSetSoundVolume(args); };
+    m_methodRegistry["stopSound"]       = [this](ScriptArgs const& args) { return ExecuteStopSound(args); };
+    m_methodRegistry["setSoundVolume"]  = [this](ScriptArgs const& args) { return ExecuteSetSoundVolume(args); };
     m_methodRegistry["setSoundBalance"] = [this](ScriptArgs const& args) { return ExecuteSetSoundBalance(args); };
-    m_methodRegistry["setSoundSpeed"] = [this](ScriptArgs const& args) { return ExecuteSetSoundSpeed(args); };
-    
+    m_methodRegistry["setSoundSpeed"]   = [this](ScriptArgs const& args) { return ExecuteSetSoundSpeed(args); };
+
     // === 3D LISTENER CONTROL ===
     m_methodRegistry["setNumListeners"] = [this](ScriptArgs const& args) { return ExecuteSetNumListeners(args); };
-    m_methodRegistry["updateListener"] = [this](ScriptArgs const& args) { return ExecuteUpdateListener(args); };
-    
+    m_methodRegistry["updateListener"]  = [this](ScriptArgs const& args) { return ExecuteUpdateListener(args); };
+
     // === UTILITY METHODS ===
-    m_methodRegistry["isValidSoundID"] = [this](ScriptArgs const& args) { return ExecuteIsValidSoundID(args); };
+    m_methodRegistry["isValidSoundID"]    = [this](ScriptArgs const& args) { return ExecuteIsValidSoundID(args); };
     m_methodRegistry["isValidPlaybackID"] = [this](ScriptArgs const& args) { return ExecuteIsValidPlaybackID(args); };
 }
 
@@ -189,9 +188,9 @@ ScriptMethodResult AudioScriptInterface::ExecuteCreateOrGetSound(ScriptArgs cons
 
     try
     {
-        String soundPath = ScriptTypeExtractor::ExtractString(args[0]);
+        String soundPath    = ScriptTypeExtractor::ExtractString(args[0]);
         String dimensionStr = ScriptTypeExtractor::ExtractString(args[1]);
-        
+
         if (!ValidateSoundPath(soundPath))
         {
             return ScriptMethodResult::Error("Invalid sound file path: " + soundPath);
@@ -216,9 +215,9 @@ ScriptMethodResult AudioScriptInterface::ExecuteCreateOrGetSound(ScriptArgs cons
         DAEMON_LOG(LogAudio, eLogVerbosity::Log, StringFormat("Attempting to load sound: {} with dimension: {}", soundPath.c_str(), (int)dimension));
 
         SoundID soundID = m_audioSystem->CreateOrGetSound(soundPath, dimension);
-        
+
         DAEMON_LOG(LogAudio, eLogVerbosity::Log, StringFormat("AudioSystem->CreateOrGetSound returned SoundID: {} (MISSING_SOUND_ID = {})", soundID, MISSING_SOUND_ID));
-        
+
         if (soundID == MISSING_SOUND_ID)
         {
             DAEMON_LOG(LogAudio, eLogVerbosity::Warning, StringFormat("Failed to load sound file: '{}' - AudioSystem returned MISSING_SOUND_ID", soundPath.c_str()));
@@ -245,9 +244,9 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSound(ScriptArgs const& arg
     try
     {
         SoundID soundID = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        
+
         SoundPlaybackID playbackID = m_audioSystem->StartSound(soundID);
-        
+
         if (playbackID == MISSING_SOUND_ID)
         {
             return ScriptMethodResult::Error("Failed to start sound playback");
@@ -269,12 +268,12 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSoundAdvanced(ScriptArgs co
 
     try
     {
-        SoundID soundID = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        bool isLooped = ScriptTypeExtractor::ExtractBool(args[1]);
-        float volume = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float balance = ScriptTypeExtractor::ExtractFloat(args[3]);
-        float speed = ScriptTypeExtractor::ExtractFloat(args[4]);
-        bool isPaused = ScriptTypeExtractor::ExtractBool(args[5]);
+        SoundID soundID  = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        bool    isLooped = ScriptTypeExtractor::ExtractBool(args[1]);
+        float   volume   = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float   balance  = ScriptTypeExtractor::ExtractFloat(args[3]);
+        float   speed    = ScriptTypeExtractor::ExtractFloat(args[4]);
+        bool    isPaused = ScriptTypeExtractor::ExtractBool(args[5]);
 
         if (!ValidateVolume(volume))
         {
@@ -290,7 +289,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSoundAdvanced(ScriptArgs co
         }
 
         SoundPlaybackID playbackID = m_audioSystem->StartSound(soundID, isLooped, volume, balance, speed, isPaused);
-        
+
         if (playbackID == MISSING_SOUND_ID)
         {
             return ScriptMethodResult::Error("Failed to start advanced sound playback");
@@ -316,18 +315,18 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSoundAt(ScriptArgs const& a
     try
     {
         SoundID soundID = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float x = ScriptTypeExtractor::ExtractFloat(args[1]);
-        float y = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float z = ScriptTypeExtractor::ExtractFloat(args[3]);
+        float   x       = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float   y       = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float   z       = ScriptTypeExtractor::ExtractFloat(args[3]);
 
         if (!ValidatePosition(x, y, z))
         {
             return ScriptMethodResult::Error("Invalid 3D position coordinates");
         }
 
-        Vec3 position(x, y, z);
+        Vec3            position(x, y, z);
         SoundPlaybackID playbackID = m_audioSystem->StartSoundAt(soundID, position);
-        
+
         if (playbackID == MISSING_SOUND_ID)
         {
             return ScriptMethodResult::Error("Failed to start 3D sound playback");
@@ -349,15 +348,15 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSoundAtAdvanced(ScriptArgs 
 
     try
     {
-        SoundID soundID = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float x = ScriptTypeExtractor::ExtractFloat(args[1]);
-        float y = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float z = ScriptTypeExtractor::ExtractFloat(args[3]);
-        bool isLooped = ScriptTypeExtractor::ExtractBool(args[4]);
-        float volume = ScriptTypeExtractor::ExtractFloat(args[5]);
-        float balance = ScriptTypeExtractor::ExtractFloat(args[6]);
-        float speed = ScriptTypeExtractor::ExtractFloat(args[7]);
-        bool isPaused = ScriptTypeExtractor::ExtractBool(args[8]);
+        SoundID soundID  = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        float   x        = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float   y        = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float   z        = ScriptTypeExtractor::ExtractFloat(args[3]);
+        bool    isLooped = ScriptTypeExtractor::ExtractBool(args[4]);
+        float   volume   = ScriptTypeExtractor::ExtractFloat(args[5]);
+        float   balance  = ScriptTypeExtractor::ExtractFloat(args[6]);
+        float   speed    = ScriptTypeExtractor::ExtractFloat(args[7]);
+        bool    isPaused = ScriptTypeExtractor::ExtractBool(args[8]);
 
         if (!ValidatePosition(x, y, z))
         {
@@ -376,9 +375,9 @@ ScriptMethodResult AudioScriptInterface::ExecuteStartSoundAtAdvanced(ScriptArgs 
             return ScriptMethodResult::Error("Speed must be between 0.1 and 10.0");
         }
 
-        Vec3 position(x, y, z);
+        Vec3            position(x, y, z);
         SoundPlaybackID playbackID = m_audioSystem->StartSoundAt(soundID, position, isLooped, volume, balance, speed, isPaused);
-        
+
         if (playbackID == MISSING_SOUND_ID)
         {
             return ScriptMethodResult::Error("Failed to start advanced 3D sound playback");
@@ -404,9 +403,9 @@ ScriptMethodResult AudioScriptInterface::ExecuteStopSound(ScriptArgs const& args
     try
     {
         SoundPlaybackID playbackID = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        
+
         m_audioSystem->StopSound(playbackID);
-        
+
         return ScriptMethodResult::Success("Sound stopped successfully");
     }
     catch (const std::exception& e)
@@ -424,7 +423,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundVolume(ScriptArgs const&
     try
     {
         SoundPlaybackID playbackID = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float volume = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float           volume     = ScriptTypeExtractor::ExtractFloat(args[1]);
 
         if (!ValidateVolume(volume))
         {
@@ -432,7 +431,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundVolume(ScriptArgs const&
         }
 
         m_audioSystem->SetSoundPlaybackVolume(playbackID, volume);
-        
+
         return ScriptMethodResult::Success("Volume set successfully");
     }
     catch (const std::exception& e)
@@ -450,7 +449,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundBalance(ScriptArgs const
     try
     {
         SoundPlaybackID playbackID = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float balance = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float           balance    = ScriptTypeExtractor::ExtractFloat(args[1]);
 
         if (!ValidateBalance(balance))
         {
@@ -458,7 +457,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundBalance(ScriptArgs const
         }
 
         m_audioSystem->SetSoundPlaybackBalance(playbackID, balance);
-        
+
         return ScriptMethodResult::Success("Balance set successfully");
     }
     catch (const std::exception& e)
@@ -476,7 +475,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundSpeed(ScriptArgs const& 
     try
     {
         SoundPlaybackID playbackID = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float speed = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float           speed      = ScriptTypeExtractor::ExtractFloat(args[1]);
 
         if (!ValidateSpeed(speed))
         {
@@ -484,7 +483,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetSoundSpeed(ScriptArgs const& 
         }
 
         m_audioSystem->SetSoundPlaybackSpeed(playbackID, speed);
-        
+
         return ScriptMethodResult::Success("Speed set successfully");
     }
     catch (const std::exception& e)
@@ -512,7 +511,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteSetNumListeners(ScriptArgs const
         }
 
         m_audioSystem->SetNumListeners(numListeners);
-        
+
         return ScriptMethodResult::Success("Number of listeners set successfully");
     }
     catch (const std::exception& e)
@@ -529,16 +528,16 @@ ScriptMethodResult AudioScriptInterface::ExecuteUpdateListener(ScriptArgs const&
 
     try
     {
-        int listenerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
-        float posX = ScriptTypeExtractor::ExtractFloat(args[1]);
-        float posY = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float posZ = ScriptTypeExtractor::ExtractFloat(args[3]);
-        float forwardX = ScriptTypeExtractor::ExtractFloat(args[4]);
-        float forwardY = ScriptTypeExtractor::ExtractFloat(args[5]);
-        float forwardZ = ScriptTypeExtractor::ExtractFloat(args[6]);
-        float upX = ScriptTypeExtractor::ExtractFloat(args[7]);
-        float upY = ScriptTypeExtractor::ExtractFloat(args[8]);
-        float upZ = ScriptTypeExtractor::ExtractFloat(args[9]);
+        int   listenerIndex = ScriptTypeExtractor::ExtractInt(args[0]);
+        float posX          = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float posY          = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float posZ          = ScriptTypeExtractor::ExtractFloat(args[3]);
+        float forwardX      = ScriptTypeExtractor::ExtractFloat(args[4]);
+        float forwardY      = ScriptTypeExtractor::ExtractFloat(args[5]);
+        float forwardZ      = ScriptTypeExtractor::ExtractFloat(args[6]);
+        float upX           = ScriptTypeExtractor::ExtractFloat(args[7]);
+        float upY           = ScriptTypeExtractor::ExtractFloat(args[8]);
+        float upZ           = ScriptTypeExtractor::ExtractFloat(args[9]);
 
         if (listenerIndex < 0 || listenerIndex > 7)
         {
@@ -550,7 +549,7 @@ ScriptMethodResult AudioScriptInterface::ExecuteUpdateListener(ScriptArgs const&
         Vec3 up(upX, upY, upZ);
 
         m_audioSystem->UpdateListener(listenerIndex, position, forward, up);
-        
+
         return ScriptMethodResult::Success("Listener updated successfully");
     }
     catch (const std::exception& e)
@@ -571,8 +570,8 @@ ScriptMethodResult AudioScriptInterface::ExecuteIsValidSoundID(ScriptArgs const&
     try
     {
         SoundID soundID = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        bool isValid = (soundID != MISSING_SOUND_ID);
-        
+        bool    isValid = (soundID != MISSING_SOUND_ID);
+
         return ScriptMethodResult::Success(isValid);
     }
     catch (const std::exception& e)
@@ -590,8 +589,8 @@ ScriptMethodResult AudioScriptInterface::ExecuteIsValidPlaybackID(ScriptArgs con
     try
     {
         SoundPlaybackID playbackID = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        bool isValid = (playbackID != MISSING_SOUND_ID);
-        
+        bool            isValid    = (playbackID != MISSING_SOUND_ID);
+
         return ScriptMethodResult::Success(isValid);
     }
     catch (const std::exception& e)
@@ -621,11 +620,11 @@ bool AudioScriptInterface::ValidateSoundPath(String const& soundPath) const
     // Check for valid audio file extensions
     String lowerPath = soundPath;
     std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
-    
-    return (lowerPath.ends_with(".mp3") || 
-            lowerPath.ends_with(".wav") || 
-            lowerPath.ends_with(".ogg") ||
-            lowerPath.ends_with(".m4a"));
+
+    return (lowerPath.ends_with(".mp3") ||
+        lowerPath.ends_with(".wav") ||
+        lowerPath.ends_with(".ogg") ||
+        lowerPath.ends_with(".m4a"));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -651,5 +650,5 @@ bool AudioScriptInterface::ValidatePosition(float x, float y, float z) const
 {
     // Check for reasonable 3D world coordinates (not NaN or infinite)
     return (std::isfinite(x) && std::isfinite(y) && std::isfinite(z) &&
-            std::abs(x) < 10000.0f && std::abs(y) < 10000.0f && std::abs(z) < 10000.0f);
+        std::abs(x) < 10000.0f && std::abs(y) < 10000.0f && std::abs(z) < 10000.0f);
 }

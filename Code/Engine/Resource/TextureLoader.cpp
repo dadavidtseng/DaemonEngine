@@ -46,7 +46,7 @@ bool TextureLoader::CanLoad(String const& extension) const
 //----------------------------------------------------------------------------------------------------
 std::shared_ptr<IResource> TextureLoader::Load(String const& path)
 {
-    auto textureResource = std::make_shared<TextureResource>(path, ResourceType::Texture);
+    auto textureResource = std::make_shared<TextureResource>(path, ResourceType::TEXTURE);
 
     if (LoadTextureFromFile(path, textureResource.get()))
     {

@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Input/InputCommon.hpp"
 
+//----------------------------------------------------------------------------------------------------
 unsigned char const NUMCODE_0             = 0x30;
 unsigned char const NUMCODE_1             = 0x31;
 unsigned char const NUMCODE_2             = 0x32;
@@ -15,6 +16,8 @@ unsigned char const NUMCODE_6             = 0x36;
 unsigned char const NUMCODE_7             = 0x37;
 unsigned char const NUMCODE_8             = 0x38;
 unsigned char const NUMCODE_9             = 0x39;
+
+//----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_A             = 0x41;
 unsigned char const KEYCODE_B             = 0x42;
 unsigned char const KEYCODE_C             = 0x43;
@@ -41,6 +44,8 @@ unsigned char const KEYCODE_W             = 0x57;
 unsigned char const KEYCODE_X             = 0x58;
 unsigned char const KEYCODE_Y             = 0x59;
 unsigned char const KEYCODE_Z             = 0x5A;
+
+//----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_F1            = 0x70;
 unsigned char const KEYCODE_F2            = 0x71;
 unsigned char const KEYCODE_F3            = 0x72;
@@ -57,6 +62,8 @@ unsigned char const KEYCODE_F13           = 0x7C;
 unsigned char const KEYCODE_F14           = 0x7D;
 unsigned char const KEYCODE_F15           = 0x7E;
 unsigned char const KEYCODE_ESC           = 0x1B;
+
+//----------------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_LEFTARROW     = 0x25;
 unsigned char const KEYCODE_UPARROW       = 0x26;
 unsigned char const KEYCODE_RIGHTARROW    = 0x27;

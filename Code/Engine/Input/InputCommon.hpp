@@ -4,9 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <cstdint>
-
+// ----------------------------------------------------------------------------------------------------
 #include "Engine/Math/IntVec2.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <cstdint>
 
 //----------------------------------------------------------------------------------------------------
 enum class eCursorMode : int8_t
@@ -38,6 +39,8 @@ extern unsigned char const NUMCODE_6;
 extern unsigned char const NUMCODE_7;
 extern unsigned char const NUMCODE_8;
 extern unsigned char const NUMCODE_9;
+
+//----------------------------------------------------------------------------------------------------
 extern unsigned char const KEYCODE_A;
 extern unsigned char const KEYCODE_B;
 extern unsigned char const KEYCODE_C;
@@ -64,6 +67,8 @@ extern unsigned char const KEYCODE_W;
 extern unsigned char const KEYCODE_X;
 extern unsigned char const KEYCODE_Y;
 extern unsigned char const KEYCODE_Z;
+
+//----------------------------------------------------------------------------------------------------
 extern unsigned char const KEYCODE_F1;
 extern unsigned char const KEYCODE_F2;
 extern unsigned char const KEYCODE_F3;
@@ -80,6 +85,8 @@ extern unsigned char const KEYCODE_F13;
 extern unsigned char const KEYCODE_F14;
 extern unsigned char const KEYCODE_F15;
 extern unsigned char const KEYCODE_ESC;
+
+//----------------------------------------------------------------------------------------------------
 extern unsigned char const KEYCODE_UPARROW;
 extern unsigned char const KEYCODE_DOWNARROW;
 extern unsigned char const KEYCODE_LEFTARROW;

@@ -47,7 +47,7 @@ std::vector<String> ShaderLoader::GetSupportedExtensions() const
 std::shared_ptr<IResource> ShaderLoader::LoadShader(String const& path, eVertexType vertexType)
 {
     // Create the resource first
-    auto shaderResource = std::make_shared<ShaderResource>(path, ResourceType::Shader);
+    auto shaderResource = std::make_shared<ShaderResource>(path, ResourceType::SHADER);
     shaderResource->SetVertexType(vertexType);
 
     // Load the actual shader through DirectX

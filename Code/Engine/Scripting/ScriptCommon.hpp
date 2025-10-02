@@ -4,9 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <any>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <any>
 
 //----------------------------------------------------------------------------------------------------
 // 腳本方法呼叫的結果類型
@@ -32,7 +33,7 @@ struct ScriptMethodInfo
     String              returnType;
 
     explicit ScriptMethodInfo(String                     methodName,
-                              String                     description = "",
-                              std::vector<String> const& parameterTypes      = {},
-                              String                     returnType  = "void");
+                              String                     description    = "",
+                              std::vector<String> const& parameterTypes = {},
+                              String                     returnType     = "void");
 };
