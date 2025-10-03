@@ -7,11 +7,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
 //----------------------------------------------------------------------------------------------------
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
-#include <vector>
+
 //----------------------------------------------------------------------------------------------------
 // Prevent Windows.h min/max macros from conflicting with V8 headers
 #ifndef NOMINMAX
@@ -204,13 +201,13 @@ private:
     //------------------------------------------------------------------------------------------------
 
     /// @brief Recursive topological sort helper
-    void TopologicalSortHelper(std::string const&              moduleUrl,
+    void TopologicalSortHelper(std::string const&               moduleUrl,
                                std::unordered_set<std::string>& visited,
                                std::unordered_set<std::string>& recursionStack,
                                std::vector<std::string>&        result) const;
 
     /// @brief Detect circular dependencies recursively
-    bool HasCircularDependencyHelper(std::string const&              moduleUrl,
+    bool HasCircularDependencyHelper(std::string const&               moduleUrl,
                                      std::unordered_set<std::string>& visited,
                                      std::unordered_set<std::string>& recursionStack) const;
 

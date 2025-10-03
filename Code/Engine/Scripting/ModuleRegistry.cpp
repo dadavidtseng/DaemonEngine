@@ -5,16 +5,16 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/ModuleRegistry.hpp"
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
-#include <algorithm>
-#include <functional>
 
 //----------------------------------------------------------------------------------------------------
 ModuleRegistry::ModuleRegistry(v8::Isolate* isolate)
     : m_isolate(isolate)
 {
-    GUARANTEE_OR_DIE(isolate != nullptr, "ModuleRegistry: V8 isolate cannot be null");
+    GUARANTEE_OR_DIE(isolate != nullptr, "ModuleRegistry: V8 isolate cannot be null")
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -33,11 +33,11 @@ void ModuleRegistry::RegisterModule(std::string const& url, v8::Local<v8::Module
 
     // Store module metadata
     ModuleInfo info;
-    info.url = url;
-    info.sourceCode = sourceCode;
-    info.sourceHash = std::hash<std::string>{}(sourceCode);
+    info.url            = url;
+    info.sourceCode     = sourceCode;
+    info.sourceHash     = std::hash<std::string>{}(sourceCode);
     info.isInstantiated = false;
-    info.isEvaluated = false;
+    info.isEvaluated    = false;
 
     m_moduleInfo[url] = info;
 }
@@ -140,7 +140,7 @@ std::vector<std::string> ModuleRegistry::GetModulesInLoadOrder() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void ModuleRegistry::TopologicalSortHelper(std::string const&              moduleUrl,
+void ModuleRegistry::TopologicalSortHelper(std::string const&               moduleUrl,
                                            std::unordered_set<std::string>& visited,
                                            std::unordered_set<std::string>& recursionStack,
                                            std::vector<std::string>&        result) const
@@ -188,22 +188,36 @@ void ModuleRegistry::MarkEvaluated(std::string const& url)
 //----------------------------------------------------------------------------------------------------
 void ModuleRegistry::InvalidateModule(std::string const& url)
 {
+    // PHASE 5 FIX: Properly reset V8 persistent handles before removal
+    auto it = m_modules.find(url);
+    if (it != m_modules.end())
+    {
+        // Explicitly reset the persistent handle to release V8's reference
+        if (it->second)
+        {
+            it->second->Reset();
+        }
+    }
+
     // Remove from module cache (preserves dependency graph)
     m_modules.erase(url);
 
     // Reset module info status
-    auto it = m_moduleInfo.find(url);
-    if (it != m_moduleInfo.end())
+    auto infoIt = m_moduleInfo.find(url);
+    if (infoIt != m_moduleInfo.end())
     {
-        it->second.isInstantiated = false;
-        it->second.isEvaluated = false;
+        infoIt->second.isInstantiated = false;
+        infoIt->second.isEvaluated    = false;
     }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("ModuleRegistry: Invalidated module '{}'", url));
 }
 
 //----------------------------------------------------------------------------------------------------
 std::vector<std::string> ModuleRegistry::InvalidateModuleTree(std::string const& url)
 {
-    std::vector<std::string> invalidated;
+    std::vector<std::string>        invalidated;
     std::unordered_set<std::string> toInvalidate;
 
     // Collect all dependents recursively
@@ -249,7 +263,8 @@ void ModuleRegistry::Clear()
 //----------------------------------------------------------------------------------------------------
 std::vector<std::string> ModuleRegistry::GetAllModuleUrls() const
 {
-    std::vector<std::string> urls;
+    StringList urls;
+
     urls.reserve(m_modules.size());
 
     for (auto const& pair : m_modules)
@@ -270,7 +285,7 @@ bool ModuleRegistry::HasCircularDependency(std::string const& moduleUrl) const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool ModuleRegistry::HasCircularDependencyHelper(std::string const&              moduleUrl,
+bool ModuleRegistry::HasCircularDependencyHelper(std::string const&               moduleUrl,
                                                  std::unordered_set<std::string>& visited,
                                                  std::unordered_set<std::string>& recursionStack) const
 {
@@ -284,13 +299,13 @@ bool ModuleRegistry::HasCircularDependencyHelper(std::string const&             
         for (std::string const& dependency : depIt->second)
         {
             // If dependency is in recursion stack, we have a cycle
-            if (recursionStack.find(dependency) != recursionStack.end())
+            if (recursionStack.contains(dependency))
             {
                 return true;
             }
 
             // Recursively check dependency
-            if (visited.find(dependency) == visited.end())
+            if (!visited.contains(dependency))
             {
                 if (HasCircularDependencyHelper(dependency, visited, recursionStack))
                 {

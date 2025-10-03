@@ -11,6 +11,7 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Scripting/ScriptSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -153,8 +154,30 @@ bool ModuleLoader::ReloadModule(std::string const& modulePath)
 {
     ClearError();
 
-    // Resolve module path
-    std::string resolvedPath = m_resolver->Resolve(modulePath, m_basePath);
+    // PHASE 5 FIX: Convert absolute path to relative path for module registry lookup
+    // Module registry uses relative paths like "Data/Scripts/JSGame.mjs"
+    // But ReloadModule() receives absolute paths like "C:/p4/.../Run/Data/Scripts/JSGame.mjs"
+    std::string moduleKey = modulePath;
+
+    // Check if modulePath is absolute (contains base path)
+    size_t basePathPos = modulePath.find(m_basePath);
+    if (basePathPos != std::string::npos)
+    {
+        // Extract the relative portion after base path
+        moduleKey = modulePath.substr(basePathPos);
+    }
+    else if (std::filesystem::path(modulePath).is_absolute())
+    {
+        // If absolute but doesn't contain base path, try to extract "Data/Scripts/..." portion
+        size_t dataPos = modulePath.find("Data/Scripts/");
+        if (dataPos != std::string::npos)
+        {
+            moduleKey = modulePath.substr(dataPos);
+        }
+    }
+
+    // Normalize the key for consistent comparison
+    moduleKey = ModuleResolver::NormalizePath(moduleKey);
 
     // Check if module registry exists
     if (!m_registry)
@@ -163,11 +186,44 @@ bool ModuleLoader::ReloadModule(std::string const& modulePath)
         return false;
     }
 
-    // Invalidate the module
-    m_registry->InvalidateModule(resolvedPath);
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("ModuleLoader: Starting hot-reload for module: {} (key: {})", modulePath, moduleKey));
 
-    // Reload from disk
-    return LoadModule(modulePath);
+    // Invalidate the module tree (includes all dependents)
+    std::vector<std::string> invalidatedModules = m_registry->InvalidateModuleTree(moduleKey);
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("ModuleLoader: Invalidated {} module(s) for hot-reload", invalidatedModules.size()));
+
+    // Log all invalidated modules for debugging
+    for (auto const& moduleUrl : invalidatedModules)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            StringFormat("  - Invalidated: {}", moduleUrl));
+    }
+
+    // Always reload from main.mjs to ensure full import chain execution
+    // This is critical because V8 module instances are immutable once evaluated
+    std::string mainModulePath = "Data/Scripts/main.mjs";
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("ModuleLoader: Reloading from entry point: {}", mainModulePath));
+
+    // Reload from main.mjs (triggers re-import of all dependent modules)
+    bool success = LoadModule(mainModulePath);
+
+    if (success)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Display,
+            StringFormat("ModuleLoader: Hot-reload completed successfully for: {} (key: {})", modulePath, moduleKey));
+    }
+    else
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            StringFormat("ModuleLoader: Hot-reload failed for: {} (key: {})", modulePath, moduleKey));
+    }
+
+    return success;
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -11,19 +11,22 @@
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class ScriptSubsystem;
+class ModuleLoader;
 
 /**
  * ScriptReloader - V8 Script Hot-Reload Management
- * 
+ *
  * Handles the complex process of reloading JavaScript files in V8 context while preserving
  * game state. Manages the complete reload lifecycle including state preservation, script
  * re-execution, and state restoration.
- * 
+ *
  * Features:
  * - Safe V8 script reloading without context recreation
  * - JavaScript state preservation and restoration
  * - Error handling and rollback on reload failures
  * - Integration with existing ScriptSubsystem
+ * - ES6 module hot-reload support (.mjs files)
+ * - Classic script hot-reload support (.js files)
  */
 class ScriptReloader
 {
@@ -34,7 +37,7 @@ public:
     ~ScriptReloader();
 
     // Core functionality
-    bool Initialize(ScriptSubsystem* scriptSystem);
+    bool Initialize(ScriptSubsystem* scriptSystem, ModuleLoader* moduleLoader = nullptr);
     void Shutdown();
 
     // Reload operations
@@ -62,6 +65,10 @@ private:
     bool ExecuteScript(const std::string& scriptPath);
     bool ReadScriptFile(const std::string& scriptPath, std::string& content);
 
+    // File type detection and routing
+    bool IsES6Module(const std::string& filePath) const;
+    bool ReloadES6Module(const std::string& modulePath);
+
     // Special reload strategies for different script types
     bool ReloadInputSystemScript(const std::string& scriptContent);
 
@@ -78,6 +85,7 @@ private:
 private:
     // Script subsystem integration
     ScriptSubsystem* m_scriptSystem{nullptr};
+    ModuleLoader*    m_moduleLoader{nullptr};
 
     // Reload state
     bool        m_isReloading{false};

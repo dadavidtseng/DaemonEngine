@@ -4,23 +4,17 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Scripting/ScriptSubsystem.hpp"
-
-#include <chrono>
-#include <fstream>
-#include <sstream>
-#include <filesystem>
-#include <stdexcept>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Network/ChromeDevToolsWebSocketSubsystem.hpp"
 #include "Engine/Scripting/FileWatcher.hpp"
+#include "Engine/Scripting/ModuleLoader.hpp"
 #include "Engine/Scripting/ScriptReloader.hpp"
-#include "Engine/Scripting/ModuleLoader.hpp"  // NEW: ES6 module loader
 #include "ThirdParty/json/json.hpp"
+//----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
@@ -113,7 +107,7 @@ public:
     }
 
 private:
-    ScriptSubsystem*      m_scriptSubsystem;
+    ScriptSubsystem*                  m_scriptSubsystem;
     ChromeDevToolsWebSocketSubsystem* m_devToolsServer;
 
     std::string StringViewToStdString(const v8_inspector::StringView& view)
@@ -279,7 +273,7 @@ ScriptSubsystem::ScriptSubsystem(sScriptSubsystemConfig config)
 }
 
 //----------------------------------------------------------------------------------------------------
-ScriptSubsystem::~ScriptSubsystem() 
+ScriptSubsystem::~ScriptSubsystem()
 {
     Shutdown();
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptSubsystem: Destroyed"));
@@ -332,9 +326,9 @@ void ScriptSubsystem::Startup()
                     DAEMON_LOG(LogScript, eLogVerbosity::Warning,
                                StringFormat("chromeDevTools section not found in WebSocketConfig.json, using defaults"));
                     // Use defaults from m_config
-                    devToolsConfig.enabled = true;
-                    devToolsConfig.host = m_config.inspectorHost;
-                    devToolsConfig.port = m_config.inspectorPort;
+                    devToolsConfig.enabled     = true;
+                    devToolsConfig.host        = m_config.inspectorHost;
+                    devToolsConfig.port        = m_config.inspectorPort;
                     devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
                 }
             }
@@ -343,9 +337,9 @@ void ScriptSubsystem::Startup()
                 DAEMON_LOG(LogScript, eLogVerbosity::Warning,
                            StringFormat("WebSocketConfig.json not found, using defaults from sScriptSubsystemConfig"));
                 // Fallback to existing hardcoded values
-                devToolsConfig.enabled = true;
-                devToolsConfig.host = m_config.inspectorHost;
-                devToolsConfig.port = m_config.inspectorPort;
+                devToolsConfig.enabled     = true;
+                devToolsConfig.host        = m_config.inspectorHost;
+                devToolsConfig.port        = m_config.inspectorPort;
                 devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
             }
         }
@@ -354,9 +348,9 @@ void ScriptSubsystem::Startup()
             DAEMON_LOG(LogScript, eLogVerbosity::Error,
                        StringFormat("JSON parsing error in WebSocketConfig.json: {}", e.what()));
             // Fallback to existing hardcoded values
-            devToolsConfig.enabled = true;
-            devToolsConfig.host = m_config.inspectorHost;
-            devToolsConfig.port = m_config.inspectorPort;
+            devToolsConfig.enabled     = true;
+            devToolsConfig.host        = m_config.inspectorHost;
+            devToolsConfig.port        = m_config.inspectorPort;
             devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
         }
 
@@ -423,7 +417,7 @@ void ScriptSubsystem::Shutdown()
     if (m_hotReloadEnabled)
     {
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptSubsystem: Shutting down hot-reload system..."));
-        
+
         m_hotReloadEnabled = false;
 
         if (m_fileWatcher)
@@ -553,8 +547,8 @@ bool ScriptSubsystem::InitializeHotReload(const std::string& projectRoot)
             return false;
         }
 
-        // Initialize ScriptReloader
-        if (!m_scriptReloader->Initialize(this))
+        // Initialize ScriptReloader with ModuleLoader support (Phase 5)
+        if (!m_scriptReloader->Initialize(this, m_moduleLoader.get()))
         {
             DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("ScriptSubsystem: Failed to initialize ScriptReloader"));
             return false;
@@ -651,32 +645,64 @@ void ScriptSubsystem::ProcessPendingEvents()
 {
     try
     {
-        // Process all pending file changes on the main thread (V8-safe)
-        std::queue<std::string> filesToProcess;
+        // PHASE 5: Add V8 scope safety (Solution B from Q3)
+        // Get V8 isolate first (this is safe without scopes)
+        void* isolatePtr = GetV8Isolate();
 
-        // Get all pending changes under lock
+        if (isolatePtr)
         {
-            std::lock_guard<std::mutex> lock(m_fileChangeQueueMutex);
-            filesToProcess.swap(m_pendingFileChanges); // Efficiently move all items
-        }
+            v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
 
-        // Process all file changes outside the lock
-        while (!filesToProcess.empty())
-        {
-            const std::string& filePath = filesToProcess.front();
+            // CRITICAL: Enter isolate scope BEFORE accessing context
+            v8::Isolate::Scope isolateScope(isolate);
+            v8::HandleScope    handleScope(isolate);
 
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptSubsystem: Processing file change on main thread: {}", filePath));
+            // Now safe to get context (requires isolate scope to be active)
+            void* contextPtr = GetV8Context();
 
-            // Convert relative path to absolute path for ScriptReloader
-            std::string absolutePath = GetAbsoluteScriptPath(filePath);
-
-            // Now safe to call V8 from main thread
-            if (m_scriptReloader && m_hotReloadEnabled)
+            if (contextPtr)
             {
-                m_scriptReloader->ReloadScript(absolutePath);
-            }
+                v8::Local<v8::Context> context = *static_cast<v8::Local<v8::Context>*>(contextPtr);
+                v8::Context::Scope     contextScope(context);
 
-            filesToProcess.pop();
+                // Process all pending file changes on the main thread (V8-safe)
+                std::queue<std::string> filesToProcess;
+
+                // Get all pending changes under lock
+                {
+                    std::lock_guard<std::mutex> lock(m_fileChangeQueueMutex);
+                    filesToProcess.swap(m_pendingFileChanges); // Efficiently move all items
+                }
+
+                // Process all file changes outside the lock
+                while (!filesToProcess.empty())
+                {
+                    const std::string& filePath = filesToProcess.front();
+
+                    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptSubsystem: Processing file change on main thread: {}", filePath));
+
+                    // Convert relative path to absolute path for ScriptReloader
+                    std::string absolutePath = GetAbsoluteScriptPath(filePath);
+
+                    // Now safe to call V8 from main thread with proper scopes
+                    if (m_scriptReloader && m_hotReloadEnabled)
+                    {
+                        m_scriptReloader->ReloadScript(absolutePath);
+                    }
+
+                    filesToProcess.pop();
+                }
+            }
+            else
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                           StringFormat("ScriptSubsystem: V8 context not available, skipping hot-reload processing"));
+            }
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                       StringFormat("ScriptSubsystem: V8 isolate not available, skipping hot-reload processing"));
         }
     }
     catch (const std::exception& e)
@@ -1252,16 +1278,16 @@ void ScriptSubsystem::SendPerformanceTimelineEvent(const std::string& eventType,
     // Create proper Profiler.consoleProfileStarted event for Performance panel
     // This is the correct Chrome DevTools Protocol event for Performance timeline
     std::string notification = std::string("{") +
-    "\"method\": \"Profiler.consoleProfileStarted\"," +
-    "\"params\": {" +
-    "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
-    "\"location\": {" +
-    "\"scriptId\": \"1\"," +
-    "\"lineNumber\": 0" +
-    "}," +
-    "\"title\": \"" + eventType + ": " + name + "\"" +
-    "}" +
-    "}";
+        "\"method\": \"Profiler.consoleProfileStarted\"," +
+        "\"params\": {" +
+        "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
+        "\"location\": {" +
+        "\"scriptId\": \"1\"," +
+        "\"lineNumber\": 0" +
+        "}," +
+        "\"title\": \"" + eventType + ": " + name + "\"" +
+        "}" +
+        "}";
 
     // Send via DevTools server
     if (m_devToolsServer && m_devToolsServer->IsRunning())
@@ -1272,35 +1298,35 @@ void ScriptSubsystem::SendPerformanceTimelineEvent(const std::string& eventType,
 
         // Also send the corresponding finished event after a short delay
         std::string finishedNotification = std::string("{") +
-        "\"method\": \"Profiler.consoleProfileFinished\"," +
-        "\"params\": {" +
-        "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
-        "\"location\": {" +
-        "\"scriptId\": \"1\"," +
-        "\"lineNumber\": 0" +
-        "}," +
-        "\"title\": \"" + eventType + ": " + name + "\"," +
-        "\"profile\": {" +
-        "\"nodes\": [" +
-        "{" +
-        "\"id\": 1," +
-        "\"callFrame\": {" +
-        "\"functionName\": \"" + name + "\"," +
-        "\"scriptId\": \"1\"," +
-        "\"url\": \"file:///FirstV8/Scripts/" + name + ".js\"," +
-        "\"lineNumber\": 0," +
-        "\"columnNumber\": 0" +
-        "}," +
-        "\"hitCount\": 1" +
-        "}" +
-        "]," +
-        "\"startTime\": " + std::to_string(timestamp) + "," +
-        "\"endTime\": " + std::to_string(timestamp + 10) + "," +
-        "\"samples\": [1]," +
-        "\"timeDeltas\": [10]" +
-        "}" +
-        "}" +
-        "}";
+            "\"method\": \"Profiler.consoleProfileFinished\"," +
+            "\"params\": {" +
+            "\"id\": \"" + std::to_string(static_cast<long long>(timestamp)) + "\"," +
+            "\"location\": {" +
+            "\"scriptId\": \"1\"," +
+            "\"lineNumber\": 0" +
+            "}," +
+            "\"title\": \"" + eventType + ": " + name + "\"," +
+            "\"profile\": {" +
+            "\"nodes\": [" +
+            "{" +
+            "\"id\": 1," +
+            "\"callFrame\": {" +
+            "\"functionName\": \"" + name + "\"," +
+            "\"scriptId\": \"1\"," +
+            "\"url\": \"file:///FirstV8/Scripts/" + name + ".js\"," +
+            "\"lineNumber\": 0," +
+            "\"columnNumber\": 0" +
+            "}," +
+            "\"hitCount\": 1" +
+            "}" +
+            "]," +
+            "\"startTime\": " + std::to_string(timestamp) + "," +
+            "\"endTime\": " + std::to_string(timestamp + 10) + "," +
+            "\"samples\": [1]," +
+            "\"timeDeltas\": [10]" +
+            "}" +
+            "}" +
+            "}";
 
         m_devToolsServer->SendToDevTools(finishedNotification);
         DAEMON_LOG(LogScript, eLogVerbosity::Display,
@@ -1409,20 +1435,20 @@ void ScriptSubsystem::SendMemoryHeapSnapshot()
         // STEP 3: Send the actual heap snapshot data chunk
         // Using a simplified but valid V8 heap snapshot format
         std::string snapshotData = std::string("{") +
-        "\"snapshot\": {" +
-        "\"meta\": {" +
-        "\"node_fields\": [\"type\", \"name\", \"id\", \"self_size\", \"edge_count\", \"trace_node_id\"]," +
-        "\"node_types\": [[\"hidden\", \"array\", \"string\", \"object\", \"code\", \"closure\", \"regexp\", \"number\", \"native\", \"synthetic\", \"concatenated string\", \"sliced string\"]]," +
-        "\"edge_fields\": [\"type\", \"name_or_index\", \"to_node\"]," +
-        "\"edge_types\": [[\"context\", \"element\", \"property\", \"internal\", \"hidden\", \"shortcut\", \"weak\"]]" +
-        "}," +
-        "\"node_count\": 3," +
-        "\"edge_count\": 2" +
-        "}," +
-        "\"nodes\": [9, 0, 1, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 1, 2, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 2, 3, " + std::to_string(usage.usedHeapSize / 3) + ", 0, 0]," +
-        "\"edges\": [1, 1, 2, 1, 2, 3]," +
-        "\"strings\": [\"FirstV8\", \"JSEngine\", \"V8Context\"]" +
-        "}";
+            "\"snapshot\": {" +
+            "\"meta\": {" +
+            "\"node_fields\": [\"type\", \"name\", \"id\", \"self_size\", \"edge_count\", \"trace_node_id\"]," +
+            "\"node_types\": [[\"hidden\", \"array\", \"string\", \"object\", \"code\", \"closure\", \"regexp\", \"number\", \"native\", \"synthetic\", \"concatenated string\", \"sliced string\"]]," +
+            "\"edge_fields\": [\"type\", \"name_or_index\", \"to_node\"]," +
+            "\"edge_types\": [[\"context\", \"element\", \"property\", \"internal\", \"hidden\", \"shortcut\", \"weak\"]]" +
+            "}," +
+            "\"node_count\": 3," +
+            "\"edge_count\": 2" +
+            "}," +
+            "\"nodes\": [9, 0, 1, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 1, 2, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 2, 3, " + std::to_string(usage.usedHeapSize / 3) + ", 0, 0]," +
+            "\"edges\": [1, 1, 2, 1, 2, 3]," +
+            "\"strings\": [\"FirstV8\", \"JSEngine\", \"V8Context\"]" +
+            "}";
 
         // Escape the JSON for embedding in the notification
         std::string escapedSnapshot = snapshotData;
@@ -1537,10 +1563,10 @@ void ScriptSubsystem::ForwardConsoleMessageToDevTools(const std::string& message
     {
         // Create StringBuffer for the notification
         std::unique_ptr<v8_inspector::StringBuffer> buffer =
-        v8_inspector::StringBuffer::create(v8_inspector::StringView(
-            reinterpret_cast<const uint8_t*>(notification.c_str()),
-            notification.length()
-        ));
+            v8_inspector::StringBuffer::create(v8_inspector::StringView(
+                reinterpret_cast<const uint8_t*>(notification.c_str()),
+                notification.length()
+            ));
 
         // Send notification directly through the channel
         m_impl->inspectorChannel->sendNotification(std::move(buffer));
@@ -1847,56 +1873,64 @@ void ScriptSubsystem::SetupV8Bindings()
 // Property getter callback - called when JavaScript reads object.property
 void PropertyGetterCallback(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    v8::Isolate* isolate = info.GetIsolate();
+    v8::Isolate*    isolate = info.GetIsolate();
     v8::HandleScope scope(isolate);
-    
+
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Build verification"));
-    
+
     // Get property callback data
-    v8::Local<v8::External> external = v8::Local<v8::External>::Cast(info.Data());
-    auto* callbackData = static_cast<PropertyCallbackData*>(external->Value());
-    
+    v8::Local<v8::External> external     = v8::Local<v8::External>::Cast(info.Data());
+    auto*                   callbackData = static_cast<PropertyCallbackData*>(external->Value());
+
     v8::String::Utf8Value propertyName(isolate, property);
-    std::string propName(*propertyName);
-    
+    std::string           propName(*propertyName);
+
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Getting property '{}' from C++ object", propName));
-    
-    try {
+
+    try
+    {
         // Call C++ GetProperty method
         std::any result = callbackData->object->GetProperty(callbackData->propertyName);
-        
+
         // Convert result to V8 value based on type
-        if (result.type() == typeid(std::string)) {
+        if (result.type() == typeid(std::string))
+        {
             std::string str = std::any_cast<std::string>(result);
             info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned string value: '{}'", str));
         }
-        else if (result.type() == typeid(String)) {
+        else if (result.type() == typeid(String))
+        {
             String str = std::any_cast<String>(result);
             info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned String value: '{}'", str.c_str()));
         }
-        else if (result.type() == typeid(int)) {
+        else if (result.type() == typeid(int))
+        {
             int value = std::any_cast<int>(result);
             info.GetReturnValue().Set(v8::Integer::New(isolate, value));
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned int value: {}", value));
         }
-        else if (result.type() == typeid(double)) {
+        else if (result.type() == typeid(double))
+        {
             double value = std::any_cast<double>(result);
             info.GetReturnValue().Set(v8::Number::New(isolate, value));
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned double value: {}", value));
         }
-        else if (result.type() == typeid(bool)) {
+        else if (result.type() == typeid(bool))
+        {
             bool value = std::any_cast<bool>(result);
             info.GetReturnValue().Set(v8::Boolean::New(isolate, value));
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned bool value: {}", value));
         }
-        else {
+        else
+        {
             DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertyGetterCallback: Unknown type returned from GetProperty, using undefined"));
             info.GetReturnValue().Set(v8::Undefined(isolate));
         }
     }
-    catch (const std::exception& e) {
+    catch (const std::exception& e)
+    {
         DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("PropertyGetterCallback: Exception in GetProperty: {}", e.what()));
         info.GetReturnValue().Set(v8::Undefined(isolate));
     }
@@ -1905,59 +1939,71 @@ void PropertyGetterCallback(v8::Local<v8::Name> property, const v8::PropertyCall
 // Property setter callback - called when JavaScript writes object.property = value
 void PropertySetterCallback(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const v8::PropertyCallbackInfo<void>& info)
 {
-    v8::Isolate* isolate = info.GetIsolate();
+    v8::Isolate*    isolate = info.GetIsolate();
     v8::HandleScope scope(isolate);
-    
+
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Build verification"));
-    
+
     // Get property callback data
-    v8::Local<v8::External> external = v8::Local<v8::External>::Cast(info.Data());
-    auto* callbackData = static_cast<PropertyCallbackData*>(external->Value());
-    
+    v8::Local<v8::External> external     = v8::Local<v8::External>::Cast(info.Data());
+    auto*                   callbackData = static_cast<PropertyCallbackData*>(external->Value());
+
     v8::String::Utf8Value propertyName(isolate, property);
-    std::string propName(*propertyName);
-    
+    std::string           propName(*propertyName);
+
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting property '{}' on C++ object", propName));
-    
-    try {
+
+    try
+    {
         std::any cppValue;
-        
+
         // Convert V8 value to C++ std::any based on JavaScript type
-        if (value->IsString()) {
+        if (value->IsString())
+        {
             v8::String::Utf8Value str(isolate, value);
             cppValue = std::string(*str);
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting string value: '{}'", *str));
         }
-        else if (value->IsNumber()) {
+        else if (value->IsNumber())
+        {
             double num = value->NumberValue(isolate->GetCurrentContext()).ToChecked();
             // Check if it's an integer
-            if (num == floor(num)) {
+            if (num == floor(num))
+            {
                 cppValue = static_cast<int>(num);
                 DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting int value: {}", static_cast<int>(num)));
-            } else {
+            }
+            else
+            {
                 cppValue = num;
                 DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting double value: {}", num));
             }
         }
-        else if (value->IsBoolean()) {
+        else if (value->IsBoolean())
+        {
             bool boolVal = value->BooleanValue(isolate);
-            cppValue = boolVal;
+            cppValue     = boolVal;
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting bool value: {}", boolVal));
         }
-        else {
+        else
+        {
             DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertySetterCallback: Unsupported value type for property '{}'", propName));
             return;
         }
-        
+
         // Call C++ SetProperty method
         bool success = callbackData->object->SetProperty(callbackData->propertyName, cppValue);
-        if (success) {
+        if (success)
+        {
             DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Successfully set property '{}'", propName));
-        } else {
+        }
+        else
+        {
             DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("PropertySetterCallback: Failed to set property '{}'", propName));
         }
     }
-    catch (const std::exception& e) {
+    catch (const std::exception& e)
+    {
         DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("PropertySetterCallback: Exception in SetProperty: {}", e.what()));
     }
 }
@@ -1994,7 +2040,8 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
         DebuggerPrintf("ScriptSubsystem: 綁定方法 %s.%s\n", objectName.c_str(), method.name.c_str());
 
         // Create V8 function callback for each method (same as original implementation)
-        auto methodCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
+        auto methodCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args)
+        {
             v8::Isolate*    isolate = args.GetIsolate();
             v8::HandleScope scope(isolate);
 
@@ -2086,17 +2133,18 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Build verification"));
     auto properties = object->GetAvailableProperties();
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Object '{}' has {} properties", objectName.c_str(), properties.size()));
-    
-    for (const auto& propertyName : properties) {
+
+    for (const auto& propertyName : properties)
+    {
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Registering property '{}.{}'", objectName.c_str(), propertyName.c_str()));
-        
+
         // Create property callback data
-        auto propertyCallbackData = std::make_unique<PropertyCallbackData>();
-        propertyCallbackData->object = object;
+        auto propertyCallbackData          = std::make_unique<PropertyCallbackData>();
+        propertyCallbackData->object       = object;
         propertyCallbackData->propertyName = propertyName;
-        
+
         v8::Local<v8::External> propertyExternal = v8::External::New(m_impl->isolate, propertyCallbackData.get());
-        
+
         // Register property accessor with V8
         jsObject->SetNativeDataProperty(
             localContext,
@@ -2105,10 +2153,10 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
             PropertySetterCallback,     // Called when JavaScript writes object.property = value
             propertyExternal           // Property callback data
         ).Check();
-        
+
         // Store property callback data to prevent destruction
         m_propertyCallbacks.push_back(std::move(propertyCallbackData));
-        
+
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("CreateSingleObjectBinding: Successfully registered property accessor for '{}.{}'", objectName.c_str(), propertyName.c_str()));
     }
 
@@ -2145,7 +2193,8 @@ void ScriptSubsystem::CreateSingleFunctionBinding(const String&         function
     DebuggerPrintf("ScriptSubsystem: 綁定全域函式: %s\n", functionName.c_str());
 
     // Create function callback (same as original implementation)
-    auto functionCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args) {
+    auto functionCallback = [](const v8::FunctionCallbackInfo<v8::Value>& args)
+    {
         v8::Isolate*    isolate = args.GetIsolate();
         v8::HandleScope scope(isolate);
 
@@ -2233,13 +2282,14 @@ void ScriptSubsystem::SetupBuiltinObjects()
         v8::Local<v8::Object> const console = v8::Object::New(m_impl->isolate);
 
         // create console.log callback with Chrome DevTools integration
-        static auto consoleLogCallback = [](v8::FunctionCallbackInfo<v8::Value> const& args) {
+        static auto consoleLogCallback = [](v8::FunctionCallbackInfo<v8::Value> const& args)
+        {
             v8::Isolate*           isolate = args.GetIsolate();
             v8::HandleScope        scope(isolate);
             v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
             // Get ScriptSubsystem instance from the data parameter
-            v8::Local<v8::External> external      = v8::Local<v8::External>::Cast(args.Data());
+            v8::Local<v8::External> external        = v8::Local<v8::External>::Cast(args.Data());
             ScriptSubsystem*        scriptSubsystem = static_cast<ScriptSubsystem*>(external->Value());
 
             String output         = "(CONSOLE): ";
@@ -2368,6 +2418,7 @@ String ScriptSubsystem::ValidateScriptPath(const String& filename) const
 
     return fullPath;
 }
+
 //----------------------------------------------------------------------------------------------------
 // ES6 Module System Implementation
 //----------------------------------------------------------------------------------------------------

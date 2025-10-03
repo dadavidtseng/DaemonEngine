@@ -13,6 +13,7 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Scripting/ScriptSubsystem.hpp"
+#include "Engine/Scripting/ModuleLoader.hpp"
 
 //----------------------------------------------------------------------------------------------------
 ScriptReloader::ScriptReloader()
@@ -27,7 +28,7 @@ ScriptReloader::~ScriptReloader()
 }
 
 
-bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem)
+bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem, ModuleLoader* moduleLoader)
 {
     if (!scriptSystem)
     {
@@ -36,12 +37,17 @@ bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem)
     }
 
     m_scriptSystem          = scriptSystem;
+    m_moduleLoader          = moduleLoader;
     m_reloadCount       = 0;
     m_successfulReloads = 0;
     m_failedReloads     = 0;
     m_lastError.clear();
 
     LogReloadEvent("ScriptReloader initialized");
+    if (m_moduleLoader)
+    {
+        LogReloadEvent("ScriptReloader: ES6 module support enabled");
+    }
     return true;
 }
 
@@ -240,6 +246,16 @@ bool ScriptReloader::ExecuteScript(const std::string& scriptPath)
     try
     {
         LogReloadEvent("Executing script: " + scriptPath);
+
+        // PHASE 5: Check if this is an ES6 module (.mjs file)
+        if (IsES6Module(scriptPath))
+        {
+            LogReloadEvent("Detected ES6 module, routing to ModuleLoader: " + scriptPath);
+            return ReloadES6Module(scriptPath);
+        }
+
+        // Classic script handling (.js files)
+        LogReloadEvent("Processing as classic script: " + scriptPath);
 
         // Read script file content
         std::string scriptContent;
@@ -505,4 +521,51 @@ void ScriptReloader::SetError(const std::string& error)
 void ScriptReloader::LogReloadEvent(const std::string& message)
 {
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptReloader: {}", message));
+}
+
+//----------------------------------------------------------------------------------------------------
+// ES6 Module Hot-Reload Support (Phase 5)
+//----------------------------------------------------------------------------------------------------
+
+bool ScriptReloader::IsES6Module(const std::string& filePath) const
+{
+    // Check file extension
+    if (filePath.length() >= 4)
+    {
+        std::string extension = filePath.substr(filePath.length() - 4);
+        if (extension == ".mjs")
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool ScriptReloader::ReloadES6Module(const std::string& modulePath)
+{
+    if (!m_moduleLoader)
+    {
+        SetError("ModuleLoader not initialized - cannot reload ES6 modules");
+        return false;
+    }
+
+    LogReloadEvent("Reloading ES6 module: " + modulePath);
+
+    // Use ModuleLoader::ReloadModule() which handles:
+    // 1. InvalidateModuleTree() to clear dependent modules
+    // 2. Reload from main.mjs to trigger full import chain
+    // 3. Enhanced logging for debugging
+    bool success = m_moduleLoader->ReloadModule(modulePath);
+
+    if (success)
+    {
+        LogReloadEvent("ES6 module reloaded successfully: " + modulePath);
+    }
+    else
+    {
+        SetError("Failed to reload ES6 module: " + modulePath);
+    }
+
+    return success;
 }
