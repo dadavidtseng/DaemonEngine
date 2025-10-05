@@ -3,232 +3,149 @@
 <!-- Engine.vcxproj.filters - Static Library(.lib) Filters Configuration -->
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////// -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- FILTER DEFINITIONS - HIERARCHICAL SUBSYSTEM ORGANIZATION -->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Filter Definition -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="FilterDefinitions">
-    <!-- Third-Party Libraries - External dependencies -->
-    <Filter Include="ThirdParty">
-      <UniqueIdentifier>{992b0690-3283-422e-b62f-a30620900343}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Audio">
-      <UniqueIdentifier>{ce0d0fcf-7cc7-431a-abf4-65c9dff65b73}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Audio\FMOD">
-      <UniqueIdentifier>{ce0d0fcf-7cc7-431a-abf4-65c9dff65b74}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities">
-      <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities\Noise">
-      <UniqueIdentifier>{8047ccb2-59ef-4007-80e4-04adb8bdd573}</UniqueIdentifier>
-    </Filter>
-    <!-- Core Engine Subsystems -->
     <Filter Include="Engine">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Audio">
+      <UniqueIdentifier>{a2870358-69b1-4189-892c-f579d046d8c5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine\Core">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Core\Utilities">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Core\Time">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F3}</UniqueIdentifier>
+      <UniqueIdentifier>{dacc44a3-188a-482e-87a5-300460dcc4aa}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Core\Debug">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F4}</UniqueIdentifier>
+      <UniqueIdentifier>{f70ef719-fd23-464a-8205-80f027bbd633}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Core\Events">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F5}</UniqueIdentifier>
+    <Filter Include="Engine\Core\Event">
+      <UniqueIdentifier>{a0771256-8038-4fec-9b69-40f964507423}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Core\IO">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Core\Threading">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F7}</UniqueIdentifier>
-    </Filter>
-    <!-- Mathematics Subsystem -->
-    <Filter Include="Engine\Math">
-      <UniqueIdentifier>{6040e489-13ad-4e35-a5e4-1776e0499565}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Math\Primitives2D">
-      <UniqueIdentifier>{6040e489-13ad-4e35-a5e4-1776e0499566}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Math\Primitives3D">
-      <UniqueIdentifier>{6040e489-13ad-4e35-a5e4-1776e0499567}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Math\Linear">
-      <UniqueIdentifier>{6040e489-13ad-4e35-a5e4-1776e0499568}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Math\Utils">
-      <UniqueIdentifier>{6040e489-13ad-4e35-a5e4-1776e0499569}</UniqueIdentifier>
-    </Filter>
-    <!-- Renderer Subsystem -->
-    <Filter Include="Engine\Renderer">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec348}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Core">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec349}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Resources">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec350}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Lighting">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec351}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Buffers">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec352}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Sprites">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec353}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Vertex">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec354}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\Debug">
-      <UniqueIdentifier>{b42e4f5f-fe70-4f08-af60-2fd38b4ec355}</UniqueIdentifier>
-    </Filter>
-    <!-- Input Subsystem -->
-    <Filter Include="Engine\Input">
-      <UniqueIdentifier>{0595f74a-d932-4113-8218-bb6062b393ba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Input\Devices">
-      <UniqueIdentifier>{0595f74a-d932-4113-8218-bb6062b393bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Input\Scripting">
-      <UniqueIdentifier>{0595f74a-d932-4113-8218-bb6062b393bc}</UniqueIdentifier>
-    </Filter>
-    <!-- Audio Subsystem -->
-    <Filter Include="Engine\Audio">
-      <UniqueIdentifier>{e95a124a-26d0-4292-a267-16ff2444c90b}</UniqueIdentifier>
-    </Filter>
-    <!-- Resource Management Subsystem -->
-    <Filter Include="Engine\Resource">
-      <UniqueIdentifier>{6e8b6a7d-9cba-4bbc-8802-7b8083eb0ec6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Resource\Cache">
-      <UniqueIdentifier>{6e8b6a7d-9cba-4bbc-8802-7b8083eb0ec7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Resource\Loaders">
-      <UniqueIdentifier>{ad14d715-d333-4a6b-91cd-958816295411}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Resource\Types">
-      <UniqueIdentifier>{b2bdc779-eaf0-435f-ab34-a8deec05b43a}</UniqueIdentifier>
-    </Filter>
-    <!-- Platform Abstraction -->
-    <Filter Include="Engine\Platform">
-      <UniqueIdentifier>{cc0452f8-e2b1-4605-afa8-3f8971c3d115}</UniqueIdentifier>
-    </Filter>
-    <!-- Network Subsystem -->
-    <Filter Include="Engine\Network">
-      <UniqueIdentifier>{c73bea8b-6107-4cbe-a15b-80514048ae9d}</UniqueIdentifier>
-    </Filter>
-    <!-- Scripting Subsystem -->
-    <Filter Include="Engine\Scripting">
-      <UniqueIdentifier>{17ca8269-39bf-4514-898d-5d621e213ad1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities\STB">
-      <UniqueIdentifier>{cb8132e0-acb1-402a-9a7b-b7779f0eb35b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities\TinyXML2">
-      <UniqueIdentifier>{f9eda815-7ba5-4c1d-975c-8ac067052fe6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Utilities\JSON">
-      <UniqueIdentifier>{10a4b5dc-d5be-4859-90a4-b2ddef428635}</UniqueIdentifier>
+      <UniqueIdentifier>{0baf5d88-2e0b-4256-8ac3-23e510f12b22}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Core\Log">
-      <UniqueIdentifier>{4fffe5f3-2600-4f69-80dd-57fcf101a1ed}</UniqueIdentifier>
+      <UniqueIdentifier>{fff83ee2-2427-4b0e-a929-d7b576831881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Thread">
+      <UniqueIdentifier>{57552d09-e8de-459c-b138-d014a941d357}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Time">
+      <UniqueIdentifier>{2a9c2dad-052d-4ab2-9033-9c17db453829}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Util">
+      <UniqueIdentifier>{9247c477-fe1e-4014-8649-07b919644f50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Input">
+      <UniqueIdentifier>{217d9e05-0d7d-4431-aae9-2e642c6b628e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Input\Device">
+      <UniqueIdentifier>{16168eba-0b31-4571-9396-060854f037f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Audio\Script">
+      <UniqueIdentifier>{0ce96e0f-71c3-4160-b270-3a62d4349ed6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Input\Script">
+      <UniqueIdentifier>{c63aed8a-9a69-42fe-afd0-19f057eca0a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math">
+      <UniqueIdentifier>{079542ae-4702-4358-b6b4-f9dd2170368b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math\Linear">
+      <UniqueIdentifier>{67371a20-4d01-47d1-b1e8-aeecbfdc3e69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math\Primitive2D">
+      <UniqueIdentifier>{98c80ead-3aca-4f1e-892b-e6c612cd12fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math\Primitive3D">
+      <UniqueIdentifier>{7fb29ccd-b7f5-4733-8b25-79f5529b186c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math\Util">
+      <UniqueIdentifier>{ecf20d04-18f0-466d-97ed-76c864bcee6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Network">
+      <UniqueIdentifier>{b81c7db0-b347-46c7-a6a7-4920a165c66e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Platform">
+      <UniqueIdentifier>{3e5b9dbe-f661-4848-b4bb-f553092b2687}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Network\WebSocket">
+      <UniqueIdentifier>{6684efef-c12f-40d3-9de5-6dfb02debfaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Network\TCP">
+      <UniqueIdentifier>{61e76f37-b282-4494-876e-d9e406c55e42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer">
+      <UniqueIdentifier>{b5230e56-bf8e-45da-a5ce-9691dacb95c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resource">
+      <UniqueIdentifier>{68edbb0c-a828-405d-a294-c0d2e03e41fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Script">
+      <UniqueIdentifier>{8a5dbfe2-d919-4f0f-8c0b-786e84c8bff9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Widget">
-      <UniqueIdentifier>{45393e0e-5cf2-435d-8c68-94d845821954}</UniqueIdentifier>
+      <UniqueIdentifier>{22f800a9-d1de-404b-b5dd-1ce4c29903b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Buffer">
+      <UniqueIdentifier>{0c77a854-5dac-433d-af2a-6cc4e40187ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Debug">
+      <UniqueIdentifier>{bf4736d1-cd1d-44b7-add5-cda9617a98e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Light">
+      <UniqueIdentifier>{b2b22612-67ba-422b-859b-37e39654b9ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Resource">
+      <UniqueIdentifier>{e197e649-272e-4a78-8dee-1e5468dca54f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Sprite">
+      <UniqueIdentifier>{3553aa34-3456-4ff1-993c-1927920007e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\Vertex">
+      <UniqueIdentifier>{5719567f-0f7f-40d7-8a4d-dde3e6ee1d77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resource\Type">
+      <UniqueIdentifier>{2b6f76a6-95a9-4897-b70c-6e875011b4aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resource\Loader">
+      <UniqueIdentifier>{ba1096bd-8679-4997-86b8-8fa3b36a76d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{2d1bf6dd-a81d-4d64-9081-f1cbbfa0526c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\FMOD">
+      <UniqueIdentifier>{4227c54c-8471-404d-8150-9b8225430f74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Noise">
+      <UniqueIdentifier>{4598331b-7515-4917-ae1b-6283e7ff93a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\STB">
+      <UniqueIdentifier>{82f90a2f-c432-41e8-b218-08fe237b4483}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\TinyXML2">
+      <UniqueIdentifier>{48123f87-8ed9-40f5-a998-48f14b615466}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\JSON">
+      <UniqueIdentifier>{348d2b99-84ed-41bb-bb90-4904b78d7a14}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- SOURCE FILE ORGANIZATION - BY SUBSYSTEM -->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- Third-Party Library Sources -->
-  <ItemGroup Label="ThirdPartySourceFiles">
-    <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp">
-      <Filter>ThirdParty\Utilities\Noise</Filter>
-    </ClCompile>
-    <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
-      <Filter>ThirdParty\Utilities\Noise</Filter>
-    </ClCompile>
-    <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp">
-      <Filter>ThirdParty\Utilities\TinyXML2</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\NetworkTCPSubsystem.cpp">
-      <Filter>Engine\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Audio\AudioScriptInterface.cpp">
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Source Files-->
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <ItemGroup Label="SourceFiles">
+    <ClCompile Include="Audio\AudioScriptInterface.cpp" />
+    <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Engine\Audio</Filter>
-    </ClCompile>
-    <ClCompile Include="Input\InputCommon.cpp">
-      <Filter>Engine\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\BaseWebSocketSubsystem.cpp">
-      <Filter>Engine\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\ChromeDevToolsWebSocketSubsystem.cpp">
-      <Filter>Engine\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\MCPWebSocketSubsystem.cpp">
-      <Filter>Engine\Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\Engine.cpp">
       <Filter>Engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core/SmartFileOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/OnScreenOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/LogSubsystem.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/FileOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/DevConsoleOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/DebugOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\ConsoleOutputDevice.cpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClCompile>
-    <ClCompile Include="Widget\IWidget.cpp">
-      <Filter>Engine\Widget</Filter>
-    </ClCompile>
-    <ClCompile Include="Widget\WidgetSubsystem.cpp">
-      <Filter>Engine\Widget</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- Core Engine Sources -->
-  <ItemGroup Label="CoreSubsystemSources">
-    <ClCompile Include="Core/EngineCommon.cpp">
+    <ClCompile Include="Core\EngineCommon.cpp">
       <Filter>Engine\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/StringUtils.cpp">
-      <Filter>Engine\Core\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/FileUtils.cpp">
-      <Filter>Engine\Core\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/XmlUtils.cpp">
-      <Filter>Engine\Core\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/Clock.cpp">
-      <Filter>Engine\Core\Time</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/Time.cpp">
-      <Filter>Engine\Core\Time</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/Timer.cpp">
-      <Filter>Engine\Core\Time</Filter>
     </ClCompile>
     <ClCompile Include="Core/DevConsole.cpp">
       <Filter>Engine\Core\Debug</Filter>
@@ -239,80 +156,86 @@
     <ClCompile Include="Core/HeatMaps.cpp">
       <Filter>Engine\Core\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Core/EventSystem.cpp">
+      <Filter>Engine\Core\Event</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/FileUtils.cpp">
+      <Filter>Engine\Core\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/XmlUtils.cpp">
+      <Filter>Engine\Core\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ConsoleOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/DebugOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/DevConsoleOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/FileOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/LogSubsystem.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/OnScreenOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/SmartFileOutputDevice.cpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClCompile>
     <ClCompile Include="Core/Job.cpp">
-      <Filter>Engine\Core\Threading</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClCompile>
     <ClCompile Include="Core/JobSystem.cpp">
-      <Filter>Engine\Core\Threading</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClCompile>
     <ClCompile Include="Core/JobWorkerThread.cpp">
-      <Filter>Engine\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Core/EventSystem.cpp">
-      <Filter>Engine\Core\Events</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClCompile>
     <ClCompile Include="Core/NamedStrings.cpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClCompile>
     <ClCompile Include="Core/Rgba8.cpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClCompile>
     <ClCompile Include="Core/SimpleTriangleFont.cpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClCompile>
-  </ItemGroup>
-  <!-- Mathematics Sources -->
-  <ItemGroup Label="MathSubsystemSources">
-    <!-- 2D Primitives -->
-    <ClCompile Include="Math/AABB2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Core/StringUtils.cpp">
+      <Filter>Engine\Core\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Capsule2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Core/Clock.cpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Disc2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Core/Time.cpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClCompile>
-    <ClCompile Include="Math/LineSegment2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Core/Timer.cpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClCompile>
-    <ClCompile Include="Math/OBB2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Audio\AudioScriptInterface.cpp">
+      <Filter>Engine\Audio\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Plane2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Input/InputScriptInterface.cpp">
+      <Filter>Engine\Input\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Triangle2.cpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClCompile Include="Input/AnalogJoystick.cpp">
+      <Filter>Engine\Input\Device</Filter>
     </ClCompile>
-    <!-- 3D Primitives -->
-    <ClCompile Include="Math/AABB3.cpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
+    <ClCompile Include="Input/XboxController.cpp">
+      <Filter>Engine\Input\Device</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Cylinder3.cpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
+    <ClCompile Include="Input\InputCommon.cpp">
+      <Filter>Engine\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Math/OBB3.cpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
+    <ClCompile Include="Input/InputSystem.cpp">
+      <Filter>Engine\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Math/Plane3.cpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
-    </ClCompile>
-    <ClCompile Include="Math/Sphere3.cpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
-    </ClCompile>
-    <!-- Linear Algebra -->
-    <ClCompile Include="Math/Vec2.cpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClCompile>
-    <ClCompile Include="Math/Vec3.cpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClCompile>
-    <ClCompile Include="Math/Vec4.cpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClCompile>
-    <ClCompile Include="Math/Mat44.cpp">
-      <Filter>Engine\Math\Linear</Filter>
+    <ClCompile Include="Input/KeyButtonState.cpp">
+      <Filter>Engine\Input</Filter>
     </ClCompile>
     <ClCompile Include="Math/EulerAngles.cpp">
       <Filter>Engine\Math\Linear</Filter>
@@ -323,81 +246,110 @@
     <ClCompile Include="Math/IntVec3.cpp">
       <Filter>Engine\Math\Linear</Filter>
     </ClCompile>
-    <!-- Math Utilities -->
-    <ClCompile Include="Math/MathUtils.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClCompile Include="Math/Mat44.cpp">
+      <Filter>Engine\Math\Linear</Filter>
     </ClCompile>
-    <ClCompile Include="Math/RandomNumberGenerator.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClCompile Include="Math/Vec2.cpp">
+      <Filter>Engine\Math\Linear</Filter>
     </ClCompile>
-    <ClCompile Include="Math/RaycastUtils.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClCompile Include="Math/Vec3.cpp">
+      <Filter>Engine\Math\Linear</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Vec4.cpp">
+      <Filter>Engine\Math\Linear</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/AABB2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Capsule2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Disc2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/LineSegment2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/OBB2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Plane2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Triangle2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/AABB3.cpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Cylinder3.cpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/OBB3.cpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Plane3.cpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Math/Sphere3.cpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
     </ClCompile>
     <ClCompile Include="Math/Curve2D.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
     <ClCompile Include="Math/FloatRange.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
     <ClCompile Include="Math/IntRange.cpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
-  </ItemGroup>
-  <!-- Renderer Sources -->
-  <ItemGroup Label="RendererSubsystemSources">
-    <!-- Core Renderer -->
-    <ClCompile Include="Renderer/Renderer.cpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClCompile Include="Math/MathUtils.cpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/RenderCommon.cpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClCompile Include="Math/RandomNumberGenerator.cpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/Camera.cpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClCompile Include="Math/RaycastUtils.cpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClCompile>
-    <!-- Lighting -->
-    <ClCompile Include="Renderer/Light.cpp">
-      <Filter>Engine\Renderer\Lighting</Filter>
+    <ClCompile Include="Network/NetworkCommon.cpp">
+      <Filter>Engine\Network\TCP</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/LightSubsystem.cpp">
-      <Filter>Engine\Renderer\Lighting</Filter>
+    <ClCompile Include="Network\NetworkTCPSubsystem.cpp">
+      <Filter>Engine\Network\TCP</Filter>
     </ClCompile>
-    <!-- Resources -->
-    <ClCompile Include="Renderer/Image.cpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClCompile Include="Network\BaseWebSocketSubsystem.cpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/Texture.cpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClCompile Include="Network\ChromeDevToolsWebSocketSubsystem.cpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/Shader.cpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClCompile Include="Network\MCPWebSocketSubsystem.cpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/BitmapFont.cpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClCompile Include="Platform/Window.cpp">
+      <Filter>Engine\Platform</Filter>
     </ClCompile>
-    <!-- Buffers -->
-    <ClCompile Include="Renderer/VertexBuffer.cpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer/IndexBuffer.cpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
+    <ClCompile Include="Platform/WindowCommon.cpp">
+      <Filter>Engine\Platform</Filter>
     </ClCompile>
     <ClCompile Include="Renderer/ConstantBuffer.cpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClCompile>
-    <!-- Sprites -->
-    <ClCompile Include="Renderer/SpriteDefinition.cpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClCompile Include="Renderer/IndexBuffer.cpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/SpriteSheet.cpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClCompile Include="Renderer/VertexBuffer.cpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/SpriteAnimDefinition.cpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClCompile Include="Renderer/Camera.cpp">
+      <Filter>Engine\Renderer</Filter>
     </ClCompile>
-    <!-- Vertex -->
-    <ClCompile Include="Renderer/VertexUtils.cpp">
-      <Filter>Engine\Renderer\Vertex</Filter>
+    <ClCompile Include="Renderer/RenderCommon.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/Renderer.cpp">
+      <Filter>Engine\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer/Vertex_PCU.cpp">
       <Filter>Engine\Renderer\Vertex</Filter>
@@ -405,260 +357,160 @@
     <ClCompile Include="Renderer/Vertex_PCUTBN.cpp">
       <Filter>Engine\Renderer\Vertex</Filter>
     </ClCompile>
-    <!-- Debug -->
+    <ClCompile Include="Renderer/VertexUtils.cpp">
+      <Filter>Engine\Renderer\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/SpriteAnimDefinition.cpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/SpriteDefinition.cpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/SpriteSheet.cpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/BitmapFont.cpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/Image.cpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/Shader.cpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/Texture.cpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/Light.cpp">
+      <Filter>Engine\Renderer\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/LightSubsystem.cpp">
+      <Filter>Engine\Renderer\Light</Filter>
+    </ClCompile>
     <ClCompile Include="Renderer/DebugRenderSystem.cpp">
       <Filter>Engine\Renderer\Debug</Filter>
     </ClCompile>
-  </ItemGroup>
-  <!-- Input Sources -->
-  <ItemGroup Label="InputSubsystemSources">
-    <ClCompile Include="Input/InputSystem.cpp">
-      <Filter>Engine\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="Input/KeyButtonState.cpp">
-      <Filter>Engine\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="Input/AnalogJoystick.cpp">
-      <Filter>Engine\Input\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="Input/XboxController.cpp">
-      <Filter>Engine\Input\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="Input/InputScriptInterface.cpp">
-      <Filter>Engine\Input\Scripting</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- Audio Sources -->
-  <ItemGroup Label="AudioSubsystemSources">
-    <ClCompile Include="Audio/AudioSystem.cpp">
-      <Filter>Engine\Audio</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- Resource Sources -->
-  <ItemGroup Label="ResourceSubsystemSources">
-    <!-- Cache -->
     <ClCompile Include="Resource/ResourceCache.cpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource/ResourceCommon.cpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource/ResourceHandle.cpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/AnimationLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/AudioLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/FontLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/IResourceLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/MaterialLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ModelLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ObjModelLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ShaderLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/TextureLoader.cpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/AnimationResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/FontResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/IResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/MaterialResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ModelResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ShaderResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/TextureResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\AudioResource.cpp">
+      <Filter>Engine\Resource\Type</Filter>
     </ClCompile>
     <ClCompile Include="Resource/ResourceSubsystem.cpp">
       <Filter>Engine\Resource</Filter>
     </ClCompile>
-    <!-- Loaders -->
-    <ClCompile Include="Resource/IResourceLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/FileWatcher.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/AnimationLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/IScriptableObject.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/AudioLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ModuleLoader.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/FontLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ModuleRegistry.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/MaterialLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ModuleResolver.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/ModelLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ScriptCommon.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/ObjModelLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ScriptReloader.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/ShaderLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ScriptSubsystem.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/TextureLoader.cpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClCompile Include="Script/ScriptTypeExtractor.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <!-- Resource Types -->
-    <ClCompile Include="Resource/IResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClCompile Include="Widget\IWidget.cpp">
+      <Filter>Engine\Widget</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/AnimationResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClCompile Include="Widget\WidgetSubsystem.cpp">
+      <Filter>Engine\Widget</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/AudioSource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp">
+      <Filter>ThirdParty\TinyXML2</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/FontResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp">
+      <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
-    <ClCompile Include="Resource/MaterialResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource/ModelResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource/ShaderResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource/TextureResource.cpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
+      <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
   </ItemGroup>
-  <!-- Platform Sources -->
-  <ItemGroup Label="PlatformSubsystemSources">
-    <ClCompile Include="Platform/Window.cpp">
-      <Filter>Engine\Platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Platform/WindowCommon.cpp">
-      <Filter>Engine\Platform</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- Network Sources -->
-  <ItemGroup Label="NetworkSubsystemSources">
-    <ClCompile Include="Network/NetworkCommon.cpp">
-      <Filter>Engine\Network</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- Scripting Sources -->
-  <ItemGroup Label="ScriptingSubsystemSources">
-    <ClCompile Include="Scripting/IScriptableObject.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="Scripting/ScriptTypeExtractor.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="Scripting/ScriptCommon.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="Scripting/FileWatcher.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="Scripting/ScriptReloader.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="Scripting/ScriptSubsystem.cpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- HEADER FILE ORGANIZATION - BY SUBSYSTEM -->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- Third-Party Library Headers -->
-  <ItemGroup Label="ThirdPartyHeaders">
-    <!-- FMOD Audio Headers -->
-    <ClInclude Include="../ThirdParty/fmod/fmod.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod.hpp">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_codec.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_common.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_dsp.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_dsp_effects.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_errors.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/fmod/fmod_output.h">
-      <Filter>ThirdParty\Audio\FMOD</Filter>
-    </ClInclude>
-    <!-- Utility Headers -->
-    <ClInclude Include="../ThirdParty/stb/stb_image.h">
-      <Filter>ThirdParty\Utilities\STB</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h">
-      <Filter>ThirdParty\Utilities\TinyXML2</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/Noise/RawNoise.hpp">
-      <Filter>ThirdParty\Utilities\Noise</Filter>
-    </ClInclude>
-    <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
-      <Filter>ThirdParty\Utilities\Noise</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\NetworkTCPSubsystem.hpp">
-      <Filter>Engine\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\AudioScriptInterface.hpp">
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Header Files -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <ItemGroup Label="HeaderFiles">
+    <ClInclude Include="Audio\AudioScriptInterface.hpp" />
+    <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\Engine.hpp" />
+    <ClInclude Include="Audio\AudioSystem.hpp">
       <Filter>Engine\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="Input\InputCommon.hpp">
-      <Filter>Engine\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\BaseWebSocketSubsystem.hpp">
-      <Filter>Engine\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\ChromeDevToolsWebSocketSubsystem.hpp">
-      <Filter>Engine\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\MCPWebSocketSubsystem.hpp">
-      <Filter>Engine\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\json\json.hpp">
-      <Filter>ThirdParty\Utilities\JSON</Filter>
     </ClInclude>
     <ClInclude Include="Core\Engine.hpp">
       <Filter>Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core/SmartFileOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/OnScreenOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/LogSubsystem.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/ILogOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/FileOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/DevConsoleOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/DebugOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\ConsoleOutputDevice.hpp">
-      <Filter>Engine\Core\Log</Filter>
-    </ClInclude>
-    <ClInclude Include="Widget\IWidget.hpp">
-      <Filter>Engine\Widget</Filter>
-    </ClInclude>
-    <ClInclude Include="Widget\WidgetSubsystem.hpp">
-      <Filter>Engine\Widget</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <!-- Core Engine Headers -->
-  <ItemGroup Label="CoreSubsystemHeaders">
-    <ClInclude Include="Core/EngineCommon.hpp">
+    <ClInclude Include="Core\EngineCommon.hpp">
       <Filter>Engine\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/StringUtils.hpp">
-      <Filter>Engine\Core\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/FileUtils.hpp">
-      <Filter>Engine\Core\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/XmlUtils.hpp">
-      <Filter>Engine\Core\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/Clock.hpp">
-      <Filter>Engine\Core\Time</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/Time.hpp">
-      <Filter>Engine\Core\Time</Filter>
-    </ClInclude>
-    <ClInclude Include="Core/Timer.hpp">
-      <Filter>Engine\Core\Time</Filter>
     </ClInclude>
     <ClInclude Include="Core/DevConsole.hpp">
       <Filter>Engine\Core\Debug</Filter>
@@ -669,80 +521,89 @@
     <ClInclude Include="Core/HeatMaps.hpp">
       <Filter>Engine\Core\Debug</Filter>
     </ClInclude>
+    <ClInclude Include="Core/EventSystem.hpp">
+      <Filter>Engine\Core\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/FileUtils.hpp">
+      <Filter>Engine\Core\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/XmlUtils.hpp">
+      <Filter>Engine\Core\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ConsoleOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/DebugOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/DevConsoleOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/FileOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/ILogOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/LogSubsystem.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/OnScreenOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/SmartFileOutputDevice.hpp">
+      <Filter>Engine\Core\Log</Filter>
+    </ClInclude>
     <ClInclude Include="Core/Job.hpp">
-      <Filter>Engine\Core\Threading</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/JobSystem.hpp">
-      <Filter>Engine\Core\Threading</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/JobWorkerThread.hpp">
-      <Filter>Engine\Core\Threading</Filter>
+      <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
-    <ClInclude Include="Core/EventSystem.hpp">
-      <Filter>Engine\Core\Events</Filter>
+    <ClInclude Include="Core/StringUtils.hpp">
+      <Filter>Engine\Core\Util</Filter>
     </ClInclude>
     <ClInclude Include="Core/NamedStrings.hpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClInclude>
     <ClInclude Include="Core/Rgba8.hpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClInclude>
     <ClInclude Include="Core/SimpleTriangleFont.hpp">
-      <Filter>Engine\Core\Utilities</Filter>
+      <Filter>Engine\Core\Util</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Mathematics Headers -->
-  <ItemGroup Label="MathSubsystemHeaders">
-    <!-- 2D Primitive Headers -->
-    <ClInclude Include="Math/AABB2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Core/Clock.hpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClInclude>
-    <ClInclude Include="Math/Capsule2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Core/Time.hpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClInclude>
-    <ClInclude Include="Math/Disc2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Core/Timer.hpp">
+      <Filter>Engine\Core\Time</Filter>
     </ClInclude>
-    <ClInclude Include="Math/LineSegment2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Audio\AudioScriptInterface.hpp">
+      <Filter>Engine\Audio\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Math/OBB2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Input/InputScriptInterface.hpp">
+      <Filter>Engine\Input\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Math/Plane2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Input/AnalogJoystick.hpp">
+      <Filter>Engine\Input\Device</Filter>
     </ClInclude>
-    <ClInclude Include="Math/Triangle2.hpp">
-      <Filter>Engine\Math\Primitives2D</Filter>
+    <ClInclude Include="Input/XboxController.hpp">
+      <Filter>Engine\Input\Device</Filter>
     </ClInclude>
-    <!-- 3D Primitive Headers -->
-    <ClInclude Include="Math/AABB3.hpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
+    <ClInclude Include="Input\InputCommon.hpp">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Math/Cylinder3.hpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
+    <ClInclude Include="Input/InputSystem.hpp">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Math/OBB3.hpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
-    </ClInclude>
-    <ClInclude Include="Math/Plane3.hpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
-    </ClInclude>
-    <ClInclude Include="Math/Sphere3.hpp">
-      <Filter>Engine\Math\Primitives3D</Filter>
-    </ClInclude>
-    <!-- Linear Algebra Headers -->
-    <ClInclude Include="Math/Vec2.hpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClInclude>
-    <ClInclude Include="Math/Vec3.hpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClInclude>
-    <ClInclude Include="Math/Vec4.hpp">
-      <Filter>Engine\Math\Linear</Filter>
-    </ClInclude>
-    <ClInclude Include="Math/Mat44.hpp">
-      <Filter>Engine\Math\Linear</Filter>
+    <ClInclude Include="Input/KeyButtonState.hpp">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
     <ClInclude Include="Math/EulerAngles.hpp">
       <Filter>Engine\Math\Linear</Filter>
@@ -753,84 +614,110 @@
     <ClInclude Include="Math/IntVec3.hpp">
       <Filter>Engine\Math\Linear</Filter>
     </ClInclude>
-    <!-- Math Utility Headers -->
-    <ClInclude Include="Math/MathUtils.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClInclude Include="Math/Mat44.hpp">
+      <Filter>Engine\Math\Linear</Filter>
     </ClInclude>
-    <ClInclude Include="Math/RandomNumberGenerator.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClInclude Include="Math/Vec2.hpp">
+      <Filter>Engine\Math\Linear</Filter>
     </ClInclude>
-    <ClInclude Include="Math/RaycastUtils.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+    <ClInclude Include="Math/Vec3.hpp">
+      <Filter>Engine\Math\Linear</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Vec4.hpp">
+      <Filter>Engine\Math\Linear</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/AABB2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Capsule2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Disc2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/LineSegment2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/OBB2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Plane2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Triangle2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/AABB3.hpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Cylinder3.hpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/OBB3.hpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Plane3.hpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Sphere3.hpp">
+      <Filter>Engine\Math\Primitive3D</Filter>
     </ClInclude>
     <ClInclude Include="Math/Curve2D.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
     <ClInclude Include="Math/FloatRange.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
     <ClInclude Include="Math/IntRange.hpp">
-      <Filter>Engine\Math\Utils</Filter>
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Renderer Headers -->
-  <ItemGroup Label="RendererSubsystemHeaders">
-    <!-- Core Renderer Headers -->
-    <ClInclude Include="Renderer/Renderer.hpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClInclude Include="Math/MathUtils.hpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/RenderCommon.hpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClInclude Include="Math/RandomNumberGenerator.hpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/Camera.hpp">
-      <Filter>Engine\Renderer\Core</Filter>
+    <ClInclude Include="Math/RaycastUtils.hpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
-    <!-- Lighting Headers -->
-    <ClInclude Include="Renderer/Light.hpp">
-      <Filter>Engine\Renderer\Lighting</Filter>
+    <ClInclude Include="Network/NetworkCommon.hpp">
+      <Filter>Engine\Network\TCP</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/LightSubsystem.hpp">
-      <Filter>Engine\Renderer\Lighting</Filter>
+    <ClInclude Include="Network\NetworkTCPSubsystem.hpp">
+      <Filter>Engine\Network\TCP</Filter>
     </ClInclude>
-    <!-- Resource Headers -->
-    <ClInclude Include="Renderer/Image.hpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClInclude Include="Network\BaseWebSocketSubsystem.hpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/Texture.hpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClInclude Include="Network\ChromeDevToolsWebSocketSubsystem.hpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/Shader.hpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClInclude Include="Network\MCPWebSocketSubsystem.hpp">
+      <Filter>Engine\Network\WebSocket</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/DefaultShader.hpp">
-      <Filter>Engine\Renderer\Resources</Filter>
+    <ClInclude Include="Platform/Window.hpp">
+      <Filter>Engine\Platform</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/BitmapFont.hpp">
-      <Filter>Engine\Renderer\Resources</Filter>
-    </ClInclude>
-    <!-- Buffer Headers -->
-    <ClInclude Include="Renderer/VertexBuffer.hpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer/IndexBuffer.hpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
+    <ClInclude Include="Platform/WindowCommon.hpp">
+      <Filter>Engine\Platform</Filter>
     </ClInclude>
     <ClInclude Include="Renderer/ConstantBuffer.hpp">
-      <Filter>Engine\Renderer\Buffers</Filter>
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClInclude>
-    <!-- Sprite Headers -->
-    <ClInclude Include="Renderer/SpriteDefinition.hpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClInclude Include="Renderer/IndexBuffer.hpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/SpriteSheet.hpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClInclude Include="Renderer/VertexBuffer.hpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/SpriteAnimDefinition.hpp">
-      <Filter>Engine\Renderer\Sprites</Filter>
+    <ClInclude Include="Renderer/Camera.hpp">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
-    <!-- Vertex Headers -->
-    <ClInclude Include="Renderer/VertexUtils.hpp">
-      <Filter>Engine\Renderer\Vertex</Filter>
+    <ClInclude Include="Renderer/RenderCommon.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Renderer.hpp">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Renderer/Vertex_PCU.hpp">
       <Filter>Engine\Renderer\Vertex</Filter>
@@ -838,141 +725,176 @@
     <ClInclude Include="Renderer/Vertex_PCUTBN.hpp">
       <Filter>Engine\Renderer\Vertex</Filter>
     </ClInclude>
-    <!-- Debug Headers -->
+    <ClInclude Include="Renderer/VertexUtils.hpp">
+      <Filter>Engine\Renderer\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/SpriteAnimDefinition.hpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/SpriteDefinition.hpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/SpriteSheet.hpp">
+      <Filter>Engine\Renderer\Sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/BitmapFont.hpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/DefaultShader.hpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Image.hpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Shader.hpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Texture.hpp">
+      <Filter>Engine\Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Light.hpp">
+      <Filter>Engine\Renderer\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/LightSubsystem.hpp">
+      <Filter>Engine\Renderer\Light</Filter>
+    </ClInclude>
     <ClInclude Include="Renderer/DebugRenderSystem.hpp">
       <Filter>Engine\Renderer\Debug</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Input Headers -->
-  <ItemGroup Label="InputSubsystemHeaders">
-    <ClInclude Include="Input/InputSystem.hpp">
-      <Filter>Engine\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="Input/KeyButtonState.hpp">
-      <Filter>Engine\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="Input/AnalogJoystick.hpp">
-      <Filter>Engine\Input\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="Input/XboxController.hpp">
-      <Filter>Engine\Input\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="Input/InputScriptInterface.hpp">
-      <Filter>Engine\Input\Scripting</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <!-- Audio Headers -->
-  <ItemGroup Label="AudioSubsystemHeaders">
-    <ClInclude Include="Audio/AudioSystem.hpp">
-      <Filter>Engine\Audio</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <!-- Resource Headers -->
-  <ItemGroup Label="ResourceSubsystemHeaders">
-    <!-- Cache Headers -->
     <ClInclude Include="Resource/ResourceCache.hpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceCommon.hpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceHandle.hpp">
-      <Filter>Engine\Resource\Cache</Filter>
+      <Filter>Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/AnimationLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/AudioLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/FontLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/IResourceLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/MaterialLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ModelLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ObjModelLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ShaderLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/TextureLoader.hpp">
+      <Filter>Engine\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/AnimationResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/FontResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/IResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/MaterialResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ModelResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ShaderResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/TextureResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\AudioResource.hpp">
+      <Filter>Engine\Resource\Type</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceSubsystem.hpp">
       <Filter>Engine\Resource</Filter>
     </ClInclude>
-    <!-- Loader Headers -->
-    <ClInclude Include="Resource/IResourceLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/FileWatcher.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/AnimationLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/IScriptableObject.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/AudioLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ModuleLoader.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/FontLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ModuleRegistry.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/MaterialLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ModuleResolver.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/ModelLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ScriptCommon.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/ObjModelLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ScriptReloader.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/ShaderLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ScriptSubsystem.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/TextureLoader.hpp">
-      <Filter>Engine\Resource\Loaders</Filter>
+    <ClInclude Include="Script/ScriptTypeExtractor.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <!-- Resource Type Headers -->
-    <ClInclude Include="Resource/IResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="Widget\IWidget.hpp">
+      <Filter>Engine\Widget</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/AnimationResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="Widget\WidgetSubsystem.hpp">
+      <Filter>Engine\Widget</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/AudioSource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/FontResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod.hpp">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/MaterialResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_codec.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/ModelResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_common.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/ShaderResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_dsp.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Resource/TextureResource.hpp">
-      <Filter>Engine\Resource\Types</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_dsp_effects.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Platform Headers -->
-  <ItemGroup Label="PlatformSubsystemHeaders">
-    <ClInclude Include="Platform/Window.hpp">
-      <Filter>Engine\Platform</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_errors.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-    <ClInclude Include="Platform/WindowCommon.hpp">
-      <Filter>Engine\Platform</Filter>
+    <ClInclude Include="../ThirdParty/fmod/fmod_output.h">
+      <Filter>ThirdParty\FMOD</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Network Headers -->
-  <ItemGroup Label="NetworkSubsystemHeaders">
-    <ClInclude Include="Network/NetworkCommon.hpp">
-      <Filter>Engine\Network</Filter>
+    <ClInclude Include="..\ThirdParty\json\json.hpp">
+      <Filter>ThirdParty\JSON</Filter>
     </ClInclude>
-  </ItemGroup>
-  <!-- Scripting Headers -->
-  <ItemGroup Label="ScriptingSubsystemHeaders">
-    <ClInclude Include="Scripting/IScriptableObject.hpp">
-      <Filter>Engine\Scripting</Filter>
+    <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h">
+      <Filter>ThirdParty\TinyXML2</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting/ScriptTypeExtractor.hpp">
-      <Filter>Engine\Scripting</Filter>
+    <ClInclude Include="../ThirdParty/stb/stb_image.h">
+      <Filter>ThirdParty\STB</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting/ScriptCommon.hpp">
-      <Filter>Engine\Scripting</Filter>
+    <ClInclude Include="../ThirdParty/Noise/RawNoise.hpp">
+      <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting/FileWatcher.hpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClInclude>
-    <ClInclude Include="Scripting/ScriptSubsystem.hpp">
-      <Filter>Engine\Scripting</Filter>
-    </ClInclude>
-    <ClInclude Include="Scripting/ScriptReloader.hpp">
-      <Filter>Engine\Scripting</Filter>
+    <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
+      <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
   </ItemGroup>
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- PACKAGE CONFIGURATION FILES -->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
 </Project>

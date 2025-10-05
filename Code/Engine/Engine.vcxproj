@@ -4,7 +4,7 @@
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////// -->
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- PROJECT CONFIGURATIONS -->
+  <!-- Project Configuration -->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -25,7 +25,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- GLOBAL PROJECT PROPERTIES                                                           -->
+  <!-- Global Project Properties -->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -36,7 +36,7 @@
     <ProjectName>Engine</ProjectName>
   </PropertyGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- CONFIGURATION-SPECIFIC PROPERTIES -->
+  <!-- Configuration-Specific Properties-->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Debug Win32 Configuration -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32">
@@ -77,7 +77,7 @@
     <ConformanceMode>true</ConformanceMode>
   </PropertyGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- EXTERNAL DEPENDENCIES AND IMPORTS -->
+  <!-- External Dependencies and Imports-->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Core MSBuild imports - order matters for proper evaluation -->
   <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
@@ -96,7 +96,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- OUTPUT DIRECTORIES AND PATHS -->
+  <!-- Output directories and Paths-->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Centralized output management for clean build organization -->
   <PropertyGroup Label="OutputDirectories">
@@ -105,7 +105,7 @@
     <TargetName>$(ProjectName)_$(PlatformShortName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- COMPILER AND LINKER CONFIGURATION -->
+  <!-- Compiler and Linker Configuration-->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Debug Win32 Configuration Settings -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="DebugWin32Settings">
@@ -190,24 +190,26 @@
     </Lib>
   </ItemDefinitionGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- SOURCE FILES - ORGANIZED BY SUBSYSTEM -->
+  <!-- Source Files-->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="ThirdPartySourceFiles">
     <!-- Third-Party Library Source Files -->
     <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp" />
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp" />
     <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp" />
-    <ClCompile Include="Core\ConsoleOutputDevice.cpp" />
+    <ClCompile Include="Audio\AudioScriptInterface.cpp" />
+    <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Core\EngineCommon.cpp" />
+    <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="Widget\IWidget.cpp" />
     <ClCompile Include="Widget\WidgetSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup Label="CoreSubsystemSources">
-    <!-- Core Engine Systems - Foundation layer -->
-    <ClCompile Include="Audio\AudioScriptInterface.cpp" />
+    <!-- Core Module -->
+    <ClCompile Include="Core\ConsoleOutputDevice.cpp" />
     <ClCompile Include="Core/Clock.cpp" />
     <ClCompile Include="Core/DevConsole.cpp" />
-    <ClCompile Include="Core/EngineCommon.cpp" />
     <ClCompile Include="Core/ErrorWarningAssert.cpp" />
     <ClCompile Include="Core/EventSystem.cpp" />
     <ClCompile Include="Core/FileUtils.cpp" />
@@ -291,10 +293,6 @@
     <ClCompile Include="Input/KeyButtonState.cpp" />
     <ClCompile Include="Input/XboxController.cpp" />
   </ItemGroup>
-  <ItemGroup Label="AudioSubsystemSources">
-    <!-- Audio System - FMOD-based audio engine -->
-    <ClCompile Include="Audio/AudioSystem.cpp" />
-  </ItemGroup>
   <ItemGroup Label="ResourceSubsystemSources">
     <!-- Resource Management System - Asset pipeline -->
     <ClCompile Include="Resource/ResourceCache.cpp" />
@@ -313,7 +311,6 @@
     <ClCompile Include="Resource/TextureLoader.cpp" />
     <!-- Resource Types -->
     <ClCompile Include="Resource/AnimationResource.cpp" />
-    <ClCompile Include="Resource/AudioSource.cpp" />
     <ClCompile Include="Resource/FontResource.cpp" />
     <ClCompile Include="Resource/IResource.cpp" />
     <ClCompile Include="Resource/MaterialResource.cpp" />
@@ -333,19 +330,18 @@
   </ItemGroup>
   <ItemGroup Label="ScriptingSubsystemSources">
     <!-- V8 JavaScript Scripting System - Enterprise integration -->
-    <ClCompile Include="Scripting/IScriptableObject.cpp" />
-    <ClCompile Include="Scripting/ScriptTypeExtractor.cpp" />
-    <ClCompile Include="Scripting/ScriptCommon.cpp" />
-    <ClCompile Include="Scripting/ScriptReloader.cpp" />
-    <ClCompile Include="Scripting/FileWatcher.cpp" />
-    <ClCompile Include="Scripting/ScriptSubsystem.cpp" />
-    <!-- ES6 Module System -->
-    <ClCompile Include="Scripting/ModuleResolver.cpp" />
-    <ClCompile Include="Scripting/ModuleRegistry.cpp" />
-    <ClCompile Include="Scripting/ModuleLoader.cpp" />
+    <ClCompile Include="Script/IScriptableObject.cpp" />
+    <ClCompile Include="Script/ScriptTypeExtractor.cpp" />
+    <ClCompile Include="Script/ScriptCommon.cpp" />
+    <ClCompile Include="Script/ScriptReloader.cpp" />
+    <ClCompile Include="Script/FileWatcher.cpp" />
+    <ClCompile Include="Script/ScriptSubsystem.cpp" />
+    <ClCompile Include="Script/ModuleResolver.cpp" />
+    <ClCompile Include="Script/ModuleRegistry.cpp" />
+    <ClCompile Include="Script/ModuleLoader.cpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
-  <!-- HEADER FILES - ORGANIZED BY SUBSYSTEM -->
+  <!-- Header Files -->
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="ThirdPartyHeaders">
     <!-- Third-Party Library Headers -->
@@ -362,17 +358,19 @@
     <ClInclude Include="../ThirdParty/stb/stb_image.h" />
     <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h" />
     <ClInclude Include="..\ThirdParty\json\json.hpp" />
+    <ClInclude Include="Audio\AudioScriptInterface.hpp" />
+    <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
+    <ClInclude Include="Core\EngineCommon.hpp" />
+    <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />
   </ItemGroup>
-  <ItemGroup Label="CoreSubsystemHeaders">
+  <ItemGroup Label="CoreModuleHeaders">
     <!-- Core Engine System Headers -->
-    <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Core/Clock.hpp" />
     <ClInclude Include="Core/DevConsole.hpp" />
-    <ClInclude Include="Core/EngineCommon.hpp" />
     <ClInclude Include="Core/ErrorWarningAssert.hpp" />
     <ClInclude Include="Core/EventSystem.hpp" />
     <ClInclude Include="Core/FileUtils.hpp" />
@@ -458,10 +456,6 @@
     <ClInclude Include="Input/KeyButtonState.hpp" />
     <ClInclude Include="Input/XboxController.hpp" />
   </ItemGroup>
-  <ItemGroup Label="AudioSubsystemHeaders">
-    <!-- Audio System Headers -->
-    <ClInclude Include="Audio/AudioSystem.hpp" />
-  </ItemGroup>
   <ItemGroup Label="ResourceSubsystemHeaders">
     <!-- Resource Management System Headers -->
     <ClInclude Include="Resource/ResourceCache.hpp" />
@@ -480,7 +474,6 @@
     <ClInclude Include="Resource/TextureLoader.hpp" />
     <!-- Resource Type Headers -->
     <ClInclude Include="Resource/AnimationResource.hpp" />
-    <ClInclude Include="Resource/AudioSource.hpp" />
     <ClInclude Include="Resource/FontResource.hpp" />
     <ClInclude Include="Resource/IResource.hpp" />
     <ClInclude Include="Resource/MaterialResource.hpp" />
@@ -500,16 +493,16 @@
   </ItemGroup>
   <ItemGroup Label="ScriptingSubsystemHeaders">
     <!-- V8 JavaScript Scripting System Headers -->
-    <ClInclude Include="Scripting/IScriptableObject.hpp" />
-    <ClInclude Include="Scripting/ScriptTypeExtractor.hpp" />
-    <ClInclude Include="Scripting/ScriptCommon.hpp" />
-    <ClInclude Include="Scripting/ScriptSubsystem.hpp" />
-    <ClInclude Include="Scripting/FileWatcher.hpp" />
-    <ClInclude Include="Scripting/ScriptReloader.hpp" />
+    <ClInclude Include="Script/IScriptableObject.hpp" />
+    <ClInclude Include="Script/ScriptTypeExtractor.hpp" />
+    <ClInclude Include="Script/ScriptCommon.hpp" />
+    <ClInclude Include="Script/ScriptSubsystem.hpp" />
+    <ClInclude Include="Script/FileWatcher.hpp" />
+    <ClInclude Include="Script/ScriptReloader.hpp" />
     <!-- ES6 Module System Headers -->
-    <ClInclude Include="Scripting/ModuleResolver.hpp" />
-    <ClInclude Include="Scripting/ModuleRegistry.hpp" />
-    <ClInclude Include="Scripting/ModuleLoader.hpp" />
+    <ClInclude Include="Script/ModuleResolver.hpp" />
+    <ClInclude Include="Script/ModuleRegistry.hpp" />
+    <ClInclude Include="Script/ModuleLoader.hpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- NUGET PACKAGE DEPENDENCIES -->
