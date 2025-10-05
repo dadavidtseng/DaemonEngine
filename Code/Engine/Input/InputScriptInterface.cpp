@@ -9,7 +9,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Scripting/ScriptTypeExtractor.hpp"
+#include "Engine/Script/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
 InputScriptInterface::InputScriptInterface(InputSystem* inputSystem)
