@@ -3,13 +3,13 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Scripting/ScriptTypeExtractor.hpp"
+#include "Engine/Script/ScriptTypeExtractor.hpp"
 
 #include <sstream>
 #include <stdexcept>
 
 #include "Engine/Math/Vec3.hpp"
-#include "Engine/Scripting/IScriptableObject.hpp"
+#include "Engine/Script/IScriptableObject.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Vec3 ScriptTypeExtractor::ExtractVec3(std::vector<std::any> const& args,

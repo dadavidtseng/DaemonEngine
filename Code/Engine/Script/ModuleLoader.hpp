@@ -6,8 +6,8 @@
 #pragma once
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Scripting/ModuleRegistry.hpp"
-#include "Engine/Scripting/ModuleResolver.hpp"
+#include "Engine/Script/ModuleRegistry.hpp"
+#include "Engine/Script/ModuleResolver.hpp"
 //----------------------------------------------------------------------------------------------------
 #include <memory>
 #include <string>
