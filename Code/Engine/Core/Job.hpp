@@ -4,14 +4,15 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
 #include <cstdint>
 
 //----------------------------------------------------------------------------------------------------
 // Job type bitfield - allows categorizing jobs for worker thread specialization
 // Workers filter jobs based on their assigned type(s)
 //----------------------------------------------------------------------------------------------------
-typedef uint32_t JobType;
-typedef JobType WorkerThreadType;
+using JobType          = uint32_t;
+using WorkerThreadType = JobType;
 
 // Standard job types
 constexpr JobType JOB_TYPE_GENERIC = 0x01;  // General computation jobs (terrain generation, etc.)
@@ -40,7 +41,10 @@ class Job
 {
 public:
     // Constructor: Allows derived classes to specify job type
-    explicit Job(JobType jobType = JOB_TYPE_GENERIC) : m_jobType(jobType) {}
+    explicit Job(JobType jobType = JOB_TYPE_GENERIC)
+        : m_jobType(jobType)
+    {
+    }
 
     // Virtual destructor ensures proper cleanup of derived classes
     virtual ~Job() = default;

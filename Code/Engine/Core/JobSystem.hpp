@@ -4,12 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/Job.hpp"  // Need JobType and WorkerThreadType definitions
+//----------------------------------------------------------------------------------------------------
+#include <condition_variable>  // For efficient worker thread sleeping
 #include <deque>
 #include <vector>
-#include <mutex>
-#include <memory>
-#include <condition_variable>  // For efficient worker thread sleeping
-#include "Engine/Core/Job.hpp"  // Need JobType and WorkerThreadType definitions
 
 //----------------------------------------------------------------------------------------------------
 class Job;
