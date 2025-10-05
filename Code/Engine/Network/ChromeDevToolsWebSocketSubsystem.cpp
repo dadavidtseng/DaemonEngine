@@ -7,7 +7,7 @@
 #include "Engine/Network/ChromeDevToolsWebSocketSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Scripting/ScriptSubsystem.hpp"
+#include "Engine/Script/ScriptSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
