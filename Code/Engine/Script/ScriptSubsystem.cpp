@@ -510,7 +510,7 @@ void ScriptSubsystem::Update()
         {
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Network event (frame {})", updateCounter));
-            SendNetworkRequestEvent("file:///FirstV8/Scripts/main.mjs", "GET", 200);
+            SendNetworkRequestEvent("file:///FirstV8/Scripts/main.js", "GET", 200);
         }
 
         // Generate Memory heap snapshots every 300 frames (~5 seconds)
@@ -567,17 +567,17 @@ bool ScriptSubsystem::InitializeHotReload(const std::string& projectRoot)
 
         // Add default watched files - Phase 4 ES6 Module System
         // Watch all ES6 module files for hot-reload support
-        m_fileWatcher->AddWatchedFile("Data/Scripts/main.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/InputSystemCommon.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/JSEngine.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/JSGame.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/core/SystemComponent.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CppBridgeSystem.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/InputSystem.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/AudioSystem.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CubeSpawner.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/PropMover.mjs");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CameraShaker.mjs");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/main.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/InputSystemCommon.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/JSEngine.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/JSGame.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/core/SystemComponent.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CppBridgeSystem.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/InputSystem.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/AudioSystem.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CubeSpawner.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/PropMover.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CameraShaker.js");
 
         // Start the file watching thread
         m_fileWatcher->StartWatching();

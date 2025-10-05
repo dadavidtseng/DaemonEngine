@@ -25,7 +25,7 @@ class ModuleLoader;
  * - JavaScript state preservation and restoration
  * - Error handling and rollback on reload failures
  * - Integration with existing ScriptSubsystem
- * - ES6 module hot-reload support (.mjs files)
+ * - ES6 module hot-reload support (.js files)
  * - Classic script hot-reload support (.js files)
  */
 class ScriptReloader

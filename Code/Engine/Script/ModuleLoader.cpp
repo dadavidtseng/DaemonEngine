@@ -155,8 +155,8 @@ bool ModuleLoader::ReloadModule(std::string const& modulePath)
     ClearError();
 
     // PHASE 5 FIX: Convert absolute path to relative path for module registry lookup
-    // Module registry uses relative paths like "Data/Scripts/JSGame.mjs"
-    // But ReloadModule() receives absolute paths like "C:/p4/.../Run/Data/Scripts/JSGame.mjs"
+    // Module registry uses relative paths like "Data/Scripts/JSGame.js"
+    // But ReloadModule() receives absolute paths like "C:/p4/.../Run/Data/Scripts/JSGame.js"
     std::string moduleKey = modulePath;
 
     // Check if modulePath is absolute (contains base path)
@@ -202,14 +202,14 @@ bool ModuleLoader::ReloadModule(std::string const& modulePath)
             StringFormat("  - Invalidated: {}", moduleUrl));
     }
 
-    // Always reload from main.mjs to ensure full import chain execution
+    // Always reload from main.js to ensure full import chain execution
     // This is critical because V8 module instances are immutable once evaluated
-    std::string mainModulePath = "Data/Scripts/main.mjs";
+    std::string mainModulePath = "Data/Scripts/main.js";
 
     DAEMON_LOG(LogScript, eLogVerbosity::Log,
         StringFormat("ModuleLoader: Reloading from entry point: {}", mainModulePath));
 
-    // Reload from main.mjs (triggers re-import of all dependent modules)
+    // Reload from main.js (triggers re-import of all dependent modules)
     bool success = LoadModule(mainModulePath);
 
     if (success)

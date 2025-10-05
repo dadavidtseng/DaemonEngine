@@ -247,7 +247,7 @@ bool ScriptReloader::ExecuteScript(const std::string& scriptPath)
     {
         LogReloadEvent("Executing script: " + scriptPath);
 
-        // PHASE 5: Check if this is an ES6 module (.mjs file)
+        // PHASE 5: Check if this is an ES6 module (.js file)
         if (IsES6Module(scriptPath))
         {
             LogReloadEvent("Detected ES6 module, routing to ModuleLoader: " + scriptPath);
@@ -529,11 +529,12 @@ void ScriptReloader::LogReloadEvent(const std::string& message)
 
 bool ScriptReloader::IsES6Module(const std::string& filePath) const
 {
-    // Check file extension
-    if (filePath.length() >= 4)
+    // All .js files are treated as ES6 modules
+    // This allows us to use a single .js extension for all JavaScript files
+    if (filePath.length() >= 3)
     {
-        std::string extension = filePath.substr(filePath.length() - 4);
-        if (extension == ".mjs")
+        std::string extension = filePath.substr(filePath.length() - 3);
+        if (extension == ".js")
         {
             return true;
         }
@@ -554,7 +555,7 @@ bool ScriptReloader::ReloadES6Module(const std::string& modulePath)
 
     // Use ModuleLoader::ReloadModule() which handles:
     // 1. InvalidateModuleTree() to clear dependent modules
-    // 2. Reload from main.mjs to trigger full import chain
+    // 2. Reload from main.js to trigger full import chain
     // 3. Enhanced logging for debugging
     bool success = m_moduleLoader->ReloadModule(modulePath);
 

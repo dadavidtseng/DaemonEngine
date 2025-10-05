@@ -149,13 +149,8 @@ std::string ModuleResolver::NormalizePath(std::string const& path)
 //----------------------------------------------------------------------------------------------------
 std::string ModuleResolver::EnsureJsExtension(std::string const& path)
 {
-    // Check if already has .js or .mjs extension
+    // Check if already has .js extension
     if (path.size() >= 3 && path.substr(path.size() - 3) == ".js")
-    {
-        return path;
-    }
-
-    if (path.size() >= 4 && path.substr(path.size() - 4) == ".mjs")
     {
         return path;
     }
