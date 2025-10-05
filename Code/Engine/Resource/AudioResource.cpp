@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Engine/Resource/AudioSource.hpp"
+#include "Engine/Resource/AudioResource.hpp"
 
 AudioSource::AudioSource(String const& path, ResourceType type): IResource(path, type)
 {
