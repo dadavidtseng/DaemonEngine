@@ -21,44 +21,28 @@ extern HANDLE g_consoleHandle;
 LogSubsystem* g_logSubsystem = nullptr;
 
 //----------------------------------------------------------------------------------------------------
-// 預定義日誌分類
-//----------------------------------------------------------------------------------------------------
-DAEMON_LOG_CATEGORY(LogTemp, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogCore, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogRenderer, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogAudio, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogInput, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogNetwork, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogResource, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogMath, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogPlatform, eLogVerbosity::Log, eLogVerbosity::All)
-DAEMON_LOG_CATEGORY(LogGame, eLogVerbosity::Log, eLogVerbosity::All)
-
-//----------------------------------------------------------------------------------------------------
 // LogEntry 實作
 //----------------------------------------------------------------------------------------------------
-LogEntry::LogEntry(String const&       cat,
-                   eLogVerbosity const verb,
-                   String const&       msg,
-                   String const&       func,
-                   String const&       file,
-                   int const           line)
-    : category(cat),
-      verbosity(verb),
-      message(msg),
-      functionName(func),
-      fileName(file),
-      lineNumber(line)
+LogEntry::LogEntry(String const&       category,
+                   eLogVerbosity const verbosity,
+                   String const&       message,
+                   String const&       functionName,
+                   String const&       fileName,
+                   int const           lineNum)
+    : m_category(category),
+      m_verbosity(verbosity),
+      m_message(message),
+      m_functionName(functionName),
+      m_fileName(fileName),
+      m_lineNum(lineNum)
 {
     if (g_logSubsystem)
     {
-        timestamp = g_logSubsystem->GetCurrentTimestamp();
-        threadId  = g_logSubsystem->GetCurrentThreadId();
+        m_timestamp = g_logSubsystem->GetCurrentTimestamp();
+        m_threadId  = g_logSubsystem->GetCurrentThreadId();
     }
 }
 
-//----------------------------------------------------------------------------------------------------
-// LogSubsystem 實作
 //----------------------------------------------------------------------------------------------------
 LogSubsystem::LogSubsystem(sLogSubsystemConfig config)
     : m_config(std::move(config)),
@@ -67,11 +51,9 @@ LogSubsystem::LogSubsystem(sLogSubsystemConfig config)
 {
 }
 
-LogSubsystem::~LogSubsystem()
-{
-    Shutdown();
-}
 
+
+//----------------------------------------------------------------------------------------------------
 void LogSubsystem::Startup()
 {
     RegisterCategory("LogTemp");
@@ -87,6 +69,7 @@ void LogSubsystem::Startup()
     RegisterCategory("LogPlatform");
     RegisterCategory("LogScript");
     RegisterCategory("LogGame");
+    RegisterCategory("LogApp");
 
     LogMessage("LogLog", eLogVerbosity::Display, "LogSubsystem::Startup() start");
 
@@ -304,7 +287,6 @@ void LogSubsystem::LogMessageIf(bool          condition, const String& categoryN
     }
 }
 
-
 void LogSubsystem::AddOnScreenMessage(const String& message, float displayTime,
                                       const Rgba8&  color, int     uniqueId)
 {
@@ -327,13 +309,13 @@ std::vector<LogEntry> LogSubsystem::GetLogHistory(const String& categoryFilter,
     for (const auto& entry : m_logHistory)
     {
         // 分類篩選
-        if (!categoryFilter.empty() && entry.category != categoryFilter)
+        if (!categoryFilter.empty() && entry.m_category != categoryFilter)
         {
             continue;
         }
 
         // 詳細程度篩選
-        if (entry.verbosity > minVerbosity)
+        if (entry.m_verbosity > minVerbosity)
         {
             continue;
         }
@@ -364,6 +346,43 @@ void LogSubsystem::FlushAllOutputs()
     {
         device->Flush();
     }
+}
+
+String LogSubsystem::GetCurrentTimestamp() const
+{
+    if (!m_config.timestampEnabled)
+    {
+        return "";
+    }
+
+    auto now    = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms     = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+
+    std::stringstream ss;
+    struct tm         timeinfo;
+#ifdef _WIN32
+    localtime_s(&timeinfo, &time_t);
+#else
+    localtime_r(&time_t, &timeinfo);
+#endif
+    ss << std::put_time(&timeinfo, "%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+
+    return ss.str();
+}
+
+String LogSubsystem::GetCurrentThreadId() const
+{
+    if (!m_config.threadIdEnabled)
+    {
+        return "";
+    }
+
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    return ss.str();
 }
 
 void LogSubsystem::ProcessLogQueue()
@@ -399,7 +418,7 @@ void LogSubsystem::ProcessLogQueue()
 
 void LogSubsystem::WriteToOutputDevices(const LogEntry& entry)
 {
-    LogCategory* category = GetCategory(entry.category);
+    LogCategory* category = GetCategory(entry.m_category);
     if (!category)
     {
         return;
@@ -444,43 +463,6 @@ void LogSubsystem::WriteToOutputDevices(const LogEntry& entry)
     }
 }
 
-String LogSubsystem::GetCurrentTimestamp() const
-{
-    if (!m_config.timestampEnabled)
-    {
-        return "";
-    }
-
-    auto now    = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms     = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
-
-    std::stringstream ss;
-    struct tm         timeinfo;
-#ifdef _WIN32
-    localtime_s(&timeinfo, &time_t);
-#else
-    localtime_r(&time_t, &timeinfo);
-#endif
-    ss << std::put_time(&timeinfo, "%H:%M:%S");
-    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
-
-    return ss.str();
-}
-
-String LogSubsystem::GetCurrentThreadId() const
-{
-    if (!m_config.threadIdEnabled)
-    {
-        return "";
-    }
-
-    std::stringstream ss;
-    ss << std::this_thread::get_id();
-    return ss.str();
-}
-
 bool LogSubsystem::ShouldLog(const String& categoryName, eLogVerbosity verbosity) const
 {
     auto it = m_categories.find(categoryName);
@@ -505,6 +487,30 @@ bool LogSubsystem::ShouldLog(const String& categoryName, eLogVerbosity verbosity
 
     return true;
 }
+
+
+//----------------------------------------------------------------------------------------------------
+// 預定義日誌分類
+//----------------------------------------------------------------------------------------------------
+DAEMON_LOG_CATEGORY(LogTemp, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogCore, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogRenderer, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogAudio, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogInput, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogNetwork, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogResource, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogMath, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogPlatform, eLogVerbosity::Log, eLogVerbosity::All)
+
+DAEMON_LOG_CATEGORY(LogGame, eLogVerbosity::Log, eLogVerbosity::All)
 
 //----------------------------------------------------------------------------------------------------
 // Smart rotation support implementation

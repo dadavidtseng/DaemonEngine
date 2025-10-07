@@ -13,6 +13,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 enum class DebugRenderObjectType : int8_t
@@ -64,7 +65,7 @@ void DebugRenderSystemStartup(sDebugRenderConfig const& config)
 {
     m_debugRenderConfig.m_renderer = config.m_renderer;
     m_debugRenderConfig.m_fontName = config.m_fontName;
-    m_debugRenderBitmapFont        = config.m_renderer->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + config.m_fontName).c_str());
+    m_debugRenderBitmapFont        = g_resourceSubsystem->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + config.m_fontName).c_str());
     g_eventSystem->SubscribeEventCallbackFunction("DebugRenderClear", OnDebugRenderClear);
     g_eventSystem->SubscribeEventCallbackFunction("DebugRenderToggle", OnDebugRenderToggle);
 }
@@ -73,6 +74,11 @@ void DebugRenderSystemStartup(sDebugRenderConfig const& config)
 void DebugRenderSystemShutdown()
 {
     DebugRenderClear();
+
+    // CRITICAL: m_debugRenderBitmapFont is owned by FontResource in ResourceSubsystem cache
+    // Do NOT delete it manually - it will be cleaned up by ResourceSubsystem::GlobalShutdown()
+    // Just clear the pointer to avoid dangling reference
+    m_debugRenderBitmapFont = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -115,7 +121,8 @@ void DebugRenderBeginFrame()
 
     m_debugRenderObjectList.erase(
         std::remove_if(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(),
-                       [deltaSeconds](DebugRenderObject* object) {
+                       [deltaSeconds](DebugRenderObject* object)
+                       {
                            if (object == nullptr)
                            {
                                return false;
@@ -124,8 +131,8 @@ void DebugRenderBeginFrame()
                            object->m_elapsedTime += deltaSeconds;
 
                            return
-                           object->m_elapsedTime >= object->m_maxElapsedTime &&
-                           object->m_maxElapsedTime > -1.f;
+                               object->m_elapsedTime >= object->m_maxElapsedTime &&
+                               object->m_maxElapsedTime > -1.f;
                        }),
         m_debugRenderObjectList.end());
 
@@ -491,7 +498,8 @@ void DebugRenderScreen(Camera const& camera)
     m_debugRenderConfig.m_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_NONE);
     m_debugRenderConfig.m_renderer->BindShader(m_debugRenderConfig.m_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU));
 
-    std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b) {
+    std::sort(m_debugRenderObjectList.begin(), m_debugRenderObjectList.end(), [](DebugRenderObject const* a, DebugRenderObject const* b)
+    {
         return a->m_maxElapsedTime < b->m_maxElapsedTime;
     });
 
@@ -515,7 +523,7 @@ void DebugRenderScreen(Camera const& camera)
                                                             DebugRenderGetDebugObjectCurrentColor(object),
                                                             1.f,
                                                             object->m_alignment,
-                                                            OVERRUN);
+                                                            eTextBoxMode::OVERRUN);
             m_debugRenderConfig.m_renderer->SetBlendMode(eBlendMode::ALPHA);
             m_debugRenderConfig.m_renderer->BindTexture(&m_debugRenderBitmapFont->GetTexture());
             m_debugRenderConfig.m_renderer->SetModelConstants();

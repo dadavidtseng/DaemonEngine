@@ -3,7 +3,6 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
-#include <cstdint>
 
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Renderer/Light.hpp"

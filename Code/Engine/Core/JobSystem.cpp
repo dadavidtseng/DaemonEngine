@@ -6,20 +6,22 @@
 #include "Engine/Core/JobSystem.hpp"
 #include "Engine/Core/JobWorkerThread.hpp"
 #include "Engine/Core/Job.hpp"
+#include <algorithm>
 #include <thread>
 #include <algorithm>
 
 //----------------------------------------------------------------------------------------------------
 // Global JobSystem instance
 //----------------------------------------------------------------------------------------------------
-JobSystem* g_jobSystem = nullptr;  // Created and owned by App
+// JobSystem* g_jobSystem = nullptr;  // Created and owned by App
 
 //----------------------------------------------------------------------------------------------------
 // JobSystem Implementation
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-JobSystem::JobSystem()
+JobSystem::JobSystem(sJobSubsystemConfig const& config)
+    : m_config(config)
 {
     // Constructor just initializes member variables
     // Actual thread creation happens in StartUp()
@@ -31,12 +33,12 @@ JobSystem::~JobSystem()
     // Ensure proper cleanup
     if (m_isRunning)
     {
-        ShutDown();
+        Shutdown();
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void JobSystem::StartUp(int numGenericThreads, int numIOThreads)
+void JobSystem::Startup()
 {
     if (m_isRunning)
     {
@@ -51,25 +53,22 @@ void JobSystem::StartUp(int numGenericThreads, int numIOThreads)
     }
 
     // Calculate total threads needed
-    int totalThreads = numGenericThreads + numIOThreads;
+    int totalThreads = m_config.m_genericThreadNum + m_config.m_ioThreadNum;
 
     // Ensure we don't exceed hardware capabilities (reserve 1 core for main thread)
     if (totalThreads > hardwareConcurrency - 1)
     {
         // Reduce generic threads first, but keep at least 1
-        numGenericThreads = hardwareConcurrency - 1 - numIOThreads;
-        if (numGenericThreads < 1)
-        {
-            numGenericThreads = 1;
-        }
-        totalThreads = numGenericThreads + numIOThreads;
+        m_config.m_genericThreadNum = hardwareConcurrency - 1 - m_config.m_ioThreadNum;
+        m_config.m_genericThreadNum = std::max(m_config.m_genericThreadNum, 1);
+        totalThreads      = m_config.m_genericThreadNum + m_config.m_ioThreadNum;
     }
 
     // Reserve space for all worker threads
     m_workerThreads.reserve(totalThreads);
 
     // Create I/O worker threads first (dedicated to file operations)
-    for (int i = 0; i < numIOThreads; ++i)
+    for (int i = 0; i < m_config.m_ioThreadNum; ++i)
     {
         auto workerThread = std::make_unique<JobWorkerThread>(this, i, JOB_TYPE_IO);
         workerThread->StartThread();
@@ -77,9 +76,9 @@ void JobSystem::StartUp(int numGenericThreads, int numIOThreads)
     }
 
     // Create generic worker threads (for terrain generation, etc.)
-    for (int i = 0; i < numGenericThreads; ++i)
+    for (int i = 0; i < m_config.m_genericThreadNum; ++i)
     {
-        int workerID = numIOThreads + i;  // Offset ID after I/O threads
+        int  workerID     = m_config.m_ioThreadNum + i;  // Offset ID after I/O threads
         auto workerThread = std::make_unique<JobWorkerThread>(this, workerID, JOB_TYPE_GENERIC);
         workerThread->StartThread();
         m_workerThreads.push_back(std::move(workerThread));
@@ -89,7 +88,7 @@ void JobSystem::StartUp(int numGenericThreads, int numIOThreads)
 }
 
 //----------------------------------------------------------------------------------------------------
-void JobSystem::ShutDown()
+void JobSystem::Shutdown()
 {
     if (!m_isRunning)
     {
@@ -111,7 +110,7 @@ void JobSystem::ShutDown()
     // Clean up any remaining jobs in the queues
     {
         std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
-        
+
         // Delete any jobs still in queues (client should have retrieved completed jobs)
         for (Job* job : m_queuedJobs)
         {
@@ -163,7 +162,7 @@ Job* JobSystem::RetrieveCompletedJob()
     }
 
     std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
-    
+
     if (m_completedJobs.empty())
     {
         return nullptr; // No completed jobs available
@@ -179,45 +178,48 @@ Job* JobSystem::RetrieveCompletedJob()
 std::vector<Job*> JobSystem::RetrieveAllCompletedJobs()
 {
     std::vector<Job*> allCompletedJobs;
-    
+
     if (!m_isRunning)
     {
         return allCompletedJobs; // Return empty vector
     }
 
     std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
-    
+
     // Move all completed jobs to the return vector
     allCompletedJobs.reserve(m_completedJobs.size());
     for (Job* job : m_completedJobs)
     {
         allCompletedJobs.push_back(job);
     }
-    
+
     // Clear the completed jobs queue
     m_completedJobs.clear();
-    
+
     return allCompletedJobs;
 }
 
 //----------------------------------------------------------------------------------------------------
 int JobSystem::GetQueuedJobCount() const
 {
-    std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
+    std::scoped_lock lock(m_jobQueuesMutex);
+
     return static_cast<int>(m_queuedJobs.size());
 }
 
 //----------------------------------------------------------------------------------------------------
 int JobSystem::GetExecutingJobCount() const
 {
-    std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
+    std::scoped_lock lock(m_jobQueuesMutex);
+
     return static_cast<int>(m_executingJobs.size());
 }
 
 //----------------------------------------------------------------------------------------------------
 int JobSystem::GetCompletedJobCount() const
 {
-    std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
+    std::scoped_lock lock(m_jobQueuesMutex);
+
     return static_cast<int>(m_completedJobs.size());
 }
 
@@ -226,9 +228,10 @@ int JobSystem::GetCompletedJobCount() const
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-bool JobSystem::ClaimJobFromQueue(Job*& outJob, WorkerThreadType workerType)
+bool JobSystem::ClaimJobFromQueue(Job*&                  out_job,
+                                  WorkerThreadType const workerType)
 {
-    std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
+    std::scoped_lock lock(m_jobQueuesMutex);
 
     // Find first job that matches worker type (bitfield check)
     for (auto it = m_queuedJobs.begin(); it != m_queuedJobs.end(); ++it)
@@ -247,32 +250,30 @@ bool JobSystem::ClaimJobFromQueue(Job*& outJob, WorkerThreadType workerType)
             m_executingJobs.push_back(job);
 
             // Return the claimed job
-            outJob = job;
+            out_job = job;
             return true;
         }
     }
 
     // No matching job found
-    outJob = nullptr;
+    out_job = nullptr;
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
 void JobSystem::MoveJobToCompleted(Job* job)
 {
-    if (!job)
-    {
-        return; // Invalid job
-    }
+    if (job == nullptr) return; // Invalid job
 
-    std::lock_guard<std::mutex> lock(m_jobQueuesMutex);
-    
+    std::scoped_lock lock(m_jobQueuesMutex);
+
     // Find and remove the job from executing jobs
-    auto it = std::find(m_executingJobs.begin(), m_executingJobs.end(), job);
+    auto const it = std::ranges::find(m_executingJobs, job);
+
     if (it != m_executingJobs.end())
     {
         m_executingJobs.erase(it);
-        
+
         // Add job to completed jobs
         m_completedJobs.push_back(job);
     }

@@ -16,3 +16,13 @@
 // Note: The virtual destructor is defaulted in the header file,
 // so no implementation is needed here.
 //----------------------------------------------------------------------------------------------------
+Job::Job(JobType const jobType)
+    : m_jobType(jobType)
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+JobType Job::GetJobType() const
+{
+    return m_jobType;
+}

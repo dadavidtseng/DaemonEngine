@@ -11,9 +11,15 @@
 #include <deque>
 #include <vector>
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
 class Job;
 class JobWorkerThread;
+
+struct sJobSubsystemConfig
+{
+    int m_genericThreadNum = 0;
+    int m_ioThreadNum      = 1;
+};
 
 //----------------------------------------------------------------------------------------------------
 // JobSystem - Central coordinator for multi-threaded job processing
@@ -42,7 +48,7 @@ class JobSystem
 {
 public:
     // Constructor - prepares job system but doesn't start threads
-    JobSystem();
+    explicit JobSystem(sJobSubsystemConfig const& config);
 
     // Destructor - ensures proper cleanup of all threads and jobs
     ~JobSystem();
@@ -56,10 +62,10 @@ public:
     // Initialize and start worker threads with specified types
     // numGenericThreads: Number of general-purpose worker threads (for terrain generation, etc.)
     // numIOThreads: Number of dedicated I/O worker threads (for load/save operations, default 1)
-    void StartUp(int numGenericThreads, int numIOThreads = 1);
+    void Startup();
 
     // Stop all worker threads and clean up resources
-    void ShutDown();
+    void Shutdown();
 
     // Submit a job to be processed by worker threads
     // The job will be added to the queued jobs and claimed by next available worker
@@ -88,8 +94,10 @@ private:
     // Friend class allows JobWorkerThread to access private queue methods
     friend class JobWorkerThread;
 
+    sJobSubsystemConfig m_config;
+
     // Thread-safe job queue operations (called by worker threads)
-    bool ClaimJobFromQueue(Job*& outJob, WorkerThreadType workerType);      // Move job: queued -> executing (filtered by type)
+    bool ClaimJobFromQueue(Job*& out_job, WorkerThreadType workerType);      // Move job: queued -> executing (filtered by type)
     void MoveJobToCompleted(Job* job);         // Move job: executing -> completed
 
     // Job queues protected by mutex
@@ -103,7 +111,7 @@ private:
     // Condition variable for efficient worker thread waiting
     // Workers sleep on this and are notified when jobs are submitted
     std::condition_variable m_jobAvailableCondition;
-    std::mutex m_conditionMutex;  // Separate mutex for condition variable
+    std::mutex              m_conditionMutex;  // Separate mutex for condition variable
 
     // Worker thread management
     std::vector<std::unique_ptr<JobWorkerThread>> m_workerThreads;

@@ -915,8 +915,7 @@ String BaseWebSocketSubsystem::Base64Encode(String const& input)
 
 bool BaseWebSocketSubsystem::SubmitServerJob()
 {
-    JobSystem* jobSystem = GEngine::GetJobSystem();
-    if (!jobSystem)
+    if (g_jobSystem == nullptr)
     {
         DAEMON_LOG(LogNetwork, eLogVerbosity::Error,
                    StringFormat("Cannot submit server job: JobSystem is null"));
@@ -924,7 +923,7 @@ bool BaseWebSocketSubsystem::SubmitServerJob()
     }
 
     m_serverJob = new WebSocketServerJob(this);
-    jobSystem->SubmitJob(m_serverJob);
+    g_jobSystem->SubmitJob(m_serverJob);
 
     DAEMON_LOG(LogNetwork, eLogVerbosity::Log,
                StringFormat("WebSocket server job submitted to JobSystem"));
@@ -934,8 +933,7 @@ bool BaseWebSocketSubsystem::SubmitServerJob()
 
 bool BaseWebSocketSubsystem::SubmitClientJob(SOCKET clientSocket)
 {
-    JobSystem* jobSystem = GEngine::GetJobSystem();
-    if (!jobSystem)
+    if (g_jobSystem == nullptr)
     {
         DAEMON_LOG(LogNetwork, eLogVerbosity::Error,
                    StringFormat("Cannot submit client job: JobSystem is null"));
@@ -943,7 +941,7 @@ bool BaseWebSocketSubsystem::SubmitClientJob(SOCKET clientSocket)
     }
 
     Job* clientJob = new WebSocketClientJob(this, clientSocket);
-    jobSystem->SubmitJob(clientJob);
+    g_jobSystem->SubmitJob(clientJob);
 
     {
         std::lock_guard<std::mutex> lock(m_clientJobsMutex);
@@ -959,11 +957,10 @@ bool BaseWebSocketSubsystem::SubmitClientJob(SOCKET clientSocket)
 
 void BaseWebSocketSubsystem::RetrieveCompletedJobs()
 {
-    JobSystem* jobSystem = GEngine::GetJobSystem();
-    if (!jobSystem) return;
+    if (g_jobSystem == nullptr) return;
 
     // Retrieve all completed jobs from JobSystem
-    std::vector<Job*> completedJobs = jobSystem->RetrieveAllCompletedJobs();
+    std::vector<Job*> completedJobs = g_jobSystem->RetrieveAllCompletedJobs();
 
     std::lock_guard<std::mutex> lock(m_clientJobsMutex);
 

@@ -93,18 +93,18 @@ struct LogCategory
 //----------------------------------------------------------------------------------------------------
 struct LogEntry
 {
-    String        category;      // 日誌分類
-    eLogVerbosity verbosity;    // 詳細程度
-    String        message;       // 日誌訊息
-    String        timestamp;     // 時間戳記
-    String        threadId;      // 執行緒 ID
-    String        functionName;  // 函數名稱
-    String        fileName;      // 檔案名稱
-    int           lineNumber;    // 行號
+    String        m_category;      // 日誌分類
+    eLogVerbosity m_verbosity;    // 詳細程度
+    String        m_message;       // 日誌訊息
+    String        m_timestamp;     // 時間戳記
+    String        m_threadId;      // 執行緒 ID
+    String        m_functionName;  // 函數名稱
+    String        m_fileName;      // 檔案名稱
+    int           m_lineNum;    // 行號
 
     LogEntry() = default;
-    LogEntry(const String& cat, eLogVerbosity       verb, const String& msg,
-             const String& func = "", const String& file = "", int      line = 0);
+    LogEntry(String const& category, eLogVerbosity          verbosity, String const& message,
+             String const& functionName = "", String const& fileName = "", int       lineNum = 0);
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -135,34 +135,21 @@ struct sLogSubsystemConfig
         sLogSubsystemConfig config;
 
         // Basic logging settings
-        if (j.contains("logFilePath"))
-            config.logFilePath = j["logFilePath"].get<std::string>();
-        if (j.contains("enableConsole"))
-            config.enableConsole = j["enableConsole"].get<bool>();
-        if (j.contains("enableFile"))
-            config.enableFile = j["enableFile"].get<bool>();
-        if (j.contains("enableDebugOut"))
-            config.enableDebugOut = j["enableDebugOut"].get<bool>();
-        if (j.contains("enableOnScreen"))
-            config.enableOnScreen = j["enableOnScreen"].get<bool>();
-        if (j.contains("enableDevConsole"))
-            config.enableDevConsole = j["enableDevConsole"].get<bool>();
-        if (j.contains("asyncLogging"))
-            config.asyncLogging = j["asyncLogging"].get<bool>();
-        if (j.contains("maxLogEntries"))
-            config.maxLogEntries = j["maxLogEntries"].get<int>();
-        if (j.contains("timestampEnabled"))
-            config.timestampEnabled = j["timestampEnabled"].get<bool>();
-        if (j.contains("threadIdEnabled"))
-            config.threadIdEnabled = j["threadIdEnabled"].get<bool>();
-        if (j.contains("autoFlush"))
-            config.autoFlush = j["autoFlush"].get<bool>();
+        if (j.contains("logFilePath")) config.logFilePath = j["logFilePath"].get<std::string>();
+        if (j.contains("enableConsole")) config.enableConsole = j["enableConsole"].get<bool>();
+        if (j.contains("enableFile")) config.enableFile = j["enableFile"].get<bool>();
+        if (j.contains("enableDebugOut")) config.enableDebugOut = j["enableDebugOut"].get<bool>();
+        if (j.contains("enableOnScreen")) config.enableOnScreen = j["enableOnScreen"].get<bool>();
+        if (j.contains("enableDevConsole")) config.enableDevConsole = j["enableDevConsole"].get<bool>();
+        if (j.contains("asyncLogging")) config.asyncLogging = j["asyncLogging"].get<bool>();
+        if (j.contains("maxLogEntries")) config.maxLogEntries = j["maxLogEntries"].get<int>();
+        if (j.contains("timestampEnabled")) config.timestampEnabled = j["timestampEnabled"].get<bool>();
+        if (j.contains("threadIdEnabled")) config.threadIdEnabled = j["threadIdEnabled"].get<bool>();
+        if (j.contains("autoFlush")) config.autoFlush = j["autoFlush"].get<bool>();
 
         // Rotation settings (path only - SmartFileOutputDevice will load the actual config)
-        if (j.contains("enableSmartRotation"))
-            config.enableSmartRotation = j["enableSmartRotation"].get<bool>();
-        if (j.contains("rotationConfigPath"))
-            config.rotationConfigPath = j["rotationConfigPath"].get<std::string>();
+        if (j.contains("enableSmartRotation")) config.enableSmartRotation = j["enableSmartRotation"].get<bool>();
+        if (j.contains("rotationConfigPath")) config.rotationConfigPath = j["rotationConfigPath"].get<std::string>();
 
         // Note: smartRotationConfig is NOT parsed here - SmartFileOutputDevice loads it from rotationConfigPath
 
@@ -176,8 +163,8 @@ struct sLogSubsystemConfig
 class LogSubsystem
 {
 public:
-    explicit LogSubsystem(sLogSubsystemConfig config = sLogSubsystemConfig{});
-    ~LogSubsystem();
+    explicit LogSubsystem(sLogSubsystemConfig config);
+    ~LogSubsystem() = default;
 
     // 子系統生命週期
     void Startup();

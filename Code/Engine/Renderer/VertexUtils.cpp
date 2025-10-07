@@ -17,14 +17,6 @@
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Platform/Window.hpp"
 
-#ifdef min
-#undef min
-#endif
-
-#ifdef max
-#undef max
-#endif
-
 //----------------------------------------------------------------------------------------------------
 AABB2 GetVertexBounds2D(VertexList_PCU const& verts)
 {
@@ -38,10 +30,10 @@ AABB2 GetVertexBounds2D(VertexList_PCU const& verts)
 
     for (Vertex_PCU const& vert : verts)
     {
-        min.x = std::min(min.x, vert.m_position.x);
-        min.y = std::min(min.y, vert.m_position.y);
-        max.x = std::max(max.x, vert.m_position.x);
-        max.y = std::max(max.y, vert.m_position.y);
+        min.x = (std::min)(min.x, vert.m_position.x);
+        min.y = (std::min)(min.y, vert.m_position.y);
+        max.x = (std::max)(max.x, vert.m_position.x);
+        max.y = (std::max)(max.y, vert.m_position.y);
     }
 
     return AABB2(min, max);

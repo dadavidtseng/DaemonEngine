@@ -9,8 +9,8 @@
 #include "Engine/Core/JobSystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-JobWorkerThread::JobWorkerThread(JobSystem* jobSystem,
-                                 int const  workerID,
+JobWorkerThread::JobWorkerThread(JobSystem*             jobSystem,
+                                 int const              workerID,
                                  WorkerThreadType const workerType)
     : m_jobSystem(jobSystem),
       m_workerID(workerID),
@@ -79,7 +79,8 @@ void JobWorkerThread::ThreadMain()
             m_jobSystem->m_jobAvailableCondition.wait_for(
                 lock,
                 std::chrono::milliseconds(10),  // Timeout after 10ms to check m_shouldStop
-                [this] {
+                [this]
+                {
                     // Predicate: wake up if stopping or if there are jobs available
                     return m_shouldStop.load() || m_jobSystem->GetQueuedJobCount() > 0;
                 }

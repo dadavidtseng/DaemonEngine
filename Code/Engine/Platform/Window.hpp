@@ -59,7 +59,6 @@ public:
     void                 EnableGlobalInputCapture();
     void                 DisableGlobalInputCapture();
 
-
     static Window* s_mainWindow; // fancy way of advertising global variables (advertisement)
 
     // Window type management

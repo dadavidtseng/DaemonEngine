@@ -6,7 +6,7 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
-const char* const DEFAULT_SHADER_SOURCE = R"(
+char const* const DEFAULT_SHADER_SOURCE = R"(
 struct vs_input_t
 {
     float3 modelSpacePosition : POSITION;
