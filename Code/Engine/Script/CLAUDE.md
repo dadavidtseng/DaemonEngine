@@ -55,16 +55,43 @@ class V8Subsystem {
 ```cpp
 class IScriptableObject {
     virtual ~IScriptableObject() = default;
-    
+
+    // Initialize method registry during construction (NEW)
+    virtual void InitializeMethodRegistry() = 0;
+
     // Called by V8Subsystem when object methods are invoked from JavaScript
-    virtual std::any CallMethod(std::string const& methodName, 
-                                std::vector<std::any> const& args) = 0;
-    
+    virtual ScriptMethodResult CallMethod(String const& methodName,
+                                         ScriptArgs const& args) = 0;
+
     // Return list of available methods for this object
-    virtual std::vector<std::string> GetAvailableMethods() const = 0;
-    
+    virtual std::vector<ScriptMethodInfo> GetAvailableMethods() const = 0;
+
     // Get object type name for debugging
-    virtual std::string GetTypeName() const = 0;
+    virtual String GetTypeName() const = 0;
+
+protected:
+    // Method registry for efficient dispatch (NEW)
+    std::unordered_map<String, MethodFunction> m_methodRegistry;
+};
+
+// Modern implementation pattern (recommended)
+class MyScriptInterface : public IScriptableObject {
+    void InitializeMethodRegistry() override {
+        m_methodRegistry["doSomething"] = [this](ScriptArgs const& args) {
+            return ExecuteDoSomething(args);
+        };
+        m_methodRegistry["getValue"] = [this](ScriptArgs const& args) {
+            return ExecuteGetValue(args);
+        };
+    }
+
+    ScriptMethodResult CallMethod(String const& methodName, ScriptArgs const& args) override {
+        auto it = m_methodRegistry.find(methodName);
+        if (it != m_methodRegistry.end()) {
+            return it->second(args);
+        }
+        return ScriptMethodResult::Error("Unknown method: " + methodName);
+    }
 };
 ```
 
@@ -209,5 +236,14 @@ The module is designed to be extended with additional scriptable interfaces for:
 
 ## Changelog
 
-- 2025-09-06 19:54:50: Initial module documentation created  
-- Recent developments: InputScriptInterface integration for exposing input module API to V8, comprehensive error handling and memory management improvements
+- 2025-10-07: **Method Registry Pattern for Scriptable Objects**
+  - Introduced `InitializeMethodRegistry()` virtual method for structured method registration
+  - Added `MethodFunction` type alias: `std::function<ScriptMethodResult(ScriptArgs const&)>`
+  - Implemented `m_methodRegistry` member for O(1) method dispatch lookup
+  - Modernized `CallMethod` signature to use `ScriptMethodResult` and `ScriptArgs`
+  - Simplified `ScriptMethodInfo` to use `StringList` instead of `std::vector<String>`
+  - Eliminates repetitive if-else chains in favor of map-based dispatch
+  - Improved type safety and compile-time error detection for method signatures
+  - Updated InputScriptInterface and AudioScriptInterface to use new pattern
+- 2025-09-06 19:54:50: Initial module documentation created
+- Recent developments: InputScriptInterface and AudioScriptInterface with method registry pattern, RendererScriptInterface for graphics API exposure, comprehensive error handling and memory management improvements

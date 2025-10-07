@@ -230,7 +230,24 @@ A: Set light data via `SetLightConstants()` which binds to shader constant buffe
 ### Shader Integration
 - `DefaultShader.hpp` - Default shader definitions
 
+### Script Interface
+- `RendererScriptInterface.cpp` - JavaScript binding for renderer
+- `RendererScriptInterface.hpp` - Script interface declarations for V8 integration
+
 ## Changelog
 
+- 2025-10-07: **JavaScript Scripting Interface and Resource Leak Detection**
+  - Added `RendererScriptInterface` class for exposing Renderer APIs to JavaScript/V8
+  - JavaScript API for rendering state control (blend, rasterizer, sampler, depth modes)
+  - JavaScript API for resource binding (textures, shaders) and draw operations
+  - Integrated Renderer with ResourceSubsystem for texture loading
+  - Added static leak tracking to `Texture` class with `ReportLeakStatus()`
+  - Added static leak tracking to `BitmapFont` class with `ReportLeakStatus()`
+  - Improved shutdown sequence: leak reports before DirectX cleanup
+  - Added `m_ownsDefaultTexture` flag to track default texture ownership
+  - Renderer now attempts to load default texture from ResourceSubsystem
+  - Fallback to local texture creation if ResourceSubsystem unavailable
+  - Commented out direct texture loading methods (now use ResourceSubsystem)
+  - Enhanced resource ownership management for proper cleanup
 - 2025-09-06 19:54:50: Initial module documentation created
-- Recent developments: VertexUtils enhancements, AABB3 integration for 3D rendering
+- Recent developments: RendererScriptInterface for JavaScript integration, resource leak detection, ResourceSubsystem integration, VertexUtils enhancements, AABB3 integration for 3D rendering

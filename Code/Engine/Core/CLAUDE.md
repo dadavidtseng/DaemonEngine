@@ -20,23 +20,65 @@ The Core module provides fundamental engine systems and utilities that serve as 
 
 ### Initialization Pattern
 ```cpp
-// Global system instances (legacy approach)
-extern EventSystem* g_eventSystem;
-extern DevConsole*  g_devConsole;
-extern JobSystem*   g_jobSystem;
-
-// Modern GEngine singleton approach (recommended)
+// Modern GEngine centralized initialization (recommended)
 GEngine& engine = GEngine::Get();
-engine.Initialize(g_jobSystem);
+engine.Construct(); // JSON-based subsystem initialization
 
-// Access subsystems via singleton
-JobSystem* jobSystem = GEngine::GetJobSystem();
+// Access subsystems via global pointers
+g_logSubsystem->LogInfo("Engine started");
+g_eventSystem->FireEvent("EngineStarted", args);
+g_jobSystem->QueueJob(job);
 
-// Typical startup in application
+// Legacy manual initialization (deprecated)
 g_eventSystem = new EventSystem(eventConfig);
 g_devConsole = new DevConsole(consoleConfig);
 g_jobSystem = new JobSystem();
 g_jobSystem->StartUp(4, 1); // 4 generic threads, 1 I/O thread
+```
+
+### JSON Configuration Files
+The engine supports data-driven configuration through JSON files:
+
+**LogConfig.json** (`Data/Config/LogConfig.json`):
+```json
+{
+  "logFilePath": "Logs/latest.log",
+  "enableConsole": true,
+  "enableFile": true,
+  "enableDebugOut": true,
+  "enableOnScreen": true,
+  "enableDevConsole": true,
+  "asyncLogging": true,
+  "maxLogEntries": 50000,
+  "timestampEnabled": true,
+  "threadIdEnabled": true,
+  "autoFlush": false,
+  "enableSmartRotation": true,
+  "rotationConfigPath": "Data/Config/LogRotation.json",
+  "smartRotationConfig": {
+    "maxFileSizeBytes": 104857600,
+    "maxTimeInterval": 7200,
+    "logDirectory": "Logs",
+    "currentLogName": "latest.log",
+    "sessionPrefix": "session"
+  }
+}
+```
+
+**EngineSubsystems.json** (`Data/Config/EngineSubsystems.json`):
+```json
+{
+  "subsystems": {
+    "log": true,
+    "events": true,
+    "jobs": true,
+    "audio": true,
+    "renderer": true,
+    "input": true,
+    "resource": true,
+    "script": true
+  }
+}
 ```
 
 ## External Interfaces
@@ -249,6 +291,13 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 
 ## Changelog
 
+- 2025-10-07: **Engine Subsystem Initialization Modernization**
+  - Implemented `GEngine::Construct()` for centralized, JSON-configured subsystem initialization
+  - Added data-driven configuration support through `LogConfig.json` and `EngineSubsystems.json`
+  - Automatic LogSubsystem configuration with fallback to hardcoded defaults
+  - Hardware-aware JobSystem thread allocation based on CPU core count
+  - Comprehensive initialization logging and error handling for missing/malformed config files
+  - Support for runtime subsystem enable/disable through JSON configuration
 - 2025-10-01: **Major LogSubsystem Refactoring** (SOLID Principles Applied)
   - Extracted 7 output devices from monolithic 2,033-line implementation into separate modular files
   - Created `ILogOutputDevice.hpp` base interface following Interface Segregation Principle
@@ -264,4 +313,4 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 - 2025-09-30: Enhanced JobSystem with thread type specialization and I/O threading support
 - 2025-09-30: Improved DevConsole with enhanced functionality and comprehensive documentation
 - 2025-09-06 19:54:50: Initial module documentation created
-- Recent developments: LogSubsystem integration with DevConsole, StringUtils enhancements for naming conventions
+- Recent developments: JSON-based engine configuration, modular subsystem initialization, comprehensive logging architecture

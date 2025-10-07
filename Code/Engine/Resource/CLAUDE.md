@@ -127,12 +127,40 @@ struct sResourceSubsystemConfig {
 
 ### Resource Type System
 ```cpp
-// Base resource interface
+// Resource type enumeration (engine naming convention)
+enum class eResourceType : int8_t {
+    TEXTURE,
+    MODEL,
+    SHADER,
+    AUDIO,
+    FONT,
+    ANIMATION,
+    MATERIAL
+};
+
+// Resource state enumeration
+enum class eResourceState : int8_t {
+    Unloaded,    // Resource not yet loaded
+    Loading,     // Currently loading
+    Loaded,      // Successfully loaded
+    Failed       // Load failed
+};
+
+// Base resource interface (modern smart pointer approach)
 class IResource {
     virtual ~IResource() = default;
-    virtual String GetResourceType() const = 0;
-    virtual size_t GetMemoryUsage() const = 0;
-    virtual bool IsLoaded() const = 0;
+    virtual eResourceType GetType() const = 0;
+    virtual eResourceState GetState() const = 0;
+    virtual size_t GetMemorySize() const = 0;
+    virtual bool Load() = 0;
+    virtual void Unload() = 0;
+
+protected:
+    uint32_t                    m_id;
+    std::string                 m_path;
+    eResourceType               m_type;
+    std::atomic<eResourceState> m_state = eResourceState::Unloaded;
+    size_t                      m_memorySize = 0;
 };
 ```
 
@@ -312,5 +340,17 @@ The Resource module integrates with:
 
 ## Changelog
 
+- 2025-10-07: **Resource Subsystem Architecture Modernization**
+  - Removed manual reference counting in favor of std::shared_ptr for automatic lifetime management
+  - Eliminated static singleton pattern from ResourceSubsystem (no more `s_instance`, `s_renderer`)
+  - Injected Renderer dependency through constructor config instead of static member
+  - Simplified ResourceHandle by removing custom ref counting logic (now wraps shared_ptr)
+  - Renamed `ResourceType` → `eResourceType` (engine naming convention)
+  - Renamed `ResourceState` → `eResourceState` (consistency with other enums)
+  - Removed `IResource::AddRef()`, `Release()`, and `GetRefCount()` (now implicit in shared_ptr)
+  - ResourceCache now uses `std::weak_ptr` for automatic cleanup of unreferenced resources
+  - All resource loaders return `std::shared_ptr<IResource>` instead of raw pointers
+  - Improved thread safety through std::shared_ptr's atomic ref counting
+  - Enhanced shutdown sequence with comprehensive debug logging
 - 2025-09-06 21:17:11: Initial Resource module documentation created
-- Recent developments: Multi-threaded loading system, comprehensive resource type support, memory management improvements
+- Recent developments: Multi-threaded loading system, comprehensive resource type support, memory management improvements, modern C++ smart pointer adoption
