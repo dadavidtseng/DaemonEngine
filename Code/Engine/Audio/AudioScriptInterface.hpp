@@ -8,8 +8,6 @@
 #include "Engine/Script/IScriptableObject.hpp"
 
 //----------------------------------------------------------------------------------------------------
-#include <functional>
-#include <unordered_map>
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class AudioSystem;
@@ -45,34 +43,32 @@ public:
     bool               SetProperty(String const& propertyName, std::any const& value) override;
 
 private:
-    AudioSystem* m_audioSystem;
+    AudioSystem* m_audioSystem = nullptr;
 
     // === METHOD REGISTRY FOR EFFICIENT DISPATCH ===
-    using MethodFunction = std::function<ScriptMethodResult(ScriptArgs const&)>;
-    std::unordered_map<String, MethodFunction> m_methodRegistry;
-    void                                       InitializeMethodRegistry();
+    void InitializeMethodRegistry() override;
 
     // === SOUND LOADING AND MANAGEMENT ===
     ScriptMethodResult ExecuteCreateOrGetSound(ScriptArgs const& args);
-    
+
     // === 2D SOUND PLAYBACK METHODS ===
     ScriptMethodResult ExecuteStartSound(ScriptArgs const& args);
     ScriptMethodResult ExecuteStartSoundAdvanced(ScriptArgs const& args);
-    
+
     // === 3D SPATIAL SOUND METHODS ===
     ScriptMethodResult ExecuteStartSoundAt(ScriptArgs const& args);
     ScriptMethodResult ExecuteStartSoundAtAdvanced(ScriptArgs const& args);
-    
+
     // === PLAYBACK CONTROL METHODS ===
     ScriptMethodResult ExecuteStopSound(ScriptArgs const& args);
     ScriptMethodResult ExecuteSetSoundVolume(ScriptArgs const& args);
     ScriptMethodResult ExecuteSetSoundBalance(ScriptArgs const& args);
     ScriptMethodResult ExecuteSetSoundSpeed(ScriptArgs const& args);
-    
+
     // === 3D LISTENER CONTROL ===
     ScriptMethodResult ExecuteSetNumListeners(ScriptArgs const& args);
     ScriptMethodResult ExecuteUpdateListener(ScriptArgs const& args);
-    
+
     // === UTILITY METHODS ===
     ScriptMethodResult ExecuteIsValidSoundID(ScriptArgs const& args);
     ScriptMethodResult ExecuteIsValidPlaybackID(ScriptArgs const& args);

@@ -23,7 +23,7 @@ AudioScriptInterface::AudioScriptInterface(AudioSystem* audioSystem)
     }
 
     // Initialize method registry for efficient dispatch
-    InitializeMethodRegistry();
+    AudioScriptInterface::InitializeMethodRegistry();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ ScriptMethodResult AudioScriptInterface::CallMethod(String const& methodName, Sc
 std::any AudioScriptInterface::GetProperty(String const& propertyName) const
 {
     // No properties currently implemented
-    UNUSED(propertyName);
+    UNUSED(propertyName)
     return std::any{};
 }
 
@@ -172,8 +172,8 @@ std::any AudioScriptInterface::GetProperty(String const& propertyName) const
 bool AudioScriptInterface::SetProperty(String const& propertyName, std::any const& value)
 {
     // No properties currently implemented
-    UNUSED(propertyName);
-    UNUSED(value);
+    UNUSED(propertyName)
+    UNUSED(value)
     return false;
 }
 

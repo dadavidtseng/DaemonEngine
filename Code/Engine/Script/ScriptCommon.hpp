@@ -27,13 +27,13 @@ struct ScriptMethodResult
 //----------------------------------------------------------------------------------------------------
 struct ScriptMethodInfo
 {
-    String              name;
-    String              description;
-    std::vector<String> parameterTypes;
-    String              returnType;
+    String     name;
+    String     description;
+    StringList parameterTypes;
+    String     returnType;
 
-    explicit ScriptMethodInfo(String                     methodName,
-                              String                     description    = "",
-                              std::vector<String> const& parameterTypes = {},
-                              String                     returnType     = "void");
+    explicit ScriptMethodInfo(String            methodName,
+                              String            description    = "",
+                              StringList const& parameterTypes = {},
+                              String            returnType     = "void");
 };

@@ -5,11 +5,14 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 //----------------------------------------------------------------------------------------------------
+#include <functional>
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ScriptCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Type alias for script method arguments using type-erased std::any vector
-using ScriptArgs = std::vector<std::any>;
+using ScriptArgs     = std::vector<std::any>;
+using MethodFunction = std::function<ScriptMethodResult(ScriptArgs const&)>;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Abstract interface for C++ objects that can be exposed to JavaScript via V8 scripting system
@@ -43,6 +46,8 @@ public:
     /// @see ScriptMethodInfo structure definition in ScriptCommon.hpp
     //------------------------------------------------------------------------------------------------
     virtual std::vector<ScriptMethodInfo> GetAvailableMethods() const = 0;
+
+    virtual void InitializeMethodRegistry() =0;
 
     //------------------------------------------------------------------------------------------------
     /// @brief Get list of all properties available for JavaScript property access
@@ -142,4 +147,6 @@ public:
     ///         the results of GetAvailableProperties() for matching property name.
     //------------------------------------------------------------------------------------------------
     virtual bool HasProperty(String const& propertyName) const;
+
+    std::unordered_map<String, MethodFunction> m_methodRegistry;
 };

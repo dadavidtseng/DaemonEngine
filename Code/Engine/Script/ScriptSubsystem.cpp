@@ -1876,16 +1876,12 @@ void PropertyGetterCallback(v8::Local<v8::Name> property, const v8::PropertyCall
     v8::Isolate*    isolate = info.GetIsolate();
     v8::HandleScope scope(isolate);
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Build verification"));
-
     // Get property callback data
     v8::Local<v8::External> external     = v8::Local<v8::External>::Cast(info.Data());
     auto*                   callbackData = static_cast<PropertyCallbackData*>(external->Value());
 
     v8::String::Utf8Value propertyName(isolate, property);
     std::string           propName(*propertyName);
-
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Getting property '{}' from C++ object", propName));
 
     try
     {
@@ -1897,31 +1893,26 @@ void PropertyGetterCallback(v8::Local<v8::Name> property, const v8::PropertyCall
         {
             std::string str = std::any_cast<std::string>(result);
             info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned string value: '{}'", str));
         }
         else if (result.type() == typeid(String))
         {
             String str = std::any_cast<String>(result);
             info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned String value: '{}'", str.c_str()));
         }
         else if (result.type() == typeid(int))
         {
             int value = std::any_cast<int>(result);
             info.GetReturnValue().Set(v8::Integer::New(isolate, value));
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned int value: {}", value));
         }
         else if (result.type() == typeid(double))
         {
             double value = std::any_cast<double>(result);
             info.GetReturnValue().Set(v8::Number::New(isolate, value));
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned double value: {}", value));
         }
         else if (result.type() == typeid(bool))
         {
             bool value = std::any_cast<bool>(result);
             info.GetReturnValue().Set(v8::Boolean::New(isolate, value));
-            DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertyGetterCallback: Returned bool value: {}", value));
         }
         else
         {
@@ -1942,16 +1933,12 @@ void PropertySetterCallback(v8::Local<v8::Name> property, v8::Local<v8::Value> v
     v8::Isolate*    isolate = info.GetIsolate();
     v8::HandleScope scope(isolate);
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Build verification"));
-
     // Get property callback data
     v8::Local<v8::External> external     = v8::Local<v8::External>::Cast(info.Data());
     auto*                   callbackData = static_cast<PropertyCallbackData*>(external->Value());
 
     v8::String::Utf8Value propertyName(isolate, property);
     std::string           propName(*propertyName);
-
-    DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("PropertySetterCallback: Setting property '{}' on C++ object", propName));
 
     try
     {

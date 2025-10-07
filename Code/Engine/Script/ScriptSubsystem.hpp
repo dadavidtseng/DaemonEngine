@@ -13,11 +13,11 @@
 #include <set>
 #include <unordered_set>
 
-// Forward declarations
+//-Forward-Declaration--------------------------------------------------------------------------------
 class ChromeDevToolsWebSocketSubsystem;
 class FileWatcher;
 class ScriptReloader;
-class ModuleLoader;  // NEW: ES6 module loader
+class ModuleLoader;
 
 //----------------------------------------------------------------------------------------------------
 using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;

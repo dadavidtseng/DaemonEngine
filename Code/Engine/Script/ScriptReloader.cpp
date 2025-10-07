@@ -4,16 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ScriptReloader.hpp"
-
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Script/ScriptSubsystem.hpp"
 #include "Engine/Script/ModuleLoader.hpp"
+#include "Engine/Script/ScriptSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 ScriptReloader::ScriptReloader()
@@ -27,7 +22,6 @@ ScriptReloader::~ScriptReloader()
     Shutdown();
 }
 
-
 bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem, ModuleLoader* moduleLoader)
 {
     if (!scriptSystem)
@@ -36,8 +30,8 @@ bool ScriptReloader::Initialize(ScriptSubsystem* scriptSystem, ModuleLoader* mod
         return false;
     }
 
-    m_scriptSystem          = scriptSystem;
-    m_moduleLoader          = moduleLoader;
+    m_scriptSystem      = scriptSystem;
+    m_moduleLoader      = moduleLoader;
     m_reloadCount       = 0;
     m_successfulReloads = 0;
     m_failedReloads     = 0;
@@ -59,13 +53,13 @@ void ScriptReloader::Shutdown()
     }
 
     ClearPreservedState();
-    m_scriptSystem               = nullptr;
+    m_scriptSystem           = nullptr;
     m_reloadCompleteCallback = nullptr;
 
     LogReloadEvent("ScriptReloader shutdown completed");
 }
 
-bool ScriptReloader::ReloadScript(const std::string& scriptPath)
+bool ScriptReloader::ReloadScript(String const& scriptPath)
 {
     std::vector<std::string> paths = {scriptPath};
     return ReloadScripts(paths);
@@ -241,7 +235,7 @@ bool ScriptReloader::PerformReload(std::vector<std::string> const& scriptPaths)
     }
 }
 
-bool ScriptReloader::ExecuteScript(const std::string& scriptPath)
+bool ScriptReloader::ExecuteScript(String const& scriptPath)
 {
     try
     {
@@ -289,7 +283,7 @@ bool ScriptReloader::ExecuteScript(const std::string& scriptPath)
     }
 }
 
-bool ScriptReloader::ReloadInputSystemScript(const std::string& scriptContent)
+bool ScriptReloader::ReloadInputSystemScript(String const& scriptContent)
 {
     try
     {
@@ -371,7 +365,7 @@ bool ScriptReloader::ReloadInputSystemScript(const std::string& scriptContent)
     }
 }
 
-bool ScriptReloader::ReadScriptFile(const std::string& scriptPath, std::string& content)
+bool ScriptReloader::ReadScriptFile(String const& scriptPath, std::string& content)
 {
     try
     {
@@ -512,13 +506,13 @@ std::string ScriptReloader::CreateStateRestorationScript()
     )";
 }
 
-void ScriptReloader::SetError(const std::string& error)
+void ScriptReloader::SetError(String const& error)
 {
     m_lastError = error;
     DAEMON_LOG(LogScript, eLogVerbosity::Error, StringFormat("ScriptReloader Error: {}", error));
 }
 
-void ScriptReloader::LogReloadEvent(const std::string& message)
+void ScriptReloader::LogReloadEvent(String const& message)
 {
     DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("ScriptReloader: {}", message));
 }
@@ -527,7 +521,7 @@ void ScriptReloader::LogReloadEvent(const std::string& message)
 // ES6 Module Hot-Reload Support (Phase 5)
 //----------------------------------------------------------------------------------------------------
 
-bool ScriptReloader::IsES6Module(const std::string& filePath) const
+bool ScriptReloader::IsES6Module(String const& filePath) const
 {
     // All .js files are treated as ES6 modules
     // This allows us to use a single .js extension for all JavaScript files
@@ -543,7 +537,7 @@ bool ScriptReloader::IsES6Module(const std::string& filePath) const
     return false;
 }
 
-bool ScriptReloader::ReloadES6Module(const std::string& modulePath)
+bool ScriptReloader::ReloadES6Module(String const& modulePath)
 {
     if (!m_moduleLoader)
     {

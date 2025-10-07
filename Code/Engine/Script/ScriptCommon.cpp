@@ -26,7 +26,7 @@ ScriptMethodResult ScriptMethodResult::Error(String const& message)
 //----------------------------------------------------------------------------------------------------
 ScriptMethodInfo::ScriptMethodInfo(String                     methodName,
                                    String                     description,
-                                   std::vector<String> const& parameterTypes,
+                                   StringList const& parameterTypes,
                                    String                     returnType)
     : name(std::move(methodName)),
       description(std::move(description)),

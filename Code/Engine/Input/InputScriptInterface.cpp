@@ -21,7 +21,7 @@ InputScriptInterface::InputScriptInterface(InputSystem* inputSystem)
     }
 
     // Initialize method registry for efficient dispatch
-    InitializeMethodRegistry();
+    InputScriptInterface::InitializeMethodRegistry();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -101,11 +101,16 @@ std::vector<ScriptMethodInfo> InputScriptInterface::GetAvailableMethods() const
                          {"int", "int"},
                          "bool"),
 
-        // // === LEGACY METHODS (for backward compatibility) ===
-        // ScriptMethodInfo("isKeyDown",
-        //                  "檢查指定按鍵是否正在被按下",
-        //                  {"int"},
-        //                  "bool"),
+        // === LEGACY METHODS (for backward compatibility) ===
+        ScriptMethodInfo("isKeyDown",
+                         "Check if a key is currently being held down (legacy)",
+                         {"int"},
+                         "bool"),
+
+        // // ScriptMethodInfo("wasKeyJustPressed",
+        // //                  "檢查指定按鍵是否剛被按下",
+        // //                  {"int"},
+        // //                  "bool"),
         //
         // ScriptMethodInfo("wasKeyJustPressed",
         //                  "檢查指定按鍵是否剛被按下",

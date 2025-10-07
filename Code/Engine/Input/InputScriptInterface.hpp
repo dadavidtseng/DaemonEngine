@@ -7,7 +7,6 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/IScriptableObject.hpp"
 //----------------------------------------------------------------------------------------------------
-#include <functional>
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class InputSystem;
@@ -26,12 +25,10 @@ public:
     bool               SetProperty(String const& propertyName, std::any const& value) override;
 
 private:
-    InputSystem* m_inputSystem;
+    InputSystem* m_inputSystem = nullptr;
 
     // === METHOD REGISTRY FOR EFFICIENT DISPATCH ===
-    using MethodFunction = std::function<ScriptMethodResult(ScriptArgs const&)>;
-    std::unordered_map<String, MethodFunction> m_methodRegistry;
-    void                                       InitializeMethodRegistry();
+    void InitializeMethodRegistry() override;
 
     // === KEYBOARD INPUT METHODS ===
     ScriptMethodResult ExecuteIsKeyPressed(ScriptArgs const& args);

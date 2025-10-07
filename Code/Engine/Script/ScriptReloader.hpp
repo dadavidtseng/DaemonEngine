@@ -6,8 +6,9 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
 #include <functional>
-#include <string>
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class ScriptSubsystem;
@@ -31,7 +32,7 @@ class ModuleLoader;
 class ScriptReloader
 {
 public:
-    using ReloadCompleteCallback = std::function<void(bool success, const std::string& error)>;
+    using ReloadCompleteCallback = std::function<void(bool success, const String& error)>;
 
     ScriptReloader();
     ~ScriptReloader();
@@ -41,8 +42,8 @@ public:
     void Shutdown();
 
     // Reload operations
-    bool ReloadScript(const std::string& scriptPath);
-    bool ReloadScripts(const std::vector<std::string>& scriptPaths);
+    bool ReloadScript(const String& scriptPath);
+    bool ReloadScripts(const std::vector<String>& scriptPaths);
     void SetReloadCompleteCallback(ReloadCompleteCallback callback);
 
     // State management
@@ -55,32 +56,32 @@ public:
     bool IsStatePreservationEnabled() const { return m_statePreservationEnabled; }
 
     // Status and debugging
-    bool        IsReloading() const { return m_isReloading; }
-    std::string GetLastError() const { return m_lastError; }
-    size_t      GetReloadCount() const { return m_reloadCount; }
+    bool   IsReloading() const { return m_isReloading; }
+    String GetLastError() const { return m_lastError; }
+    size_t GetReloadCount() const { return m_reloadCount; }
 
 private:
     // Internal reload logic
-    bool PerformReload(const std::vector<std::string>& scriptPaths);
-    bool ExecuteScript(const std::string& scriptPath);
-    bool ReadScriptFile(const std::string& scriptPath, std::string& content);
+    bool PerformReload(StringList const& scriptPaths);
+    bool ExecuteScript(String const& scriptPath);
+    bool ReadScriptFile(String const& scriptPath, String& content);
 
     // File type detection and routing
-    bool IsES6Module(const std::string& filePath) const;
-    bool ReloadES6Module(const std::string& modulePath);
+    bool IsES6Module(String const& filePath) const;
+    bool ReloadES6Module(String const& modulePath);
 
     // Special reload strategies for different script types
-    bool ReloadInputSystemScript(const std::string& scriptContent);
+    bool ReloadInputSystemScript(String const& scriptContent);
 
     // State management helpers
-    bool        PreserveSpecificObjects();
-    bool        RestoreSpecificObjects();
-    std::string CreateStatePreservationScript();
-    std::string CreateStateRestorationScript();
+    bool   PreserveSpecificObjects();
+    bool   RestoreSpecificObjects();
+    String CreateStatePreservationScript();
+    String CreateStateRestorationScript();
 
     // Error handling
-    void SetError(const std::string& error);
-    void LogReloadEvent(const std::string& message);
+    void SetError(String const& error);
+    void LogReloadEvent(String const& message);
 
 private:
     // Script subsystem integration
@@ -88,13 +89,13 @@ private:
     ModuleLoader*    m_moduleLoader{nullptr};
 
     // Reload state
-    bool        m_isReloading{false};
-    bool        m_statePreservationEnabled{true};
-    std::string m_preservedState;
+    bool   m_isReloading{false};
+    bool   m_statePreservationEnabled{true};
+    String m_preservedState;
 
     // Callback and error handling
     ReloadCompleteCallback m_reloadCompleteCallback;
-    std::string            m_lastError;
+    String                 m_lastError;
 
     // Statistics
     size_t m_reloadCount{0};
