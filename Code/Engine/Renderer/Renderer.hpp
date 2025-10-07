@@ -4,18 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-
-#include <vector>
-
-#include "Engine/Core/Rgba8.hpp"
-#include "Engine/Math/AABB2.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/RenderCommon.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
-#include "Engine/Renderer/Vertex_PCU.hpp"
-#include "Game/EngineBuildPreferences.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class BitmapFont;
@@ -65,7 +59,6 @@ public:
     static int k_modelConstantsSlot;
     static int k_blurConstantSlot;
 
-
     void Startup();
     void BeginFrame();
     void EndFrame() const;
@@ -87,10 +80,12 @@ public:
     void BindTexture(Texture const* texture, int slot = 0) const;
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
 
-    Image       CreateImageFromFile(char const* imageFilePath);
-    BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
-    Shader*     CreateOrGetShaderFromFile(char const* shaderFilePath, eVertexType vertexType = eVertexType::VERTEX_PCU);
-    Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
+    // Image CreateImageFromFile(char const* imageFilePath);
+    // Phase 6: REMOVED - use ResourceSubsystem::CreateOrGetBitmapFontFromFile() instead
+    // BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
+    Shader* CreateOrGetShaderFromFile(char const* shaderFilePath, eVertexType vertexType = eVertexType::VERTEX_PCU);
+    // Phase 6: REMOVED - use ResourceSubsystem::CreateOrGetTextureFromFile() instead
+    // Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
 
     void            SetBlendMode(eBlendMode mode);
     void            SetDepthMode(eDepthMode mode);
@@ -199,9 +194,10 @@ protected:
     ConstantBuffer* m_perFrameCBO         = nullptr;
     ConstantBuffer* m_blurCBO             = nullptr;
 
-    Texture* m_defaultTexture = nullptr;
-    Shader*  m_defaultShader  = nullptr;
-    Shader*  m_currentShader  = nullptr;
+    Texture* m_defaultTexture     = nullptr;
+    bool     m_ownsDefaultTexture = false;  // Phase 4: Track if we own the fallback default texture
+    Shader*  m_defaultShader      = nullptr;
+    Shader*  m_currentShader      = nullptr;
 
     std::vector<BitmapFont*> m_loadedFonts;
     std::vector<Shader*>     m_loadedShaders;

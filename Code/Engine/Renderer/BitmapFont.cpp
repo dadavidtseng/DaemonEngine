@@ -6,13 +6,88 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Renderer/Texture.hpp"
 
 //----------------------------------------------------------------------------------------------------
-BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture const& fontTexture, IntVec2 const& spriteCoords)
-    : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
-      , m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
+// Static member initialization
+int BitmapFont::s_totalCreated = 0;
+int BitmapFont::s_totalDeleted = 0;
+
+//----------------------------------------------------------------------------------------------------
+BitmapFont::BitmapFont(char const*    fontFilePathNameWithNoExtension,
+                       Texture const& fontTexture,
+                       IntVec2 const& spriteCoords)
+    : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension),
+      m_fontGlyphsSpriteSheet(fontTexture, spriteCoords)
 {
+    s_totalCreated++;
+    DebuggerPrintf("[BitmapFont] Constructor: Created font #%d '%s' (this=%p), Alive=%d\n",
+                   s_totalCreated, fontFilePathNameWithNoExtension, this, GetAliveCount());
+}
+
+//----------------------------------------------------------------------------------------------------
+BitmapFont::BitmapFont(char const* fontFilePathNameWithNoExtension, Texture* fontTexture, IntVec2 const& spriteCoords, bool ownsTexture)
+    : m_fontFilePathNameWithNoExtension(fontFilePathNameWithNoExtension)
+      , m_fontGlyphsSpriteSheet(*fontTexture, spriteCoords)
+      , m_ownedTexture(ownsTexture ? fontTexture : nullptr)
+{
+    s_totalCreated++;
+    DebuggerPrintf("[BitmapFont] Constructor (owning): Created font #%d '%s' (this=%p), ownsTexture=%d, Alive=%d\n",
+                   s_totalCreated, fontFilePathNameWithNoExtension, this, ownsTexture, GetAliveCount());
+}
+
+//----------------------------------------------------------------------------------------------------
+BitmapFont::~BitmapFont()
+{
+    s_totalDeleted++;
+    // Don't call DebuggerPrintf during destruction - logging system may be shut down
+
+    // Delete owned texture if we own it
+    if (m_ownedTexture)
+    {
+        delete m_ownedTexture;
+        m_ownedTexture = nullptr;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+int BitmapFont::GetAliveCount()
+{
+    return s_totalCreated - s_totalDeleted;
+}
+
+//----------------------------------------------------------------------------------------------------
+int BitmapFont::GetTotalCreated()
+{
+    return s_totalCreated;
+}
+
+//----------------------------------------------------------------------------------------------------
+int BitmapFont::GetTotalDeleted()
+{
+    return s_totalDeleted;
+}
+
+//----------------------------------------------------------------------------------------------------
+void BitmapFont::ReportLeakStatus()
+{
+    int alive = GetAliveCount();
+    DebuggerPrintf("========================================\n");
+    DebuggerPrintf("[BitmapFont] LEAK REPORT:\n");
+    DebuggerPrintf("[BitmapFont]   Total Created: %d\n", s_totalCreated);
+    DebuggerPrintf("[BitmapFont]   Total Deleted: %d\n", s_totalDeleted);
+    DebuggerPrintf("[BitmapFont]   Still Alive:   %d\n", alive);
+    if (alive > 0)
+    {
+        DebuggerPrintf("[BitmapFont]   *** LEAK DETECTED: %d fonts not deleted! ***\n", alive);
+    }
+    else
+    {
+        DebuggerPrintf("[BitmapFont]   No leaks detected.\n");
+    }
+    DebuggerPrintf("========================================\n");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -22,12 +97,12 @@ Texture const& BitmapFont::GetTexture() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForText2D(VertexList_PCU&   verts,
-                                   String const& text,
-                                   Vec2 const&   textMins,
-                                   float const   cellHeight,
-                                   Rgba8 const&  tint,
-                                   float const   cellAspectRatio) const
+void BitmapFont::AddVertsForText2D(VertexList_PCU& verts,
+                                   String const&   text,
+                                   Vec2 const&     textMins,
+                                   float const     cellHeight,
+                                   Rgba8 const&    tint,
+                                   float const     cellAspectRatio) const
 {
     Vec2 currentPosition = textMins; // Create a local copy to modify
 
@@ -45,7 +120,7 @@ void BitmapFont::AddVertsForText2D(VertexList_PCU&   verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForTextInBox2D(VertexList_PCU&        verts,
+void BitmapFont::AddVertsForTextInBox2D(VertexList_PCU&    verts,
                                         String const&      text,
                                         AABB2 const&       box,
                                         float              cellHeight,
@@ -66,18 +141,18 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList_PCU&        verts,
     for (String const& line : lines)
     {
         float lineWidth = GetTextWidth(cellHeight, line, cellAspectRatio);
-        maxLineWidth    = std::max(maxLineWidth, lineWidth);
+        maxLineWidth    = (std::max)(maxLineWidth, lineWidth);
     }
 
     // 4. If eTextBoxMode is set to SHRINK_TO_FIT,
     float scaleFactor = 1.f;
 
-    if (mode == SHRINK_TO_FIT)
+    if (mode == eTextBoxMode::SHRINK_TO_FIT)
     {
         // Get the horizontalScale and verticalScale, and set scaleFactor to whichever is smaller.
         float const horizontalScale = box.GetDimensions().x / maxLineWidth;
         float const verticalScale   = box.GetDimensions().y / totalLineHeight;
-        scaleFactor                 = std::min(horizontalScale, verticalScale);
+        scaleFactor                 = (std::min)(horizontalScale, verticalScale);
     }
 
     // 5. Apply the scaleFactor to cellHeight, maxLineWidth, and totalLineHeight.
@@ -139,19 +214,19 @@ void BitmapFont::AddVertsForTextInBox2D(VertexList_PCU&        verts,
 }
 
 //----------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList_PCU&   verts,
-                                                   String const& text,
-                                                   float const   cellHeight,
-                                                   Rgba8 const&  tint,
-                                                   float const   cellAspectRatio,
-                                                   Vec2 const&   alignment,
-                                                   int const     maxGlyphsToDraw) const
+void BitmapFont::AddVertsForText3DAtOriginXForward(VertexList_PCU& verts,
+                                                   String const&   text,
+                                                   float const     cellHeight,
+                                                   Rgba8 const&    tint,
+                                                   float const     cellAspectRatio,
+                                                   Vec2 const&     alignment,
+                                                   int const       maxGlyphsToDraw) const
 {
     float const textWidth = GetTextWidth(cellHeight, text, cellAspectRatio);
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(textWidth, cellHeight));
 
-    AddVertsForTextInBox2D(verts, text, box, cellHeight, tint, cellAspectRatio, alignment, OVERRUN, maxGlyphsToDraw);
+    AddVertsForTextInBox2D(verts, text, box, cellHeight, tint, cellAspectRatio, alignment, eTextBoxMode::OVERRUN, maxGlyphsToDraw);
 
     Mat44 transform;
 

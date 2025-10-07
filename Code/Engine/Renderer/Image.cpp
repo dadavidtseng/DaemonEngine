@@ -3,10 +3,11 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#define STB_IMAGE_IMPLEMENTATION    // Exactly one .CPP (this Image.cpp) should #define this before #including stb_image.h
 #include "Engine/Renderer/Image.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/ErrorWarningAssert.hpp"
+//----------------------------------------------------------------------------------------------------
+#define STB_IMAGE_IMPLEMENTATION    // Exactly one .CPP (this Image.cpp) should #define this before #including stb_image.h
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -45,7 +46,8 @@ Image::Image(char const* imageFilePath)
 }
 
 //----------------------------------------------------------------------------------------------------
-Image::Image(IntVec2 const& size, Rgba8 const color)
+Image::Image(IntVec2 const& size,
+             Rgba8 const    color)
     : m_dimensions(size)
 {
     m_rgbaTexels.resize(static_cast<unsigned long long>(size.x) * size.y, color);
@@ -84,7 +86,8 @@ void const* Image::GetRawData() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void Image::SetTexelColor(IntVec2 const& texelCoords, Rgba8 const& newColor)
+void Image::SetTexelColor(IntVec2 const& texelCoords,
+                          Rgba8 const&   newColor)
 {
     GUARANTEE_OR_DIE(texelCoords.x >= 0 &&
                      texelCoords.x < m_dimensions.x &&

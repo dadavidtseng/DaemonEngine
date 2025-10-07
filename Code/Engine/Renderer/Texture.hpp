@@ -17,9 +17,17 @@ class Texture
     friend class TextureLoader; // Allow TextureLoader to access protected members
 
 public:
+    Texture(); // Constructor for leak tracking
     ~Texture();
+
     // Add a getter for texture dimensions
-    IntVec2 GetDimensions() const { return m_dimensions; }
+    IntVec2 GetDimensions() const;
+
+    // Leak tracking - static counters
+    static int GetAliveCount();
+    static int GetTotalCreated();
+    static int GetTotalDeleted();
+    static void ReportLeakStatus();
 
 protected:
     String  m_name;
@@ -33,4 +41,9 @@ protected:
     /// Examples of shader resources include a constant buffer, a texture buffer, and a texture.
     ID3D11ShaderResourceView* m_shaderResourceView = nullptr;
     ID3D11RenderTargetView*   m_renderTargetView   = nullptr;
+
+private:
+    // Leak tracking
+    static int s_totalCreated;
+    static int s_totalDeleted;
 };

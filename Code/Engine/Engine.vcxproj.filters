@@ -130,6 +130,9 @@
     <Filter Include="ThirdParty\JSON">
       <UniqueIdentifier>{348d2b99-84ed-41bb-bb90-4904b78d7a14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Renderer\Script">
+      <UniqueIdentifier>{b7c199f2-5119-477b-b7c2-34545f805a2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Source Files-->
@@ -494,6 +497,9 @@
     </ClCompile>
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
       <Filter>ThirdParty\Noise</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\RendererScriptInterface.cpp">
+      <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -895,6 +901,9 @@
     </ClInclude>
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RendererScriptInterface.hpp">
+      <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

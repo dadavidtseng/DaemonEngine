@@ -26,6 +26,8 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
+#include "Engine/Resource/TextureResource.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 #pragma comment(lib, "d3d11.lib")
@@ -33,9 +35,7 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 // Define ENGINE_DEBUG_RENDERER if this is a Debug configuration and link debug libraries if it is.
-// #if defined(_DEBUG)
-// #define ENGINE_DEBUG_RENDER
-// #endif
+
 
 #if defined(ENGINE_DEBUG_RENDER)
 #include <dxgidebug.h>
@@ -382,10 +382,25 @@ void Renderer::Startup()
     m_blurCBO             = CreateConstantBuffer(sizeof(BlurConstants));
 
     //------------------------------------------------------------------------------------------------
-    // Initialize m_defaultTexture to a 2x2 white image
-    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
-    m_defaultTexture         = CreateTextureFromImage(defaultImage);
-    m_defaultTexture->m_name = "Default";
+    // Phase 4: Default texture now managed by ResourceSubsystem
+    // Get the default texture from ResourceSubsystem instead of creating it here
+    // ResourceHandle<TextureResource> defaultTextureHandle = EngineCommon::g_resourceSubsystem->GetDefaultTexture();
+    // if (defaultTextureHandle.IsValid())
+    // {
+    //     m_defaultTexture = defaultTextureHandle->GetRendererTexture();
+    //     m_ownsDefaultTexture = false;  // ResourceSubsystem owns it
+    //     DebuggerPrintf("[Renderer] Loaded default texture from ResourceSubsystem.\n");
+    // }
+    // else
+    {
+        DebuggerPrintf("Warning: Failed to load default texture from ResourceSubsystem. Creating fallback texture.\n");
+        // Fallback: Create a local default texture if ResourceSubsystem failed
+        Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+        m_defaultTexture = CreateTextureFromImage(defaultImage);
+        m_defaultTexture->m_name = "Default_Fallback";
+        m_ownsDefaultTexture = true;  // We own the fallback texture
+    }
+
     m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
     // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
@@ -425,6 +440,9 @@ void Renderer::Shutdown()
         ENGINE_SAFE_RELEASE(m_loadedShaders[i]);
     }
 
+    // CRITICAL: Delete textures that are still owned by Renderer
+    // Textures created through ResourceSubsystem are owned by TextureResource and will be cleaned up separately
+    // But textures created directly by Renderer (like render textures) are still owned by Renderer
     for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
     {
         ENGINE_SAFE_RELEASE(m_loadedTextures[i]);
@@ -443,6 +461,16 @@ void Renderer::Shutdown()
     {
         delete m_blurDownTextures[i];
     }
+
+    // Phase 4: Only delete default texture if we own it (fallback case)
+    if (m_ownsDefaultTexture && m_defaultTexture)
+    {
+        DebuggerPrintf("[Renderer] Shutdown: Deleting owned fallback default texture\n");
+        delete m_defaultTexture;
+        m_defaultTexture = nullptr;
+        m_ownsDefaultTexture = false;
+    }
+    // Otherwise, ResourceSubsystem owns it and will clean it up
 
     delete m_emissiveTexture;
     delete m_screenTexture;
@@ -493,6 +521,12 @@ void Renderer::Shutdown()
     DX_SAFE_RELEASE(m_deviceContext)
     DX_SAFE_RELEASE(m_device)
 
+    // Report leak status for Texture and BitmapFont BEFORE D3D11 debug report
+    DebuggerPrintf("\n");
+    Texture::ReportLeakStatus();
+    DebuggerPrintf("\n");
+    BitmapFont::ReportLeakStatus();
+    DebuggerPrintf("\n");
 
     // Report error leaks and release debug module
 #if defined(ENGINE_DEBUG_RENDER)
@@ -704,6 +738,8 @@ void Renderer::DrawTexturedQuad(AABB2 const&   bounds,
 }
 
 //----------------------------------------------------------------------------------------------------
+// Phase 6: REMOVED - All texture/font loading now goes through ResourceSubsystem
+/*
 Texture* Renderer::CreateOrGetTextureFromFile(char const* imageFilePath)
 {
     // See if we already have this texture previously loaded
@@ -727,7 +763,7 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
     }
 
     String const   textureFilePath = Stringf("%s.png", bitmapFontFilePathWithNoExtension);
-    Texture const* newTexture      = CreateOrGetTextureFromFile(textureFilePath.c_str());
+    Texture* newTexture      = CreateTextureFromFile(textureFilePath.c_str());
 
     if (!newTexture)
     {
@@ -735,13 +771,18 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
         return nullptr;
     }
 
-    // Consider using smart pointers for better memory management
-    BitmapFont* newBitMapFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *newTexture, IntVec2(16, 16));
-    m_loadedFonts.push_back(newBitMapFont);
+    // Use new constructor that takes ownership of the texture
+    // This ensures the texture is properly cleaned up when the BitmapFont is deleted
+    BitmapFont* newBitMapFont = new BitmapFont(bitmapFontFilePathWithNoExtension, newTexture, IntVec2(16, 16), true);
+    // NOTE: BitmapFonts are now owned by ResourceSubsystem (via FontResource)
+    // Renderer does not track ownership anymore
+    // m_loadedFonts.push_back(newBitMapFont);
 
     return newBitMapFont;
 }
+*/
 
+//----------------------------------------------------------------------------------------------------
 Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderFilePath,
                                             eVertexType const vertexType)
 {
@@ -1009,15 +1050,17 @@ Texture* Renderer::CreateTextureFromImage(Image const& image)
         ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
     }
 
-    m_loadedTextures.push_back(newTexture);
+    // NOTE: Textures are now owned by ResourceSubsystem (via TextureResource)
+    // Renderer does not track ownership anymore
+    // m_loadedTextures.push_back(newTexture);
     return newTexture;
 }
 
 //----------------------------------------------------------------------------------------------------
-Image Renderer::CreateImageFromFile(char const* imageFilePath)
-{
-    return Image(imageFilePath);
-}
+// Image Renderer::CreateImageFromFile(char const* imageFilePath)
+// {
+//     return Image(imageFilePath);
+// }
 
 //----------------------------------------------------------------------------------------------------
 Shader* Renderer::CreateShader(char const*       shaderName,
