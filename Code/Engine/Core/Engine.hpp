@@ -4,11 +4,9 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
+#include "EngineCommon.hpp"
 
-//----------------------------------------------------------------------------------------------------
-// Forward Declarations
-//----------------------------------------------------------------------------------------------------
-class JobSystem;
+class Camera;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Global Engine singleton providing centralized access to engine subsystems
@@ -19,6 +17,7 @@ class JobSystem;
 ///
 /// @remark Access via GEngine::Get() singleton instance
 /// @remark Subsystems must be initialized before use (call Initialize() during engine startup)
+/// @remark Some subsystems are optional (AudioSystem, InputSystem) and may be nullptr
 ///
 /// @see App::Startup() for initialization sequence
 //----------------------------------------------------------------------------------------------------
@@ -31,12 +30,14 @@ public:
     //----------------------------------------------------------------------------------------------------
     static GEngine& Get();
 
+    void Construct();
+    void Destruct();
+
     //----------------------------------------------------------------------------------------------------
     /// @brief Initialize the engine singleton with subsystem pointers
-    /// @param jobSystem Pointer to the global JobSystem instance
     /// @remark Called during App::Startup() to wire up subsystems
     //----------------------------------------------------------------------------------------------------
-    void Initialize(JobSystem* jobSystem);
+    void Startup();
 
     //----------------------------------------------------------------------------------------------------
     /// @brief Shutdown and cleanup the engine singleton
@@ -44,28 +45,15 @@ public:
     //----------------------------------------------------------------------------------------------------
     void Shutdown();
 
-    //----------------------------------------------------------------------------------------------------
-    // Subsystem Accessors (Static Methods)
-    //----------------------------------------------------------------------------------------------------
-
-    /// @brief Get the global JobSystem instance (static accessor)
-    /// @return Pointer to JobSystem (may be nullptr if not initialized)
-    /// @remark Thread-safe to call, but subsystem operations may not be thread-safe
-    static JobSystem* GetJobSystem() { return Get().m_jobSystem; }
+    // Prevent copying and assignment
+    GEngine(GEngine const&)            = delete;
+    GEngine& operator=(GEngine const&) = delete;
+    GEngine(GEngine&&)                 = delete;
+    GEngine& operator=(GEngine&&)      = delete;
 
 private:
     // Private constructor for singleton pattern
-    GEngine() = default;
+    GEngine()  = default;
     ~GEngine() = default;
-
-    // Prevent copying and assignment
-    GEngine(GEngine const&) = delete;
-    GEngine& operator=(GEngine const&) = delete;
-    GEngine(GEngine&&) = delete;
-    GEngine& operator=(GEngine&&) = delete;
-
-    //----------------------------------------------------------------------------------------------------
-    // Member Variables
-    //----------------------------------------------------------------------------------------------------
-    JobSystem* m_jobSystem = nullptr;
 };
+

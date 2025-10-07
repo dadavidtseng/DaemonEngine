@@ -94,11 +94,11 @@ void SmartFileOutputDevice::WriteLog(const LogEntry& entry)
 
 	// Format log entry (similar to regular FileOutputDevice)
 	String formattedEntry = Stringf("[%s][%s][%s:%d] %s\n",
-									entry.timestamp.c_str(),
-									entry.category.c_str(),
-									entry.fileName.c_str(),
-									entry.lineNumber,
-									entry.message.c_str()
+									entry.m_timestamp.c_str(),
+									entry.m_category.c_str(),
+									entry.m_fileName.c_str(),
+									entry.m_lineNum,
+									entry.m_message.c_str()
 	);
 
 	// Write to current file

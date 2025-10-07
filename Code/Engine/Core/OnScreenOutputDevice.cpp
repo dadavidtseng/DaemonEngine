@@ -15,7 +15,7 @@
 void OnScreenOutputDevice::WriteLog(const LogEntry& entry)
 {
 	Rgba8 color;
-	switch (entry.verbosity)
+	switch (entry.m_verbosity)
 	{
 	case eLogVerbosity::Fatal: color = Rgba8::RED;
 		break;
@@ -29,7 +29,7 @@ void OnScreenOutputDevice::WriteLog(const LogEntry& entry)
 		break;
 	}
 
-	AddMessage("[" + entry.category + "] " + entry.message, 5.0f, color);
+	AddMessage("[" + entry.m_category + "] " + entry.m_message, 5.0f, color);
 }
 
 void OnScreenOutputDevice::Update(float deltaTime)

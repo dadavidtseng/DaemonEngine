@@ -97,6 +97,9 @@ protected:
     std::vector<sDevConsoleLine> m_lines;     //TODO: support a max limited # of lines (e.g. fixed circular buffer)
     int                          m_frameNumber = 0;
 
+    // Cached font pointer to avoid creating new fonts every frame
+    BitmapFont const* m_cachedFont = nullptr;
+
     // True if the dev console is currently visible and accepting input.
     bool m_isOpen = false;
 

@@ -5,9 +5,18 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Script/ScriptSubsystem.hpp"
 
+struct sAudioSystemConfig;
 //-Forward-Declaration--------------------------------------------------------------------------------
+class Window;
+class ScriptSubsystem;
+class ResourceSubsystem;
+class Renderer;
+class RandomNumberGenerator;
+class AudioSystem;
 class DevConsole;
 class EventSystem;
 class HotReloadSubsystem;
@@ -17,13 +26,82 @@ class LogSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
-extern NamedStrings         g_gameConfigBlackboard;
-extern EventSystem*         g_eventSystem;
-extern DevConsole*          g_devConsole;
-extern HotReloadSubsystem*  g_hotReloadSubsystem;
-extern InputSystem*         g_input;
-extern JobSystem*           g_jobSystem;
-extern LogSubsystem*        g_logSubsystem;
+extern NamedStrings g_gameConfigBlackboard;
+
+//----------------------------------------------------------------------------------------------------
+extern AudioSystem*           g_audio;
+extern DevConsole*            g_devConsole;
+extern EventSystem*           g_eventSystem;
+extern JobSystem*             g_jobSystem;
+extern LogSubsystem*          g_logSubsystem;
+extern InputSystem*           g_input;
+extern Renderer*              g_renderer;
+extern RandomNumberGenerator* g_rng;
+extern Window*                g_window;
+extern ResourceSubsystem*     g_resourceSubsystem;
+extern ScriptSubsystem*       g_scriptSubsystem;
+
+//----------------------------------------------------------------------------------------------------
+struct sEngineConfig
+{
+    sAudioSystemConfig     m_audioConfig;
+    sScriptSubsystemConfig m_scriptConfig;
+};
+
+// //----------------------------------------------------------------------------------------------------
+// namespace Engine
+// {
+//     namespace Audio
+//     {
+//         extern AudioSystem* g_audio;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Core
+//     {
+//         extern DevConsole*   g_devConsole;
+//         extern EventSystem*  g_eventSystem;
+//         extern JobSystem*    g_jobSystem;
+//         extern LogSubsystem* g_logSubsystem;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Input
+//     {
+//         extern InputSystem* g_input;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Graphic
+//     {
+//         extern Renderer* g_renderer;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Math
+//     {
+//         extern RandomNumberGenerator* g_rng;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Platform
+//     {
+//         extern Window* g_window;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Resource
+//     {
+//         extern ResourceSubsystem* g_resourceSubsystem;
+//     }
+//
+//     //------------------------------------------------------------------------------------------------
+//     namespace Script
+//     {
+//         extern ScriptSubsystem* g_scriptSubsystem;
+//     }
+// }
+
 
 //----------------------------------------------------------------------------------------------------
 /// @brief

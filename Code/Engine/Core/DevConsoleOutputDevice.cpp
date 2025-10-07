@@ -19,7 +19,7 @@ void DevConsoleOutputDevice::WriteLog(const LogEntry& entry)
 	{
 		// 根據詳細程度選擇適當的顏色類型
 		Rgba8 lineType = DevConsole::INFO_MINOR;
-		switch (entry.verbosity)
+		switch (entry.m_verbosity)
 		{
 		case eLogVerbosity::Fatal:
 		case eLogVerbosity::Error:
@@ -36,7 +36,7 @@ void DevConsoleOutputDevice::WriteLog(const LogEntry& entry)
 			break;
 		}
 
-		g_devConsole->AddLine(lineType, "[" + entry.category + "] " + entry.message);
+		g_devConsole->AddLine(lineType, "[" + entry.m_category + "] " + entry.m_message);
 	}
 }
 

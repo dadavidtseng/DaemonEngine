@@ -57,13 +57,13 @@ void FileOutputDevice::WriteLog(const LogEntry& entry)
 
 	if (m_logFile.is_open())
 	{
-		m_logFile << "[" << entry.timestamp << "] "
-		<< "[" << entry.threadId << "] "
-		<< "[" << entry.category << "] ";
+		m_logFile << "[" << entry.m_timestamp << "] "
+		<< "[" << entry.m_threadId << "] "
+		<< "[" << entry.m_category << "] ";
 
 		// 轉換詳細程度為字串
 		const char* verbosityStr = "Unknown";
-		switch (entry.verbosity)
+		switch (entry.m_verbosity)
 		{
 		case eLogVerbosity::Fatal: verbosityStr = "Fatal";
 			break;
@@ -81,12 +81,12 @@ void FileOutputDevice::WriteLog(const LogEntry& entry)
 			break;
 		}
 
-		m_logFile << "[" << verbosityStr << "] " << entry.message;
+		m_logFile << "[" << verbosityStr << "] " << entry.m_message;
 
 		// 如果有檔案和行號資訊，也記錄下來
-		if (!entry.fileName.empty() && entry.lineNumber > 0)
+		if (!entry.m_fileName.empty() && entry.m_lineNum > 0)
 		{
-			m_logFile << " (" << entry.fileName << ":" << entry.lineNumber << ")";
+			m_logFile << " (" << entry.m_fileName << ":" << entry.m_lineNum << ")";
 		}
 
 		m_logFile << std::endl;

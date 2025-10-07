@@ -17,7 +17,7 @@
 void DebugOutputDevice::WriteLog(const LogEntry& entry)
 {
 #ifdef _WIN32
-	String outputString = "[" + entry.category + "] " + entry.message + "\n";
+	String outputString = "[" + entry.m_category + "] " + entry.m_message + "\n";
 	OutputDebugStringA(outputString.c_str());
 #endif
 }

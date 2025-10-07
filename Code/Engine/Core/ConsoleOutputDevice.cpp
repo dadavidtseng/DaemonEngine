@@ -37,7 +37,7 @@ void ConsoleOutputDevice::WriteLog(const LogEntry& entry)
 
 		// 根據詳細程度設定顏色
 		WORD color = originalAttributes;
-		switch (entry.verbosity)
+		switch (entry.m_verbosity)
 		{
 		case eLogVerbosity::Fatal:
 			color = BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
@@ -69,9 +69,9 @@ void ConsoleOutputDevice::WriteLog(const LogEntry& entry)
 
 		// 格式化輸出（與您原始的 printf 風格一致）
 		printf("[%s] [%s] %s\n",
-			   entry.timestamp.c_str(),
-			   entry.category.c_str(),
-			   entry.message.c_str());
+			   entry.m_timestamp.c_str(),
+			   entry.m_category.c_str(),
+			   entry.m_message.c_str());
 
 		SetConsoleTextAttribute(hConsole, originalAttributes);
 	}
@@ -79,14 +79,14 @@ void ConsoleOutputDevice::WriteLog(const LogEntry& entry)
 	{
 		// 如果沒有控制台控制代碼，使用標準輸出
 		printf("[%s] [%s] %s\n",
-			   entry.timestamp.c_str(),
-			   entry.category.c_str(),
-			   entry.message.c_str());
+			   entry.m_timestamp.c_str(),
+			   entry.m_category.c_str(),
+			   entry.m_message.c_str());
 	}
 #else
 	// Unix/Linux 系統使用 ANSI 顏色碼
 	const char* colorCode = "\033[0m"; // 預設白色
-	switch (entry.verbosity)
+	switch (entry.m_verbosity)
 	{
 	case eLogVerbosity::Fatal: colorCode = "\033[41;37;1m";
 		break; // 紅底白字
@@ -106,9 +106,9 @@ void ConsoleOutputDevice::WriteLog(const LogEntry& entry)
 
 	printf("%s[%s] [%s] %s\033[0m\n",
 		   colorCode,
-		   entry.timestamp.c_str(),
-		   entry.category.c_str(),
-		   entry.message.c_str());
+		   entry.m_timestamp.c_str(),
+		   entry.m_category.c_str(),
+		   entry.m_message.c_str());
 #endif
 }
 

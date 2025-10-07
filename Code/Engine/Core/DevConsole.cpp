@@ -12,6 +12,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
 #include <sstream>
 
@@ -57,6 +58,7 @@ void DevConsole::StartUp()
     Vec2 const bottomLeft     = Vec2::ZERO;
     Vec2 const screenTopRight = Vec2(1600.f, 800.f);
 
+    m_config.m_defaultCamera = new Camera();
     m_config.m_defaultCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_config.m_defaultCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 }
@@ -64,7 +66,10 @@ void DevConsole::StartUp()
 //----------------------------------------------------------------------------------------------------
 void DevConsole::Shutdown()
 {
-    // Clean up any allocated resources (like font objects, etc.)
+    // CRITICAL: m_cachedFont is owned by FontResource in ResourceSubsystem cache
+    // Do NOT delete it manually - it will be cleaned up by ResourceSubsystem::GlobalShutdown()
+    // Just clear the pointer to avoid dangling reference
+    m_cachedFont = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -179,13 +184,25 @@ void DevConsole::Render(AABB2 const& bounds,
         m_insertionPointBlinkTimer->DecrementPeriodIfElapsed();
     }
 
-    BitmapFont const* font = rendererOverride->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + m_config.m_defaultFontName).c_str());
+    // Cache the font pointer on first use to avoid creating new fonts every frame
+    if (!m_cachedFont)
+    {
+        m_cachedFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile(("Data/Fonts/" + m_config.m_defaultFontName).c_str());
+    }
+
+    // Use cached font pointer
+    if (!m_cachedFont)
+    {
+        // Font failed to load, cannot render
+        rendererOverride->EndCamera(*m_config.m_defaultCamera);
+        return;
+    }
 
     // Render the console depending on the current mode
     switch (m_mode)
     {
     case OPEN_FULL:
-        Render_OpenFull(bounds, *rendererOverride, *font, m_config.m_defaultFontAspect);
+        Render_OpenFull(bounds, *rendererOverride, *m_cachedFont, m_config.m_defaultFontAspect);
         break;
     case OPEN_PARTIAL:
         // Render partial screen console if needed
@@ -299,7 +316,7 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
     }
 
     // Check if ENTER key needs special handling (Execute must be called without mutex)
-    bool needsExecute = false;
+    bool   needsExecute = false;
     String commandToExecute;
 
     {
@@ -310,14 +327,14 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
         {
             if (g_devConsole->m_inputText.empty() == true)
             {
-                g_devConsole->m_mode = HIDDEN;
+                g_devConsole->m_mode   = HIDDEN;
                 g_devConsole->m_isOpen = false;
             }
             else
             {
                 g_devConsole->m_commandHistory.push_back(g_devConsole->m_inputText);
                 commandToExecute = g_devConsole->m_inputText;  // Copy for execution
-                needsExecute = true;
+                needsExecute     = true;
                 g_devConsole->m_inputText.clear();
                 g_devConsole->m_historyIndex           = -1;
                 g_devConsole->m_insertionPointPosition = 0;
@@ -403,7 +420,7 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
         {
             if (g_devConsole->m_inputText.empty() == true)
             {
-                g_devConsole->m_mode = HIDDEN;
+                g_devConsole->m_mode   = HIDDEN;
                 g_devConsole->m_isOpen = false;
             }
             else
