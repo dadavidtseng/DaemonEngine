@@ -1,5 +1,5 @@
 // ============================================
-// ResourceHandle.hpp - 智慧資源句柄
+// ResourceHandle.hpp - Smart Resource Handle
 // ============================================
 #pragma once
 #include <memory>
@@ -13,60 +13,20 @@ public:
     explicit ResourceHandle(std::shared_ptr<T> resource)
         : m_resource(resource)
     {
-        if (m_resource)
-        {
-            m_resource->AddRef();
-        }
+        // No manual ref counting needed - shared_ptr handles it automatically
     }
 
-    ~ResourceHandle()
-    {
-        Release();
-    }
+    ~ResourceHandle() = default;
 
-    // 複製建構與賦值
-    ResourceHandle(const ResourceHandle& other)
-        : m_resource(other.m_resource)
-    {
-        if (m_resource)
-        {
-            m_resource->AddRef();
-        }
-    }
+    // Copy constructor and assignment (shared_ptr handles ref counting)
+    ResourceHandle(const ResourceHandle& other) = default;
+    ResourceHandle& operator=(const ResourceHandle& other) = default;
 
-    ResourceHandle& operator=(const ResourceHandle& other)
-    {
-        if (this != &other)
-        {
-            Release();
-            m_resource = other.m_resource;
-            if (m_resource)
-            {
-                m_resource->AddRef();
-            }
-        }
-        return *this;
-    }
+    // Move constructor and assignment (shared_ptr handles transfer)
+    ResourceHandle(ResourceHandle&& other) noexcept = default;
+    ResourceHandle& operator=(ResourceHandle&& other) noexcept = default;
 
-    // 移動建構與賦值
-    ResourceHandle(ResourceHandle&& other) noexcept
-        : m_resource(std::move(other.m_resource))
-    {
-        other.m_resource.reset();
-    }
-
-    ResourceHandle& operator=(ResourceHandle&& other) noexcept
-    {
-        if (this != &other)
-        {
-            Release();
-            m_resource = std::move(other.m_resource);
-            other.m_resource.reset();
-        }
-        return *this;
-    }
-
-    // 資源存取
+    // Resource access
     T* Get() const { return m_resource.get(); }
     T* operator->() const { return m_resource.get(); }
     T& operator*() const { return *m_resource; }
@@ -74,11 +34,8 @@ public:
 
     void Release()
     {
-        if (m_resource)
-        {
-            m_resource->Release();
-            m_resource.reset();
-        }
+        // Simply reset the shared_ptr - automatic ref count decrement
+        m_resource.reset();
     }
 
 private:

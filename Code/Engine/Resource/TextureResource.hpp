@@ -16,7 +16,7 @@ class Renderer;
 class TextureResource : public IResource
 {
 public:
-    TextureResource(String const& path, ResourceType type);
+    TextureResource(String const& path, eResourceType type);
     ~TextureResource() override;
 
     // IResource interface implementation
@@ -38,6 +38,7 @@ public:
 private:
     friend class TextureLoader;
     friend class Renderer; // Allow Renderer to access resources
+    friend class ResourceSubsystem; // Allow ResourceSubsystem to create default texture
 
     // Texture properties
     String m_name;

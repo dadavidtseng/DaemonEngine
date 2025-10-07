@@ -8,7 +8,7 @@
 #include "Engine/Renderer/Texture.hpp"
 
 //----------------------------------------------------------------------------------------------------
-TextureResource::TextureResource(String const& path, ResourceType type)
+TextureResource::TextureResource(String const& path, eResourceType type)
     : IResource(path, type)
 {
     // Initialize texture properties
@@ -18,7 +18,8 @@ TextureResource::TextureResource(String const& path, ResourceType type)
 //----------------------------------------------------------------------------------------------------
 TextureResource::~TextureResource()
 {
-    Unload();
+    // Don't call DebuggerPrintf during destruction - logging system may be shut down
+    TextureResource::Unload();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -36,9 +37,13 @@ bool TextureResource::Load()
 //----------------------------------------------------------------------------------------------------
 void TextureResource::Unload()
 {
-    // Note: Renderer::Texture is managed by the Renderer
-    // We don't directly delete it here as it might be shared
-    m_rendererTexture = nullptr;
+    // TextureResource OWNS the Renderer::Texture - we must delete it
+    // Don't call DebuggerPrintf during destruction - logging system may be shut down
+    if (m_rendererTexture)
+    {
+        delete m_rendererTexture;
+        m_rendererTexture = nullptr;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

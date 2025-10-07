@@ -16,7 +16,7 @@ bool MaterialResource::Load()
     // 這裡可以加入解析邏輯
     // 目前假設材質屬性已經由 ModelLoader 設定
 
-    m_state = ResourceState::Loaded;
+    m_state = eResourceState::Loaded;
     return true;
 }
 
@@ -34,7 +34,7 @@ void MaterialResource::Unload()
     m_textureResources.clear();
     m_shaderResources.clear();
 
-    m_state = ResourceState::Unloaded;
+    m_state = eResourceState::Unloaded;
 }
 
 size_t MaterialResource::GetMemorySize() const

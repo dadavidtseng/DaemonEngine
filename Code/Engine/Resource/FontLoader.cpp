@@ -6,11 +6,16 @@
 #include "Engine/Resource/FontLoader.hpp"
 #include "Engine/Resource/FontResource.hpp"
 #include "Engine/Resource/ResourceCommon.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/Texture.hpp"
+#include "Engine/Math/IntVec2.hpp"
 #include <algorithm>
+
+#include "Engine/Core/EngineCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 FontLoader::FontLoader(Renderer* renderer)
@@ -51,7 +56,7 @@ bool FontLoader::CanLoad(String const& extension) const
 //----------------------------------------------------------------------------------------------------
 std::shared_ptr<IResource> FontLoader::Load(String const& path)
 {
-    auto fontResource = std::make_shared<FontResource>(path, ResourceType::FONT);
+    auto fontResource = std::make_shared<FontResource>(path, eResourceType::FONT);
 
     if (LoadFontFromFile(path, fontResource.get()))
     {
@@ -70,12 +75,26 @@ StringList FontLoader::GetSupportedExtensions() const
 //----------------------------------------------------------------------------------------------------
 bool FontLoader::LoadFontFromFile(String const& path, FontResource* fontResource)
 {
-    // Use the Renderer's existing bitmap font loading functionality
-    BitmapFont* rendererBitmapFont = m_renderer->CreateOrGetBitmapFontFromFile(path.c_str());
+    // Create BitmapFont directly instead of using Renderer's method
+    String const textureFilePath = Stringf("%s.png", path.c_str());
+
+    // Load texture through ResourceSubsystem
+    Texture* fontTexture = g_resourceSubsystem->CreateOrGetTextureFromFile(textureFilePath);
+
+    if (!fontTexture)
+    {
+        DebuggerPrintf("Error: FontLoader could not load texture '%s' for font '%s'.\n",
+                       textureFilePath.c_str(), path.c_str());
+        return false;
+    }
+
+    // Create BitmapFont WITHOUT ownership of the texture
+    // The texture is owned by TextureResource in ResourceSubsystem cache
+    BitmapFont* rendererBitmapFont = new BitmapFont(path.c_str(), fontTexture, IntVec2(16, 16), false);
 
     if (!rendererBitmapFont)
     {
-        DebuggerPrintf("Error: FontLoader could not load bitmap font '%s'.\n", path.c_str());
+        DebuggerPrintf("Error: FontLoader could not create bitmap font '%s'.\n", path.c_str());
         return false;
     }
 

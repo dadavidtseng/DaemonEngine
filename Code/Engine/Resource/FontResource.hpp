@@ -6,7 +6,6 @@
 #pragma once
 #include "Engine/Resource/IResource.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Math/IntVec2.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class BitmapFont;
@@ -16,8 +15,8 @@ class Renderer;
 class FontResource : public IResource
 {
 public:
-    FontResource(String const& path, ResourceType type);
-    virtual ~FontResource();
+    FontResource(String const& path, eResourceType type);
+    ~FontResource() override;
 
     // IResource interface implementation
     bool   Load() override;
@@ -32,7 +31,7 @@ public:
 
 private:
     friend class FontLoader;
-    friend class Renderer; // Allow Renderer to access resources
+    // friend class Renderer; // Allow Renderer to access resources
 
     // Font properties
     String  m_name;

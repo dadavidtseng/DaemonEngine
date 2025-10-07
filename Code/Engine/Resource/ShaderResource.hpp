@@ -15,7 +15,7 @@ class Shader;
 class ShaderResource : public IResource
 {
 public:
-    ShaderResource(String const& path, ResourceType type);
+    ShaderResource(String const& path, eResourceType type);
     ~ShaderResource() override;
 
     // IResource interface implementation

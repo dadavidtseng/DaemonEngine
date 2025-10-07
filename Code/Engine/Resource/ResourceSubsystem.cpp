@@ -6,6 +6,9 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include <filesystem>
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Renderer/Image.hpp"
 #include "Engine/Resource/ObjModelLoader.hpp"
 #include "Engine/Resource/TextureLoader.hpp"
 #include "Engine/Resource/FontLoader.hpp"
@@ -24,27 +27,11 @@ ResourceSubsystem::ResourceSubsystem(sResourceSubsystemConfig const& config)
 {
 }
 
-//----------------------------------------------------------------------------------------------------
-void ResourceSubsystem::Startup()
-{
-    m_running = true;
-
-    // 註冊預設的載入器
-    RegisterLoader(std::make_unique<ObjModelLoader>());
-    // 未來可以加入更多載入器
-    // RegisterLoader(std::make_unique<TextureLoader>());
-    // RegisterLoader(std::make_unique<ShaderLoader>());
-
-    // 創建工作執行緒
-    for (int i = 0; i < m_config.m_threadCount; ++i)
-    {
-        m_workerThreads.emplace_back(&ResourceSubsystem::WorkerThread, this);
-    }
-}
-
 
 void ResourceSubsystem::Shutdown()
 {
+    DebuggerPrintf("[ResourceSubsystem] Shutdown: Starting shutdown process\n");
+
     // 停止工作執行緒
     {
         std::unique_lock lock(m_queueMutex);
@@ -61,9 +48,15 @@ void ResourceSubsystem::Shutdown()
         }
     }
 
+    DebuggerPrintf("[ResourceSubsystem] Shutdown: Worker threads stopped, clearing cache\n");
+
     // 清理資源
     m_cache.Clear();
     m_loaders.clear();
+
+    m_config.m_renderer = nullptr;
+
+    DebuggerPrintf("[ResourceSubsystem] Shutdown: Shutdown complete\n");
 }
 
 void ResourceSubsystem::RegisterLoader(std::unique_ptr<IResourceLoader> loader)
@@ -71,6 +64,7 @@ void ResourceSubsystem::RegisterLoader(std::unique_ptr<IResourceLoader> loader)
     m_loaders.push_back(std::move(loader));
 }
 
+// TODO: handle this with
 std::shared_ptr<IResource> ResourceSubsystem::LoadResourceInternal(String const& path)
 {
     String extension = GetFileExtension(path);
@@ -127,7 +121,8 @@ void ResourceSubsystem::PreloadResources(const std::vector<std::string>& paths)
         // 將載入任務加入佇列
         {
             std::lock_guard<std::mutex> lock(m_queueMutex);
-            m_taskQueue.push([this, path]() {
+            m_taskQueue.push([this, path]()
+            {
                 LoadResourceInternal(path);
             });
         }
@@ -163,38 +158,35 @@ size_t ResourceSubsystem::GetResourceCount() const
 //----------------------------------------------------------------------------------------------------
 
 // Static member definitions
-ResourceSubsystem* ResourceSubsystem::s_instance = nullptr;
-Renderer* ResourceSubsystem::s_renderer = nullptr;
+// ResourceSubsystem* ResourceSubsystem::s_instance = nullptr;
+// Renderer* ResourceSubsystem::s_renderer = nullptr;
 
-void ResourceSubsystem::Initialize(Renderer* renderer, sResourceSubsystemConfig const& config)
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::Startup()
 {
-    if (s_instance)
-    {
-        DebuggerPrintf("Warning: ResourceSubsystem already initialized. Ignoring second initialization.\n");
-        return;
-    }
+    m_running = true;
 
-    s_renderer = renderer;
-    s_instance = new ResourceSubsystem(config);
-    s_instance->Startup();
-
-    // Register standard loaders with device access
-    if (s_renderer)
+    if (m_config.m_renderer != nullptr)
     {
-        ID3D11Device* device = s_renderer->m_device;
+        ID3D11Device* device = m_config.m_renderer->m_device;
         if (device)
         {
+            RegisterLoader(std::make_unique<ObjModelLoader>());
+
             auto textureLoader = std::make_unique<TextureLoader>(device);
-            s_instance->RegisterLoader(std::move(textureLoader));
+            RegisterLoader(std::move(textureLoader));
             DebuggerPrintf("Info: ResourceSubsystem initialized with TextureLoader.\n");
 
-            auto fontLoader = std::make_unique<FontLoader>(s_renderer);
-            s_instance->RegisterLoader(std::move(fontLoader));
+            auto fontLoader = std::make_unique<FontLoader>(m_config.m_renderer);
+            RegisterLoader(std::move(fontLoader));
             DebuggerPrintf("Info: ResourceSubsystem initialized with FontLoader.\n");
 
             auto shaderLoader = std::make_unique<ShaderLoader>(device);
-            s_instance->RegisterLoader(std::move(shaderLoader));
+            RegisterLoader(std::move(shaderLoader));
             DebuggerPrintf("Info: ResourceSubsystem initialized with ShaderLoader.\n");
+
+            // Phase 4: Create default texture AFTER loaders are registered
+            CreateDefaultTexture();
         }
         else
         {
@@ -205,37 +197,54 @@ void ResourceSubsystem::Initialize(Renderer* renderer, sResourceSubsystemConfig 
     {
         DebuggerPrintf("Warning: ResourceSubsystem initialized without Renderer.\n");
     }
-}
 
-void ResourceSubsystem::GlobalShutdown()
-{
-    if (s_instance)
+    // 註冊預設的載入器
+
+    // 未來可以加入更多載入器
+    // RegisterLoader(std::make_unique<TextureLoader>());
+    // RegisterLoader(std::make_unique<ShaderLoader>());
+
+    // Phase 4: Default texture creation moved to Initialize() after loaders are registered
+    // CreateDefaultTexture(); // REMOVED - moved to Initialize()
+
+    // 創建工作執行緒
+    for (int i = 0; i < m_config.m_threadCount; ++i)
     {
-        s_instance->Shutdown();
-        delete s_instance;
-        s_instance = nullptr;
-        s_renderer = nullptr;
-        DebuggerPrintf("Info: ResourceSubsystem shut down.\n");
+        m_workerThreads.emplace_back(&ResourceSubsystem::WorkerThread, this);
     }
 }
+
+// void ResourceSubsystem::Initialize(Renderer* renderer, sResourceSubsystemConfig const& config)
+// {
+//     s_instance->Startup();
+//
+//     // Register standard loaders with device access
+// }
+//
+// void ResourceSubsystem::GlobalShutdown()
+// {
+//     if (s_instance)
+//     {
+//         s_instance->Shutdown();
+//         delete s_instance;
+//         s_instance = nullptr;
+//         s_renderer = nullptr;
+//         DebuggerPrintf("Info: ResourceSubsystem shut down.\n");
+//     }
+// }
 
 Texture* ResourceSubsystem::CreateOrGetTextureFromFile(String const& path)
 {
-    if (!s_instance || !s_renderer)
-    {
-        DebuggerPrintf("Warning: ResourceSubsystem not initialized, falling back to Renderer.\n");
-        return s_renderer ? s_renderer->CreateOrGetTextureFromFile(path.c_str()) : nullptr;
-    }
 
     try
     {
         // Load texture through ResourceSubsystem
-        auto textureHandle = s_instance->LoadResource<TextureResource>(path);
+        auto textureHandle = LoadResource<TextureResource>(path);
 
         if (textureHandle.IsValid() && textureHandle.Get())
         {
             TextureResource* textureResource = textureHandle.Get();
-            Texture* rendererTexture = textureResource->GetRendererTexture();
+            Texture*         rendererTexture = textureResource->GetRendererTexture();
 
             if (rendererTexture)
             {
@@ -253,21 +262,15 @@ Texture* ResourceSubsystem::CreateOrGetTextureFromFile(String const& path)
 
 BitmapFont* ResourceSubsystem::CreateOrGetBitmapFontFromFile(String const& path)
 {
-    if (!s_instance || !s_renderer)
-    {
-        DebuggerPrintf("Warning: ResourceSubsystem not initialized, falling back to Renderer.\n");
-        return s_renderer ? s_renderer->CreateOrGetBitmapFontFromFile(path.c_str()) : nullptr;
-    }
-
-    try
+        try
     {
         // Load font through ResourceSubsystem
-        auto fontHandle = s_instance->LoadResource<FontResource>(path);
+        auto fontHandle = LoadResource<FontResource>(path);
 
         if (fontHandle.IsValid() && fontHandle.Get())
         {
-            FontResource* fontResource = fontHandle.Get();
-            BitmapFont* rendererBitmapFont = fontResource->GetRendererBitmapFont();
+            FontResource* fontResource       = fontHandle.Get();
+            BitmapFont*   rendererBitmapFont = fontResource->GetRendererBitmapFont();
 
             if (rendererBitmapFont)
             {
@@ -285,17 +288,17 @@ BitmapFont* ResourceSubsystem::CreateOrGetBitmapFontFromFile(String const& path)
 
 Shader* ResourceSubsystem::CreateOrGetShaderFromFile(String const& path, eVertexType vertexType)
 {
-    if (!s_instance || !s_renderer)
-    {
-        DebuggerPrintf("Warning: ResourceSubsystem not initialized, falling back to Renderer.\n");
-        return s_renderer ? s_renderer->CreateOrGetShaderFromFile(path.c_str(), vertexType) : nullptr;
-    }
+    // if (!s_instance || !s_renderer)
+    // {
+    //     DebuggerPrintf("Warning: ResourceSubsystem not initialized, falling back to Renderer.\n");
+    //     return s_renderer ? s_renderer->CreateOrGetShaderFromFile(path.c_str(), vertexType) : nullptr;
+    // }
 
     try
     {
         // Check cache first with vertex type in key
         String cacheKey = path + "_" + std::to_string(static_cast<int>(vertexType));
-        if (std::shared_ptr<IResource> const cached = s_instance->m_cache.Get(cacheKey))
+        if (std::shared_ptr<IResource> const cached = m_cache.Get(cacheKey))
         {
             if (ShaderResource* shaderResource = static_cast<ShaderResource*>(cached.get()))
             {
@@ -304,16 +307,16 @@ Shader* ResourceSubsystem::CreateOrGetShaderFromFile(String const& path, eVertex
         }
 
         // Find ShaderLoader and load with vertex type
-        for (std::unique_ptr<IResourceLoader> const& loader : s_instance->m_loaders)
+        for (std::unique_ptr<IResourceLoader> const& loader : m_loaders)
         {
             if (ShaderLoader* shaderLoader = dynamic_cast<ShaderLoader*>(loader.get()))
             {
-                if (shaderLoader->CanLoad(s_instance->GetFileExtension(path)))
+                if (shaderLoader->CanLoad(GetFileExtension(path)))
                 {
                     auto shaderResource = shaderLoader->LoadShader(path, vertexType);
                     if (shaderResource)
                     {
-                        s_instance->m_cache.Add(cacheKey, shaderResource);
+                        m_cache.Add(cacheKey, shaderResource);
                         if (ShaderResource* shader = static_cast<ShaderResource*>(shaderResource.get()))
                         {
                             return shader->GetRendererShader();
@@ -330,4 +333,75 @@ Shader* ResourceSubsystem::CreateOrGetShaderFromFile(String const& path, eVertex
     }
 
     return nullptr;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Phase 4: Default Texture Management
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::CreateDefaultTexture()
+{
+    // Check if Renderer and device are available
+    // if (!s_renderer || !s_renderer->m_device)
+    // {
+    //     DebuggerPrintf("Warning: Cannot create default texture - Renderer or D3D device not available.\n");
+    //     return;
+    // }
+
+    // Create a 2x2 white texture (matching Renderer's original implementation)
+    Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
+
+    // Find TextureLoader
+    TextureLoader* textureLoader = nullptr;
+    for (std::unique_ptr<IResourceLoader> const& loader : m_loaders)
+    {
+        if (TextureLoader* tl = dynamic_cast<TextureLoader*>(loader.get()))
+        {
+            textureLoader = tl;
+            break;
+        }
+    }
+
+    if (!textureLoader)
+    {
+        DebuggerPrintf("Error: Cannot create default texture - TextureLoader not found.\n");
+        return;
+    }
+
+    // Create TextureResource
+    auto defaultTextureRes = std::make_shared<TextureResource>("__default_white__", eResourceType::TEXTURE);
+
+    // Create Renderer::Texture from image using TextureLoader's method
+    // Note: We're accessing private method CreateTextureFromImage, but TextureLoader should expose a public method
+    // For now, we'll create the texture directly using Renderer's method temporarily
+    Texture* texture = m_config.m_renderer->CreateTextureFromImage(defaultImage);
+    if (texture)
+    {
+        texture->m_name = "__default_white__";
+        defaultTextureRes->SetRendererTexture(texture);
+        defaultTextureRes->SetName("__default_white__");
+
+        // Cache as special resource
+        m_cache.Add("__default_white__", defaultTextureRes);
+
+        DebuggerPrintf("[ResourceSubsystem] Created default white texture.\n");
+    }
+    else
+    {
+        DebuggerPrintf("Error: Failed to create default white texture.\n");
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ResourceHandle<TextureResource> ResourceSubsystem::GetDefaultTexture()
+{
+    // if (!s_instance)
+    // {
+    //     DebuggerPrintf("Error: ResourceSubsystem not initialized - cannot get default texture.\n");
+    //     return ResourceHandle<TextureResource>();
+    // }
+
+    // return LoadResource<TextureResource>("__default_white__");
+    return LoadResource<TextureResource>("Data/Images/TestUV.png");
 }

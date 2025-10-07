@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Resource/AudioResource.hpp"
 
-AudioSource::AudioSource(String const& path, ResourceType type): IResource(path, type)
+//----------------------------------------------------------------------------------------------------
+AudioSource::AudioSource(String const& path, eResourceType const type)
+    : IResource(path, type)
 {
 }

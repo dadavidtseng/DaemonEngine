@@ -4,11 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Resource/FontResource.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/BitmapFont.hpp"
 
 //----------------------------------------------------------------------------------------------------
-FontResource::FontResource(String const& path, ResourceType type)
+FontResource::FontResource(String const& path,
+                           eResourceType const type)
     : IResource(path, type)
 {
     // Initialize font properties
@@ -18,7 +19,7 @@ FontResource::FontResource(String const& path, ResourceType type)
 //----------------------------------------------------------------------------------------------------
 FontResource::~FontResource()
 {
-    Unload();
+    FontResource::Unload();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -36,9 +37,13 @@ bool FontResource::Load()
 //----------------------------------------------------------------------------------------------------
 void FontResource::Unload()
 {
-    // Note: Renderer::BitmapFont is managed by the Renderer
-    // We don't directly delete it here as it might be shared
-    m_rendererBitmapFont = nullptr;
+    // FontResource OWNS the Renderer::BitmapFont - we must delete it
+    // Don't call DebuggerPrintf during destruction - logging system may be shut down
+    if (m_rendererBitmapFont)
+    {
+        delete m_rendererBitmapFont;
+        m_rendererBitmapFont = nullptr;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

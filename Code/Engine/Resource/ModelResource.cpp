@@ -8,16 +8,16 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 ModelResource::ModelResource(String const& path)
-    : IResource(path, ResourceType::Model)
+    : IResource(path, eResourceType::Model)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
 bool ModelResource::Load()
 {
-    if (m_state == ResourceState::Loaded) return true;
+    if (m_state == eResourceState::Loaded) return true;
 
-    m_state = ResourceState::Loading;
+    m_state = eResourceState::Loading;
 
     // 使用 ObjModelLoader 載入
     bool success = ObjModelLoader::Load(m_path, m_vertices, m_indices, m_hasNormals, m_hasUVs);
@@ -34,11 +34,11 @@ bool ModelResource::Load()
         m_subMeshes.push_back(mainMesh);
 
         m_memorySize = CalculateMemorySize();
-        m_state      = ResourceState::Loaded;
+        m_state      = eResourceState::Loaded;
     }
     else
     {
-        m_state = ResourceState::Failed;
+        m_state = eResourceState::Failed;
     }
 
     return success;

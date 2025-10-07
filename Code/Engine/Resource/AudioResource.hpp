@@ -4,11 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Resource/IResource.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class AudioSource : public IResource
 {
 public:
-    AudioSource(String const& path, ResourceType type);
+    AudioSource(String const& path, eResourceType type);
 };

@@ -10,5 +10,5 @@
 class AnimationResource : public IResource
 {
 public:
-    AnimationResource(String const& path, ResourceType type);
+    AnimationResource(String const& path, eResourceType type);
 };

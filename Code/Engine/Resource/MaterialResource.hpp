@@ -66,7 +66,7 @@ public:
     // IResource 介面實作
     bool         Load() override;
     void         Unload() override;
-    ResourceType GetType() const override { return ResourceType::Material; }
+    eResourceType GetType() const override { return eResourceType::Material; }
     size_t       GetMemorySize() const override;
 
     // 材質屬性管理

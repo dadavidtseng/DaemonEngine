@@ -6,7 +6,7 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
-enum class ResourceType
+enum class eResourceType
 {
     Unknown,
     Model,
@@ -19,7 +19,7 @@ enum class ResourceType
 };
 
 // 資源狀態
-enum class ResourceState
+enum class eResourceState
 {
     Unloaded,    // 未載入
     Loading,     // 載入中
@@ -28,7 +28,7 @@ enum class ResourceState
     Unloading    // 卸載中
 };
 
-enum class ResourcePriority
+enum class eResourcePriority
 {
     Low,
     Normal,

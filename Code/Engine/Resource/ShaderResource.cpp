@@ -8,7 +8,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
-ShaderResource::ShaderResource(String const& path, ResourceType type)
+ShaderResource::ShaderResource(String const& path, eResourceType type)
     : IResource(path, type)
 {
 }
@@ -22,7 +22,7 @@ ShaderResource::~ShaderResource()
 //----------------------------------------------------------------------------------------------------
 bool ShaderResource::Load()
 {
-    if (m_state == ResourceState::Loaded)
+    if (m_state == eResourceState::Loaded)
     {
         return true;
     }
@@ -41,7 +41,7 @@ void ShaderResource::Unload()
         m_rendererShader = nullptr;
     }
 
-    m_state = ResourceState::Unloaded;
+    m_state = eResourceState::Unloaded;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -61,5 +61,5 @@ void ShaderResource::SetRendererShader(Shader* shader)
     }
 
     m_rendererShader = shader;
-    m_state = shader ? ResourceState::Loaded : ResourceState::Unloaded;
+    m_state = shader ? eResourceState::Loaded : eResourceState::Unloaded;
 }

@@ -22,10 +22,14 @@ class Texture;
 class BitmapFont;
 class Shader;
 class Renderer;
+class TextureResource;
+class TextureLoader;
 
+//----------------------------------------------------------------------------------------------------
 struct sResourceSubsystemConfig
 {
-    int m_threadCount = 0;
+    Renderer* m_renderer    = nullptr;
+    int       m_threadCount = 0;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -64,13 +68,14 @@ public:
     template <typename T>
     std::future<ResourceHandle<T>> LoadResourceAsync(String const& path)
     {
-        return std::async(std::launch::async, [this, path]() {
+        return std::async(std::launch::async, [this, path]()
+        {
             return LoadResource<T>(path);
         });
     }
 
     // 預載入資源列表
-    void PreloadResources( std::vector<std::string> const& paths);
+    void PreloadResources(std::vector<std::string> const& paths);
 
     // 卸載未使用的資源
     void UnloadUnusedResources();
@@ -83,29 +88,34 @@ public:
     void SetMemoryLimit(size_t bytes) { m_memoryLimit = bytes; }
 
     // Global singleton access methods
-    static void Initialize(Renderer* renderer, sResourceSubsystemConfig const& config = sResourceSubsystemConfig());
-    static void GlobalShutdown();
-    static ResourceSubsystem* Get() { return s_instance; }
+    // static void               Initialize(Renderer* renderer, sResourceSubsystemConfig const& config = sResourceSubsystemConfig());
+    // static void               GlobalShutdown();
+    // static ResourceSubsystem* Get() { return s_instance; }
 
     // Global resource access methods - delegates to Renderer for actual loading
-    static Texture* CreateOrGetTextureFromFile(String const& path);
-    static BitmapFont* CreateOrGetBitmapFontFromFile(String const& path);
-    static Shader* CreateOrGetShaderFromFile(String const& path, eVertexType vertexType = eVertexType::VERTEX_PCU);
+     Texture*    CreateOrGetTextureFromFile(String const& path);
+     BitmapFont* CreateOrGetBitmapFontFromFile(String const& path);
+     Shader*     CreateOrGetShaderFromFile(String const& path, eVertexType vertexType = eVertexType::VERTEX_PCU);
+
+    // Default texture access (Phase 4: Migration from Renderer)
+     ResourceHandle<TextureResource> GetDefaultTexture();
 
 private:
+    // Helper method to create default white texture
+    void                     CreateDefaultTexture();
     sResourceSubsystemConfig m_config;
 
     // Singleton instance
-    static ResourceSubsystem* s_instance;
-    static Renderer* s_renderer;
+    // static ResourceSubsystem* s_instance;
+    // static Renderer*          s_renderer;
 
     // 禁止複製
-    ResourceSubsystem( ResourceSubsystem const&)            = delete;
-    ResourceSubsystem& operator=( ResourceSubsystem const&) = delete;
+    ResourceSubsystem(ResourceSubsystem const&)            = delete;
+    ResourceSubsystem& operator=(ResourceSubsystem const&) = delete;
 
     // 內部載入方法
-    std::shared_ptr<IResource> LoadResourceInternal( String const& path);
-    String                GetFileExtension( String const& path) const;
+    std::shared_ptr<IResource> LoadResourceInternal(String const& path);
+    String                     GetFileExtension(String const& path) const;
 
     // 工作執行緒
     void WorkerThread();
