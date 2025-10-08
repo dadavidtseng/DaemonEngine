@@ -571,13 +571,10 @@ bool ScriptSubsystem::InitializeHotReload(const std::string& projectRoot)
         m_fileWatcher->AddWatchedFile("Data/Scripts/InputSystemCommon.js");
         m_fileWatcher->AddWatchedFile("Data/Scripts/JSEngine.js");
         m_fileWatcher->AddWatchedFile("Data/Scripts/JSGame.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/core/SystemComponent.js");
+        m_fileWatcher->AddWatchedFile("Data/Scripts/core/Subsystem.js");
         m_fileWatcher->AddWatchedFile("Data/Scripts/components/CppBridgeSystem.js");
         m_fileWatcher->AddWatchedFile("Data/Scripts/components/InputSystem.js");
         m_fileWatcher->AddWatchedFile("Data/Scripts/components/AudioSystem.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CubeSpawner.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/PropMover.js");
-        m_fileWatcher->AddWatchedFile("Data/Scripts/components/CameraShaker.js");
 
         // Start the file watching thread
         m_fileWatcher->StartWatching();

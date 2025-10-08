@@ -39,120 +39,173 @@ void GEngine::Construct()
     // Load engine subsystem configuration
     //------------------------------------------------------------------------------------------------
     nlohmann::json subsystemConfig;
-    bool hasSubsystemConfig = false;
+    bool           hasSubsystemConfig = false;
 
     try
     {
         std::ifstream subsystemConfigFile("Data/Config/EngineSubsystems.json");
+
         if (subsystemConfigFile.is_open())
         {
             subsystemConfigFile >> subsystemConfig;
             hasSubsystemConfig = true;
-            DebuggerPrintf("Loaded EngineSubsystems config from JSON\n");
+            DebuggerPrintf("(GEngine::Construct)EngineSubsystems.json exists. Loaded EngineSubsystems config from \"Data/Config/EngineSubsystems.json\"\n");
         }
         else
         {
-            DebuggerPrintf("EngineSubsystems.json not found, using default configuration (all enabled)\n");
+            DebuggerPrintf("(GEngine::Construct)EngineSubsystems.json not found, using default configuration (all subsystems enabled)\n");
         }
     }
     catch (nlohmann::json::exception const& e)
     {
-        DebuggerPrintf("JSON parsing error in EngineSubsystems.json: %s\n", e.what());
-        DebuggerPrintf("Using default configuration (all subsystems enabled)\n");
+        DebuggerPrintf("(GEngine::Construct)JSON parsing error in EngineSubsystems.json: %s\n", e.what());
+        DebuggerPrintf("(GEngine::Construct)Using default configuration (all subsystems enabled)\n");
     }
 
     //------------------------------------------------------------------------------------------------
 #pragma region LogSubsystem
-    // Load LogSubsystem configuration from JSON file
-    sLogSubsystemConfig config;
+    // Check if LogSubsystem should be enabled from core subsystems list
+    bool enableLogSubsystem = true;  // Default: enabled
 
-    try
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
-        std::ifstream configFile("Data/Config/LogConfig.json");
-        if (configFile.is_open())
-        {
-            nlohmann::json jsonConfig;
-            configFile >> jsonConfig;
-            config = sLogSubsystemConfig::FromJSON(jsonConfig);
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableLogSubsystem         = std::ranges::find(coreSubsystems, "LogSubsystem") != coreSubsystems.end();
+    }
 
-            // Simple success message (we can't use LogSubsystem yet as it's not initialized)
-            DebuggerPrintf("Loaded LogSubsystem config from JSON\n");
+    if (enableLogSubsystem)
+    {
+        // Load LogSubsystem configuration from JSON file
+        sLogSubsystemConfig config;
+
+        try
+        {
+            std::ifstream configFile("Data/Config/LogConfig.json");
+            if (configFile.is_open())
+            {
+                nlohmann::json jsonConfig;
+                configFile >> jsonConfig;
+                config = sLogSubsystemConfig::FromJSON(jsonConfig);
+
+                // Simple success message (we can't use LogSubsystem yet as it's not initialized)
+                DebuggerPrintf("Loaded LogSubsystem config from JSON\n");
+            }
+            else
+            {
+                // Fallback to hardcoded defaults if JSON file not found
+                DebuggerPrintf("LogConfig.json not found, using default configuration\n");
+
+                config.logFilePath      = "Logs/latest.log";
+                config.enableConsole    = true;
+                config.enableFile       = true;
+                config.enableDebugOut   = true;
+                config.enableOnScreen   = true;
+                config.enableDevConsole = true;
+                config.asyncLogging     = true;
+                config.maxLogEntries    = 50000;
+                config.timestampEnabled = true;
+                config.threadIdEnabled  = true;
+                config.autoFlush        = false;
+
+                // Enhanced smart rotation settings
+                config.enableSmartRotation = true;
+                config.rotationConfigPath  = "Data/Config/LogRotation.json";
+
+                // Configure Minecraft-style rotation settings
+                config.smartRotationConfig.maxFileSizeBytes = 100 * 1024 * 1024;
+                config.smartRotationConfig.maxTimeInterval  = std::chrono::hours(2);
+                config.smartRotationConfig.logDirectory     = "Logs";
+                config.smartRotationConfig.currentLogName   = "latest.log";
+                config.smartRotationConfig.sessionPrefix    = "session";
+            }
         }
-        else
+        catch (nlohmann::json::exception const& e)
         {
-            // Fallback to hardcoded defaults if JSON file not found
-            DebuggerPrintf("LogConfig.json not found, using default configuration\n");
+            DebuggerPrintf("JSON parsing error in LogConfig.json: %s\n", e.what());
 
-            config.logFilePath      = "Logs/latest.log";
-            config.enableConsole    = true;
-            config.enableFile       = true;
-            config.enableDebugOut   = true;
-            config.enableOnScreen   = true;
-            config.enableDevConsole = true;
-            config.asyncLogging     = true;
-            config.maxLogEntries    = 50000;
-            config.timestampEnabled = true;
-            config.threadIdEnabled  = true;
-            config.autoFlush        = false;
-
-            // Enhanced smart rotation settings
-            config.enableSmartRotation = true;
-            config.rotationConfigPath  = "Data/Config/LogRotation.json";
-
-            // Configure Minecraft-style rotation settings
+            // Fallback to hardcoded defaults on error
+            config.logFilePath                          = "Logs/latest.log";
+            config.enableConsole                        = true;
+            config.enableFile                           = true;
+            config.enableDebugOut                       = true;
+            config.enableOnScreen                       = true;
+            config.enableDevConsole                     = true;
+            config.asyncLogging                         = true;
+            config.maxLogEntries                        = 50000;
+            config.timestampEnabled                     = true;
+            config.threadIdEnabled                      = true;
+            config.autoFlush                            = false;
+            config.enableSmartRotation                  = true;
+            config.rotationConfigPath                   = "Data/Config/LogRotation.json";
             config.smartRotationConfig.maxFileSizeBytes = 100 * 1024 * 1024;
             config.smartRotationConfig.maxTimeInterval  = std::chrono::hours(2);
             config.smartRotationConfig.logDirectory     = "Logs";
             config.smartRotationConfig.currentLogName   = "latest.log";
             config.smartRotationConfig.sessionPrefix    = "session";
         }
+
+        g_logSubsystem = new LogSubsystem(config);
+        DebuggerPrintf("LogSubsystem: ENABLED\n");
     }
-    catch (nlohmann::json::exception const& e)
+    else
     {
-        DebuggerPrintf("JSON parsing error in LogConfig.json: %s\n", e.what());
-
-        // Fallback to hardcoded defaults on error
-        config.logFilePath                          = "Logs/latest.log";
-        config.enableConsole                        = true;
-        config.enableFile                           = true;
-        config.enableDebugOut                       = true;
-        config.enableOnScreen                       = true;
-        config.enableDevConsole                     = true;
-        config.asyncLogging                         = true;
-        config.maxLogEntries                        = 50000;
-        config.timestampEnabled                     = true;
-        config.threadIdEnabled                      = true;
-        config.autoFlush                            = false;
-        config.enableSmartRotation                  = true;
-        config.rotationConfigPath                   = "Data/Config/LogRotation.json";
-        config.smartRotationConfig.maxFileSizeBytes = 100 * 1024 * 1024;
-        config.smartRotationConfig.maxTimeInterval  = std::chrono::hours(2);
-        config.smartRotationConfig.logDirectory     = "Logs";
-        config.smartRotationConfig.currentLogName   = "latest.log";
-        config.smartRotationConfig.sessionPrefix    = "session";
+        g_logSubsystem = nullptr;
+        DebuggerPrintf("LogSubsystem: DISABLED (from config)\n");
     }
-
-    g_logSubsystem = new LogSubsystem(config);
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region EventSystem
-    sEventSystemConfig constexpr sEventSystemConfig;
-    g_eventSystem = new EventSystem(sEventSystemConfig);
+    // Check if EventSystem should be enabled from core subsystems list
+    bool enableEventSystem = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableEventSystem          = std::ranges::find(coreSubsystems, "EventSystem") != coreSubsystems.end();
+    }
+
+    if (enableEventSystem)
+    {
+        sEventSystemConfig constexpr sEventSystemConfig;
+        g_eventSystem = new EventSystem(sEventSystemConfig);
+        DebuggerPrintf("EventSystem: ENABLED\n");
+    }
+    else
+    {
+        g_eventSystem = nullptr;
+        DebuggerPrintf("EventSystem: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region JobSystem
-    int totalCores = static_cast<int>(std::thread::hardware_concurrency());
-    // if (totalCores < 3) totalCores = 3;  // Minimum: main thread + 1 IO + 1 generic
+    // Check if JobSystem should be enabled from core subsystems list
+    bool enableJobSystem = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableJobSystem            = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
+    }
 
-    int numIOThreads      = 1;                         // 1 dedicated thread for file I/O
-    int numGenericThreads = totalCores - 2;       // N-2 threads for computation (terrain generation, etc.)
-    numGenericThreads     = (std::max)(numGenericThreads, 1);  // Ensure at least 1 generic worker
+    if (enableJobSystem)
+    {
+        int totalCores = static_cast<int>(std::thread::hardware_concurrency());
+        // if (totalCores < 3) totalCores = 3;  // Minimum: main thread + 1 IO + 1 generic
 
-    sJobSubsystemConfig sJobSubsystemConfig;
-    sJobSubsystemConfig.m_genericThreadNum = numGenericThreads;
-    sJobSubsystemConfig.m_ioThreadNum      = numIOThreads;
-    JobSystem* jobSystem                   = new JobSystem(sJobSubsystemConfig);
-    g_jobSystem                      = jobSystem;
+        int numIOThreads      = 1;                         // 1 dedicated thread for file I/O
+        int numGenericThreads = totalCores - 2;       // N-2 threads for computation (terrain generation, etc.)
+        numGenericThreads     = (std::max)(numGenericThreads, 1);  // Ensure at least 1 generic worker
+
+        sJobSubsystemConfig sJobSubsystemConfig;
+        sJobSubsystemConfig.m_genericThreadNum = numGenericThreads;
+        sJobSubsystemConfig.m_ioThreadNum      = numIOThreads;
+        JobSystem* jobSystem                   = new JobSystem(sJobSubsystemConfig);
+        g_jobSystem                            = jobSystem;
+        DebuggerPrintf("JobSystem: ENABLED\n");
+    }
+    else
+    {
+        g_jobSystem = nullptr;
+        DebuggerPrintf("JobSystem: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region InputSystem
@@ -178,32 +231,100 @@ void GEngine::Construct()
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region Window
-    sWindowConfig sWindowConfig;
-    sWindowConfig.m_windowType  = eWindowType::WINDOWED;
-    sWindowConfig.m_aspectRatio = 2.f;
-    sWindowConfig.m_inputSystem = g_input;
-    sWindowConfig.m_windowTitle = "ScriptVisualTests";
-    g_window                    = new Window(sWindowConfig);
+    // Check if Window should be enabled from core subsystems list
+    bool enableWindow = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableWindow               = std::find(coreSubsystems.begin(), coreSubsystems.end(), "Window") != coreSubsystems.end();
+    }
+
+    if (enableWindow)
+    {
+        sWindowConfig sWindowConfig;
+        sWindowConfig.m_windowType  = eWindowType::WINDOWED;
+        sWindowConfig.m_aspectRatio = 2.f;
+        sWindowConfig.m_inputSystem = g_input;
+        sWindowConfig.m_windowTitle = "ScriptVisualTests";
+        g_window                    = new Window(sWindowConfig);
+        DebuggerPrintf("Window: ENABLED\n");
+    }
+    else
+    {
+        g_window = nullptr;
+        DebuggerPrintf("Window: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region Renderer
-    sRendererConfig sRendererConfig;
-    sRendererConfig.m_window = g_window;
-    g_renderer               = new Renderer(sRendererConfig);
+    // Check if Renderer should be enabled from core subsystems list
+    bool enableRenderer = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableRenderer             = std::find(coreSubsystems.begin(), coreSubsystems.end(), "Renderer") != coreSubsystems.end();
+    }
+
+    if (enableRenderer)
+    {
+        sRendererConfig sRendererConfig;
+        sRendererConfig.m_window = g_window;
+        g_renderer               = new Renderer(sRendererConfig);
+        DebuggerPrintf("Renderer: ENABLED\n");
+    }
+    else
+    {
+        g_renderer = nullptr;
+        DebuggerPrintf("Renderer: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region DevConsole
-    sDevConsoleConfig devConsoleConfig;
-    devConsoleConfig.m_defaultRenderer = g_renderer;
-    devConsoleConfig.m_defaultFontName = "DaemonFont";
-    g_devConsole                       = new DevConsole(devConsoleConfig);
+    // Check if DevConsole should be enabled from core subsystems list
+    bool enableDevConsole = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableDevConsole           = std::find(coreSubsystems.begin(), coreSubsystems.end(), "DevConsole") != coreSubsystems.end();
+    }
+
+    if (enableDevConsole)
+    {
+        sDevConsoleConfig devConsoleConfig;
+        devConsoleConfig.m_defaultRenderer = g_renderer;
+        devConsoleConfig.m_defaultFontName = "DaemonFont";
+        g_devConsole                       = new DevConsole(devConsoleConfig);
+        DebuggerPrintf("DevConsole: ENABLED\n");
+    }
+    else
+    {
+        g_devConsole = nullptr;
+        DebuggerPrintf("DevConsole: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region ResourceSubsystem
-    sResourceSubsystemConfig resourceSubsystemConfig;
-    resourceSubsystemConfig.m_renderer    = g_renderer;
-    resourceSubsystemConfig.m_threadCount = 4;
-    g_resourceSubsystem                   = new ResourceSubsystem(resourceSubsystemConfig);
+    // Check if ResourceSubsystem should be enabled from core subsystems list
+    bool enableResourceSubsystem = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableResourceSubsystem    = std::find(coreSubsystems.begin(), coreSubsystems.end(), "ResourceSubsystem") != coreSubsystems.end();
+    }
+
+    if (enableResourceSubsystem)
+    {
+        sResourceSubsystemConfig resourceSubsystemConfig;
+        resourceSubsystemConfig.m_renderer    = g_renderer;
+        resourceSubsystemConfig.m_threadCount = 4;
+        g_resourceSubsystem                   = new ResourceSubsystem(resourceSubsystemConfig);
+        DebuggerPrintf("ResourceSubsystem: ENABLED\n");
+    }
+    else
+    {
+        g_resourceSubsystem = nullptr;
+        DebuggerPrintf("ResourceSubsystem: DISABLED (from config)\n");
+    }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region AudioSystem
@@ -243,7 +364,7 @@ void GEngine::Construct()
         // Read config from JSON if available
         if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("script"))
         {
-            auto const& scriptJsonConfig = subsystemConfig["subsystems"]["script"]["config"];
+            auto const& scriptJsonConfig     = subsystemConfig["subsystems"]["script"]["config"];
             scriptConfig.enableDebugging     = scriptJsonConfig.value("enableDebugging", true);
             scriptConfig.heapSizeLimit       = scriptJsonConfig.value("heapSizeLimit", 256);
             scriptConfig.enableConsoleOutput = scriptJsonConfig.value("enableConsoleOutput", true);
@@ -304,33 +425,76 @@ void GEngine::Startup()
     sDebugRenderConfig.m_fontName = "DaemonFont";
 #pragma endregion
 
-    g_devConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Mouse) Aim");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(W/A)   Move");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(S/D)   Strafe");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Q/E)   Roll");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Z/C)   Elevate");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Shift) Sprint");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(H)     Set Camera to Origin");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(1)     Spawn Line");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(2)     Spawn Point");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(3)     Spawn Wireframe Sphere");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(4)     Spawn Basis");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(5)     Spawn Billboard Text");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(6)     Spawn Wireframe Cylinder");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(7)     Add Message");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
-    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
+    if (g_devConsole)
+    {
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Mouse) Aim");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(W/A)   Move");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(S/D)   Strafe");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Q/E)   Roll");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Z/C)   Elevate");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Shift) Sprint");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(H)     Set Camera to Origin");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(1)     Spawn Line");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(2)     Spawn Point");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(3)     Spawn Wireframe Sphere");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(4)     Spawn Basis");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(5)     Spawn Billboard Text");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(6)     Spawn Wireframe Cylinder");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(7)     Add Message");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
+        g_devConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
+    }
 
-    g_logSubsystem->Startup();
-    g_jobSystem->Startup();
-    g_eventSystem->Startup();
-    g_window->Startup();
-    g_renderer->Startup();
-    g_devConsole->StartUp();
-    g_resourceSubsystem->Startup();
-    DebugRenderSystemStartup(sDebugRenderConfig);
+    // Startup core subsystems (check for null before calling)
+    if (g_logSubsystem)
+    {
+        g_logSubsystem->Startup();
+        DebuggerPrintf("LogSubsystem started\n");
+    }
+
+    if (g_jobSystem)
+    {
+        g_jobSystem->Startup();
+        DebuggerPrintf("JobSystem started\n");
+    }
+
+    if (g_eventSystem)
+    {
+        g_eventSystem->Startup();
+        DebuggerPrintf("EventSystem started\n");
+    }
+
+    if (g_window)
+    {
+        g_window->Startup();
+        DebuggerPrintf("Window started\n");
+    }
+
+    if (g_renderer)
+    {
+        g_renderer->Startup();
+        DebuggerPrintf("Renderer started\n");
+    }
+
+    if (g_devConsole)
+    {
+        g_devConsole->StartUp();
+        DebuggerPrintf("DevConsole started\n");
+    }
+
+    if (g_resourceSubsystem)
+    {
+        g_resourceSubsystem->Startup();
+        DebuggerPrintf("ResourceSubsystem started\n");
+    }
+
+    if (g_renderer)
+    {
+        DebugRenderSystemStartup(sDebugRenderConfig);
+        DebuggerPrintf("DebugRenderSystem started\n");
+    }
 
     // Conditionally startup optional subsystems
     if (g_input)
@@ -374,13 +538,52 @@ void GEngine::Shutdown()
         DebuggerPrintf("InputSystem shutdown\n");
     }
 
-    // Shutdown core subsystems (reverse order of startup)
-    DebugRenderSystemShutdown();
-    g_resourceSubsystem->Shutdown();
-    g_devConsole->Shutdown();
-    g_renderer->Shutdown();
-    g_window->Shutdown();
-    g_eventSystem->Shutdown();
-    g_jobSystem->Shutdown();
-    g_logSubsystem->Shutdown();
+    // Shutdown core subsystems (reverse order of startup, check for null)
+    if (g_renderer)
+    {
+        DebugRenderSystemShutdown();
+        DebuggerPrintf("DebugRenderSystem shutdown\n");
+    }
+
+    if (g_resourceSubsystem)
+    {
+        g_resourceSubsystem->Shutdown();
+        DebuggerPrintf("ResourceSubsystem shutdown\n");
+    }
+
+    if (g_devConsole)
+    {
+        g_devConsole->Shutdown();
+        DebuggerPrintf("DevConsole shutdown\n");
+    }
+
+    if (g_renderer)
+    {
+        g_renderer->Shutdown();
+        DebuggerPrintf("Renderer shutdown\n");
+    }
+
+    if (g_window)
+    {
+        g_window->Shutdown();
+        DebuggerPrintf("Window shutdown\n");
+    }
+
+    if (g_eventSystem)
+    {
+        g_eventSystem->Shutdown();
+        DebuggerPrintf("EventSystem shutdown\n");
+    }
+
+    if (g_jobSystem)
+    {
+        g_jobSystem->Shutdown();
+        DebuggerPrintf("JobSystem shutdown\n");
+    }
+
+    if (g_logSubsystem)
+    {
+        g_logSubsystem->Shutdown();
+        DebuggerPrintf("LogSubsystem shutdown\n");
+    }
 }
