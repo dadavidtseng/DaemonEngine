@@ -150,6 +150,60 @@ bool ModuleLoader::LoadModuleFromSource(std::string const& moduleCode, std::stri
 }
 
 //----------------------------------------------------------------------------------------------------
+bool ModuleLoader::CheckForExistingInstances()
+{
+    // Get V8 isolate and context
+    void* isolatePtr = m_scriptSystem->GetV8Isolate();
+    if (!isolatePtr)
+    {
+        return false;
+    }
+
+    v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
+    v8::Isolate::Scope isolateScope(isolate);
+    v8::HandleScope handleScope(isolate);
+
+    void* contextPtr = m_scriptSystem->GetV8Context();
+    if (!contextPtr)
+    {
+        return false;
+    }
+
+    v8::Local<v8::Context> context = *static_cast<v8::Local<v8::Context>*>(contextPtr);
+    v8::Context::Scope contextScope(context);
+
+    // Check if globalThis.JSEngine exists
+    v8::Local<v8::Object> globalThis = context->Global();
+    v8::Local<v8::String> jsEngineKey = v8::String::NewFromUtf8Literal(isolate, "JSEngine");
+
+    v8::Maybe<bool> hasJSEngine = globalThis->Has(context, jsEngineKey);
+    if (hasJSEngine.IsNothing() || !hasJSEngine.FromJust())
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            "ModuleLoader: No existing JSEngine instance found in globalThis");
+        return false;
+    }
+
+    // Check if the JSEngine value is actually an object (not undefined/null)
+    v8::MaybeLocal<v8::Value> maybeJSEngine = globalThis->Get(context, jsEngineKey);
+    if (maybeJSEngine.IsEmpty())
+    {
+        return false;
+    }
+
+    v8::Local<v8::Value> jsEngineValue = maybeJSEngine.ToLocalChecked();
+    if (!jsEngineValue->IsObject())
+    {
+        return false;
+    }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        "ModuleLoader: Found existing JSEngine instance - preserving instances during hot-reload");
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
 bool ModuleLoader::ReloadModule(std::string const& modulePath)
 {
     ClearError();
@@ -202,29 +256,62 @@ bool ModuleLoader::ReloadModule(std::string const& modulePath)
             StringFormat("  - Invalidated: {}", moduleUrl));
     }
 
-    // Always reload from main.js to ensure full import chain execution
-    // This is critical because V8 module instances are immutable once evaluated
-    std::string mainModulePath = "Data/Scripts/main.js";
+    // HOT-RELOAD STRATEGY: Different strategies for different file types
+    //  - main.js or JSGame.js changes: Full reload (constructors need to run)
+    //  - Component files change: Preserve instances (hot-reload methods)
+    bool isMainOrJSGame = (moduleKey.find("main.js") != std::string::npos ||
+                           moduleKey.find("JSGame.js") != std::string::npos);
 
-    DAEMON_LOG(LogScript, eLogVerbosity::Log,
-        StringFormat("ModuleLoader: Reloading from entry point: {}", mainModulePath));
+    bool shouldPreserveInstances = CheckForExistingInstances() && !isMainOrJSGame;
 
-    // Reload from main.js (triggers re-import of all dependent modules)
-    bool success = LoadModule(mainModulePath);
-
-    if (success)
+    if (shouldPreserveInstances)
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Display,
-            StringFormat("ModuleLoader: Hot-reload completed successfully for: {} (key: {})", modulePath, moduleKey));
+        // INSTANCE PRESERVATION MODE: Only reload the changed module
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            StringFormat("ModuleLoader: Preserving existing JSEngine/JSGame instances, reloading only: {}", moduleKey));
+
+        // Reload only the changed module (not main.js)
+        bool success = LoadModule(moduleKey);
+
+        if (success)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
+                StringFormat("ModuleLoader: Hot-reload completed (instance preservation) for: {} (key: {})", modulePath, moduleKey));
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                StringFormat("ModuleLoader: Hot-reload failed for: {} (key: {})", modulePath, moduleKey));
+        }
+
+        return success;
     }
     else
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Error,
-            StringFormat("ModuleLoader: Hot-reload failed for: {} (key: {})", modulePath, moduleKey));
-    }
+        // FULL RELOAD MODE: Reload from main.js to create new instances
+        std::string mainModulePath = "Data/Scripts/main.js";
 
-    return success;
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            StringFormat("ModuleLoader: No existing instances, reloading from entry point: {}", mainModulePath));
+
+        // Reload from main.js (triggers re-import of all dependent modules)
+        bool success = LoadModule(mainModulePath);
+
+        if (success)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Display,
+                StringFormat("ModuleLoader: Hot-reload completed successfully for: {} (key: {})", modulePath, moduleKey));
+        }
+        else
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                StringFormat("ModuleLoader: Hot-reload failed for: {} (key: {})", modulePath, moduleKey));
+        }
+
+        return success;
+    }
 }
+
 
 //----------------------------------------------------------------------------------------------------
 v8::MaybeLocal<v8::Module> ModuleLoader::CompileModule(v8::Isolate*           isolate,

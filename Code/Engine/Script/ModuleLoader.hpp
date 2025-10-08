@@ -178,6 +178,10 @@ private:
     // Internal helper methods
     //------------------------------------------------------------------------------------------------
 
+    /// @brief Check if JSEngine/JSGame instances exist in globalThis
+    /// @return true if instances exist and should be preserved during hot-reload
+    bool CheckForExistingInstances();
+
     /// @brief Read module file from disk
     bool ReadModuleFile(std::string const& filePath, std::string& outCode);
 
