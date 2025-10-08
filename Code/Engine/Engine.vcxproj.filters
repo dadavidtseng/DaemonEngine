@@ -501,6 +501,9 @@
     <ClCompile Include="Renderer\RendererScriptInterface.cpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\CameraScriptInterface.cpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -903,6 +906,9 @@
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\RendererScriptInterface.hpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\CameraScriptInterface.hpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
   </ItemGroup>
