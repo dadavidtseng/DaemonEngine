@@ -68,12 +68,14 @@ private:
     // Vertex array management
     ScriptMethodResult ExecuteCreateVertexArray(ScriptArgs const& args);
     ScriptMethodResult ExecuteAddVertex(ScriptArgs const& args);
+    ScriptMethodResult ExecuteAddVertexBatch(ScriptArgs const& args);
 
     // Helper methods for enum conversion
     int  StringToBlendMode(String const& modeStr) const;
     int  StringToRasterizerMode(String const& modeStr) const;
     int  StringToSamplerMode(String const& modeStr) const;
     int  StringToDepthMode(String const& modeStr) const;
+
 
 private:
     Renderer*                                            m_renderer = nullptr;

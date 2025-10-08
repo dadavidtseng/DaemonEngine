@@ -39,6 +39,7 @@ void RendererScriptInterface::InitializeMethodRegistry()
     m_methodRegistry["drawVertexArray"]     = [this](ScriptArgs const& args) { return ExecuteDrawVertexArray(args); };
     m_methodRegistry["createVertexArrayCPP"]   = [this](ScriptArgs const& args) { return ExecuteCreateVertexArray(args); };
     m_methodRegistry["addVertex"]           = [this](ScriptArgs const& args) { return ExecuteAddVertex(args); };
+    m_methodRegistry["addVertexBatch"]      = [this](ScriptArgs const& args) { return ExecuteAddVertexBatch(args); };
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -94,6 +95,11 @@ std::vector<ScriptMethodInfo> RendererScriptInterface::GetAvailableMethods() con
                          "Add vertex to current vertex array (x, y, z, r, g, b, a, u, v)",
                          {"number", "number", "number", "number", "number", "number", "number", "number", "number"},
                          "void"),
+
+        ScriptMethodInfo("addVertexBatch",
+                         "Add multiple vertices from JavaScript array [x,y,z,r,g,b,a,u,v, ...]",
+                         {"array"},
+                         "void"),
     };
 }
 
@@ -131,6 +137,7 @@ ScriptMethodResult RendererScriptInterface::CallMethod(String const& methodName,
     if (methodName == "drawVertexArray")         return ExecuteDrawVertexArray(args);
     if (methodName == "createVertexArrayCPP")       return ExecuteCreateVertexArray(args);
     if (methodName == "addVertex")               return ExecuteAddVertex(args);
+    if (methodName == "addVertexBatch")         return ExecuteAddVertexBatch(args);
 
     return ScriptMethodResult::Error("Unknown method: " + methodName);
 }
@@ -433,4 +440,71 @@ int RendererScriptInterface::StringToDepthMode(String const& modeStr) const
 
     DAEMON_LOG(LogScript, eLogVerbosity::Warning, StringFormat("Unknown depth mode: {}, defaulting to READ_WRITE_LESS_EQUAL", modeStr));
     return static_cast<int>(eDepthMode::READ_WRITE_LESS_EQUAL);
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult RendererScriptInterface::ExecuteAddVertexBatch(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "addVertexBatch");
+    if (!result.success) return result;
+
+    try
+    {
+        if (m_currentVertexArrayHandle.empty())
+        {
+            return ScriptMethodResult::Error("No vertex array created. Call createVertexArray() first.");
+        }
+
+        // Expect a single argument containing an array of vertex data
+        // Format: [x,y,z,r,g,b,a,u,v, x,y,z,r,g,b,a,u,v, ...]
+        if (args[0].type() != typeid(std::vector<std::any>))
+        {
+            return ScriptMethodResult::Error("addVertexBatch expects an array argument");
+        }
+
+        std::vector<std::any> const& vertexData = std::any_cast<std::vector<std::any> const&>(args[0]);
+
+        // Each vertex needs 9 values (x,y,z, r,g,b,a, u,v)
+        if (vertexData.size() % 9 != 0)
+        {
+            return ScriptMethodResult::Error(
+                "addVertexBatch: array size must be multiple of 9 (got " +
+                std::to_string(vertexData.size()) + ")");
+        }
+
+        size_t numVertices = vertexData.size() / 9;
+        std::vector<Vertex_PCU>& vertices = m_vertexArrays[m_currentVertexArrayHandle];
+        vertices.reserve(vertices.size() + numVertices);
+
+        for (size_t i = 0; i < numVertices; ++i)
+        {
+            size_t baseIdx = i * 9;
+
+            // PERFORMANCE OPTIMIZATION: Direct any_cast<double> instead of ScriptTypeExtractor
+            // JavaScript always sends numbers as doubles, avoiding exception-based type checking
+            float x = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 0]));
+            float y = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 1]));
+            float z = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 2]));
+            unsigned char r = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 3]));
+            unsigned char g = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 4]));
+            unsigned char b = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 5]));
+            unsigned char a = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 6]));
+            float u = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 7]));
+            float v = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 8]));
+
+            // PERFORMANCE OPTIMIZATION: emplace_back for in-place construction
+            vertices.emplace_back(Vec3(x, y, z), Rgba8(r, g, b, a), Vec2(u, v));
+        }
+
+        return ScriptMethodResult::Success();
+    }
+    catch (std::bad_any_cast const& e)
+    {
+        return ScriptMethodResult::Error(
+            "AddVertexBatch type error: Expected double values from JavaScript. " + String(e.what()));
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("AddVertexBatch failed: " + String(e.what()));
+    }
 }
