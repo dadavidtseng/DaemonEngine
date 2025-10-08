@@ -6,12 +6,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Core/Rgba8.hpp"
-#include "Engine/Math/EulerAngles.hpp"
-#include "Engine/Math/Mat44.hpp"
-#include "Engine/Math/Vec3.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
@@ -29,17 +24,19 @@ RendererScriptInterface::RendererScriptInterface(Renderer* renderer)
 //----------------------------------------------------------------------------------------------------
 void RendererScriptInterface::InitializeMethodRegistry()
 {
-    m_methodRegistry["setModelConstants"]   = [this](ScriptArgs const& args) { return ExecuteSetModelConstants(args); };
-    m_methodRegistry["setBlendMode"]        = [this](ScriptArgs const& args) { return ExecuteSetBlendMode(args); };
-    m_methodRegistry["setRasterizerMode"]   = [this](ScriptArgs const& args) { return ExecuteSetRasterizerMode(args); };
-    m_methodRegistry["setSamplerMode"]      = [this](ScriptArgs const& args) { return ExecuteSetSamplerMode(args); };
-    m_methodRegistry["setDepthMode"]        = [this](ScriptArgs const& args) { return ExecuteSetDepthMode(args); };
-    m_methodRegistry["bindTextureCPP"]         = [this](ScriptArgs const& args) { return ExecuteBindTexture(args); };
-    m_methodRegistry["bindShader"]          = [this](ScriptArgs const& args) { return ExecuteBindShader(args); };
-    m_methodRegistry["drawVertexArray"]     = [this](ScriptArgs const& args) { return ExecuteDrawVertexArray(args); };
-    m_methodRegistry["createVertexArrayCPP"]   = [this](ScriptArgs const& args) { return ExecuteCreateVertexArray(args); };
-    m_methodRegistry["addVertex"]           = [this](ScriptArgs const& args) { return ExecuteAddVertex(args); };
-    m_methodRegistry["addVertexBatch"]      = [this](ScriptArgs const& args) { return ExecuteAddVertexBatch(args); };
+    m_methodRegistry["setModelConstants"]    = [this](ScriptArgs const& args) { return ExecuteSetModelConstants(args); };
+    m_methodRegistry["setBlendMode"]         = [this](ScriptArgs const& args) { return ExecuteSetBlendMode(args); };
+    m_methodRegistry["setRasterizerMode"]    = [this](ScriptArgs const& args) { return ExecuteSetRasterizerMode(args); };
+    m_methodRegistry["setSamplerMode"]       = [this](ScriptArgs const& args) { return ExecuteSetSamplerMode(args); };
+    m_methodRegistry["setDepthMode"]         = [this](ScriptArgs const& args) { return ExecuteSetDepthMode(args); };
+    m_methodRegistry["bindTextureCPP"]       = [this](ScriptArgs const& args) { return ExecuteBindTexture(args); };
+    m_methodRegistry["bindShader"]           = [this](ScriptArgs const& args) { return ExecuteBindShader(args); };
+    m_methodRegistry["drawVertexArray"]      = [this](ScriptArgs const& args) { return ExecuteDrawVertexArray(args); };
+    m_methodRegistry["beginCamera"]          = [this](ScriptArgs const& args) { return ExecuteBeginCamera(args); };
+    m_methodRegistry["endCamera"]            = [this](ScriptArgs const& args) { return ExecuteEndCamera(args); };
+    m_methodRegistry["createVertexArrayCPP"] = [this](ScriptArgs const& args) { return ExecuteCreateVertexArray(args); };
+    m_methodRegistry["addVertex"]            = [this](ScriptArgs const& args) { return ExecuteAddVertex(args); };
+    m_methodRegistry["addVertexBatch"]       = [this](ScriptArgs const& args) { return ExecuteAddVertexBatch(args); };
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -86,6 +83,16 @@ std::vector<ScriptMethodInfo> RendererScriptInterface::GetAvailableMethods() con
                          {"string"},
                          "void"),
 
+        ScriptMethodInfo("beginCamera",
+                         "Begin rendering with camera",
+                         {"number"},
+                         "void"),
+
+        ScriptMethodInfo("endCamera",
+                         "End rendering with camera",
+                         {"number"},
+                         "void"),
+
         ScriptMethodInfo("createVertexArrayCPP",
                          "Create new vertex array and return handle ID",
                          {},
@@ -112,32 +119,36 @@ std::vector<String> RendererScriptInterface::GetAvailableProperties() const
 //----------------------------------------------------------------------------------------------------
 std::any RendererScriptInterface::GetProperty(String const& propertyName) const
 {
-    UNUSED(propertyName);
+    UNUSED(propertyName)
     return std::any{};
 }
 
 //----------------------------------------------------------------------------------------------------
-bool RendererScriptInterface::SetProperty(String const& propertyName, std::any const& value)
+bool RendererScriptInterface::SetProperty(String const& propertyName,
+    std::any const& value)
 {
-    UNUSED(propertyName);
-    UNUSED(value);
+    UNUSED(propertyName)
+    UNUSED(value)
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
-ScriptMethodResult RendererScriptInterface::CallMethod(String const& methodName, ScriptArgs const& args)
+ScriptMethodResult RendererScriptInterface::CallMethod(String const& methodName,
+    ScriptArgs const& args)
 {
-    if (methodName == "setModelConstants")       return ExecuteSetModelConstants(args);
-    if (methodName == "setBlendMode")            return ExecuteSetBlendMode(args);
-    if (methodName == "setRasterizerMode")       return ExecuteSetRasterizerMode(args);
-    if (methodName == "setSamplerMode")          return ExecuteSetSamplerMode(args);
-    if (methodName == "setDepthMode")            return ExecuteSetDepthMode(args);
-    if (methodName == "bindTextureCPP")             return ExecuteBindTexture(args);
-    if (methodName == "bindShader")              return ExecuteBindShader(args);
-    if (methodName == "drawVertexArray")         return ExecuteDrawVertexArray(args);
-    if (methodName == "createVertexArrayCPP")       return ExecuteCreateVertexArray(args);
-    if (methodName == "addVertex")               return ExecuteAddVertex(args);
-    if (methodName == "addVertexBatch")         return ExecuteAddVertexBatch(args);
+    if (methodName == "setModelConstants") return ExecuteSetModelConstants(args);
+    if (methodName == "setBlendMode") return ExecuteSetBlendMode(args);
+    if (methodName == "setRasterizerMode") return ExecuteSetRasterizerMode(args);
+    if (methodName == "setSamplerMode") return ExecuteSetSamplerMode(args);
+    if (methodName == "setDepthMode") return ExecuteSetDepthMode(args);
+    if (methodName == "bindTextureCPP") return ExecuteBindTexture(args);
+    if (methodName == "bindShader") return ExecuteBindShader(args);
+    if (methodName == "drawVertexArray") return ExecuteDrawVertexArray(args);
+    if (methodName == "beginCamera") return ExecuteBeginCamera(args);
+    if (methodName == "endCamera") return ExecuteEndCamera(args);
+    if (methodName == "createVertexArrayCPP") return ExecuteCreateVertexArray(args);
+    if (methodName == "addVertex") return ExecuteAddVertex(args);
+    if (methodName == "addVertexBatch") return ExecuteAddVertexBatch(args);
 
     return ScriptMethodResult::Error("Unknown method: " + methodName);
 }
@@ -146,6 +157,7 @@ ScriptMethodResult RendererScriptInterface::CallMethod(String const& methodName,
 ScriptMethodResult RendererScriptInterface::ExecuteSetModelConstants(ScriptArgs const& args)
 {
     auto result = ScriptTypeExtractor::ValidateArgCount(args, 10, "setModelConstants");
+
     if (!result.success) return result;
 
     try
@@ -163,11 +175,11 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetModelConstants(ScriptArgs 
         unsigned char g = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[7]));
         unsigned char b = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[8]));
         unsigned char a = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[9]));
-        Rgba8 color(r, g, b, a);
+        Rgba8         color(r, g, b, a);
 
         // Build transform matrix exactly like Entity::GetModelToWorldTransform()
         EulerAngles orientation(yaw, pitch, roll);
-        Mat44 transform;
+        Mat44       transform;
         transform.SetTranslation3D(position);
         transform.Append(orientation.GetAsMatrix_IFwd_JLeft_KUp());
 
@@ -177,7 +189,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetModelConstants(ScriptArgs 
     catch (std::exception const& e)
     {
         DAEMON_LOG(LogRenderer, eLogVerbosity::Error,
-            Stringf("RendererScriptInterface::setModelConstants ERROR: %s", e.what()));
+                   Stringf("RendererScriptInterface::setModelConstants ERROR: %s", e.what()));
         return ScriptMethodResult::Error("SetModelConstants failed: " + String(e.what()));
     }
 }
@@ -191,7 +203,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetBlendMode(ScriptArgs const
     try
     {
         String modeStr = ScriptTypeExtractor::ExtractString(args[0]);
-        int mode = StringToBlendMode(modeStr);
+        int    mode    = StringToBlendMode(modeStr);
         m_renderer->SetBlendMode(static_cast<eBlendMode>(mode));
         return ScriptMethodResult::Success();
     }
@@ -210,7 +222,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetRasterizerMode(ScriptArgs 
     try
     {
         String modeStr = ScriptTypeExtractor::ExtractString(args[0]);
-        int mode = StringToRasterizerMode(modeStr);
+        int    mode    = StringToRasterizerMode(modeStr);
         m_renderer->SetRasterizerMode(static_cast<eRasterizerMode>(mode));
         return ScriptMethodResult::Success();
     }
@@ -229,7 +241,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetSamplerMode(ScriptArgs con
     try
     {
         String modeStr = ScriptTypeExtractor::ExtractString(args[0]);
-        int mode = StringToSamplerMode(modeStr);
+        int    mode    = StringToSamplerMode(modeStr);
         m_renderer->SetSamplerMode(static_cast<eSamplerMode>(mode));
         return ScriptMethodResult::Success();
     }
@@ -248,7 +260,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetDepthMode(ScriptArgs const
     try
     {
         String modeStr = ScriptTypeExtractor::ExtractString(args[0]);
-        int mode = StringToDepthMode(modeStr);
+        int    mode    = StringToDepthMode(modeStr);
         m_renderer->SetDepthMode(static_cast<eDepthMode>(mode));
         return ScriptMethodResult::Success();
     }
@@ -294,8 +306,8 @@ ScriptMethodResult RendererScriptInterface::ExecuteBindShader(ScriptArgs const& 
 
     try
     {
-        String shaderPath = ScriptTypeExtractor::ExtractString(args[0]);
-        Shader* shader = m_renderer->CreateOrGetShaderFromFile(shaderPath.c_str(), eVertexType::VERTEX_PCU);
+        String  shaderPath = ScriptTypeExtractor::ExtractString(args[0]);
+        Shader* shader     = m_renderer->CreateOrGetShaderFromFile(shaderPath.c_str(), eVertexType::VERTEX_PCU);
         m_renderer->BindShader(shader);
         return ScriptMethodResult::Success();
     }
@@ -319,7 +331,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteDrawVertexArray(ScriptArgs co
         if (it == m_vertexArrays.end())
         {
             DAEMON_LOG(LogRenderer, eLogVerbosity::Error,
-                Stringf("RendererScriptInterface::drawVertexArray ERROR: Vertex array not found: %s", handle.c_str()));
+                       Stringf("RendererScriptInterface::drawVertexArray ERROR: Vertex array not found: %s", handle.c_str()));
             return ScriptMethodResult::Error("Vertex array not found: " + handle);
         }
 
@@ -332,7 +344,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteDrawVertexArray(ScriptArgs co
     catch (std::exception const& e)
     {
         DAEMON_LOG(LogRenderer, eLogVerbosity::Error,
-            Stringf("RendererScriptInterface::drawVertexArray ERROR: %s", e.what()));
+                   Stringf("RendererScriptInterface::drawVertexArray ERROR: %s", e.what()));
         return ScriptMethodResult::Error("DrawVertexArray failed: " + String(e.what()));
     }
 }
@@ -345,8 +357,8 @@ ScriptMethodResult RendererScriptInterface::ExecuteCreateVertexArray(ScriptArgs 
 
     try
     {
-        String handle = "vertexArray_" + std::to_string(m_nextVertexArrayId++);
-        m_vertexArrays[handle] = std::vector<Vertex_PCU>();
+        String handle              = "vertexArray_" + std::to_string(m_nextVertexArrayId++);
+        m_vertexArrays[handle]     = std::vector<Vertex_PCU>();
         m_currentVertexArrayHandle = handle;
 
         return ScriptMethodResult::Success(handle);
@@ -370,19 +382,19 @@ ScriptMethodResult RendererScriptInterface::ExecuteAddVertex(ScriptArgs const& a
             return ScriptMethodResult::Error("No vertex array created. Call createVertexArray() first.");
         }
 
-        float x = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[0]));
-        float y = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[1]));
-        float z = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[2]));
+        float         x = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        float         y = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[1]));
+        float         z = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[2]));
         unsigned char r = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[3]));
         unsigned char g = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[4]));
         unsigned char b = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[5]));
         unsigned char a = static_cast<unsigned char>(ScriptTypeExtractor::ExtractInt(args[6]));
-        float u = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[7]));
-        float v = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[8]));
+        float         u = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[7]));
+        float         v = static_cast<float>(ScriptTypeExtractor::ExtractDouble(args[8]));
 
         Vertex_PCU vertex;
-        vertex.m_position = Vec3(x, y, z);
-        vertex.m_color = Rgba8(r, g, b, a);
+        vertex.m_position    = Vec3(x, y, z);
+        vertex.m_color       = Rgba8(r, g, b, a);
         vertex.m_uvTexCoords = Vec2(u, v);
 
         m_vertexArrays[m_currentVertexArrayHandle].push_back(vertex);
@@ -472,8 +484,8 @@ ScriptMethodResult RendererScriptInterface::ExecuteAddVertexBatch(ScriptArgs con
                 std::to_string(vertexData.size()) + ")");
         }
 
-        size_t numVertices = vertexData.size() / 9;
-        std::vector<Vertex_PCU>& vertices = m_vertexArrays[m_currentVertexArrayHandle];
+        size_t                   numVertices = vertexData.size() / 9;
+        std::vector<Vertex_PCU>& vertices    = m_vertexArrays[m_currentVertexArrayHandle];
         vertices.reserve(vertices.size() + numVertices);
 
         for (size_t i = 0; i < numVertices; ++i)
@@ -482,15 +494,15 @@ ScriptMethodResult RendererScriptInterface::ExecuteAddVertexBatch(ScriptArgs con
 
             // PERFORMANCE OPTIMIZATION: Direct any_cast<double> instead of ScriptTypeExtractor
             // JavaScript always sends numbers as doubles, avoiding exception-based type checking
-            float x = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 0]));
-            float y = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 1]));
-            float z = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 2]));
+            float         x = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 0]));
+            float         y = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 1]));
+            float         z = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 2]));
             unsigned char r = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 3]));
             unsigned char g = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 4]));
             unsigned char b = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 5]));
             unsigned char a = static_cast<unsigned char>(std::any_cast<double>(vertexData[baseIdx + 6]));
-            float u = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 7]));
-            float v = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 8]));
+            float         u = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 7]));
+            float         v = static_cast<float>(std::any_cast<double>(vertexData[baseIdx + 8]));
 
             // PERFORMANCE OPTIMIZATION: emplace_back for in-place construction
             vertices.emplace_back(Vec3(x, y, z), Rgba8(r, g, b, a), Vec2(u, v));
@@ -506,5 +518,49 @@ ScriptMethodResult RendererScriptInterface::ExecuteAddVertexBatch(ScriptArgs con
     catch (std::exception const& e)
     {
         return ScriptMethodResult::Error("AddVertexBatch failed: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult RendererScriptInterface::ExecuteBeginCamera(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "beginCamera");
+    if (!result.success) return result;
+
+    try
+    {
+        // Extract camera handle (stored as double from JavaScript)
+        double   cameraHandleDouble = ScriptTypeExtractor::ExtractDouble(args[0]);
+        uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
+        Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
+
+        m_renderer->BeginCamera(*camera);
+        return ScriptMethodResult::Success();
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("BeginCamera failed: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult RendererScriptInterface::ExecuteEndCamera(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "endCamera");
+    if (!result.success) return result;
+
+    try
+    {
+        // Extract camera handle (stored as double from JavaScript)
+        double   cameraHandleDouble = ScriptTypeExtractor::ExtractDouble(args[0]);
+        uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
+        Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
+
+        m_renderer->EndCamera(*camera);
+        return ScriptMethodResult::Success();
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("EndCamera failed: " + String(e.what()));
     }
 }

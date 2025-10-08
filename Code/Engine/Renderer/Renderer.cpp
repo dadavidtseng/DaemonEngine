@@ -1947,8 +1947,7 @@ HRESULT Renderer::CreateWindowSwapChain(Window& window)
     return hr;
 }
 
-// 在 Renderer.cpp 中實作解綁函式
-void Renderer::UnbindShaderResources()
+void Renderer::UnbindShaderResources() const
 {
     ID3D11ShaderResourceView* nullSRV[8] = {nullptr};
     m_deviceContext->PSSetShaderResources(0, 8, nullSRV);

@@ -225,5 +225,5 @@ protected:
     Shader* m_blurDownShader      = nullptr;
     Shader* m_blurUpShader        = nullptr;
     Shader* m_blurCompositeShader = nullptr;
-    void    UnbindShaderResources(); // 添加這個函式聲明
+    void    UnbindShaderResources() const; // 添加這個函式聲明
 };
