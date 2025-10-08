@@ -107,40 +107,10 @@ std::vector<ScriptMethodInfo> InputScriptInterface::GetAvailableMethods() const
                          {"int"},
                          "bool"),
 
-        // // ScriptMethodInfo("wasKeyJustPressed",
-        // //                  "檢查指定按鍵是否剛被按下",
-        // //                  {"int"},
-        // //                  "bool"),
-        //
-        // ScriptMethodInfo("wasKeyJustPressed",
-        //                  "檢查指定按鍵是否剛被按下",
-        //                  {"int"},
-        //                  "bool"),
-        //
-        // ScriptMethodInfo("wasKeyJustReleased",
-        //                  "檢查指定按鍵是否剛被釋放",
-        //                  {"int"},
-        //                  "bool"),
-        //
-        // ScriptMethodInfo("getCursorDelta",
-        //                  "取得滑鼠游標移動增量",
-        //                  {},
-        //                  "object"),
-        //
-        // ScriptMethodInfo("getCursorPosition",
-        //                  "取得滑鼠游標目前位置",
-        //                  {},
-        //                  "object"),
-        //
-        // ScriptMethodInfo("getController",
-        //                  "取得指定索引的控制器",
-        //                  {"int"},
-        //                  "object"),
-        //
-        // ScriptMethodInfo("setCursorMode",
-        //                  "設定游標模式 (0=POINTER, 1=FPS)",
-        //                  {"int"},
-        //                  "void")
+        ScriptMethodInfo("getCursorClientDelta",
+                         "Get cursor client delta (legacy)",
+                         {},
+                         "object")
     };
 }
 
@@ -277,7 +247,7 @@ ScriptMethodResult InputScriptInterface::ExecuteWasKeyJustReleased(ScriptArgs co
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult InputScriptInterface::ExecuteGetCursorClientDelta(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getCursorDelta");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getCursorClientDelta");
     if (!result.success) return result;
 
     try
