@@ -2055,6 +2055,32 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
                 {
                     cppArgs.push_back(arg->BooleanValue(isolate));
                 }
+                else if (arg->IsArray())
+                {
+                    v8::Local<v8::Array> array = v8::Local<v8::Array>::Cast(arg);
+                    uint32_t length = array->Length();
+                    std::vector<std::any> arrayElements;
+                    arrayElements.reserve(length);
+                    
+                    for (uint32_t j = 0; j < length; j++)
+                    {
+                        v8::Local<v8::Value> element = array->Get(isolate->GetCurrentContext(), j).ToLocalChecked();
+                        if (element->IsNumber())
+                        {
+                            arrayElements.push_back(element->NumberValue(isolate->GetCurrentContext()).ToChecked());
+                        }
+                        else if (element->IsString())
+                        {
+                            v8::String::Utf8Value str(isolate, element);
+                            arrayElements.push_back(String(*str));
+                        }
+                        else if (element->IsBoolean())
+                        {
+                            arrayElements.push_back(element->BooleanValue(isolate));
+                        }
+                    }
+                    cppArgs.push_back(arrayElements);
+                }
             }
 
             // Call C++ method

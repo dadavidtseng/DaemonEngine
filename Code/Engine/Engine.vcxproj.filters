@@ -131,7 +131,7 @@
       <UniqueIdentifier>{348d2b99-84ed-41bb-bb90-4904b78d7a14}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Renderer\Script">
-      <UniqueIdentifier>{b7c199f2-5119-477b-b7c2-34545f805a2f}</UniqueIdentifier>
+      <UniqueIdentifier>{cf71cf3f-2647-4e69-86c6-83343bc7e115}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
