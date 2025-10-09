@@ -4,7 +4,7 @@
 //----------------------------------------------------------------------------------------------------
 
 #include <algorithm>
-
+#include "Game/EngineBuildPreferences.hpp"
 #include "Engine/Core/Engine.hpp"
 
 #include "DevConsole.hpp"
@@ -20,7 +20,9 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
+#ifndef ENGINE_DISABLE_SCRIPT
 #include "Engine/Script/ScriptSubsystem.hpp"
+#endif
 
 // using namespace Engine;
 
@@ -349,6 +351,7 @@ void GEngine::Construct()
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
+#ifndef ENGINE_DISABLE_SCRIPT
 #pragma region ScriptSubsystem
     // Check if ScriptSubsystem is enabled in config
     bool enableScript = true;  // Default: enabled
@@ -396,6 +399,7 @@ void GEngine::Construct()
         DebuggerPrintf("ScriptSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
+#endif // !ENGINE_DISABLE_SCRIPT
     //------------------------------------------------------------------------------------------------
     g_rng = new RandomNumberGenerator();
 }
@@ -404,7 +408,9 @@ void GEngine::Construct()
 void GEngine::Destruct()
 {
     ENGINE_SAFE_RELEASE(g_rng);
+#ifndef ENGINE_DISABLE_SCRIPT
     ENGINE_SAFE_RELEASE(g_scriptSubsystem);
+#endif
     ENGINE_SAFE_RELEASE(g_audio);
     ENGINE_SAFE_RELEASE(g_input);
     ENGINE_SAFE_RELEASE(g_resourceSubsystem);
@@ -509,22 +515,26 @@ void GEngine::Startup()
         DebuggerPrintf("AudioSystem started\n");
     }
 
+#ifndef ENGINE_DISABLE_SCRIPT
     if (g_scriptSubsystem)
     {
         g_scriptSubsystem->Startup();
         DebuggerPrintf("ScriptSubsystem started\n");
     }
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------
 void GEngine::Shutdown()
 {
     // Shutdown optional subsystems conditionally (reverse order)
+#ifndef ENGINE_DISABLE_SCRIPT
     if (g_scriptSubsystem)
     {
         g_scriptSubsystem->Shutdown();
         DebuggerPrintf("ScriptSubsystem shutdown\n");
     }
+#endif
 
     if (g_audio)
     {
@@ -539,11 +549,10 @@ void GEngine::Shutdown()
     }
 
     // Shutdown core subsystems (reverse order of startup, check for null)
-    if (g_renderer)
-    {
+
         DebugRenderSystemShutdown();
         DebuggerPrintf("DebugRenderSystem shutdown\n");
-    }
+
 
     if (g_resourceSubsystem)
     {
