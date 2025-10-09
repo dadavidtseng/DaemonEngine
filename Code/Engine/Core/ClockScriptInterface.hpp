@@ -27,13 +27,14 @@ class Clock;
 class ClockScriptInterface : public IScriptableObject
 {
 public:
-    /// @brief Construct ClockScriptInterface with Clock reference for time operations
+    /// @brief Construct ClockScriptInterface for clock creation and management
     ///
-    /// @param clock Valid Clock instance for performing time management operations
-    ///
-    /// @remark Clock must remain valid for lifetime of this interface object.
     /// @remark Automatically initializes method registry for efficient JavaScript dispatch.
-    explicit ClockScriptInterface(Clock* clock);
+    /// @remark Manages JavaScript-created clocks internally with automatic cleanup.
+    ClockScriptInterface();
+
+    /// @brief Destructor - cleans up all JavaScript-created clocks
+    ~ClockScriptInterface() override;
 
     std::vector<ScriptMethodInfo> GetAvailableMethods() const override;
     StringList                    GetAvailableProperties() const override;
@@ -43,10 +44,12 @@ public:
     bool               SetProperty(String const& propertyName, std::any const& value) override;
 
 private:
-    Clock* m_clock = nullptr;
-
     // === METHOD REGISTRY FOR EFFICIENT DISPATCH ===
     void InitializeMethodRegistry() override;
+
+    // === CLOCK CREATION AND DESTRUCTION ===
+    ScriptMethodResult ExecuteCreateClock(ScriptArgs const& args);
+    ScriptMethodResult ExecuteDestroyClock(ScriptArgs const& args);
 
     // === PAUSE CONTROL METHODS ===
     ScriptMethodResult ExecutePause(ScriptArgs const& args);
@@ -67,4 +70,10 @@ private:
 
     // === VALIDATION ===
     bool ValidateTimeScale(float timeScale) const;
+
+    // === HELPER METHODS ===
+    Clock* ExtractClockFromHandle(double handle) const;
+
+    // Clock storage for JavaScript-created clocks
+    std::vector<Clock*> m_createdClocks;
 };

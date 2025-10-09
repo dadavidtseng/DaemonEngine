@@ -13,21 +13,30 @@
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
-ClockScriptInterface::ClockScriptInterface(Clock* clock)
-    : m_clock(clock)
+ClockScriptInterface::ClockScriptInterface()
 {
-    if (!m_clock)
-    {
-        ERROR_AND_DIE("ClockScriptInterface: Clock pointer cannot be null")
-    }
-
     // Initialize method registry for efficient dispatch
     ClockScriptInterface::InitializeMethodRegistry();
 }
 
 //----------------------------------------------------------------------------------------------------
+ClockScriptInterface::~ClockScriptInterface()
+{
+    // Clean up all JavaScript-created clocks
+    for (Clock* clock : m_createdClocks)
+    {
+        delete clock;
+    }
+    m_createdClocks.clear();
+}
+
+//----------------------------------------------------------------------------------------------------
 void ClockScriptInterface::InitializeMethodRegistry()
 {
+    // === CLOCK CREATION AND DESTRUCTION ===
+    m_methodRegistry["createClock"]  = [this](ScriptArgs const& args) { return ExecuteCreateClock(args); };
+    m_methodRegistry["destroyClock"] = [this](ScriptArgs const& args) { return ExecuteDestroyClock(args); };
+
     // === PAUSE CONTROL METHODS ===
     m_methodRegistry["pause"]       = [this](ScriptArgs const& args) { return ExecutePause(args); };
     m_methodRegistry["unpause"]     = [this](ScriptArgs const& args) { return ExecuteUnpause(args); };
@@ -50,62 +59,73 @@ void ClockScriptInterface::InitializeMethodRegistry()
 std::vector<ScriptMethodInfo> ClockScriptInterface::GetAvailableMethods() const
 {
     return {
+        // === CLOCK CREATION AND DESTRUCTION ===
+        ScriptMethodInfo("createClock",
+                         "Create a new clock instance as child of system clock",
+                         {},
+                         "Clock*"),
+
+        ScriptMethodInfo("destroyClock",
+                         "Destroy a clock instance",
+                         {"Clock*"},
+                         "void"),
+
         // === PAUSE CONTROL METHODS ===
         ScriptMethodInfo("pause",
-                         "Pause the clock, stopping time progression",
-                         {},
+                         "Pause the specified clock, stopping time progression",
+                         {"Clock*"},
                          "void"),
 
         ScriptMethodInfo("unpause",
-                         "Unpause the clock, resuming time progression",
-                         {},
+                         "Unpause the specified clock, resuming time progression",
+                         {"Clock*"},
                          "void"),
 
         ScriptMethodInfo("togglePause",
-                         "Toggle pause state of the clock",
-                         {},
+                         "Toggle pause state of the specified clock",
+                         {"Clock*"},
                          "void"),
 
         ScriptMethodInfo("isPaused",
-                         "Check if the clock is currently paused",
-                         {},
+                         "Check if the specified clock is currently paused",
+                         {"Clock*"},
                          "bool"),
 
         // === TIME CONTROL METHODS ===
         ScriptMethodInfo("stepSingleFrame",
-                         "Advance the clock by a single frame while paused",
-                         {},
+                         "Advance the specified clock by a single frame while paused",
+                         {"Clock*"},
                          "void"),
 
         ScriptMethodInfo("setTimeScale",
-                         "Set time scale multiplier (1.0 = normal, 0.5 = slow motion, 2.0 = fast forward)",
-                         {"number"},
+                         "Set time scale multiplier for the specified clock (1.0 = normal, 0.5 = slow motion, 2.0 = fast forward)",
+                         {"Clock*", "number"},
                          "void"),
 
         ScriptMethodInfo("reset",
-                         "Reset the clock to initial state",
-                         {},
+                         "Reset the specified clock to initial state",
+                         {"Clock*"},
                          "void"),
 
         // === TIME QUERY METHODS ===
         ScriptMethodInfo("getTimeScale",
-                         "Get current time scale multiplier",
-                         {},
+                         "Get current time scale multiplier of the specified clock",
+                         {"Clock*"},
                          "number"),
 
         ScriptMethodInfo("getDeltaSeconds",
-                         "Get time elapsed since last frame in seconds",
-                         {},
+                         "Get time elapsed since last frame in seconds for the specified clock",
+                         {"Clock*"},
                          "number"),
 
         ScriptMethodInfo("getTotalSeconds",
-                         "Get total accumulated time in seconds",
-                         {},
+                         "Get total accumulated time in seconds for the specified clock",
+                         {"Clock*"},
                          "number"),
 
         ScriptMethodInfo("getFrameCount",
-                         "Get total number of frames processed by this clock",
-                         {},
+                         "Get total number of frames processed by the specified clock",
+                         {"Clock*"},
                          "number")
     };
 }
@@ -156,17 +176,76 @@ bool ClockScriptInterface::SetProperty(String const& propertyName, std::any cons
 }
 
 //----------------------------------------------------------------------------------------------------
+// CLOCK CREATION AND DESTRUCTION
+//----------------------------------------------------------------------------------------------------
+
+ScriptMethodResult ClockScriptInterface::ExecuteCreateClock(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "createClock");
+    if (!result.success) return result;
+
+    try
+    {
+        // Create new clock as child of system clock (matching C++ Game::Game() behavior)
+        Clock* newClock = new Clock(Clock::GetSystemClock());
+        m_createdClocks.push_back(newClock);
+
+        // Return clock handle (pointer as number)
+        double handle = static_cast<double>(reinterpret_cast<uintptr_t>(newClock));
+        return ScriptMethodResult::Success(handle);
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to create clock: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult ClockScriptInterface::ExecuteDestroyClock(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "destroyClock");
+    if (!result.success) return result;
+
+    try
+    {
+        double clockHandle = ScriptTypeExtractor::ExtractDouble(args[0]);
+        Clock* clock = reinterpret_cast<Clock*>(static_cast<uintptr_t>(clockHandle));
+
+        // Find and remove from created clocks vector
+        auto it = std::find(m_createdClocks.begin(), m_createdClocks.end(), clock);
+        if (it != m_createdClocks.end())
+        {
+            delete *it;
+            m_createdClocks.erase(it);
+            return ScriptMethodResult::Success("Clock destroyed successfully");
+        }
+
+        return ScriptMethodResult::Error("Clock not found in managed clocks");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to destroy clock: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 // PAUSE CONTROL METHODS
 //----------------------------------------------------------------------------------------------------
 
 ScriptMethodResult ClockScriptInterface::ExecutePause(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "pause");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "pause");
     if (!result.success) return result;
 
     try
     {
-        m_clock->Pause();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        clock->Pause();
         return ScriptMethodResult::Success("Clock paused successfully");
     }
     catch (const std::exception& e)
@@ -178,12 +257,18 @@ ScriptMethodResult ClockScriptInterface::ExecutePause(ScriptArgs const& args)
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteUnpause(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "unpause");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "unpause");
     if (!result.success) return result;
 
     try
     {
-        m_clock->Unpause();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        clock->Unpause();
         return ScriptMethodResult::Success("Clock unpaused successfully");
     }
     catch (const std::exception& e)
@@ -195,12 +280,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteUnpause(ScriptArgs const& args)
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteTogglePause(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "togglePause");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "togglePause");
     if (!result.success) return result;
 
     try
     {
-        m_clock->TogglePause();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        clock->TogglePause();
         return ScriptMethodResult::Success("Clock pause toggled successfully");
     }
     catch (const std::exception& e)
@@ -212,12 +303,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteTogglePause(ScriptArgs const& ar
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteIsPaused(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "isPaused");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "isPaused");
     if (!result.success) return result;
 
     try
     {
-        bool isPaused = m_clock->IsPaused();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        bool isPaused = clock->IsPaused();
         return ScriptMethodResult::Success(isPaused);
     }
     catch (const std::exception& e)
@@ -232,12 +329,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteIsPaused(ScriptArgs const& args)
 
 ScriptMethodResult ClockScriptInterface::ExecuteStepSingleFrame(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "stepSingleFrame");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "stepSingleFrame");
     if (!result.success) return result;
 
     try
     {
-        m_clock->StepSingleFrame();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        clock->StepSingleFrame();
         return ScriptMethodResult::Success("Clock stepped single frame successfully");
     }
     catch (const std::exception& e)
@@ -249,19 +352,25 @@ ScriptMethodResult ClockScriptInterface::ExecuteStepSingleFrame(ScriptArgs const
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteSetTimeScale(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "setTimeScale");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 2, "setTimeScale");
     if (!result.success) return result;
 
     try
     {
-        float timeScale = ScriptTypeExtractor::ExtractFloat(args[0]);
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        float timeScale = ScriptTypeExtractor::ExtractFloat(args[1]);
 
         if (!ValidateTimeScale(timeScale))
         {
             return ScriptMethodResult::Error("Time scale must be between 0.0 and 10.0");
         }
 
-        m_clock->SetTimeScale(timeScale);
+        clock->SetTimeScale(timeScale);
         return ScriptMethodResult::Success("Time scale set successfully");
     }
     catch (const std::exception& e)
@@ -273,12 +382,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteSetTimeScale(ScriptArgs const& a
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteReset(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "reset");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "reset");
     if (!result.success) return result;
 
     try
     {
-        m_clock->Reset();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        clock->Reset();
         return ScriptMethodResult::Success("Clock reset successfully");
     }
     catch (const std::exception& e)
@@ -293,12 +408,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteReset(ScriptArgs const& args)
 
 ScriptMethodResult ClockScriptInterface::ExecuteGetTimeScale(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getTimeScale");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getTimeScale");
     if (!result.success) return result;
 
     try
     {
-        float timeScale = m_clock->GetTimeScale();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        float timeScale = clock->GetTimeScale();
         return ScriptMethodResult::Success(static_cast<double>(timeScale));
     }
     catch (const std::exception& e)
@@ -310,12 +431,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteGetTimeScale(ScriptArgs const& a
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteGetDeltaSeconds(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getDeltaSeconds");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getDeltaSeconds");
     if (!result.success) return result;
 
     try
     {
-        double deltaSeconds = m_clock->GetDeltaSeconds();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        double deltaSeconds = clock->GetDeltaSeconds();
         return ScriptMethodResult::Success(deltaSeconds);
     }
     catch (const std::exception& e)
@@ -327,12 +454,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteGetDeltaSeconds(ScriptArgs const
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteGetTotalSeconds(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getTotalSeconds");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getTotalSeconds");
     if (!result.success) return result;
 
     try
     {
-        double totalSeconds = m_clock->GetTotalSeconds();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        double totalSeconds = clock->GetTotalSeconds();
         return ScriptMethodResult::Success(totalSeconds);
     }
     catch (const std::exception& e)
@@ -344,12 +477,18 @@ ScriptMethodResult ClockScriptInterface::ExecuteGetTotalSeconds(ScriptArgs const
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult ClockScriptInterface::ExecuteGetFrameCount(ScriptArgs const& args)
 {
-    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getFrameCount");
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getFrameCount");
     if (!result.success) return result;
 
     try
     {
-        int frameCount = m_clock->GetFrameCount();
+        Clock* clock = ExtractClockFromHandle(ScriptTypeExtractor::ExtractDouble(args[0]));
+        if (!clock)
+        {
+            return ScriptMethodResult::Error("Invalid clock handle");
+        }
+
+        int frameCount = clock->GetFrameCount();
         return ScriptMethodResult::Success(static_cast<double>(frameCount));
     }
     catch (const std::exception& e)
@@ -359,10 +498,16 @@ ScriptMethodResult ClockScriptInterface::ExecuteGetFrameCount(ScriptArgs const& 
 }
 
 //----------------------------------------------------------------------------------------------------
-// VALIDATION
+// VALIDATION AND HELPER METHODS
 //----------------------------------------------------------------------------------------------------
 
 bool ClockScriptInterface::ValidateTimeScale(float timeScale) const
 {
     return (timeScale >= 0.0f && timeScale <= 10.0f);
+}
+
+//----------------------------------------------------------------------------------------------------
+Clock* ClockScriptInterface::ExtractClockFromHandle(double handle) const
+{
+    return reinterpret_cast<Clock*>(static_cast<uintptr_t>(handle));
 }
