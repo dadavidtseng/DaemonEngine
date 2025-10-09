@@ -67,7 +67,16 @@ Renderer::Renderer(sRendererConfig const& config)
     m_bitmapInfo.bmiHeader.biBitCount    = 32;
     m_bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
+    // TODO: investigate how to prevent this crash when shutting down.
     m_pixelData.resize((size_t)screenWidth * (size_t)screenHeight * 4);
+}
+
+// TODO: fix m_pixelData, this is just temporary
+Renderer::~Renderer()
+{
+    // Clear pixel data explicitly to avoid iterator corruption in Debug mode
+    m_pixelData.clear();
+    m_pixelData.shrink_to_fit();
 }
 
 void Renderer::CreateDeviceAndSwapChain(unsigned int deviceFlags)
@@ -1442,6 +1451,7 @@ void Renderer::ReadStagingTextureToPixelData()
     if (FAILED(hr))
     {
         DebuggerPrintf("Failed to create staging texture: 0x%08X\n", hr);
+        mainRenderTargetTexture->Release();
         return;
     }
 
@@ -1455,6 +1465,7 @@ void Renderer::ReadStagingTextureToPixelData()
     {
         DebuggerPrintf("Failed to map staging texture: 0x%08X\n", hr);
         stagingTex->Release();
+        mainRenderTargetTexture->Release();
         return;
     }
 
@@ -1466,21 +1477,23 @@ void Renderer::ReadStagingTextureToPixelData()
 
     for (UINT row = 0; row < desc.Height; ++row)
     {
-        BYTE* srcRow = srcData + row * srcPitch;
-        BYTE* dstRow = &m_pixelData[row * desc.Width * 4];
+        BYTE*  srcRow      = srcData + row * srcPitch;
+        size_t dstRowIndex = row * desc.Width * 4;
 
         for (UINT col = 0; col < desc.Width; ++col)
         {
             // 注意格式根據你的 render target 設定，這裡假設是 DXGI_FORMAT_R8G8B8A8_UNORM
+            // DirectX 格式通常是 BGRA
             BYTE b = srcRow[col * 4 + 0];
             BYTE g = srcRow[col * 4 + 1];
             BYTE r = srcRow[col * 4 + 2];
             BYTE a = srcRow[col * 4 + 3];
 
-            dstRow[col * 4 + 0] = r;
-            dstRow[col * 4 + 1] = g;
-            dstRow[col * 4 + 2] = b;
-            dstRow[col * 4 + 3] = a;
+            size_t dstColIndex = dstRowIndex + col * 4;
+            m_pixelData[dstColIndex + 0] = r;
+            m_pixelData[dstColIndex + 1] = g;
+            m_pixelData[dstColIndex + 2] = b;
+            m_pixelData[dstColIndex + 3] = a;
         }
     }
 
@@ -1694,12 +1707,14 @@ void Renderer::RenderViewportToWindow(Window const& window)
     // 從場景數據複製指定區域
     for (size_t y = 0; y < srcHeight; y++)
     {
-        size_t srcRowIndex = (srcY + y) * screenWidth + srcX;
-        size_t dstRowIndex = y * srcWidth;
+        size_t srcRowStart = ((srcY + y) * screenWidth + srcX) * 4;
+        size_t dstRowStart = y * srcWidth * 4;
 
-        memcpy(&windowPixels[dstRowIndex * 4],
-               &m_pixelData[srcRowIndex * 4],
-               srcWidth * 4);
+        // Copy pixel by pixel to avoid taking address of vector elements
+        for (size_t x = 0; x < srcWidth * 4; x++)
+        {
+            windowPixels[dstRowStart + x] = m_pixelData[srcRowStart + x];
+        }
     }
 
     // 設置 DIB 信息

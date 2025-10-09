@@ -52,6 +52,7 @@ class Renderer
 
 public:
     explicit Renderer(sRendererConfig const& config);
+    ~Renderer();
 
     static int k_perFrameConstantSlot;
     static int k_lightConstantSlot;
