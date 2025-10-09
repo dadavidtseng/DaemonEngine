@@ -133,6 +133,9 @@
     <Filter Include="Engine\Renderer\Script">
       <UniqueIdentifier>{cf71cf3f-2647-4e69-86c6-83343bc7e115}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Core\Script">
+      <UniqueIdentifier>{b8b73e4a-bd5c-4f24-8320-b7bd2ed15169}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Source Files-->
@@ -502,6 +505,12 @@
       <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\CameraScriptInterface.cpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ClockScriptInterface.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
   </ItemGroup>
@@ -909,6 +918,12 @@
       <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\CameraScriptInterface.hpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ClockScriptInterface.hpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
   </ItemGroup>

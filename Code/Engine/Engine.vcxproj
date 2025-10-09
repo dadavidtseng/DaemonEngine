@@ -203,9 +203,11 @@
     <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
+    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
     <ClCompile Include="Renderer\RendererScriptInterface.cpp" />
     <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="Widget\IWidget.cpp" />
@@ -366,10 +368,12 @@
     <ClInclude Include="..\ThirdParty\json\json.hpp" />
     <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\ClockScriptInterface.hpp" />
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
+    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <ClInclude Include="Renderer\RendererScriptInterface.hpp" />
     <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
