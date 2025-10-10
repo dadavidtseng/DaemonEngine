@@ -220,9 +220,26 @@ void GEngine::Construct()
 
     if (enableInput)
     {
-        sInputSystemConfig constexpr sInputSystemConfig;
-        InputSystem*                 inputSystem = new InputSystem(sInputSystemConfig);
-        g_input                                  = inputSystem;
+        sInputSystemConfig inputConfig;
+
+        // Read config from JSON if available
+        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input") &&
+            subsystemConfig["subsystems"]["input"].contains("config"))
+        {
+            // auto const& inputJsonConfig = subsystemConfig["subsystems"]["input"]["config"];
+            // inputConfig.enableController = inputJsonConfig.value("enableController", true);
+            // inputConfig.enableMouse = inputJsonConfig.value("enableMouse", true);
+            // inputConfig.enableKeyboard = inputJsonConfig.value("enableKeyboard", true);
+            // Note: sInputSystemConfig currently has no fields - reserved for future expansion
+            DebuggerPrintf("InputSystem: JSON config available but struct has no fields yet\n");
+        }
+        else
+        {
+            // Fallback to hardcoded defaults (currently no config fields)
+        }
+
+        InputSystem* inputSystem = new InputSystem(inputConfig);
+        g_input                  = inputSystem;
         DebuggerPrintf("InputSystem: ENABLED\n");
     }
     else
@@ -243,12 +260,42 @@ void GEngine::Construct()
 
     if (enableWindow)
     {
-        sWindowConfig sWindowConfig;
-        sWindowConfig.m_windowType  = eWindowType::WINDOWED;
-        sWindowConfig.m_aspectRatio = 2.f;
-        sWindowConfig.m_inputSystem = g_input;
-        sWindowConfig.m_windowTitle = "ScriptVisualTests";
-        g_window                    = new Window(sWindowConfig);
+        sWindowConfig windowConfig;
+
+        // Read config from JSON if available
+        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig.contains("platform") &&
+            subsystemConfig["subsystems"]["platform"].contains("config"))
+        {
+            auto const& platformJsonConfig = subsystemConfig["subsystems"]["platform"]["config"];
+
+            // Read windowType from JSON (string to enum conversion)
+            std::string windowTypeStr = platformJsonConfig.value("windowType", "WINDOWED");
+            if (windowTypeStr == "WINDOWED") windowConfig.m_windowType = eWindowType::WINDOWED;
+            else if (windowTypeStr == "BORDERLESS") windowConfig.m_windowType = eWindowType::BORDERLESS;
+            else if (windowTypeStr == "FULLSCREEN_LETTERBOX") windowConfig.m_windowType = eWindowType::FULLSCREEN_LETTERBOX;
+            else if (windowTypeStr == "FULLSCREEN_STRETCH") windowConfig.m_windowType = eWindowType::FULLSCREEN_STRETCH;
+            else if (windowTypeStr == "FULLSCREEN_CROP") windowConfig.m_windowType = eWindowType::FULLSCREEN_CROP;
+            else if (windowTypeStr == "MINIMIZED") windowConfig.m_windowType = eWindowType::MINIMIZED;
+            else if (windowTypeStr == "HIDDEN") windowConfig.m_windowType = eWindowType::HIDDEN;
+            else windowConfig.m_windowType                                = eWindowType::WINDOWED; // Default fallback
+
+            windowConfig.m_aspectRatio = platformJsonConfig.value("aspectRatio", 2.0f);
+            windowConfig.m_windowTitle = platformJsonConfig.value("windowTitle", "DEFAULT");
+
+            DebuggerPrintf("Window: Configured from JSON - Type: %s, AspectRatio: %.1f, Title: %s\n",
+                           windowTypeStr.c_str(), windowConfig.m_aspectRatio, windowConfig.m_windowTitle.c_str());
+        }
+        else
+        {
+            // Fallback to hardcoded defaults
+            windowConfig.m_windowType  = eWindowType::WINDOWED;
+            windowConfig.m_aspectRatio = 2.f;
+            windowConfig.m_windowTitle = "DEFAULT";
+            DebuggerPrintf("Window: Using hardcoded defaults\n");
+        }
+
+        windowConfig.m_inputSystem = g_input;
+        g_window                   = new Window(windowConfig);
         DebuggerPrintf("Window: ENABLED\n");
     }
     else
@@ -339,9 +386,24 @@ void GEngine::Construct()
 
     if (enableAudio)
     {
-        sAudioSystemConfig constexpr sAudioSystemConfig;
-        AudioSystem*                 audioSystem = new AudioSystem(sAudioSystemConfig);
-        g_audio                                  = audioSystem;
+        sAudioSystemConfig audioConfig;
+
+        // Read config from JSON if available
+        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("audio") &&
+            subsystemConfig["subsystems"]["audio"].contains("config"))
+        {
+            // auto const& audioJsonConfig = subsystemConfig["subsystems"]["audio"]["config"];
+            // audioConfig.maxChannels = audioJsonConfig.value("maxChannels", 128);
+            // Note: sAudioSystemConfig currently has no fields - reserved for future expansion
+            DebuggerPrintf("AudioSystem: JSON config available but struct has no fields yet\n");
+        }
+        else
+        {
+            // Fallback to hardcoded defaults (currently no config fields)
+        }
+
+        AudioSystem* audioSystem = new AudioSystem(audioConfig);
+        g_audio                  = audioSystem;
         DebuggerPrintf("AudioSystem: ENABLED\n");
     }
     else
@@ -401,7 +463,70 @@ void GEngine::Construct()
 #pragma endregion
 #endif // !ENGINE_DISABLE_SCRIPT
     //------------------------------------------------------------------------------------------------
-    g_rng = new RandomNumberGenerator();
+#pragma region Math (RandomNumberGenerator)
+    // Check if Math subsystem (RNG) should be enabled
+    bool enableMath = true;  // Default: enabled
+    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math"))
+    {
+        enableMath = subsystemConfig["subsystems"]["math"].value("enabled", true);
+    }
+
+    if (enableMath)
+    {
+        // Read config from JSON if available
+        unsigned int seed = 0;  // 0 = use time-based seed
+        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math") &&
+            subsystemConfig["subsystems"]["math"].contains("config"))
+        {
+            auto const& mathJsonConfig = subsystemConfig["subsystems"]["math"]["config"];
+            if (mathJsonConfig.contains("defaultSeed") && !mathJsonConfig["defaultSeed"].is_null())
+            {
+                seed = mathJsonConfig.value("defaultSeed", 0u);
+                DebuggerPrintf("Math (RandomNumberGenerator): Using custom seed %u from config\n", seed);
+            }
+        }
+
+        if (seed == 0)
+        {
+            g_rng = new RandomNumberGenerator();  // Time-based seed
+        }
+        else
+        {
+            g_rng = new RandomNumberGenerator();  // Custom seed from JSON
+        }
+        DebuggerPrintf("Math (RandomNumberGenerator): ENABLED\n");
+    }
+    else
+    {
+        g_rng = nullptr;
+        DebuggerPrintf("Math (RandomNumberGenerator): DISABLED (from config)\n");
+    }
+#pragma endregion
+    //------------------------------------------------------------------------------------------------
+#pragma region Network (NetworkTCPSubsystem)
+    // NOTE: NetworkTCPSubsystem exists but is not yet integrated into global engine initialization
+    // Implementation available in Engine/Network/NetworkTCPSubsystem.hpp
+    // To integrate: Add g_networkSubsystem global pointer to EngineCommon.hpp and implement here
+
+    // Check if Network subsystem should be enabled
+    bool enableNetwork = false;  // Default: disabled (not yet integrated)
+    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("network"))
+    {
+        enableNetwork = subsystemConfig["subsystems"]["network"].value("enabled", false);
+    }
+
+    if (enableNetwork)
+    {
+        DebuggerPrintf("Network (NetworkTCPSubsystem): NOT YET IMPLEMENTED\n");
+        DebuggerPrintf("  - NetworkTCPSubsystem class exists in Engine/Network/\n");
+        DebuggerPrintf("  - Requires global g_networkSubsystem pointer integration\n");
+    }
+    else
+    {
+        DebuggerPrintf("Network (NetworkTCPSubsystem): DISABLED (from config or not integrated)\n");
+    }
+#pragma endregion
+    //------------------------------------------------------------------------------------------------
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -550,8 +675,8 @@ void GEngine::Shutdown()
 
     // Shutdown core subsystems (reverse order of startup, check for null)
 
-        DebugRenderSystemShutdown();
-        DebuggerPrintf("DebugRenderSystem shutdown\n");
+    DebugRenderSystemShutdown();
+    DebuggerPrintf("DebugRenderSystem shutdown\n");
 
 
     if (g_resourceSubsystem)
