@@ -10,7 +10,7 @@
 #include "Engine/Renderer/RenderCommon.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
-
+#include "Game/EngineBuildPreferences.hpp"
 //-Forward-Declaration--------------------------------------------------------------------------------
 class BitmapFont;
 class ConstantBuffer;

@@ -4,6 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Game/EngineBuildPreferences.hpp"
+#if !defined( ENGINE_DISABLE_SCRIPT )
+
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/IScriptableObject.hpp"
 //----------------------------------------------------------------------------------------------------
@@ -370,3 +373,5 @@ private:
     /// @brief ES6 module loader
     std::unique_ptr<ModuleLoader> m_moduleLoader;
 };
+
+#endif // !defined( ENGINE_DISABLE_AUDIO )
