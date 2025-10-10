@@ -511,7 +511,6 @@
     <ClInclude Include="Script/ScriptSubsystem.hpp" />
     <ClInclude Include="Script/FileWatcher.hpp" />
     <ClInclude Include="Script/ScriptReloader.hpp" />
-    <!-- ES6 Module System Headers -->
     <ClInclude Include="Script/ModuleResolver.hpp" />
     <ClInclude Include="Script/ModuleRegistry.hpp" />
     <ClInclude Include="Script/ModuleLoader.hpp" />
