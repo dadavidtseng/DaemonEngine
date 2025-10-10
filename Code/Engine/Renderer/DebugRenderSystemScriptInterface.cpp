@@ -585,7 +585,31 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldText(ScriptA
     try
     {
         String text       = ScriptTypeExtractor::ExtractString(args[0]);
-        // args[1] should be array of 16 numbers for transform matrix - simplified for now
+
+        // Extract transform matrix from array parameter
+        Mat44 transform = Mat44(); // Default to identity
+        try
+        {
+            auto const& arrayArg = std::any_cast<std::vector<std::any> const&>(args[1]);
+            if (arrayArg.size() == 16)
+            {
+                float matrixValues[16];
+                for (size_t i = 0; i < 16; i++)
+                {
+                    matrixValues[i] = static_cast<float>(std::any_cast<double>(arrayArg[i]));
+                }
+                transform = Mat44(matrixValues);
+            }
+            else
+            {
+                return ScriptMethodResult::Error("Transform matrix must have exactly 16 elements");
+            }
+        }
+        catch (std::bad_any_cast const&)
+        {
+            return ScriptMethodResult::Error("Invalid transform matrix parameter");
+        }
+
         float  textHeight = ScriptTypeExtractor::ExtractFloat(args[2]);
         float  alignX     = ScriptTypeExtractor::ExtractFloat(args[3]);
         float  alignY     = ScriptTypeExtractor::ExtractFloat(args[4]);
@@ -605,8 +629,6 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldText(ScriptA
             return ScriptMethodResult::Error("Duration must be non-negative");
         }
 
-        // For now use identity transform - full matrix parsing would be more complex
-        Mat44             transform = Mat44();
         Vec2              alignment(alignX, alignY);
         Rgba8             color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
         eDebugRenderMode  mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
@@ -677,7 +699,30 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldBasis(Script
 
     try
     {
-        // args[0] should be array of 16 numbers for transform matrix - simplified for now
+        // Extract transform matrix from array parameter
+        Mat44 transform = Mat44(); // Default to identity
+        try
+        {
+            auto const& arrayArg = std::any_cast<std::vector<std::any> const&>(args[0]);
+            if (arrayArg.size() == 16)
+            {
+                float matrixValues[16];
+                for (size_t i = 0; i < 16; i++)
+                {
+                    matrixValues[i] = static_cast<float>(std::any_cast<double>(arrayArg[i]));
+                }
+                transform = Mat44(matrixValues);
+            }
+            else
+            {
+                return ScriptMethodResult::Error("Transform matrix must have exactly 16 elements");
+            }
+        }
+        catch (std::bad_any_cast const&)
+        {
+            return ScriptMethodResult::Error("Invalid transform matrix parameter");
+        }
+
         float  duration = ScriptTypeExtractor::ExtractFloat(args[1]);
         String modeStr  = ScriptTypeExtractor::ExtractString(args[2]);
 
@@ -686,9 +731,7 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldBasis(Script
             return ScriptMethodResult::Error("Duration must be non-negative");
         }
 
-        // For now use identity transform - full matrix parsing would be more complex
-        Mat44            transform = Mat44();
-        eDebugRenderMode mode      = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
+        eDebugRenderMode mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
 
         DebugAddWorldBasis(transform, duration, mode);
         return ScriptMethodResult::Success("World basis added");
@@ -798,7 +841,8 @@ bool DebugRenderSystemScriptInterface::ValidatePosition(float x, float y, float 
 //----------------------------------------------------------------------------------------------------
 bool DebugRenderSystemScriptInterface::ValidateDuration(float duration) const
 {
-    return (duration >= 0.0f && std::isfinite(duration));
+    // Duration must be finite, and either non-negative OR -1.0 (permanent)
+    return std::isfinite(duration) && (duration >= 0.0f || duration == -1.0f);
 }
 
 //----------------------------------------------------------------------------------------------------
