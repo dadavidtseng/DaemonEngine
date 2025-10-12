@@ -41,12 +41,16 @@ extern Window*                g_window;
 extern ResourceSubsystem*     g_resourceSubsystem;
 extern ScriptSubsystem*       g_scriptSubsystem;
 
-//----------------------------------------------------------------------------------------------------
-struct sEngineConfig
-{
-    sAudioSystemConfig     m_audioConfig;
-    sScriptSubsystemConfig m_scriptConfig;
-};
+// Forward declaration for KADI subsystem
+class KADIWebSocketSubsystem;
+extern KADIWebSocketSubsystem* g_kadiSubsystem;
+
+// //----------------------------------------------------------------------------------------------------
+// struct sEngineConfig
+// {
+//     sAudioSystemConfig     m_audioConfig;
+//     sScriptSubsystemConfig m_scriptConfig;
+// };
 
 // //----------------------------------------------------------------------------------------------------
 // namespace Engine

@@ -16,6 +16,7 @@ RandomNumberGenerator* g_rng               = nullptr;
 Window*                g_window            = nullptr;
 ResourceSubsystem*     g_resourceSubsystem = nullptr;
 ScriptSubsystem*       g_scriptSubsystem   = nullptr;
+KADIWebSocketSubsystem* g_kadiSubsystem    = nullptr;
 
 
 // //----------------------------------------------------------------------------------------------------
