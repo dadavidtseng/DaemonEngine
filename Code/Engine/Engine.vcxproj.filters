@@ -136,6 +136,9 @@
     <Filter Include="Engine\Core\Script">
       <UniqueIdentifier>{b8b73e4a-bd5c-4f24-8320-b7bd2ed15169}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Network\KADI">
+      <UniqueIdentifier>{7205cc61-f206-41b6-b9ca-682ccfb08dea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Source Files-->
@@ -512,6 +515,21 @@
     </ClCompile>
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp">
       <Filter>Engine\Renderer\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\KADIAuthenticationUtility.cpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\KADIWebSocketSubsystem.cpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\KADIProtocolV1Adapter.cpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\MockKADIProtocolAdapter.cpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\KADIScriptInterface.cpp">
+      <Filter>Engine\Network\KADI</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -925,6 +943,24 @@
     </ClInclude>
     <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp">
       <Filter>Engine\Renderer\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\KADIAuthenticationUtility.hpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\KADIWebSocketSubsystem.hpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\IKADIProtocolAdapter.hpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\KADIProtocolV1Adapter.hpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MockKADIProtocolAdapter.hpp">
+      <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\KADIScriptInterface.hpp">
+      <Filter>Engine\Network\KADI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

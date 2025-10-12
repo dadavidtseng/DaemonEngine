@@ -206,6 +206,7 @@
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
+    <ClCompile Include="Network\KADIScriptInterface.cpp" />
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
     <ClCompile Include="Renderer\RendererScriptInterface.cpp" />
@@ -335,6 +336,12 @@
     <!-- Network Subsystem -->
     <ClCompile Include="Network/NetworkCommon.cpp" />
     <ClCompile Include="Network\NetworkTCPSubsystem.cpp" />
+    <!-- KADI Protocol Adapters (Phase 0) -->
+    <ClCompile Include="Network\KADIProtocolV1Adapter.cpp" />
+    <ClCompile Include="Network\MockKADIProtocolAdapter.cpp" />
+    <!-- KADI WebSocket and Authentication (Phase 1) -->
+    <ClCompile Include="Network\KADIWebSocketSubsystem.cpp" />
+    <ClCompile Include="Network\KADIAuthenticationUtility.cpp" />
   </ItemGroup>
   <ItemGroup Label="ScriptingSubsystemSources">
     <!-- V8 JavaScript Scripting System - Enterprise integration -->
@@ -347,6 +354,7 @@
     <ClCompile Include="Script/ModuleResolver.cpp" />
     <ClCompile Include="Script/ModuleRegistry.cpp" />
     <ClCompile Include="Script/ModuleLoader.cpp" />
+    <!-- KADI JavaScript Bindings (Phase 1) -->
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -372,6 +380,7 @@
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
+    <ClInclude Include="Network\KADIScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
     <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <ClInclude Include="Renderer\RendererScriptInterface.hpp" />
@@ -502,6 +511,13 @@
     <!-- Network Subsystem Headers -->
     <ClInclude Include="Network/NetworkCommon.hpp" />
     <ClInclude Include="Network\NetworkTCPSubsystem.hpp" />
+    <!-- KADI Protocol Adapters (Phase 0) -->
+    <ClInclude Include="Network\IKADIProtocolAdapter.hpp" />
+    <ClInclude Include="Network\KADIProtocolV1Adapter.hpp" />
+    <ClInclude Include="Network\MockKADIProtocolAdapter.hpp" />
+    <!-- KADI WebSocket and Authentication (Phase 1) -->
+    <ClInclude Include="Network\KADIWebSocketSubsystem.hpp" />
+    <ClInclude Include="Network\KADIAuthenticationUtility.hpp" />
   </ItemGroup>
   <ItemGroup Label="ScriptingSubsystemHeaders">
     <!-- V8 JavaScript Scripting System Headers -->
@@ -514,6 +530,7 @@
     <ClInclude Include="Script/ModuleResolver.hpp" />
     <ClInclude Include="Script/ModuleRegistry.hpp" />
     <ClInclude Include="Script/ModuleLoader.hpp" />
+    <!-- KADI JavaScript Bindings (Phase 1) -->
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- NUGET PACKAGE DEPENDENCIES -->
