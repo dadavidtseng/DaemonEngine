@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ScriptSubsystem.hpp"
+#include "Game/EngineBuildPreferences.hpp"
+#if !defined( ENGINE_DISABLE_SCRIPT )
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -207,7 +209,7 @@ public:
         }
 
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("JS Console [{}]: {} ({}:{}:{})",
-                       levelStr, msg, urlStr, lineNumber, columnNumber));
+                                                               levelStr, msg, urlStr, lineNumber, columnNumber));
     }
 
     double currentTimeMS() override
@@ -319,7 +321,7 @@ void ScriptSubsystem::Startup()
                     devToolsConfig = sChromeDevToolsConfig::FromJSON(jsonConfig["chromeDevTools"]);
                     DAEMON_LOG(LogScript, eLogVerbosity::Log,
                                StringFormat("Loaded Chrome DevTools config from JSON: {}:{}",
-                                   devToolsConfig.host, devToolsConfig.port));
+                                            devToolsConfig.host, devToolsConfig.port));
                 }
                 else
                 {
@@ -372,13 +374,13 @@ void ScriptSubsystem::Startup()
 
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("Chrome DevTools server started successfully on {}:{}",
-                           devToolsConfig.host, devToolsConfig.port));
+                                    devToolsConfig.host, devToolsConfig.port));
         }
         else
         {
             DAEMON_LOG(LogScript, eLogVerbosity::Error,
                        StringFormat("Failed to start Chrome DevTools server on {}:{}",
-                           devToolsConfig.host, devToolsConfig.port));
+                                    devToolsConfig.host, devToolsConfig.port));
         }
     }
 
@@ -1216,7 +1218,7 @@ void ScriptSubsystem::ReplayScriptsToDevTools()
     size_t totalScripts = m_priorityScriptNotifications.size() + m_scriptNotifications.size();
     DAEMON_LOG(LogScript, eLogVerbosity::Display,
                StringFormat("Replaying {} script notifications ({} priority, {} regular) to newly connected DevTools",
-                   totalScripts, m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
+                            totalScripts, m_priorityScriptNotifications.size(), m_scriptNotifications.size()));
 
     // First, replay high-priority scripts (JSEngine.js, JSGame.js) to ensure they appear first
     for (const std::string& notification : m_priorityScriptNotifications)
@@ -1610,9 +1612,9 @@ bool ScriptSubsystem::InitializeV8Engine() const
 
         DAEMON_LOG(LogScript, eLogVerbosity::Display,
                    StringFormat("V8 heap limits set: Total {}MB, Old Gen {}MB, Young Gen {}MB",
-                       m_config.heapSizeLimit,
-                       (heapSizeBytes * 0.8) / (1024 * 1024),
-                       (heapSizeBytes * 0.2) / (1024 * 1024)));
+                                m_config.heapSizeLimit,
+                                (heapSizeBytes * 0.8) / (1024 * 1024),
+                                (heapSizeBytes * 0.2) / (1024 * 1024)));
     }
 
     m_impl->isolate = v8::Isolate::New(m_impl->createParams);
@@ -2052,13 +2054,19 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
                 {
                     cppArgs.push_back(arg->BooleanValue(isolate));
                 }
+                else if (arg->IsFunction())
+                {
+                    // Phase 2: Store v8::Function for callback registration
+                    v8::Local<v8::Function> func = v8::Local<v8::Function>::Cast(arg);
+                    cppArgs.push_back(func);
+                }
                 else if (arg->IsArray())
                 {
-                    v8::Local<v8::Array> array = v8::Local<v8::Array>::Cast(arg);
-                    uint32_t length = array->Length();
+                    v8::Local<v8::Array>  array  = v8::Local<v8::Array>::Cast(arg);
+                    uint32_t              length = array->Length();
                     std::vector<std::any> arrayElements;
                     arrayElements.reserve(length);
-                    
+
                     for (uint32_t j = 0; j < length; j++)
                     {
                         v8::Local<v8::Value> element = array->Get(isolate->GetCurrentContext(), j).ToLocalChecked();
@@ -2091,7 +2099,35 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
                     if (result.result.type() == typeid(String))
                     {
                         String str = std::any_cast<String>(result.result);
-                        args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
+
+                        // Try to parse as JSON first - if it looks like JSON and parses successfully,
+                        // return a JavaScript object instead of a string
+                        if (!str.empty() && (str[0] == '{' || str[0] == '['))
+                        {
+                            v8::Local<v8::Context> context = isolate->GetCurrentContext();
+                            v8::TryCatch tryCatch(isolate);
+
+                            v8::MaybeLocal<v8::Value> jsonResult = v8::JSON::Parse(
+                                context,
+                                v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked()
+                            );
+
+                            if (!jsonResult.IsEmpty())
+                            {
+                                // Successfully parsed as JSON - return the object
+                                args.GetReturnValue().Set(jsonResult.ToLocalChecked());
+                            }
+                            else
+                            {
+                                // JSON parsing failed - return as string
+                                args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
+                            }
+                        }
+                        else
+                        {
+                            // Not JSON - return as string
+                            args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, str.c_str()).ToLocalChecked());
+                        }
                     }
                     else if (result.result.type() == typeid(bool))
                     {
@@ -2501,6 +2537,12 @@ void* ScriptSubsystem::GetV8Context()
 }
 
 //----------------------------------------------------------------------------------------------------
+v8::Isolate* ScriptSubsystem::GetIsolate()
+{
+    return static_cast<v8::Isolate*>(GetV8Isolate());
+}
+
+//----------------------------------------------------------------------------------------------------
 bool ScriptSubsystem::ExecuteModuleFromSource(String const& moduleCode, String const& moduleName)
 {
     if (!m_isInitialized)
@@ -2529,3 +2571,4 @@ bool ScriptSubsystem::ExecuteModuleFromSource(String const& moduleCode, String c
 
     return success;
 }
+#endif // !defined( ENGINE_DISABLE_AUDIO )

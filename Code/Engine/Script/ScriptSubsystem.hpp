@@ -4,8 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Game/EngineBuildPreferences.hpp"
-#if !defined( ENGINE_DISABLE_SCRIPT )
+
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/IScriptableObject.hpp"
@@ -21,6 +20,12 @@ class ChromeDevToolsWebSocketSubsystem;
 class FileWatcher;
 class ScriptReloader;
 class ModuleLoader;
+
+// V8 forward declarations
+namespace v8
+{
+    class Isolate;
+}
 
 //----------------------------------------------------------------------------------------------------
 using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
@@ -139,6 +144,12 @@ public:
     /// @return Pointer to V8 context, or nullptr if not initialized
     /// @remark For use by ModuleLoader - not part of public API
     void* GetV8Context();
+
+    /// @brief Get V8 isolate as typed pointer (for callback storage)
+    ///
+    /// @return Typed v8::Isolate pointer, or nullptr if not initialized
+    /// @remark For Phase 2 KADI callback storage - allows direct V8 API usage
+    v8::Isolate* GetIsolate();
 
     //------------------------------------------------------------------------------------------------
     // Error handling and status queries
@@ -374,4 +385,3 @@ private:
     std::unique_ptr<ModuleLoader> m_moduleLoader;
 };
 
-#endif // !defined( ENGINE_DISABLE_AUDIO )
