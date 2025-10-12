@@ -8,6 +8,7 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 //----------------------------------------------------------------------------------------------------
 #include <filesystem>
+#include <utility>
 
 //----------------------------------------------------------------------------------------------------
 bool FileReadToBuffer(std::vector<uint8_t>& out_buffer, String const& fileName)
@@ -48,7 +49,7 @@ bool FileReadToBuffer(std::vector<uint8_t>& out_buffer, String const& fileName)
 
     size_t const bytesRead = fread(out_buffer.data(), 1, fileSize, file);
 
-    if (bytesRead != static_cast<size_t>(fileSize))
+    if (std::cmp_not_equal(bytesRead, fileSize))
     {
         ERROR_RECOVERABLE("Error: Failed to read the entire file.")
         fclose(file);
