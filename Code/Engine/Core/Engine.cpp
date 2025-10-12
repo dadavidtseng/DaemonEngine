@@ -23,6 +23,7 @@
 #ifndef ENGINE_DISABLE_SCRIPT
 #include "Engine/Script/ScriptSubsystem.hpp"
 #endif
+#include "Engine/Network/KADIWebSocketSubsystem.hpp"
 
 // using namespace Engine;
 
@@ -41,7 +42,7 @@ void GEngine::Construct()
     // Load engine subsystem configuration
     //------------------------------------------------------------------------------------------------
     nlohmann::json subsystemConfig;
-    bool           hasSubsystemConfig = false;
+    bool           bHasEngineSubsystemConfig = false;
 
     try
     {
@@ -50,7 +51,7 @@ void GEngine::Construct()
         if (subsystemConfigFile.is_open())
         {
             subsystemConfigFile >> subsystemConfig;
-            hasSubsystemConfig = true;
+            bHasEngineSubsystemConfig = true;
             DebuggerPrintf("(GEngine::Construct)EngineSubsystems.json exists. Loaded EngineSubsystems config from \"Data/Config/EngineSubsystems.json\"\n");
         }
         else
@@ -67,15 +68,17 @@ void GEngine::Construct()
     //------------------------------------------------------------------------------------------------
 #pragma region LogSubsystem
     // Check if LogSubsystem should be enabled from core subsystems list
-    bool enableLogSubsystem = true;  // Default: enabled
+    bool bEnableLogSubsystem = true;  // Default: enabled
 
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig &&
+        subsystemConfig.contains("core") &&
+        subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        enableLogSubsystem         = std::ranges::find(coreSubsystems, "LogSubsystem") != coreSubsystems.end();
+        bEnableLogSubsystem         = std::ranges::find(coreSubsystems, "LogSubsystem") != coreSubsystems.end();
     }
 
-    if (enableLogSubsystem)
+    if (bEnableLogSubsystem)
     {
         // Load LogSubsystem configuration from JSON file
         sLogSubsystemConfig config;
@@ -159,7 +162,7 @@ void GEngine::Construct()
 #pragma region EventSystem
     // Check if EventSystem should be enabled from core subsystems list
     bool enableEventSystem = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
         enableEventSystem          = std::ranges::find(coreSubsystems, "EventSystem") != coreSubsystems.end();
@@ -181,7 +184,7 @@ void GEngine::Construct()
 #pragma region JobSystem
     // Check if JobSystem should be enabled from core subsystems list
     bool enableJobSystem = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
         enableJobSystem            = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
@@ -213,7 +216,7 @@ void GEngine::Construct()
 #pragma region InputSystem
     // Check if InputSystem is enabled in config
     bool enableInput = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input"))
     {
         enableInput = subsystemConfig["subsystems"]["input"].value("enabled", true);
     }
@@ -223,7 +226,7 @@ void GEngine::Construct()
         sInputSystemConfig inputConfig;
 
         // Read config from JSON if available
-        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input") &&
+        if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input") &&
             subsystemConfig["subsystems"]["input"].contains("config"))
         {
             // auto const& inputJsonConfig = subsystemConfig["subsystems"]["input"]["config"];
@@ -252,10 +255,13 @@ void GEngine::Construct()
 #pragma region Window
     // Check if Window should be enabled from core subsystems list
     bool enableWindow = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+
+    if (bHasEngineSubsystemConfig &&
+        subsystemConfig.contains("core") &&
+        subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        enableWindow               = std::find(coreSubsystems.begin(), coreSubsystems.end(), "Window") != coreSubsystems.end();
+        enableWindow               = std::ranges::find(coreSubsystems, "Window") != coreSubsystems.end();
     }
 
     if (enableWindow)
@@ -263,10 +269,14 @@ void GEngine::Construct()
         sWindowConfig windowConfig;
 
         // Read config from JSON if available
-        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig.contains("platform") &&
+        if (bHasEngineSubsystemConfig &&
+            subsystemConfig.contains("subsystems") &&
+            subsystemConfig["subsystems"].contains("platform") &&
             subsystemConfig["subsystems"]["platform"].contains("config"))
         {
             auto const& platformJsonConfig = subsystemConfig["subsystems"]["platform"]["config"];
+
+            windowConfig.m_windowType = eWindowType::WINDOWED; // Default fallback
 
             // Read windowType from JSON (string to enum conversion)
             std::string windowTypeStr = platformJsonConfig.value("windowType", "WINDOWED");
@@ -277,7 +287,6 @@ void GEngine::Construct()
             else if (windowTypeStr == "FULLSCREEN_CROP") windowConfig.m_windowType = eWindowType::FULLSCREEN_CROP;
             else if (windowTypeStr == "MINIMIZED") windowConfig.m_windowType = eWindowType::MINIMIZED;
             else if (windowTypeStr == "HIDDEN") windowConfig.m_windowType = eWindowType::HIDDEN;
-            else windowConfig.m_windowType                                = eWindowType::WINDOWED; // Default fallback
 
             windowConfig.m_aspectRatio = platformJsonConfig.value("aspectRatio", 2.0f);
             windowConfig.m_windowTitle = platformJsonConfig.value("windowTitle", "DEFAULT");
@@ -308,10 +317,10 @@ void GEngine::Construct()
 #pragma region Renderer
     // Check if Renderer should be enabled from core subsystems list
     bool enableRenderer = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        enableRenderer             = std::find(coreSubsystems.begin(), coreSubsystems.end(), "Renderer") != coreSubsystems.end();
+        enableRenderer             = std::ranges::find(coreSubsystems, "Renderer") != coreSubsystems.end();
     }
 
     if (enableRenderer)
@@ -331,7 +340,7 @@ void GEngine::Construct()
 #pragma region DevConsole
     // Check if DevConsole should be enabled from core subsystems list
     bool enableDevConsole = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
         enableDevConsole           = std::find(coreSubsystems.begin(), coreSubsystems.end(), "DevConsole") != coreSubsystems.end();
@@ -355,7 +364,7 @@ void GEngine::Construct()
 #pragma region ResourceSubsystem
     // Check if ResourceSubsystem should be enabled from core subsystems list
     bool enableResourceSubsystem = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
         enableResourceSubsystem    = std::find(coreSubsystems.begin(), coreSubsystems.end(), "ResourceSubsystem") != coreSubsystems.end();
@@ -379,7 +388,7 @@ void GEngine::Construct()
 #pragma region AudioSystem
     // Check if AudioSystem is enabled in config
     bool enableAudio = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("audio"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("audio"))
     {
         enableAudio = subsystemConfig["subsystems"]["audio"].value("enabled", true);
     }
@@ -389,7 +398,7 @@ void GEngine::Construct()
         sAudioSystemConfig audioConfig;
 
         // Read config from JSON if available
-        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("audio") &&
+        if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("audio") &&
             subsystemConfig["subsystems"]["audio"].contains("config"))
         {
             // auto const& audioJsonConfig = subsystemConfig["subsystems"]["audio"]["config"];
@@ -417,7 +426,7 @@ void GEngine::Construct()
 #pragma region ScriptSubsystem
     // Check if ScriptSubsystem is enabled in config
     bool enableScript = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("script"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("script"))
     {
         enableScript = subsystemConfig["subsystems"]["script"].value("enabled", true);
     }
@@ -427,7 +436,7 @@ void GEngine::Construct()
         sScriptSubsystemConfig scriptConfig;
 
         // Read config from JSON if available
-        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("script"))
+        if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("script"))
         {
             auto const& scriptJsonConfig     = subsystemConfig["subsystems"]["script"]["config"];
             scriptConfig.enableDebugging     = scriptJsonConfig.value("enableDebugging", true);
@@ -466,7 +475,7 @@ void GEngine::Construct()
 #pragma region Math (RandomNumberGenerator)
     // Check if Math subsystem (RNG) should be enabled
     bool enableMath = true;  // Default: enabled
-    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math"))
     {
         enableMath = subsystemConfig["subsystems"]["math"].value("enabled", true);
     }
@@ -475,7 +484,7 @@ void GEngine::Construct()
     {
         // Read config from JSON if available
         unsigned int seed = 0;  // 0 = use time-based seed
-        if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math") &&
+        if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("math") &&
             subsystemConfig["subsystems"]["math"].contains("config"))
         {
             auto const& mathJsonConfig = subsystemConfig["subsystems"]["math"]["config"];
@@ -510,7 +519,7 @@ void GEngine::Construct()
 
     // Check if Network subsystem should be enabled
     bool enableNetwork = false;  // Default: disabled (not yet integrated)
-    if (hasSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("network"))
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("network"))
     {
         enableNetwork = subsystemConfig["subsystems"]["network"].value("enabled", false);
     }
@@ -527,11 +536,35 @@ void GEngine::Construct()
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
+#pragma region KADI (KADIWebSocketSubsystem)
+    // KADI broker integration for distributed agent communication
+    // Implementation available in Engine/Network/KADIWebSocketSubsystem.hpp
+
+    // Check if KADI subsystem should be enabled
+    bool enableKADI = true;  // Default: enabled for Phase 1 testing
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("kadi"))
+    {
+        enableKADI = subsystemConfig["subsystems"]["kadi"].value("enabled", true);
+    }
+
+    if (enableKADI)
+    {
+        g_kadiSubsystem = new KADIWebSocketSubsystem();
+        DebuggerPrintf("KADIWebSocketSubsystem: ENABLED\n");
+    }
+    else
+    {
+        g_kadiSubsystem = nullptr;
+        DebuggerPrintf("KADIWebSocketSubsystem: DISABLED (from config)\n");
+    }
+#pragma endregion
+    //------------------------------------------------------------------------------------------------
 }
 
 //----------------------------------------------------------------------------------------------------
 void GEngine::Destruct()
 {
+    ENGINE_SAFE_RELEASE(g_kadiSubsystem);
     ENGINE_SAFE_RELEASE(g_rng);
 #ifndef ENGINE_DISABLE_SCRIPT
     ENGINE_SAFE_RELEASE(g_scriptSubsystem);
@@ -647,12 +680,24 @@ void GEngine::Startup()
         DebuggerPrintf("ScriptSubsystem started\n");
     }
 #endif
+
+    if (g_kadiSubsystem)
+    {
+        g_kadiSubsystem->Startup();
+        DebuggerPrintf("KADIWebSocketSubsystem started\n");
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void GEngine::Shutdown()
 {
     // Shutdown optional subsystems conditionally (reverse order)
+    if (g_kadiSubsystem)
+    {
+        g_kadiSubsystem->Shutdown();
+        DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
+    }
+
 #ifndef ENGINE_DISABLE_SCRIPT
     if (g_scriptSubsystem)
     {
