@@ -6,8 +6,12 @@
 #include "Engine/Input/InputSystem.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Platform/Window.hpp"
-
+#include "Engine/Core/StringUtils.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <thread>
+#include <chrono>
 //----------------------------------------------------------------------------------------------------
 InputSystem* g_input = nullptr;
 
@@ -239,4 +243,141 @@ STATIC bool InputSystem::OnWindowKeyReleased(EventArgs& args)
     g_input->HandleKeyReleased(keyCode);
 
     return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Phase 6a: KADI Development Tools - Input Injection Implementation
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+void InputSystem::InjectKeyPress(unsigned char keyCode, int durationMs)
+{
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("InputSystem: Injecting key press for keyCode={}, duration={}ms", keyCode, durationMs));
+
+    // Convert virtual key code to scan code
+    UINT scanCode = MapVirtualKeyA(keyCode, MAPVK_VK_TO_VSC);
+
+    // Prepare key down event
+    INPUT inputDown = {};
+    inputDown.type = INPUT_KEYBOARD;
+    inputDown.ki.wVk = keyCode;
+    inputDown.ki.wScan = static_cast<WORD>(scanCode);
+    inputDown.ki.dwFlags = 0;  // Key down
+    inputDown.ki.time = 0;
+    inputDown.ki.dwExtraInfo = 0;
+
+    // Prepare key up event
+    INPUT inputUp = {};
+    inputUp.type = INPUT_KEYBOARD;
+    inputUp.ki.wVk = keyCode;
+    inputUp.ki.wScan = static_cast<WORD>(scanCode);
+    inputUp.ki.dwFlags = KEYEVENTF_KEYUP;
+    inputUp.ki.time = 0;
+    inputUp.ki.dwExtraInfo = 0;
+
+    // Send key down
+    UINT result = SendInput(1, &inputDown, sizeof(INPUT));
+    if (result != 1)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            StringFormat("InputSystem: SendInput failed for key down (keyCode={})", keyCode));
+        return;
+    }
+
+    // Wait for duration
+    if (durationMs > 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(durationMs));
+    }
+
+    // Send key up
+    result = SendInput(1, &inputUp, sizeof(INPUT));
+    if (result != 1)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            StringFormat("InputSystem: SendInput failed for key up (keyCode={})", keyCode));
+        return;
+    }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("InputSystem: Key press injection completed for keyCode={}", keyCode));
+}
+
+//----------------------------------------------------------------------------------------------------
+void InputSystem::InjectKeyHold(unsigned char keyCode, int durationMs, bool repeat)
+{
+    // Convert boolean to string for logging (avoid StringFormat assertion with bool)
+    char const* repeatStr = repeat ? "true" : "false";
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("InputSystem: Injecting key hold for keyCode={}, duration={}ms, repeat={}",
+                     keyCode, durationMs, repeatStr));
+
+    // Convert virtual key code to scan code
+    UINT scanCode = MapVirtualKeyA(keyCode, MAPVK_VK_TO_VSC);
+
+    // Prepare key down event
+    INPUT inputDown = {};
+    inputDown.type = INPUT_KEYBOARD;
+    inputDown.ki.wVk = keyCode;
+    inputDown.ki.wScan = static_cast<WORD>(scanCode);
+    inputDown.ki.dwFlags = 0;  // Key down
+    inputDown.ki.time = 0;
+    inputDown.ki.dwExtraInfo = 0;
+
+    // Send initial key down
+    UINT result = SendInput(1, &inputDown, sizeof(INPUT));
+    if (result != 1)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            StringFormat("InputSystem: SendInput failed for key down (keyCode={})", keyCode));
+        return;
+    }
+
+    // If repeat is enabled, send multiple key down events during hold duration
+    if (repeat && durationMs > 0)
+    {
+        int const repeatInterval = 50;  // 50ms between repeats (typical keyboard repeat rate)
+        int remainingTime = durationMs;
+
+        while (remainingTime > 0)
+        {
+            int waitTime = (remainingTime < repeatInterval) ? remainingTime : repeatInterval;
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+            remainingTime -= waitTime;
+
+            // Send another key down event to simulate repeat
+            if (remainingTime > 0)
+            {
+                SendInput(1, &inputDown, sizeof(INPUT));
+            }
+        }
+    }
+    else if (durationMs > 0)
+    {
+        // Simple hold without repeat
+        std::this_thread::sleep_for(std::chrono::milliseconds(durationMs));
+    }
+
+    // Prepare key up event
+    INPUT inputUp = {};
+    inputUp.type = INPUT_KEYBOARD;
+    inputUp.ki.wVk = keyCode;
+    inputUp.ki.wScan = static_cast<WORD>(scanCode);
+    inputUp.ki.dwFlags = KEYEVENTF_KEYUP;
+    inputUp.ki.time = 0;
+    inputUp.ki.dwExtraInfo = 0;
+
+    // Send key up
+    result = SendInput(1, &inputUp, sizeof(INPUT));
+    if (result != 1)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+            StringFormat("InputSystem: SendInput failed for key up (keyCode={})", keyCode));
+        return;
+    }
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+        StringFormat("InputSystem: Key hold injection completed for keyCode={}", keyCode));
 }

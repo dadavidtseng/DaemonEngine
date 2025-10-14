@@ -32,6 +32,10 @@ public:
     void HandleKeyPressed(unsigned char keyCode);
     void HandleKeyReleased(unsigned char keyCode);
 
+    // Phase 6a: KADI Development Tools - Input Injection
+    void InjectKeyPress(unsigned char keyCode, int durationMs = 50);
+    void InjectKeyHold(unsigned char keyCode, int durationMs, bool repeat = false);
+
     XboxController const& GetController(int controllerID);
     Vec2                  GetCursorClientDelta() const;
     Vec2                  GetCursorClientPosition() const;

@@ -2376,8 +2376,9 @@ void ScriptSubsystem::SetupBuiltinObjects()
                 consoleMessage += argString;
             }
 
+            // TODO: FIX!!!
             // Log to C++ logging system
-            DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("{}", output));
+            //DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("{}", output));
 
             // Forward to Chrome DevTools Console if Inspector is enabled
             if (scriptSubsystem->m_impl->inspector && scriptSubsystem->m_impl->inspectorSession)
