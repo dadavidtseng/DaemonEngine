@@ -258,12 +258,6 @@ bool ScriptReloader::ExecuteScript(String const& scriptPath)
             return false;
         }
 
-        // For InputSystem.js, use special reloading strategy to avoid class re-declaration
-        if (scriptPath.find("InputSystem.js") != std::string::npos)
-        {
-            return ReloadInputSystemScript(scriptContent);
-        }
-
         // For other scripts, use the original approach
         if (m_scriptSystem->ExecuteScript(scriptContent))
         {
@@ -279,88 +273,6 @@ bool ScriptReloader::ExecuteScript(String const& scriptPath)
     catch (const std::exception& e)
     {
         SetError("Script execution exception for " + scriptPath + ": " + std::string(e.what()));
-        return false;
-    }
-}
-
-bool ScriptReloader::ReloadInputSystemScript(String const& scriptContent)
-{
-    try
-    {
-        LogReloadEvent("Reloading InputSystem.js with class replacement strategy");
-
-        // Create a script that replaces the InputSystem class without re-declaring it
-        std::string reloadScript = R"(
-(function() {
-    try {
-        // Save old InputSystem reference
-        var oldInputSystem = globalThis.InputSystem;
-
-        // Clear the InputSystem from global scope temporarily
-        delete globalThis.InputSystem;
-
-        // Execute the new InputSystem code
-)" + scriptContent + R"(
-
-        // Force version update to trigger hot-reload detection
-        if (typeof InputSystem !== 'undefined') {
-            InputSystem.version = Date.now();
-            console.log('ScriptReloader: InputSystem hot-reloaded, new version:', InputSystem.version);
-
-            // CRITICAL FIX: Update existing instances with new methods
-            // Find all existing InputSystem instances and replace their methods
-            console.log('ScriptReloader: Checking for existing InputSystem instances...');
-            if (typeof globalThis.jsGameInstance !== 'undefined' &&
-                globalThis.jsGameInstance &&
-                globalThis.jsGameInstance.inputSystem) {
-
-                console.log('ScriptReloader: Found existing InputSystem instance, replacing with new version');
-                var oldInstance = globalThis.jsGameInstance.inputSystem;
-                var savedState = {
-                    lastF1State: oldInstance.lastF1State || false
-                };
-
-                // Create new instance with saved state
-                var newInstance = new InputSystem();
-                newInstance.lastF1State = savedState.lastF1State;
-
-                // Replace the instance in JSGame
-                globalThis.jsGameInstance.inputSystem = newInstance;
-
-                console.log('ScriptReloader: Updated existing InputSystem instance with new methods');
-            } else {
-                console.log('ScriptReloader: No existing InputSystem instance found or jsGameInstance not available');
-            }
-        }
-
-        console.log('ScriptReloader: InputSystem.js reloaded successfully');
-        return { success: true, message: 'InputSystem reloaded successfully' };
-    } catch (e) {
-        // Restore old InputSystem if reload failed
-        if (typeof oldInputSystem !== 'undefined') {
-            globalThis.InputSystem = oldInputSystem;
-        }
-        console.log('ScriptReloader: InputSystem reload failed:', e.message);
-        return { success: false, error: e.message, stack: e.stack };
-    }
-})();
-)";
-
-        // Execute the reload script in V8
-        if (m_scriptSystem->ExecuteScript(reloadScript))
-        {
-            LogReloadEvent("InputSystem.js reloaded successfully");
-            return true;
-        }
-        else
-        {
-            SetError("Failed to reload InputSystem.js");
-            return false;
-        }
-    }
-    catch (const std::exception& e)
-    {
-        SetError("InputSystem reload exception: " + std::string(e.what()));
         return false;
     }
 }
