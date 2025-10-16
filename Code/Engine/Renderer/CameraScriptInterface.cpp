@@ -100,7 +100,7 @@ StringList CameraScriptInterface::GetAvailableProperties() const
 
 //----------------------------------------------------------------------------------------------------
 ScriptMethodResult CameraScriptInterface::CallMethod(String const&     methodName,
-                                                      ScriptArgs const& args)
+                                                     ScriptArgs const& args)
 {
     auto it = m_methodRegistry.find(methodName);
     if (it != m_methodRegistry.end())
@@ -114,75 +114,32 @@ ScriptMethodResult CameraScriptInterface::CallMethod(String const&     methodNam
 //----------------------------------------------------------------------------------------------------
 std::any CameraScriptInterface::GetProperty(String const& propertyName) const
 {
-    UNUSED(propertyName);
+    UNUSED(propertyName)
     return std::any{};
 }
 
 //----------------------------------------------------------------------------------------------------
 bool CameraScriptInterface::SetProperty(String const& propertyName, std::any const& value)
 {
-    UNUSED(propertyName);
-    UNUSED(value);
+    UNUSED(propertyName)
+    UNUSED(value)
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
 void CameraScriptInterface::InitializeMethodRegistry()
 {
-    m_methodRegistry["createCamera"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteCreateCamera(args);
-    };
-
-    m_methodRegistry["destroyCamera"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteDestroyCamera(args);
-    };
-
-    m_methodRegistry["setPerspectiveView"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetPerspectiveView(args);
-    };
-
-    m_methodRegistry["setOrthographicView"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetOrthographicView(args);
-    };
-
-    m_methodRegistry["setNormalizedViewport"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetNormalizedViewport(args);
-    };
-
-    m_methodRegistry["setCameraToRenderTransform"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetCameraToRenderTransform(args);
-    };
-
-    m_methodRegistry["setCameraPosition"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetCameraPosition(args);
-    };
-
-    m_methodRegistry["setCameraOrientation"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetCameraOrientation(args);
-    };
-
-    m_methodRegistry["setCameraPositionAndOrientation"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteSetCameraPositionAndOrientation(args);
-    };
-
-    m_methodRegistry["getCameraPosition"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteGetCameraPosition(args);
-    };
-
-    m_methodRegistry["getCameraOrientation"] = [this](ScriptArgs const& args)
-    {
-        return ExecuteGetCameraOrientation(args);
-    };
+    m_methodRegistry["createCamera"]                    = [this](ScriptArgs const& args) { return ExecuteCreateCamera(args); };
+    m_methodRegistry["destroyCamera"]                   = [this](ScriptArgs const& args) { return ExecuteDestroyCamera(args); };
+    m_methodRegistry["setPerspectiveView"]              = [this](ScriptArgs const& args) { return ExecuteSetPerspectiveView(args); };
+    m_methodRegistry["setOrthographicView"]             = [this](ScriptArgs const& args) { return ExecuteSetOrthographicView(args); };
+    m_methodRegistry["setNormalizedViewport"]           = [this](ScriptArgs const& args) { return ExecuteSetNormalizedViewport(args); };
+    m_methodRegistry["setCameraToRenderTransform"]      = [this](ScriptArgs const& args) { return ExecuteSetCameraToRenderTransform(args); };
+    m_methodRegistry["setCameraPosition"]               = [this](ScriptArgs const& args) { return ExecuteSetCameraPosition(args); };
+    m_methodRegistry["setCameraOrientation"]            = [this](ScriptArgs const& args) { return ExecuteSetCameraOrientation(args); };
+    m_methodRegistry["setCameraPositionAndOrientation"] = [this](ScriptArgs const& args) { return ExecuteSetCameraPositionAndOrientation(args); };
+    m_methodRegistry["getCameraPosition"]               = [this](ScriptArgs const& args) { return ExecuteGetCameraPosition(args); };
+    m_methodRegistry["getCameraOrientation"]            = [this](ScriptArgs const& args) { return ExecuteGetCameraOrientation(args); };
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -198,7 +155,7 @@ ScriptMethodResult CameraScriptInterface::ExecuteCreateCamera(ScriptArgs const& 
 
         // Return camera pointer as double for JavaScript
         // (JavaScript numbers are doubles, can safely hold pointer values)
-        uint64_t cameraHandle = reinterpret_cast<uint64_t>(newCamera);
+        uint64_t cameraHandle       = reinterpret_cast<uint64_t>(newCamera);
         double   cameraHandleDouble = static_cast<double>(cameraHandle);
         return ScriptMethodResult::Success(cameraHandleDouble);
     }
@@ -249,10 +206,10 @@ ScriptMethodResult CameraScriptInterface::ExecuteSetPerspectiveView(ScriptArgs c
         uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
         Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
 
-        float aspect      = ScriptTypeExtractor::ExtractFloat(args[1]);
-        float fovDegrees  = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float nearZ       = ScriptTypeExtractor::ExtractFloat(args[3]);
-        float farZ        = ScriptTypeExtractor::ExtractFloat(args[4]);
+        float aspect     = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float fovDegrees = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float nearZ      = ScriptTypeExtractor::ExtractFloat(args[3]);
+        float farZ       = ScriptTypeExtractor::ExtractFloat(args[4]);
 
         camera->SetPerspectiveGraphicView(aspect, fovDegrees, nearZ, farZ);
         return ScriptMethodResult::Success();
@@ -275,10 +232,10 @@ ScriptMethodResult CameraScriptInterface::ExecuteSetOrthographicView(ScriptArgs 
         uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
         Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
 
-        float minX  = ScriptTypeExtractor::ExtractFloat(args[1]);
-        float minY  = ScriptTypeExtractor::ExtractFloat(args[2]);
-        float maxX  = ScriptTypeExtractor::ExtractFloat(args[3]);
-        float maxY  = ScriptTypeExtractor::ExtractFloat(args[4]);
+        float minX = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float minY = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float maxX = ScriptTypeExtractor::ExtractFloat(args[3]);
+        float maxY = ScriptTypeExtractor::ExtractFloat(args[4]);
 
         camera->SetOrthoGraphicView(Vec2(minX, minY), Vec2(maxX, maxY));
         return ScriptMethodResult::Success();
