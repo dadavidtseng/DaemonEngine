@@ -69,7 +69,8 @@ bool ModuleLoader::LoadModuleFromSource(std::string const& moduleCode, std::stri
 
     v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
 
-    // CRITICAL: Create V8 scopes (required for all V8 operations)
+    // CRITICAL: Acquire V8 lock and create V8 scopes (required for all V8 operations)
+    v8::Locker locker(isolate);
     v8::Isolate::Scope isolateScope(isolate);
     v8::HandleScope handleScope(isolate);
 
@@ -160,6 +161,7 @@ bool ModuleLoader::CheckForExistingInstances()
     }
 
     v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
+    v8::Locker locker(isolate);
     v8::Isolate::Scope isolateScope(isolate);
     v8::HandleScope handleScope(isolate);
 
