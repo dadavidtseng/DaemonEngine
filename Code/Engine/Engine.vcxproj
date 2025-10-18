@@ -283,6 +283,7 @@
     <ClCompile Include="Renderer/Light.cpp" />
     <ClCompile Include="Renderer/LightSubsystem.cpp" />
     <ClCompile Include="Renderer/RenderCommon.cpp" />
+    <ClCompile Include="Renderer/RenderCommandQueue.cpp" />
     <ClCompile Include="Renderer/Renderer.cpp" />
     <ClCompile Include="Renderer/Shader.cpp" />
     <ClCompile Include="Renderer/SpriteAnimDefinition.cpp" />
@@ -458,6 +459,8 @@
     <ClInclude Include="Renderer/Light.hpp" />
     <ClInclude Include="Renderer/LightSubsystem.hpp" />
     <ClInclude Include="Renderer/RenderCommon.hpp" />
+    <ClInclude Include="Renderer/RenderCommand.hpp" />
+    <ClInclude Include="Renderer/RenderCommandQueue.hpp" />
     <ClInclude Include="Renderer/Renderer.hpp" />
     <ClInclude Include="Renderer/Shader.hpp" />
     <ClInclude Include="Renderer/SpriteAnimDefinition.hpp" />

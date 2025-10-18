@@ -531,6 +531,9 @@
     <ClCompile Include="Network\KADIScriptInterface.cpp">
       <Filter>Engine\Network\KADI</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer/RenderCommandQueue.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -961,6 +964,12 @@
     </ClInclude>
     <ClInclude Include="Network\KADIScriptInterface.hpp">
       <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/RenderCommand.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/RenderCommandQueue.hpp">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
