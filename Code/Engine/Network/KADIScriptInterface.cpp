@@ -589,6 +589,9 @@ void KADIScriptInterface::InvokeToolInvokeCallback(int requestId, std::string co
 		return;
 	}
 
+	// CRITICAL: Acquire V8 lock before ANY V8 API calls
+	// Required for multi-threaded V8 access (Phase 1: Async Architecture)
+	v8::Locker locker(m_v8Isolate);
 	v8::Isolate::Scope isolateScope(m_v8Isolate);
 	v8::HandleScope handleScope(m_v8Isolate);
 	v8::Local<v8::Context> context = m_v8Context->Get(m_v8Isolate);
@@ -624,6 +627,9 @@ void KADIScriptInterface::InvokeEventDeliveryCallback(std::string const& channel
 		return;
 	}
 
+	// CRITICAL: Acquire V8 lock before ANY V8 API calls
+	// Required for multi-threaded V8 access (Phase 1: Async Architecture)
+	v8::Locker locker(m_v8Isolate);
 	v8::Isolate::Scope isolateScope(m_v8Isolate);
 	v8::HandleScope handleScope(m_v8Isolate);
 	v8::Local<v8::Context> context = m_v8Context->Get(m_v8Isolate);
@@ -658,6 +664,9 @@ void KADIScriptInterface::InvokeConnectionStateCallback(std::string const& oldSt
 		return;
 	}
 
+	// CRITICAL: Acquire V8 lock before ANY V8 API calls
+	// Required for multi-threaded V8 access (Phase 1: Async Architecture)
+	v8::Locker locker(m_v8Isolate);
 	v8::Isolate::Scope isolateScope(m_v8Isolate);
 	v8::HandleScope handleScope(m_v8Isolate);
 	v8::Local<v8::Context> context = m_v8Context->Get(m_v8Isolate);
