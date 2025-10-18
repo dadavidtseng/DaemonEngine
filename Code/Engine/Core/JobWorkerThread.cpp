@@ -44,11 +44,22 @@ void JobWorkerThread::StartThread()
 //----------------------------------------------------------------------------------------------------
 void JobWorkerThread::StopAndJoin()
 {
+    RequestStop();
+    Join();
+}
+
+//----------------------------------------------------------------------------------------------------
+void JobWorkerThread::RequestStop()
+{
+    // Just set the stop flag without joining
+    m_shouldStop.store(true);
+}
+
+//----------------------------------------------------------------------------------------------------
+void JobWorkerThread::Join()
+{
     if (m_isRunning.load())
     {
-        // Signal the thread to stop
-        m_shouldStop.store(true);
-
         // Wait for the thread to finish
         if (m_thread.joinable())
         {

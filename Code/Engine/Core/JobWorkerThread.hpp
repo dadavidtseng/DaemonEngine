@@ -49,6 +49,13 @@ public:
     // Signal the worker thread to stop and wait for it to finish
     void StopAndJoin();
 
+    // Signal the worker thread to stop (without joining)
+    // Used during shutdown to set all stop flags before notify_all()
+    void RequestStop();
+
+    // Wait for the worker thread to finish (after RequestStop was called)
+    void Join();
+
     // Get this worker's unique ID
     int GetWorkerID() const { return m_workerID; }
 
