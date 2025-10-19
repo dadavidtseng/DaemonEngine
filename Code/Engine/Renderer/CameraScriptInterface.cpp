@@ -6,6 +6,7 @@
 #include "Engine/Renderer/CameraScriptInterface.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/EulerAngles.hpp"
@@ -88,7 +89,27 @@ std::vector<ScriptMethodInfo> CameraScriptInterface::GetAvailableMethods() const
         ScriptMethodInfo("getCameraOrientation",
                          "Get camera orientation (yaw, pitch, roll)",
                          {"Camera*"},
-                         "object")
+                         "object"),
+
+        ScriptMethodInfo("setActiveWorldCamera",
+                         "Set the active world camera for 3D rendering",
+                         {"Camera*"},
+                         "void"),
+
+        ScriptMethodInfo("getActiveWorldCamera",
+                         "Get the active world camera (returns null if not set)",
+                         {},
+                         "Camera*"),
+
+        ScriptMethodInfo("setCameraRole",
+                         "Set camera role for entity-based rendering (e.g., 'world', 'screen')",
+                         {"Camera*", "string"},
+                         "void"),
+
+        ScriptMethodInfo("getCameraByRole",
+                         "Get camera by role name (returns null if not found)",
+                         {"string"},
+                         "Camera*")
     };
 }
 
@@ -140,6 +161,10 @@ void CameraScriptInterface::InitializeMethodRegistry()
     m_methodRegistry["setCameraPositionAndOrientation"] = [this](ScriptArgs const& args) { return ExecuteSetCameraPositionAndOrientation(args); };
     m_methodRegistry["getCameraPosition"]               = [this](ScriptArgs const& args) { return ExecuteGetCameraPosition(args); };
     m_methodRegistry["getCameraOrientation"]            = [this](ScriptArgs const& args) { return ExecuteGetCameraOrientation(args); };
+    m_methodRegistry["setActiveWorldCamera"]            = [this](ScriptArgs const& args) { return ExecuteSetActiveWorldCamera(args); };
+    m_methodRegistry["getActiveWorldCamera"]            = [this](ScriptArgs const& args) { return ExecuteGetActiveWorldCamera(args); };
+    m_methodRegistry["setCameraRole"]                   = [this](ScriptArgs const& args) { return ExecuteSetCameraRole(args); };
+    m_methodRegistry["getCameraByRole"]                 = [this](ScriptArgs const& args) { return ExecuteGetCameraByRole(args); };
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -424,5 +449,124 @@ ScriptMethodResult CameraScriptInterface::ExecuteGetCameraOrientation(ScriptArgs
     catch (std::exception const& e)
     {
         return ScriptMethodResult::Error("Failed to get camera orientation: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult CameraScriptInterface::ExecuteSetActiveWorldCamera(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "setActiveWorldCamera");
+    if (!result.success) return result;
+
+    try
+    {
+        double   cameraHandleDouble = ScriptTypeExtractor::ExtractDouble(args[0]);
+        uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
+        Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
+
+        // Verify this camera is managed by this interface
+        auto it = std::find(m_createdCameras.begin(), m_createdCameras.end(), camera);
+        if (it == m_createdCameras.end())
+        {
+            return ScriptMethodResult::Error("Camera not found in managed cameras");
+        }
+
+        m_activeWorldCamera = camera;
+        DebuggerPrintf("[CameraScriptInterface] Active world camera set to: 0x%p\n", camera);
+        return ScriptMethodResult::Success();
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("Failed to set active world camera: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult CameraScriptInterface::ExecuteGetActiveWorldCamera(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "getActiveWorldCamera");
+    if (!result.success) return result;
+
+    try
+    {
+        if (m_activeWorldCamera == nullptr)
+        {
+            // Return 0 to indicate no active camera
+            return ScriptMethodResult::Success(0.0);
+        }
+
+        // Return camera pointer as double for JavaScript
+        uint64_t cameraHandle       = reinterpret_cast<uint64_t>(m_activeWorldCamera);
+        double   cameraHandleDouble = static_cast<double>(cameraHandle);
+        return ScriptMethodResult::Success(cameraHandleDouble);
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("Failed to get active world camera: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult CameraScriptInterface::ExecuteSetCameraRole(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 2, "setCameraRole");
+    if (!result.success) return result;
+
+    try
+    {
+        // Extract camera handle
+        double   cameraHandleDouble = ScriptTypeExtractor::ExtractDouble(args[0]);
+        uint64_t cameraHandle       = static_cast<uint64_t>(cameraHandleDouble);
+        Camera*  camera             = reinterpret_cast<Camera*>(cameraHandle);
+
+        // Extract role name
+        std::string role = std::any_cast<std::string>(args[1]);
+
+        // Verify this camera is managed by this interface
+        auto it = std::find(m_createdCameras.begin(), m_createdCameras.end(), camera);
+        if (it == m_createdCameras.end())
+        {
+            return ScriptMethodResult::Error("Camera not found in managed cameras");
+        }
+
+        // Set camera role
+        m_cameraRoles[role] = camera;
+        DAEMON_LOG(LogScript, eLogVerbosity::Log,
+            Stringf("[CameraScriptInterface] Camera role set: '%s' -> %p", role.c_str(), camera));
+        return ScriptMethodResult::Success();
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("Failed to set camera role: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult CameraScriptInterface::ExecuteGetCameraByRole(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "getCameraByRole");
+    if (!result.success) return result;
+
+    try
+    {
+        // Extract role name
+        std::string role = std::any_cast<std::string>(args[0]);
+
+        // Find camera by role
+        auto it = m_cameraRoles.find(role);
+        if (it == m_cameraRoles.end())
+        {
+            // Return 0 to indicate no camera with this role
+            return ScriptMethodResult::Success(0.0);
+        }
+
+        // Return camera pointer as double for JavaScript
+        uint64_t cameraHandle       = reinterpret_cast<uint64_t>(it->second);
+        double   cameraHandleDouble = static_cast<double>(cameraHandle);
+        return ScriptMethodResult::Success(cameraHandleDouble);
+    }
+    catch (std::exception const& e)
+    {
+        return ScriptMethodResult::Error("Failed to get camera by role: " + String(e.what()));
     }
 }
