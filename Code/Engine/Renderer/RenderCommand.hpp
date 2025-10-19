@@ -50,9 +50,10 @@ enum class RenderCommandType : uint8_t
 	CREATE_MESH,      // Create new mesh entity
 	UPDATE_ENTITY,    // Update entity position/orientation/color
 	DESTROY_ENTITY,   // Remove entity from rendering
+	CREATE_CAMERA,    // Create new camera (Phase 2)
+	UPDATE_CAMERA,    // Update camera position/orientation
 	CREATE_LIGHT,     // Create new light source
-	UPDATE_LIGHT,     // Update light properties
-	UPDATE_CAMERA     // Update camera position/orientation
+	UPDATE_LIGHT      // Update light properties
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -110,6 +111,17 @@ struct LightUpdateData
 };
 
 //----------------------------------------------------------------------------------------------------
+// CameraCreationData
+// Payload for CREATE_CAMERA command (Phase 2)
+//----------------------------------------------------------------------------------------------------
+struct CameraCreationData
+{
+	Vec3        position;
+	Vec3        lookAt;       // Target position to look at
+	std::string type;         // "world" or "screen"
+};
+
+//----------------------------------------------------------------------------------------------------
 // CameraUpdateData
 // Payload for UPDATE_CAMERA command
 //----------------------------------------------------------------------------------------------------
@@ -145,9 +157,10 @@ struct RenderCommand
 	std::variant<std::monostate,
 	             MeshCreationData,
 	             EntityUpdateData,
+	             CameraCreationData,
+	             CameraUpdateData,
 	             LightCreationData,
-	             LightUpdateData,
-	             CameraUpdateData>
+	             LightUpdateData>
 	    data;
 
 	// Default constructor (required for array initialization)
