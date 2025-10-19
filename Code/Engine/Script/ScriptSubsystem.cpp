@@ -2068,8 +2068,13 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
                 else if (arg->IsFunction())
                 {
                     // Phase 2: Store v8::Function for callback registration
+                    // CRITICAL: Must store as v8::Global (persistent handle) not v8::Local (stack handle)
+                    // v8::Local becomes invalid when HandleScope exits - callbacks execute later!
                     v8::Local<v8::Function> func = v8::Local<v8::Function>::Cast(arg);
-                    cppArgs.push_back(func);
+
+                    // Create persistent handle that survives beyond this HandleScope
+                    auto* globalFunc = new v8::Global<v8::Function>(isolate, func);
+                    cppArgs.push_back(globalFunc);
                 }
                 else if (arg->IsArray())
                 {

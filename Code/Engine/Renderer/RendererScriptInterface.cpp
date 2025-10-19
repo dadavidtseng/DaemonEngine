@@ -189,7 +189,7 @@ ScriptMethodResult RendererScriptInterface::ExecuteSetModelConstants(ScriptArgs 
     catch (std::exception const& e)
     {
         DAEMON_LOG(LogRenderer, eLogVerbosity::Error,
-                   Stringf("RendererScriptInterface::setModelConstants ERROR: %s", e.what()));
+                   Stringf("RendererScriptInterface::setModelConstants ERROR: {}", e.what()));
         return ScriptMethodResult::Error("SetModelConstants failed: " + String(e.what()));
     }
 }
