@@ -209,7 +209,7 @@
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
-    <ClCompile Include="Renderer\RendererScriptInterface.cpp" />
+    <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="Widget\IWidget.cpp" />
     <ClCompile Include="Widget\WidgetSubsystem.cpp" />
@@ -384,7 +384,7 @@
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
     <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
-    <ClInclude Include="Renderer\RendererScriptInterface.hpp" />
+    <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />

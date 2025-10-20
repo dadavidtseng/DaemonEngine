@@ -504,9 +504,7 @@
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\RendererScriptInterface.cpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClCompile>
+    <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Renderer\CameraScriptInterface.cpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
@@ -935,9 +933,7 @@
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\RendererScriptInterface.hpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClInclude>
+    <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Renderer\CameraScriptInterface.hpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
