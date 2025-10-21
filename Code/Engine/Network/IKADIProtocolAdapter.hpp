@@ -84,11 +84,15 @@ public:
     virtual std::string SerializeHello() = 0;
 
     /// @brief Serialize authentication message with public key and signature
-    /// @param publicKey Ed25519 public key (hex-encoded)
-    /// @param signature Signed nonce (hex-encoded)
+    /// @param publicKey Ed25519 public key (base64-encoded)
+    /// @param signature Signed nonce (base64-encoded)
+    /// @param nonce Original nonce from broker hello response
+    /// @param wantNewId Request new agent ID registration (default: true)
     /// @return Protocol-formatted authentication message
     virtual std::string SerializeAuthenticate(std::string const& publicKey,
-                                              std::string const& signature) = 0;
+                                              std::string const& signature,
+                                              std::string const& nonce,
+                                              bool wantNewId = true) = 0;
 
     /// @brief Serialize tool registration message
     /// @param tools JSON array of tool definitions (name, description, inputSchema)

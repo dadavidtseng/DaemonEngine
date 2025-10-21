@@ -9,6 +9,8 @@
 #include "Engine/Network/IKADIProtocolAdapter.hpp"
 #include "Engine/Core/StringUtils.hpp"
 
+#include <map>  // For ID mapping (string ID to int hash)
+
 //----------------------------------------------------------------------------------------------------
 // KADI Protocol V1 Adapter (JSON-RPC 2.0 over WebSocket)
 //----------------------------------------------------------------------------------------------------
@@ -25,7 +27,9 @@ public:
 	std::string SerializeHello() override;
 
 	std::string SerializeAuthenticate(std::string const& publicKey,
-	                                   std::string const& signature) override;
+	                                   std::string const& signature,
+	                                   std::string const& nonce,
+	                                   bool wantNewId = true) override;
 
 	std::string SerializeToolRegistration(nlohmann::json const& tools) override;
 
@@ -74,4 +78,9 @@ private:
 	/// @param method Method name string
 	/// @return Corresponding eKADIMessageType
 	eKADIMessageType ParseMethodToType(std::string const& method);
+
+	//----------------------------------------------------------------------------------------------------
+	// ID Mapping (for broker compatibility with string IDs)
+	//----------------------------------------------------------------------------------------------------
+	std::map<int, std::string> m_idMapping;  // Maps hashed int IDs back to original string IDs
 };

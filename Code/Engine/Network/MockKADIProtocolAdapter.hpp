@@ -25,7 +25,9 @@ public:
 
 	std::string SerializeHello() override;
 	std::string SerializeAuthenticate(std::string const& publicKey,
-	                                   std::string const& signature) override;
+	                                   std::string const& signature,
+	                                   std::string const& nonce,
+	                                   bool wantNewId = true) override;
 	std::string SerializeToolRegistration(nlohmann::json const& tools) override;
 	std::string SerializeToolResult(int requestId, nlohmann::json const& result) override;
 	std::string SerializeToolError(int requestId, std::string const& errorMessage) override;
