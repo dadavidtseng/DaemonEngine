@@ -7,6 +7,8 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
+#include <functional>  // For std::hash (string ID to int conversion)
+
 //----------------------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------------------
@@ -31,11 +33,15 @@ std::string KADIProtocolV1Adapter::SerializeHello()
 }
 
 std::string KADIProtocolV1Adapter::SerializeAuthenticate(std::string const& publicKey,
-                                                          std::string const& signature)
+                                                          std::string const& signature,
+                                                          std::string const& nonce,
+                                                          bool wantNewId)
 {
 	nlohmann::json params = {
 		{"publicKey", publicKey},
-		{"signature", signature}
+		{"signature", signature},
+		{"nonce", nonce},
+		{"wantNewId", wantNewId}
 	};
 
 	nlohmann::json request = CreateRequest("kadi.session.authenticate", params);
@@ -45,35 +51,68 @@ std::string KADIProtocolV1Adapter::SerializeAuthenticate(std::string const& publ
 std::string KADIProtocolV1Adapter::SerializeToolRegistration(nlohmann::json const& tools)
 {
 	nlohmann::json params = {
-		{"agentId", m_agentId},
 		{"tools", tools},
-		{"networks", nlohmann::json::array({"global"})}
+		{"networks", nlohmann::json::array({"global"})},
+		{"displayName", "ProtogameJS3D Agent"}
 	};
 
-	nlohmann::json request = CreateRequest("kadi.capabilities.register", params);
+	nlohmann::json request = CreateRequest("kadi.agent.register", params);
 	return request.dump();
 }
 
 std::string KADIProtocolV1Adapter::SerializeToolResult(int requestId, nlohmann::json const& result)
 {
-	nlohmann::json params = {
-		{"requestId", requestId},
+	// Check if we have the original string ID for this hashed int ID
+	nlohmann::json responseIdJson;
+	auto it = m_idMapping.find(requestId);
+	if (it != m_idMapping.end())
+	{
+		responseIdJson = it->second;  // Use original string ID
+		m_idMapping.erase(it);        // Clean up mapping after use
+	}
+	else
+	{
+		responseIdJson = requestId;   // Use integer ID as-is
+	}
+
+	// Send JSON-RPC RESPONSE, not a request
+	// The broker sent us a request with an ID, we respond directly with that ID
+	nlohmann::json response = {
+		{"jsonrpc", "2.0"},
+		{"id", responseIdJson},
 		{"result", result}
 	};
 
-	nlohmann::json request = CreateRequest("kadi.ability.result", params);
-	return request.dump();
+	return response.dump();
 }
 
 std::string KADIProtocolV1Adapter::SerializeToolError(int requestId, std::string const& errorMessage)
 {
-	nlohmann::json params = {
-		{"requestId", requestId},
-		{"error", errorMessage}
+	// Check if we have the original string ID for this hashed int ID
+	nlohmann::json responseIdJson;
+	auto it = m_idMapping.find(requestId);
+	if (it != m_idMapping.end())
+	{
+		responseIdJson = it->second;  // Use original string ID
+		m_idMapping.erase(it);        // Clean up mapping after use
+	}
+	else
+	{
+		responseIdJson = requestId;   // Use integer ID as-is
+	}
+
+	// Send JSON-RPC ERROR RESPONSE, not a request
+	// JSON-RPC 2.0 error response format
+	nlohmann::json response = {
+		{"jsonrpc", "2.0"},
+		{"id", responseIdJson},
+		{"error", {
+			{"code", -32000},  // Server error code
+			{"message", errorMessage}
+		}}
 	};
 
-	nlohmann::json request = CreateRequest("kadi.ability.error", params);
-	return request.dump();
+	return response.dump();
 }
 
 std::string KADIProtocolV1Adapter::SerializeEventPublish(std::string const& channel,
@@ -122,15 +161,41 @@ bool KADIProtocolV1Adapter::ParseMessage(std::string const& message, sKADIMessag
 		// Parse JSON
 		nlohmann::json j = nlohmann::json::parse(message);
 
-		// Validate JSON-RPC 2.0 structure
-		if (!j.contains("jsonrpc") || j["jsonrpc"] != "2.0")
+		// Validate JSON-RPC 2.0 structure (optional for KADI methods)
+		if (j.contains("jsonrpc") && j["jsonrpc"] != "2.0")
 		{
-			DebuggerPrintf("KADIProtocolV1: Invalid JSON-RPC version or missing jsonrpc field\n");
+			DebuggerPrintf("KADIProtocolV1: Invalid JSON-RPC version\n");
 			return false;
 		}
+		// If jsonrpc is missing, we tolerate it for KADI broker compatibility
 
 		// Extract message ID (optional for notifications)
-		out.id = j.value("id", -1);
+		// JSON-RPC 2.0 allows ID to be string, number, or null
+		if (j.contains("id"))
+		{
+			if (j["id"].is_number_integer())
+			{
+				out.id = j["id"].get<int>();
+			}
+			else if (j["id"].is_string())
+			{
+				// Broker sends string IDs (e.g., "mcp-uuid-timestamp")
+				// Hash to integer for compatibility with existing int-based ID system
+				std::string idStr = j["id"].get<std::string>();
+				out.id = static_cast<int>(std::hash<std::string>{}(idStr) & 0x7FFFFFFF);
+
+				// Store mapping so we can send back the original string ID
+				m_idMapping[out.id] = idStr;
+			}
+			else
+			{
+				out.id = -1;  // null or other type = notification
+			}
+		}
+		else
+		{
+			out.id = -1;  // Missing ID = notification
+		}
 
 		// Determine message type based on structure
 		if (j.contains("method"))
@@ -251,8 +316,8 @@ eKADIMessageType KADIProtocolV1Adapter::ParseMethodToType(std::string const& met
 	if (method == "kadi.session.pong") return eKADIMessageType::PONG;
 
 	// Tool Management
-	if (method == "kadi.capabilities.register") return eKADIMessageType::REGISTER_TOOLS;
-	if (method == "kadi.ability.invoke") return eKADIMessageType::TOOL_INVOKE;
+	if (method == "kadi.agent.register") return eKADIMessageType::REGISTER_TOOLS;
+	if (method == "kadi.ability.request") return eKADIMessageType::TOOL_INVOKE;  // Broker sends 'request', not 'invoke'
 	if (method == "kadi.ability.result") return eKADIMessageType::TOOL_RESULT;
 	if (method == "kadi.ability.error") return eKADIMessageType::TOOL_ERROR;
 	if (method == "kadi.ability.cancel") return eKADIMessageType::TOOL_CANCEL;

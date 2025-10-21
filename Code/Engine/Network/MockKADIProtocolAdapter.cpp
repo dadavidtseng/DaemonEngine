@@ -30,10 +30,14 @@ std::string MockKADIProtocolAdapter::SerializeHello()
 }
 
 std::string MockKADIProtocolAdapter::SerializeAuthenticate(std::string const& publicKey,
-                                                            std::string const& signature)
+                                                            std::string const& signature,
+                                                            std::string const& nonce,
+                                                            bool wantNewId)
 {
 	UNUSED(publicKey);
 	UNUSED(signature);
+	UNUSED(nonce);
+	UNUSED(wantNewId);
 
 	std::string mockMessage = R"({"method":"kadi.session.authenticate"})";
 	m_sentMessages.push_back("AUTHENTICATE");

@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/x509.h>  // For i2d_PUBKEY() and d2i_PUBKEY()
 
 #include <memory>
 #include <cstring>
@@ -85,14 +86,21 @@ bool KADIAuthenticationUtility::GenerateKeyPair(sEd25519KeyPair& outKeyPair)
 
 	OpenSSLUniquePtr<EVP_PKEY> pkey(rawPkey);
 
-	// Extract public key (32 bytes for Ed25519)
-	outKeyPair.publicKey.resize(32);
-	size_t publicKeyLen = outKeyPair.publicKey.size();
-	if (EVP_PKEY_get_raw_public_key(pkey.get(), outKeyPair.publicKey.data(), &publicKeyLen) <= 0)
+	// Export public key in DER/SPKI format (SubjectPublicKeyInfo)
+	// This format is required by KADI broker for signature verification
+	unsigned char* derBuffer = nullptr;
+	int derLen = i2d_PUBKEY(pkey.get(), &derBuffer);
+	if (derLen <= 0 || !derBuffer)
 	{
-		DebuggerPrintf("KADIAuthenticationUtility: Failed to extract public key\n");
+		DebuggerPrintf("KADIAuthenticationUtility: Failed to export public key to DER\n");
 		return false;
 	}
+
+	// Copy DER-encoded public key to output (will be ~44 bytes for Ed25519)
+	outKeyPair.publicKey.assign(derBuffer, derBuffer + derLen);
+	OPENSSL_free(derBuffer);  // Free OpenSSL-allocated memory
+
+	size_t publicKeyLen = outKeyPair.publicKey.size();
 
 	// Extract private key (64 bytes for Ed25519 - includes public key)
 	outKeyPair.privateKey.resize(32);  // Ed25519 private key is 32 bytes
@@ -183,18 +191,20 @@ bool KADIAuthenticationUtility::VerifySignature(std::string const& nonce,
                                                  std::vector<unsigned char> const& signature,
                                                  std::vector<unsigned char> const& publicKey)
 {
-	if (publicKey.size() != 32)
+	// Public key is now in DER/SPKI format (not raw 32 bytes)
+	// Expected size is ~44 bytes for Ed25519 in DER format
+	if (publicKey.empty())
 	{
-		DebuggerPrintf("KADIAuthenticationUtility: Invalid public key size: %zu (expected 32)\n", publicKey.size());
+		DebuggerPrintf("KADIAuthenticationUtility: Empty public key\n");
 		return false;
 	}
 
-	// Create EVP_PKEY from raw public key
-	EVP_PKEY* rawPkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, nullptr,
-	                                                 publicKey.data(), publicKey.size());
+	// Create EVP_PKEY from DER-encoded public key
+	unsigned char const* derPtr = publicKey.data();  // OpenSSL modifies this pointer
+	EVP_PKEY* rawPkey = d2i_PUBKEY(nullptr, &derPtr, static_cast<long>(publicKey.size()));
 	if (!rawPkey)
 	{
-		DebuggerPrintf("KADIAuthenticationUtility: Failed to create EVP_PKEY from public key\n");
+		DebuggerPrintf("KADIAuthenticationUtility: Failed to decode DER public key\n");
 		return false;
 	}
 

@@ -418,7 +418,8 @@ void KADIWebSocketSubsystem::InitiateAuthentication(std::string const& nonce)
     // Encode signature to base64
     std::string signature = KADIAuthenticationUtility::Base64Encode(signatureBinary);
 
-    std::string authMessage = m_protocolAdapter->SerializeAuthenticate(m_publicKey, signature);
+    // Send authentication with nonce and wantNewId flag
+    std::string authMessage = m_protocolAdapter->SerializeAuthenticate(m_publicKey, signature, nonce, true);
     QueueMessage(authMessage);
 }
 
@@ -659,26 +660,11 @@ void KADIWebSocketSubsystem::HandleToolInvoke(sKADIMessage const& message)
 
     if (m_toolInvokeCallback)
     {
-        // Extract requestId - could be string or int depending on broker implementation
-        int requestId = -1;
-        if (message.payload.contains("requestId"))
-        {
-            if (message.payload["requestId"].is_number())
-            {
-                requestId = message.payload["requestId"].get<int>();
-            }
-            else if (message.payload["requestId"].is_string())
-            {
-                // Hash string requestId to int for callback compatibility
-                // Note: In production, you'd want a better mapping or change callback signature
-                std::string requestIdStr = message.payload["requestId"].get<std::string>();
-                requestId = static_cast<int>(std::hash<std::string>{}(requestIdStr));
-                DebuggerPrintf("  Converted string requestId '%s' to int %d\n", requestIdStr.c_str(), requestId);
-            }
-        }
+        // Request ID is already parsed and stored in message.id (hashed if it was a string)
+        int requestId = message.id;
 
         std::string    toolName  = message.payload.value("toolName", "");
-        nlohmann::json arguments = message.payload.value("arguments", nlohmann::json::object());
+        nlohmann::json arguments = message.payload.value("toolInput", nlohmann::json::object());
 
         DebuggerPrintf("  Tool: %s, RequestId: %d\n", toolName.c_str(), requestId);
 
