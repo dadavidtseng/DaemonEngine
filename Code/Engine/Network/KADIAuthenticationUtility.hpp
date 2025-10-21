@@ -13,8 +13,8 @@
 //----------------------------------------------------------------------------------------------------
 struct sEd25519KeyPair
 {
-	std::vector<unsigned char> publicKey;   // 32 bytes
-	std::vector<unsigned char> privateKey;  // 64 bytes (includes public key)
+	std::vector<unsigned char> publicKey;   // DER/SPKI format (~44 bytes for Ed25519)
+	std::vector<unsigned char> privateKey;  // Raw format (32 bytes for Ed25519)
 
 	// Encode keys to base64 for JSON transmission
 	std::string GetPublicKeyBase64() const;
