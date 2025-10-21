@@ -47,13 +47,16 @@ using EntityID = uint64_t;
 //----------------------------------------------------------------------------------------------------
 enum class RenderCommandType : uint8_t
 {
-	CREATE_MESH,      // Create new mesh entity
-	UPDATE_ENTITY,    // Update entity position/orientation/color
-	DESTROY_ENTITY,   // Remove entity from rendering
-	CREATE_CAMERA,    // Create new camera (Phase 2)
-	UPDATE_CAMERA,    // Update camera position/orientation
-	CREATE_LIGHT,     // Create new light source
-	UPDATE_LIGHT      // Update light properties
+	CREATE_MESH,        // Create new mesh entity
+	UPDATE_ENTITY,      // Update entity position/orientation/color
+	DESTROY_ENTITY,     // Remove entity from rendering
+	CREATE_CAMERA,      // Create new camera (Phase 2b)
+	UPDATE_CAMERA,      // Update camera position/orientation
+	SET_ACTIVE_CAMERA,  // Set which camera is active for rendering
+	UPDATE_CAMERA_TYPE, // Change camera type (world/screen)
+	DESTROY_CAMERA,     // Remove camera from rendering
+	CREATE_LIGHT,       // Create new light source
+	UPDATE_LIGHT        // Update light properties
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -112,13 +115,15 @@ struct LightUpdateData
 
 //----------------------------------------------------------------------------------------------------
 // CameraCreationData
-// Payload for CREATE_CAMERA command (Phase 2)
+// Payload for CREATE_CAMERA command (Phase 2b)
+// Uses position + orientation (matches Camera.hpp SetPositionAndOrientation pattern)
+// Type determines camera mode: "world" = Perspective, "screen" = Orthographic
 //----------------------------------------------------------------------------------------------------
 struct CameraCreationData
 {
-	Vec3        position;
-	Vec3        lookAt;       // Target position to look at
-	std::string type;         // "world" or "screen"
+	Vec3        position;      // World-space position (X-forward, Y-left, Z-up)
+	EulerAngles orientation;   // Yaw, Pitch, Roll in degrees
+	std::string type;          // "world" (3D perspective) or "screen" (2D orthographic)
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -129,6 +134,16 @@ struct CameraUpdateData
 {
 	Vec3        position;
 	EulerAngles orientation;  // Yaw, Pitch, Roll in degrees
+};
+
+//----------------------------------------------------------------------------------------------------
+// CameraTypeUpdateData
+// Payload for UPDATE_CAMERA_TYPE command (Phase 2b)
+// Changes camera mode between "world" (3D perspective) and "screen" (2D orthographic)
+//----------------------------------------------------------------------------------------------------
+struct CameraTypeUpdateData
+{
+	std::string type;  // "world" or "screen"
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -153,12 +168,13 @@ struct RenderCommand
 	EntityID          entityId;  // Target entity (0 for camera)
 
 	// Type-safe payload using std::variant
-	// std::monostate for commands without payload (e.g., DESTROY_ENTITY)
+	// std::monostate for commands without payload (e.g., DESTROY_ENTITY, SET_ACTIVE_CAMERA, DESTROY_CAMERA)
 	std::variant<std::monostate,
 	             MeshCreationData,
 	             EntityUpdateData,
 	             CameraCreationData,
 	             CameraUpdateData,
+	             CameraTypeUpdateData,
 	             LightCreationData,
 	             LightUpdateData>
 	    data;
