@@ -209,7 +209,7 @@
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
-    <ClCompile Include="Renderer\RendererScriptInterface.cpp" />
+    <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="Widget\IWidget.cpp" />
     <ClCompile Include="Widget\WidgetSubsystem.cpp" />
@@ -283,6 +283,7 @@
     <ClCompile Include="Renderer/Light.cpp" />
     <ClCompile Include="Renderer/LightSubsystem.cpp" />
     <ClCompile Include="Renderer/RenderCommon.cpp" />
+    <ClCompile Include="Renderer/RenderCommandQueue.cpp" />
     <ClCompile Include="Renderer/Renderer.cpp" />
     <ClCompile Include="Renderer/Shader.cpp" />
     <ClCompile Include="Renderer/SpriteAnimDefinition.cpp" />
@@ -383,7 +384,7 @@
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
     <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
-    <ClInclude Include="Renderer\RendererScriptInterface.hpp" />
+    <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />
@@ -458,6 +459,8 @@
     <ClInclude Include="Renderer/Light.hpp" />
     <ClInclude Include="Renderer/LightSubsystem.hpp" />
     <ClInclude Include="Renderer/RenderCommon.hpp" />
+    <ClInclude Include="Renderer/RenderCommand.hpp" />
+    <ClInclude Include="Renderer/RenderCommandQueue.hpp" />
     <ClInclude Include="Renderer/Renderer.hpp" />
     <ClInclude Include="Renderer/Shader.hpp" />
     <ClInclude Include="Renderer/SpriteAnimDefinition.hpp" />

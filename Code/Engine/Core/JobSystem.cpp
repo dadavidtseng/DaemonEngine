@@ -10,6 +10,8 @@
 #include <thread>
 #include <algorithm>
 
+#include "ErrorWarningAssert.hpp"
+
 //----------------------------------------------------------------------------------------------------
 // Global JobSystem instance
 //----------------------------------------------------------------------------------------------------
@@ -95,12 +97,30 @@ void JobSystem::Shutdown()
         return; // Already shut down
     }
 
-    // Signal all worker threads to stop and wait for them to finish
+    // CRITICAL: Shutdown sequence to avoid deadlock:
+    // 1. Set m_shouldStop flag on ALL workers first (without joining)
+    // 2. Wake up all sleeping workers with notify_all()
+    // 3. Wait for all workers to exit with join()
+
+    // Step 1: Signal all worker threads to stop (sets m_shouldStop = true)
     for (auto& workerThread : m_workerThreads)
     {
         if (workerThread)
         {
-            workerThread->StopAndJoin();
+            workerThread->RequestStop();
+        }
+    }
+
+    // Step 2: Wake up all sleeping worker threads now that m_shouldStop is set
+    // They will check the predicate, see m_shouldStop == true, and exit
+    m_jobAvailableCondition.notify_all();
+
+    // Step 3: Wait for all worker threads to finish
+    for (auto& workerThread : m_workerThreads)
+    {
+        if (workerThread)
+        {
+            workerThread->Join();
         }
     }
 

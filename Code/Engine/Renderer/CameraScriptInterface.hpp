@@ -7,6 +7,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/IScriptableObject.hpp"
 
+#include <unordered_map>
+#include <string>
+
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
 
@@ -32,6 +35,16 @@ public:
     std::any           GetProperty(String const& propertyName) const override;
     bool               SetProperty(String const& propertyName, std::any const& value) override;
 
+    // Public accessor for C++ code to get active world camera
+    Camera* GetActiveWorldCameraPtr() const { return m_activeWorldCamera; }
+
+    // Public accessor for C++ code to get camera by role (Phase 2)
+    Camera* GetCameraByRole(std::string const& role) const
+    {
+        auto it = m_cameraRoles.find(role);
+        return (it != m_cameraRoles.end()) ? it->second : nullptr;
+    }
+
 private:
     void InitializeMethodRegistry() override;
 
@@ -54,6 +67,20 @@ private:
     ScriptMethodResult ExecuteGetCameraPosition(ScriptArgs const& args);
     ScriptMethodResult ExecuteGetCameraOrientation(ScriptArgs const& args);
 
+    // Active camera management
+    ScriptMethodResult ExecuteSetActiveWorldCamera(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetActiveWorldCamera(ScriptArgs const& args);
+
+    // Camera role management (Phase 2: Entity-based camera selection)
+    ScriptMethodResult ExecuteSetCameraRole(ScriptArgs const& args);
+    ScriptMethodResult ExecuteGetCameraByRole(ScriptArgs const& args);
+
     // Camera storage for JavaScript-created cameras
     std::vector<Camera*> m_createdCameras;
+
+    // Active world camera (used for 3D rendering)
+    Camera* m_activeWorldCamera = nullptr;
+
+    // Camera roles (Phase 2: Support "world" and "screen" cameras)
+    std::unordered_map<std::string, Camera*> m_cameraRoles;  // role name -> camera pointer
 };

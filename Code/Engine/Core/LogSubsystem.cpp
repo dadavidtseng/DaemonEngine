@@ -15,6 +15,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include "ErrorWarningAssert.hpp"
+
 // 外部全域變數聲明
 extern HANDLE g_consoleHandle;
 
@@ -166,10 +168,19 @@ void LogSubsystem::Shutdown()
     // 記錄關閉訊息
     LogMessage("LogCore", eLogVerbosity::Display, "LogSubsystem::Shutdown() start");
 
+    // CRITICAL: Disable async logging BEFORE stopping worker thread
+    // This prevents new logs from being queued during shutdown
+    bool wasAsyncLogging = m_config.asyncLogging;
+    m_config.asyncLogging = false;
+
     // 停止非同步日誌執行緒
     if (m_logThread.joinable())
     {
-        m_shouldExit = true;
+        // Set stop flag first, then notify to wake the thread
+        m_shouldExit.store(true, std::memory_order_release);  // Use explicit memory ordering
+
+        m_logCondition.notify_all();  // Wake up the worker thread immediately
+
         m_logThread.join();
     }
 
@@ -181,7 +192,11 @@ void LogSubsystem::Shutdown()
     ClearLogHistory();
     m_categories.clear();
 
+    // This log will be written synchronously since async logging is disabled
     LogMessage("LogCore", eLogVerbosity::Display, "LogSubsystem::Shutdown() finish");
+
+    // Restore original setting (not strictly necessary since we're shutting down)
+    m_config.asyncLogging = wasAsyncLogging;
 }
 
 void LogSubsystem::BeginFrame()
@@ -256,8 +271,13 @@ void LogSubsystem::LogMessage(String const&       categoryName,
     if (m_config.asyncLogging)
     {
         // 非同步日誌：加入佇列
-        std::lock_guard<std::mutex> lock(m_queueMutex);
-        m_logQueue.push(entry);
+        {
+            std::lock_guard<std::mutex> lock(m_queueMutex);
+            m_logQueue.push(entry);
+        }
+
+        // Notify the worker thread that a log entry is available
+        m_logCondition.notify_one();
     }
     else
     {
@@ -387,26 +407,46 @@ String LogSubsystem::GetCurrentThreadId() const
 
 void LogSubsystem::ProcessLogQueue()
 {
-    while (!m_shouldExit)
+    while (!m_shouldExit.load(std::memory_order_acquire))  // Use explicit memory ordering
     {
+        // CRITICAL: Use the SAME mutex for condition variable and queue access
+        // This prevents data race when predicate checks m_logQueue.empty()
         std::unique_lock<std::mutex> lock(m_queueMutex);
 
+        // Wait for logs to be available or shutdown signal
+        m_logCondition.wait_for(
+            lock,
+            std::chrono::milliseconds(10),  // Timeout after 10ms to check m_shouldExit
+            [this]
+            {
+                // Predicate: wake up if stopping or if there are logs available
+                // Safe to access m_logQueue here because we hold m_queueMutex
+                return m_shouldExit.load(std::memory_order_acquire) || !m_logQueue.empty();
+            }
+        );
+
+        // Check m_shouldExit again after waking up
+        if (m_shouldExit.load(std::memory_order_acquire))
+        {
+            break;
+        }
+
+        // Process one log entry if available
         if (!m_logQueue.empty())
         {
             LogEntry entry = m_logQueue.front();
             m_logQueue.pop();
-            lock.unlock();
+            lock.unlock();  // Unlock before expensive WriteToOutputDevices
 
             WriteToOutputDevices(entry);
         }
         else
         {
             lock.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 
-    // 處理剩餘的日誌條目
+    // Process remaining log entries after shutdown signal
     std::lock_guard<std::mutex> lock(m_queueMutex);
     while (!m_logQueue.empty())
     {

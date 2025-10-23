@@ -504,9 +504,7 @@
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\RendererScriptInterface.cpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClCompile>
+    <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Renderer\CameraScriptInterface.cpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClCompile>
@@ -530,6 +528,9 @@
     </ClCompile>
     <ClCompile Include="Network\KADIScriptInterface.cpp">
       <Filter>Engine\Network\KADI</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer/RenderCommandQueue.cpp">
+      <Filter>Engine\Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -932,9 +933,7 @@
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\RendererScriptInterface.hpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClInclude>
+    <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Renderer\CameraScriptInterface.hpp">
       <Filter>Engine\Renderer\Script</Filter>
     </ClInclude>
@@ -961,6 +960,12 @@
     </ClInclude>
     <ClInclude Include="Network\KADIScriptInterface.hpp">
       <Filter>Engine\Network\KADI</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/RenderCommand.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/RenderCommandQueue.hpp">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

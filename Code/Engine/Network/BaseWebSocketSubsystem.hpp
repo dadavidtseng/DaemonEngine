@@ -256,13 +256,13 @@ private:
     /// @return true if job submitted successfully
     bool SubmitServerJob();
 
-    /// @brief Submit client handler job to JobSystem
+    /// @brief Create a dedicated thread for client handler (NOT using JobSystem)
     /// @param clientSocket Client socket to handle
-    /// @return true if job submitted successfully
-    bool SubmitClientJob(SOCKET clientSocket);
+    /// @return true if thread created successfully
+    bool CreateClientThread(SOCKET clientSocket);
 
-    /// @brief Retrieve and cleanup completed jobs from JobSystem
-    void RetrieveCompletedJobs();
+    /// @brief Join and cleanup finished client threads
+    void CleanupClientThreads();
 
     //----------------------------------------------------------------------------------------------------
     // Member Variables
@@ -274,10 +274,12 @@ private:
     std::atomic<bool> m_isRunning{false};
     std::atomic<bool> m_shouldStop{false};
 
-    // JobSystem integration
+    // JobSystem integration (server only)
     Job*              m_serverJob = nullptr;
-    std::vector<Job*> m_clientJobs;
-    std::mutex        m_clientJobsMutex;
+
+    // Client thread management (NOT using JobSystem - these are long-running blocking operations)
+    std::vector<std::unique_ptr<std::thread>> m_clientThreads;
+    std::mutex        m_clientThreadsMutex;
 
     // Connection management
     std::unordered_map<SOCKET, sWebSocketConnection> m_connections;

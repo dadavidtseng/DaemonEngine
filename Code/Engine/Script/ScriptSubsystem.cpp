@@ -653,6 +653,8 @@ void ScriptSubsystem::ProcessPendingEvents()
         {
             v8::Isolate* isolate = static_cast<v8::Isolate*>(isolatePtr);
 
+            // CRITICAL: Acquire V8 lock for multi-threaded access
+            v8::Locker locker(isolate);
             // CRITICAL: Enter isolate scope BEFORE accessing context
             v8::Isolate::Scope isolateScope(isolate);
             v8::HandleScope    handleScope(isolate);
@@ -839,6 +841,7 @@ bool ScriptSubsystem::ExecuteUnregisteredScript(String const& script)
 
     m_impl->lastExecutionStart = GetCurrentTimeSeconds();
 
+    v8::Locker                   locker(m_impl->isolate);
     v8::Isolate::Scope           isolateScope(m_impl->isolate);
     v8::HandleScope              handleScope(m_impl->isolate);
     v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
@@ -901,6 +904,7 @@ bool ScriptSubsystem::ExecuteScriptWithOrigin(String const& script, String const
 
     m_impl->lastExecutionStart = GetCurrentTimeSeconds();
 
+    v8::Locker                   locker(m_impl->isolate);
     v8::Isolate::Scope           isolateScope(m_impl->isolate);
     v8::HandleScope              handleScope(m_impl->isolate);
     v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
@@ -1627,6 +1631,7 @@ bool ScriptSubsystem::InitializeV8Engine() const
     }
 
     // Create Context
+    v8::Locker                   locker(m_impl->isolate);                           // Thread safety, acquire V8 lock for multi-threaded access
     v8::Isolate::Scope           isolateScope(m_impl->isolate);                     // Thread safety, make this isolate active for the current thread
     v8::HandleScope              handleScope(m_impl->isolate);                      // Memory safety, manage temporary V8 object handles automatically
     v8::Local<v8::Context> const localContext = v8::Context::New(m_impl->isolate);  // Create new JavaScript execution context
@@ -1794,6 +1799,12 @@ void ScriptSubsystem::ShutdownV8Engine()
     {
         DAEMON_LOG(LogScript, eLogVerbosity::Display, StringFormat("Shutting down Chrome DevTools Inspector..."));
 
+        // CRITICAL: Acquire V8 lock for ALL inspector shutdown operations
+        // Required for multi-threaded V8 access (Phase 1: Async Architecture)
+        v8::Locker         locker(m_impl->isolate);
+        v8::Isolate::Scope isolateScope(m_impl->isolate);
+        v8::HandleScope    handleScope(m_impl->isolate);
+
         // Stop inspector session
         if (m_impl->inspectorSession)
         {
@@ -1804,8 +1815,6 @@ void ScriptSubsystem::ShutdownV8Engine()
         // Notify inspector about context destruction
         if (!m_impl->globalContext.IsEmpty())
         {
-            v8::Isolate::Scope     isolateScope(m_impl->isolate);
-            v8::HandleScope        handleScope(m_impl->isolate);
             v8::Local<v8::Context> localContext = m_impl->globalContext.Get(m_impl->isolate);
             m_impl->inspector->contextDestroyed(localContext);
         }
@@ -2008,6 +2017,7 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
         return;
     }
 
+    v8::Locker                   locker(m_impl->isolate);
     v8::Isolate::Scope           isolateScope(m_impl->isolate);
     v8::HandleScope              handleScope(m_impl->isolate);
     v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
@@ -2058,8 +2068,13 @@ void ScriptSubsystem::CreateSingleObjectBinding(String const&                   
                 else if (arg->IsFunction())
                 {
                     // Phase 2: Store v8::Function for callback registration
+                    // CRITICAL: Must store as v8::Global (persistent handle) not v8::Local (stack handle)
+                    // v8::Local becomes invalid when HandleScope exits - callbacks execute later!
                     v8::Local<v8::Function> func = v8::Local<v8::Function>::Cast(arg);
-                    cppArgs.push_back(func);
+
+                    // Create persistent handle that survives beyond this HandleScope
+                    auto* globalFunc = new v8::Global<v8::Function>(isolate, func);
+                    cppArgs.push_back(globalFunc);
                 }
                 else if (arg->IsArray())
                 {
@@ -2231,6 +2246,7 @@ void ScriptSubsystem::CreateSingleFunctionBinding(const String&         function
         return;
     }
 
+    v8::Locker                   locker(m_impl->isolate);
     v8::Isolate::Scope           isolateScope(m_impl->isolate);
     v8::HandleScope              handleScope(m_impl->isolate);
     v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
@@ -2316,6 +2332,7 @@ void ScriptSubsystem::SetupBuiltinObjects()
 
     if (m_impl->isolate == nullptr) ERROR_AND_DIE(StringFormat("(ScriptSubsystem::SetupBuiltinObjects)(v8::Isolate* is nullptr)"));
 
+    v8::Locker                   locker(m_impl->isolate);
     v8::Isolate::Scope           isolateScope(m_impl->isolate);
     v8::HandleScope              handleScope(m_impl->isolate);
     v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
@@ -2527,7 +2544,8 @@ void* ScriptSubsystem::GetV8Context()
         return nullptr;
     }
 
-    // CRITICAL: Must be in Isolate scope to safely call Get() on Persistent<Context>
+    // CRITICAL: Acquire V8 lock and enter isolate scope to safely call Get() on Persistent<Context>
+    v8::Locker locker(isolate);
     v8::Isolate::Scope isolateScope(isolate);
 
     // Create a persistent pointer to the Local<Context>

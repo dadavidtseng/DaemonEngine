@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -246,10 +247,11 @@ private:
     std::vector<std::unique_ptr<ILogOutputDevice>> m_outputDevices;
 
     // 非同步日誌相關
-    std::queue<LogEntry> m_logQueue;
-    mutable std::mutex   m_queueMutex;
-    std::thread          m_logThread;
-    std::atomic<bool>    m_shouldExit{false};
+    std::queue<LogEntry>      m_logQueue;
+    mutable std::mutex        m_queueMutex;       // Protects both m_logQueue AND m_logCondition
+    std::thread               m_logThread;
+    std::atomic<bool>         m_shouldExit{false};
+    std::condition_variable   m_logCondition;    // Condition variable for efficient waiting (uses m_queueMutex)
 
     // 記憶體中的日誌歷史
     std::vector<LogEntry> m_logHistory;

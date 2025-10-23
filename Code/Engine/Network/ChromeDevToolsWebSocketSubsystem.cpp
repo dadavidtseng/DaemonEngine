@@ -19,6 +19,7 @@
 #pragma warning(disable: 4324)  // 'structname': structure was padded due to alignment specifier
 
 // V8 Inspector includes
+#include "v8.h"                 // For v8::Locker (required for multi-threaded V8 access)
 #include "v8-inspector.h"
 
 #pragma warning(pop)            // pops the last warning state pushed onto the stack
@@ -146,9 +147,25 @@ void ChromeDevToolsWebSocketSubsystem::ProcessQueuedMessages()
         // while inspector messages are still queued
         if (m_inspectorSession && m_scriptSubsystem && m_scriptSubsystem->IsInitialized())
         {
-            v8_inspector::StringView messageView(
-                reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
-            m_inspectorSession->dispatchProtocolMessage(messageView);
+            // CRITICAL: Acquire V8 lock before calling V8 Inspector APIs
+            // Required for multi-threaded V8 access (Phase 1: Async Architecture)
+            v8::Isolate* isolate = m_scriptSubsystem->GetIsolate();
+
+            if (isolate)
+            {
+                v8::Locker locker(isolate);
+                v8::Isolate::Scope isolateScope(isolate);
+
+                v8_inspector::StringView messageView(
+                    reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
+                m_inspectorSession->dispatchProtocolMessage(messageView);
+            }
+            else
+            {
+                // Log error if isolate unavailable
+                DAEMON_LOG(LogNetwork, eLogVerbosity::Warning,
+                           "Cannot process inspector message: V8 isolate unavailable");
+            }
         }
         else
         {
