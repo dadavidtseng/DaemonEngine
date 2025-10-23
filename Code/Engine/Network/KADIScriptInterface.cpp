@@ -16,6 +16,7 @@
 #include "Engine/Network/KADIAuthenticationUtility.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
 #pragma warning(pop)
@@ -372,17 +373,29 @@ ScriptMethodResult KADIScriptInterface::ExecuteOnToolInvoke(ScriptArgs const& ar
 			return ScriptMethodResult::Error("KADI onToolInvoke: V8 isolate not initialized");
 		}
 
-		// Extract v8::Local<v8::Function> from std::any
-		// The ScriptSubsystem passes v8::Function wrapped in std::any
-		if (args[0].type() != typeid(v8::Local<v8::Function>))
+		// PHASE 1 FIX: ScriptSubsystem now passes v8::Global<v8::Function>* (persistent handle pointer)
+		// instead of v8::Local<v8::Function> (stack handle) after async architecture changes (commit d394ac6)
+		// This prevents use-after-free when callbacks execute after HandleScope exits
+		if (args[0].type() != typeid(v8::Global<v8::Function>*))
 		{
+			// DIAGNOSTIC: Log type mismatch for debugging
+			DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+			           StringFormat("KADI onToolInvoke: Unexpected argument type. Received: {}, Expected: {}",
+			                        args[0].type().name(), typeid(v8::Global<v8::Function>*).name()));
 			return ScriptMethodResult::Error("KADI onToolInvoke: Argument must be a function");
 		}
 
-		v8::Local<v8::Function> callback = std::any_cast<v8::Local<v8::Function>>(args[0]);
+		// Extract pointer to v8::Global<v8::Function> from std::any
+		v8::Global<v8::Function>* globalCallback = std::any_cast<v8::Global<v8::Function>*>(args[0]);
 
-		// Store as persistent handle
-		m_jsToolInvokeCallback = std::make_unique<v8::Persistent<v8::Function>>(m_v8Isolate, callback);
+		// Get v8::Local<v8::Function> from the global handle for immediate use
+		v8::Local<v8::Function> callback = globalCallback->Get(m_v8Isolate);
+
+		// Store as persistent handle (transfer ownership from ScriptSubsystem's heap allocation)
+		// NOTE: v8::Global is a subclass of v8::Persistent, so we can safely transfer ownership
+		m_jsToolInvokeCallback = std::unique_ptr<v8::Persistent<v8::Function>>(
+			reinterpret_cast<v8::Persistent<v8::Function>*>(globalCallback)
+		);
 
 		// Store current context for later invocation
 		v8::Local<v8::Context> context = m_v8Isolate->GetCurrentContext();
@@ -421,16 +434,23 @@ ScriptMethodResult KADIScriptInterface::ExecuteOnEventDelivery(ScriptArgs const&
 			return ScriptMethodResult::Error("KADI onEventDelivery: V8 isolate not initialized");
 		}
 
-		// Extract v8::Local<v8::Function> from std::any
-		if (args[0].type() != typeid(v8::Local<v8::Function>))
+		// PHASE 1 FIX: ScriptSubsystem now passes v8::Global<v8::Function>* (persistent handle pointer)
+		// instead of v8::Local<v8::Function> (stack handle) after async architecture changes (commit d394ac6)
+		if (args[0].type() != typeid(v8::Global<v8::Function>*))
 		{
 			return ScriptMethodResult::Error("KADI onEventDelivery: Argument must be a function");
 		}
 
-		v8::Local<v8::Function> callback = std::any_cast<v8::Local<v8::Function>>(args[0]);
+		// Extract pointer to v8::Global<v8::Function> from std::any
+		v8::Global<v8::Function>* globalCallback = std::any_cast<v8::Global<v8::Function>*>(args[0]);
 
-		// Store as persistent handle
-		m_jsEventDeliveryCallback = std::make_unique<v8::Persistent<v8::Function>>(m_v8Isolate, callback);
+		// Get v8::Local<v8::Function> from the global handle for immediate use
+		v8::Local<v8::Function> callback = globalCallback->Get(m_v8Isolate);
+
+		// Store as persistent handle (transfer ownership from ScriptSubsystem's heap allocation)
+		m_jsEventDeliveryCallback = std::unique_ptr<v8::Persistent<v8::Function>>(
+			reinterpret_cast<v8::Persistent<v8::Function>*>(globalCallback)
+		);
 
 		// Store current context for later invocation
 		v8::Local<v8::Context> context = m_v8Isolate->GetCurrentContext();
@@ -583,11 +603,21 @@ void KADIScriptInterface::ClearCallbacks()
 
 void KADIScriptInterface::InvokeToolInvokeCallback(int requestId, std::string const& toolName, nlohmann::json const& arguments)
 {
+	// DIAGNOSTIC: Log JavaScript callback invocation start
+	DAEMON_LOG(LogScript, eLogVerbosity::Display,
+	           StringFormat("[KADI DIAGNOSTIC] InvokeToolInvokeCallback - Tool: {}, RequestId: {}", toolName, requestId));
+
 	if (!m_v8Isolate || !m_jsToolInvokeCallback || !m_v8Context)
 	{
+		DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+		           "[KADI DIAGNOSTIC] Cannot invoke callback - V8 not initialized or callback not registered");
 		DebuggerPrintf("KADIScriptInterface: Cannot invoke tool callback - isolate, context, or callback not set\n");
 		return;
 	}
+
+	// DIAGNOSTIC: Log V8 lock acquisition
+	DAEMON_LOG(LogScript, eLogVerbosity::Display,
+	           "[KADI DIAGNOSTIC] Acquiring V8 lock for callback invocation");
 
 	// CRITICAL: Acquire V8 lock before ANY V8 API calls
 	// Required for multi-threaded V8 access (Phase 1: Async Architecture)
@@ -606,6 +636,10 @@ void KADIScriptInterface::InvokeToolInvokeCallback(int requestId, std::string co
 	jsArgs[1] = v8::String::NewFromUtf8(m_v8Isolate, toolName.c_str()).ToLocalChecked();
 	jsArgs[2] = v8::String::NewFromUtf8(m_v8Isolate, arguments.dump().c_str()).ToLocalChecked();
 
+	// DIAGNOSTIC: Log callback execution
+	DAEMON_LOG(LogScript, eLogVerbosity::Display,
+	           "[KADI DIAGNOSTIC] Calling JavaScript callback function");
+
 	// Call JavaScript callback
 	v8::TryCatch tryCatch(m_v8Isolate);
 	v8::Local<v8::Value> result;
@@ -614,8 +648,16 @@ void KADIScriptInterface::InvokeToolInvokeCallback(int requestId, std::string co
 		if (tryCatch.HasCaught())
 		{
 			v8::String::Utf8Value error(m_v8Isolate, tryCatch.Exception());
+			DAEMON_LOG(LogScript, eLogVerbosity::Error,
+			           StringFormat("[KADI DIAGNOSTIC] JavaScript callback error: {}", *error));
 			DebuggerPrintf("KADIScriptInterface: Tool invoke callback error: %s\n", *error);
 		}
+	}
+	else
+	{
+		// DIAGNOSTIC: Log successful callback execution
+		DAEMON_LOG(LogScript, eLogVerbosity::Display,
+		           "[KADI DIAGNOSTIC] JavaScript callback executed successfully");
 	}
 }
 
