@@ -25,6 +25,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/Time.hpp"
 
 #pragma comment(lib, "ws2_32.lib")
@@ -543,8 +544,13 @@ void KADIWebSocketSubsystem::ProcessIncomingMessages()
     std::lock_guard<std::mutex> lock(m_incomingMutex);
 
     size_t messageCount = m_incomingMessages.size();
+
+    // DIAGNOSTIC: Log main thread processing start
     if (messageCount > 0)
     {
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                   StringFormat("[KADI DIAGNOSTIC] Main thread ProcessIncomingMessages - {} messages in queue",
+                                messageCount));
         DebuggerPrintf("KADIWebSocketSubsystem: ProcessIncomingMessages - %zu messages in queue\n", messageCount);
     }
 
@@ -552,6 +558,10 @@ void KADIWebSocketSubsystem::ProcessIncomingMessages()
     {
         std::string message = m_incomingMessages.front();
         m_incomingMessages.pop();
+
+        // DIAGNOSTIC: Log message being processed
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                   StringFormat("[KADI DIAGNOSTIC] Main thread processing message: {}", message));
 
         DebuggerPrintf("KADIWebSocketSubsystem: Processing message: %s\n", message.c_str());
 
@@ -571,6 +581,11 @@ void KADIWebSocketSubsystem::ProcessIncomingMessages()
 
 void KADIWebSocketSubsystem::HandleIncomingMessage(sKADIMessage const& message)
 {
+    // DIAGNOSTIC: Log message routing
+    DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+               StringFormat("[KADI DIAGNOSTIC] HandleIncomingMessage - message type = {}",
+                            static_cast<int>(message.type)));
+
     DebuggerPrintf("KADIWebSocketSubsystem: HandleIncomingMessage - message type = %d\n", (int)message.type);
 
     switch (message.type)
@@ -586,6 +601,9 @@ void KADIWebSocketSubsystem::HandleIncomingMessage(sKADIMessage const& message)
         break;
 
     case eKADIMessageType::TOOL_INVOKE:
+        // DIAGNOSTIC: Log tool invocation routing
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                   "[KADI DIAGNOSTIC] Routing to HandleToolInvoke");
         DebuggerPrintf("  Routing to HandleToolInvoke\n");
         HandleToolInvoke(message);
         break;
@@ -656,6 +674,10 @@ void KADIWebSocketSubsystem::HandleAuthenticateResponse(sKADIMessage const& mess
 
 void KADIWebSocketSubsystem::HandleToolInvoke(sKADIMessage const& message)
 {
+    // DIAGNOSTIC: Log tool invocation reception
+    DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+               "[KADI DIAGNOSTIC] HandleToolInvoke - received tool invocation");
+
     DebuggerPrintf("KADIWebSocketSubsystem: Received tool invocation\n");
 
     if (m_toolInvokeCallback)
@@ -666,12 +688,25 @@ void KADIWebSocketSubsystem::HandleToolInvoke(sKADIMessage const& message)
         std::string    toolName  = message.payload.value("toolName", "");
         nlohmann::json arguments = message.payload.value("toolInput", nlohmann::json::object());
 
+        // DIAGNOSTIC: Log tool invocation details
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                   StringFormat("[KADI DIAGNOSTIC] Invoking callback - Tool: {}, RequestId: {}, Args: {}",
+                                toolName, requestId, arguments.dump()));
+
         DebuggerPrintf("  Tool: %s, RequestId: %d\n", toolName.c_str(), requestId);
 
         m_toolInvokeCallback(requestId, toolName, arguments);
+
+        // DIAGNOSTIC: Log callback invocation complete
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                   "[KADI DIAGNOSTIC] Tool invoke callback executed");
     }
     else
     {
+        // DIAGNOSTIC: Log missing callback
+        DAEMON_LOG(LogNetwork, eLogVerbosity::Warning,
+                   "[KADI DIAGNOSTIC] Tool invoke received but NO CALLBACK REGISTERED!");
+
         DebuggerPrintf("KADIWebSocketSubsystem: Tool invoke received but no callback registered\n");
     }
 }
@@ -902,6 +937,11 @@ void KADIWebSocketSubsystem::WebSocketThreadMain()
                     break;
                 }
 
+                // DIAGNOSTIC: Log WebSocket thread message reception
+                DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                           StringFormat("[KADI DIAGNOSTIC] WebSocket thread received message (length={}): {}",
+                                        decodedMessage.length(), decodedMessage));
+
                 // Queue message for main thread processing
                 ReceiveMessageInternal(decodedMessage);
 
@@ -935,6 +975,11 @@ void KADIWebSocketSubsystem::ReceiveMessageInternal(std::string const& message)
 {
     std::lock_guard<std::mutex> lock(m_incomingMutex);
     m_incomingMessages.push(message);
+
+    // DIAGNOSTIC: Log message queued for main thread
+    DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+               StringFormat("[KADI DIAGNOSTIC] Message queued to m_incomingMessages (queue size={})",
+                            m_incomingMessages.size()));
 
     DebuggerPrintf("KADIWebSocketSubsystem: Received: %s\n", message.c_str());
 }
