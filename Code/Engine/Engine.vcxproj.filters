@@ -139,6 +139,9 @@
     <Filter Include="Engine\Network\KADI">
       <UniqueIdentifier>{7205cc61-f206-41b6-b9ca-682ccfb08dea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Entity">
+      <UniqueIdentifier>{37af2f65-4615-484d-b0b7-af3a654924e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Source Files-->
@@ -505,9 +508,6 @@
       <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
-    <ClCompile Include="Renderer\CameraScriptInterface.cpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClCompile>
     <ClCompile Include="Core\ClockScriptInterface.cpp">
       <Filter>Engine\Core\Script</Filter>
     </ClCompile>
@@ -531,6 +531,15 @@
     </ClCompile>
     <ClCompile Include="Renderer/RenderCommandQueue.cpp">
       <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\CameraStateBuffer.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\CameraScriptInterface.cpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\EntityScriptInterface.cpp">
+      <Filter>Engine\Entity</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -934,9 +943,6 @@
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
-    <ClInclude Include="Renderer\CameraScriptInterface.hpp">
-      <Filter>Engine\Renderer\Script</Filter>
-    </ClInclude>
     <ClInclude Include="Core\ClockScriptInterface.hpp">
       <Filter>Engine\Core\Script</Filter>
     </ClInclude>
@@ -967,5 +973,46 @@
     <ClInclude Include="Renderer/RenderCommandQueue.hpp">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\CameraState.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\CameraStateBuffer.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\IJSGameLogicContext.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\StateBuffer.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\EntityID.hpp">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\EntityAPI.hpp">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\EntityState.hpp">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\EntityStateBuffer.hpp">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\CameraAPI.hpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\CameraScriptInterface.hpp">
+      <Filter>Engine\Renderer\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\EntityScriptInterface.hpp">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entity\EntityAPI.cpp">
+      <Filter>Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\CameraAPI.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

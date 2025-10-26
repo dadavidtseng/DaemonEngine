@@ -206,8 +206,12 @@
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
+    <ClCompile Include="Entity\EntityScriptInterface.cpp" />
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
+    <ClCompile Include="Entity\EntityAPI.cpp" />
+    <ClCompile Include="Renderer\CameraAPI.cpp" />
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
+    <ClCompile Include="Renderer\CameraStateBuffer.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
@@ -355,7 +359,7 @@
     <ClCompile Include="Script/ModuleResolver.cpp" />
     <ClCompile Include="Script/ModuleRegistry.cpp" />
     <ClCompile Include="Script/ModuleLoader.cpp" />
-    <!-- KADI JavaScript Bindings (Phase 1) -->
+    <!-- Standard Script Interfaces (M4-T8: moved from Game) -->
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -381,11 +385,21 @@
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
+    <ClInclude Include="Core\StateBuffer.hpp" />
+    <ClInclude Include="Entity\EntityAPI.hpp" />
+    <ClInclude Include="Entity\EntityID.hpp" />
+    <ClInclude Include="Entity\EntityScriptInterface.hpp" />
+    <ClInclude Include="Entity\EntityState.hpp" />
+    <ClInclude Include="Entity\EntityStateBuffer.hpp" />
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
+    <ClInclude Include="Renderer\CameraAPI.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
+    <ClInclude Include="Renderer\CameraState.hpp" />
+    <ClInclude Include="Renderer\CameraStateBuffer.hpp" />
     <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Resource\AudioResource.hpp" />
+    <ClInclude Include="Script\IJSGameLogicContext.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />
   </ItemGroup>
@@ -533,7 +547,7 @@
     <ClInclude Include="Script/ModuleResolver.hpp" />
     <ClInclude Include="Script/ModuleRegistry.hpp" />
     <ClInclude Include="Script/ModuleLoader.hpp" />
-    <!-- KADI JavaScript Bindings (Phase 1) -->
+    <!-- Standard Script Interfaces (M4-T8: moved from Game) -->
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- NUGET PACKAGE DEPENDENCIES -->
