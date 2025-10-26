@@ -26,18 +26,11 @@
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Entity/EntityID.hpp"
 
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <variant>
-
-//----------------------------------------------------------------------------------------------------
-// EntityID Type Definition
-// - Compatible with JavaScript Number type (53-bit safe integer)
-// - Unique identifier for all game entities
-//----------------------------------------------------------------------------------------------------
-using EntityID = uint64_t;
 
 //----------------------------------------------------------------------------------------------------
 // RenderCommandType Enumeration
