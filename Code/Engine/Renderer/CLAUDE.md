@@ -12,6 +12,9 @@ The Renderer module provides a comprehensive DirectX 11-based graphics rendering
 - `Renderer.hpp` - Main renderer class and rendering pipeline
 - `RenderCommon.hpp` - Shared rendering constants and enums
 - `Camera.hpp` - View and projection management
+- `CameraAPI.hpp` - High-level async camera management API
+- `CameraScriptInterface.hpp` - JavaScript bindings for camera control
+- `CameraStateBuffer.hpp` - Thread-safe camera state synchronization
 
 ### Initialization Pattern
 ```cpp
@@ -52,7 +55,41 @@ class Renderer {
 };
 ```
 
-### Resource Management
+
+### Camera Management API (M4-T8 Async Architecture)
+```cpp
+class CameraAPI {
+    // Camera creation/destruction (async with callbacks)
+    CallbackID CreateCamera(Vec3 const& position, EulerAngles const& orientation,
+                           std::string const& type, ScriptCallback const& callback);
+    CallbackID DestroyCamera(EntityID cameraId, ScriptCallback const& callback);
+    
+    // Camera updates (fire-and-forget)
+    void UpdateCamera(EntityID cameraId, Vec3 const& position, 
+                     EulerAngles const& orientation);  // RECOMMENDED: Atomic update
+    void MoveCameraBy(EntityID cameraId, Vec3 const& delta);
+    void LookAtCamera(EntityID cameraId, Vec3 const& target);
+    
+    // Camera state management
+    CallbackID SetActiveCamera(EntityID cameraId, ScriptCallback const& callback);
+    CallbackID UpdateCameraType(EntityID cameraId, std::string const& type,
+                                ScriptCallback const& callback);
+    uintptr_t GetCameraHandle(EntityID cameraId) const;
+    
+    // Callback execution (main thread)
+    void ExecutePendingCallbacks();
+    void NotifyCallbackReady(CallbackID callbackId, EntityID resultId);
+};
+
+// Usage from JavaScript (via CameraScriptInterface):
+// camera.create({position: {x: -10, y: 0, z: 5}, orientation: {yaw: 0, pitch: 0, roll: 0},
+//                type: 'world'}, (cameraId) => { console.log('Camera created:', cameraId); });
+// camera.update(cameraId, {x: -5, y: 0, z: 3}, {yaw: 45, pitch: 0, roll: 0});
+// camera.moveBy(cameraId, {dx: 1, dy: 0, dz: 0});
+// camera.lookAt(cameraId, {x: 0, y: 0, z: 0});
+```
+
+
 ```cpp
 // Asset creation and caching
 Image       CreateImageFromFile(char const* imageFilePath);
@@ -194,7 +231,17 @@ A: Create `.hlsl` files and use `CreateOrGetShaderFromFile()`. Shaders are autom
 ### Q: Can I render to multiple render targets?
 A: Yes, the system supports custom render targets via `CreateRenderTexture()` and multiple render target binding.
 
-### Q: How does the lighting system work?
+
+### Q: How do I use the async Camera API?
+A: Use CameraAPI::CreateCamera() with a callback for async creation. Update camera state with UpdateCamera() (atomic) or MoveCameraBy() (relative). Callbacks are executed via ExecutePendingCallbacks().
+
+### Q: Why are there deprecated UpdateCameraPosition/Orientation methods?
+A: Use UpdateCamera() for atomic position+orientation updates to avoid race conditions. The separate methods are kept for backward compatibility but may cause synchronization issues.
+
+### Q: How does CameraStateBuffer work?
+A: It uses StateBuffer template for double-buffering. Worker thread writes camera state to back buffer, main thread reads from front buffer for rendering, with SwapBuffers() at frame boundaries.
+
+
 A: Set light data via `SetLightConstants()` which binds to shader constant buffers. Supports multiple light types.
 
 ## Related Files
@@ -206,7 +253,41 @@ A: Set light data via `SetLightConstants()` which binds to shader constant buffe
 - `Camera.cpp` - View and projection matrices
 - `DebugRenderSystem.cpp` - Debug visualization
 
-### Resource Management
+
+### Camera Management API (M4-T8 Async Architecture)
+```cpp
+class CameraAPI {
+    // Camera creation/destruction (async with callbacks)
+    CallbackID CreateCamera(Vec3 const& position, EulerAngles const& orientation,
+                           std::string const& type, ScriptCallback const& callback);
+    CallbackID DestroyCamera(EntityID cameraId, ScriptCallback const& callback);
+    
+    // Camera updates (fire-and-forget)
+    void UpdateCamera(EntityID cameraId, Vec3 const& position, 
+                     EulerAngles const& orientation);  // RECOMMENDED: Atomic update
+    void MoveCameraBy(EntityID cameraId, Vec3 const& delta);
+    void LookAtCamera(EntityID cameraId, Vec3 const& target);
+    
+    // Camera state management
+    CallbackID SetActiveCamera(EntityID cameraId, ScriptCallback const& callback);
+    CallbackID UpdateCameraType(EntityID cameraId, std::string const& type,
+                                ScriptCallback const& callback);
+    uintptr_t GetCameraHandle(EntityID cameraId) const;
+    
+    // Callback execution (main thread)
+    void ExecutePendingCallbacks();
+    void NotifyCallbackReady(CallbackID callbackId, EntityID resultId);
+};
+
+// Usage from JavaScript (via CameraScriptInterface):
+// camera.create({position: {x: -10, y: 0, z: 5}, orientation: {yaw: 0, pitch: 0, roll: 0},
+//                type: 'world'}, (cameraId) => { console.log('Camera created:', cameraId); });
+// camera.update(cameraId, {x: -5, y: 0, z: 3}, {yaw: 45, pitch: 0, roll: 0});
+// camera.moveBy(cameraId, {dx: 1, dy: 0, dz: 0});
+// camera.lookAt(cameraId, {x: 0, y: 0, z: 0});
+```
+
+
 - `Texture.cpp` - Texture loading and management
 - `Shader.cpp` - Shader compilation and binding
 - `Image.cpp` - Image loading and processing
@@ -230,11 +311,29 @@ A: Set light data via `SetLightConstants()` which binds to shader constant buffe
 ### Shader Integration
 - `DefaultShader.hpp` - Default shader definitions
 
-### Script Interface
-- `RendererScriptInterface.cpp` - JavaScript binding for renderer
+
+### Camera API (M4-T8 Async Architecture)
+- `CameraAPI.cpp` - High-level async camera management
+- `CameraAPI.hpp` - Camera API interface
+- `CameraScriptInterface.cpp` - JavaScript camera bindings
+- `CameraScriptInterface.hpp` - Camera script interface declarations
+- `CameraStateBuffer.cpp` - Thread-safe camera state management
+- `CameraStateBuffer.hpp` - Camera state double-buffering
+- `CameraState.hpp` - Camera state data structure
+
+ - JavaScript binding for renderer
 - `RendererScriptInterface.hpp` - Script interface declarations for V8 integration
 
 ## Changelog
+
+- 2025-10-27: **M4-T8 Async Architecture Refactoring**
+  - Added CameraAPI for high-level async camera management
+  - Added CameraScriptInterface for JavaScript camera control
+  - Introduced CameraStateBuffer for thread-safe camera state synchronization
+  - Refactored camera system for double-buffered async updates
+  - Separated camera concerns from entity management (Single Responsibility Principle)
+  - Camera creation/updates now async with callback support
+  - Lock-free camera state reads for rendering
 
 - 2025-10-07: **JavaScript Scripting Interface and Resource Leak Detection**
   - Added `RendererScriptInterface` class for exposing Renderer APIs to JavaScript/V8

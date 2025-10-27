@@ -16,6 +16,7 @@ The Core module provides fundamental engine systems and utilities that serve as 
 - `ILogOutputDevice.hpp` - Interface for custom log output destinations
 - `Clock.hpp` - Time management and timing utilities
 - `JobSystem.hpp` - Multi-threaded job system with specialized worker threads
+- `StateBuffer.hpp` - Generic double-buffering template for async state synchronization
 - `DevConsole.hpp` - Developer console for debugging and command execution
 
 ### Initialization Pattern
@@ -160,7 +161,45 @@ bool AreAllJobsCompleted() const;
 void ShutDown();
 ```
 
-### Timing and Clock System
+
+### StateBuffer Template API
+```cpp
+// Generic double-buffered container for thread-safe state synchronization
+template <typename TStateContainer>
+class StateBuffer {
+    // Lock-free buffer access
+    TStateContainer const* GetFrontBuffer() const;  // Main thread reads (rendering)
+    TStateContainer* GetBackBuffer();                // Worker thread writes (JavaScript)
+    
+    // Frame boundary synchronization
+    void SwapBuffers();  // Brief locked operation (main thread only)
+    
+    // Monitoring
+    size_t GetElementCount() const;
+    uint64_t GetTotalSwaps() const;
+};
+
+// Usage example: Entity state synchronization
+using EntityStateMap = std::unordered_map<EntityID, EntityState>;
+using EntityStateBuffer = StateBuffer<EntityStateMap>;
+
+EntityStateBuffer* buffer = new EntityStateBuffer();
+
+// Worker thread (JavaScript logic)
+EntityStateMap* backBuffer = buffer->GetBackBuffer();
+(*backBuffer)[entityId] = updatedState;  // Lock-free write
+
+// Main thread (Rendering)
+EntityStateMap const* frontBuffer = buffer->GetFrontBuffer();
+for (auto const& [id, state] : *frontBuffer) {
+    RenderEntity(state);  // Lock-free read
+}
+
+// Frame boundary (Main thread)
+buffer->SwapBuffers();  // Brief locked copy and swap
+```
+
+
 ```cpp
 // High-precision timing
 class Clock {
@@ -250,7 +289,15 @@ A: Clock tracks global engine time and frame delta, Timer measures specific dura
 A: Use the assertion macros in `ErrorWarningAssert.hpp` for debug-time checks, and logging system for runtime error reporting.
 
 ### Q: Can I extend the event system?
-A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` with your custom event names and callbacks.
+A: Yes, register new event names
+
+
+### Q: How do I use StateBuffer for async state synchronization?
+A: Create a StateBuffer with your container type (e.g., StateBuffer<std::unordered_map<ID, State>>). Worker thread writes to back buffer, main thread reads from front buffer, and call SwapBuffers() at frame boundaries.
+
+### Q: Is StateBuffer thread-safe?
+A: Yes. Worker thread writes to back buffer (lock-free), main thread reads from front buffer (lock-free), and SwapBuffers() uses a brief lock to synchronize. Assumes single writer and single reader.
+ by calling `SubscribeEventCallbackFunction()` with your custom event names and callbacks.
 
 ## Related Files
 
@@ -281,6 +328,7 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 - `XmlUtils.cpp` - XML parsing utilities
 - `HeatMaps.cpp` - Performance visualization
 - `NamedStrings.cpp` - Configuration management
+- `StateBuffer.hpp` - Generic double-buffering template (header-only)
 - `Rgba8.cpp` - Color utilities
 - `SimpleTriangleFont.cpp` - Basic font rendering
 
@@ -290,6 +338,13 @@ A: Yes, register new event names by calling `SubscribeEventCallbackFunction()` w
 - `StringUtils.hpp` - String processing functions
 
 ## Changelog
+
+- 2025-10-27: **M4-T8 Async Architecture Refactoring**
+  - Added StateBuffer.hpp template for generic double-buffered state containers
+  - Provides lock-free reads/writes with brief locked swap operations
+  - Supports async architecture pattern with worker thread state synchronization
+  - Used by Entity and Camera systems for thread-safe state management
+  - Template instantiations: StateBuffer<EntityStateMap>, StateBuffer<CameraStateMap>
 
 - 2025-10-07: **Engine Subsystem Initialization Modernization**
   - Implemented `GEngine::Construct()` for centralized, JSON-configured subsystem initialization

@@ -11,6 +11,7 @@ The Scripting module provides JavaScript integration through Google's V8 engine,
 ### Primary Entry Point
 - `V8Subsystem.hpp` - Main V8 integration subsystem
 - `IScriptableObject.hpp` - Interface for C++ objects exposed to scripts
+- `IJSGameLogicContext.hpp` - Interface for game-specific JavaScript execution context
 
 ### Initialization Pattern
 ```cpp
@@ -95,7 +96,63 @@ class MyScriptInterface : public IScriptableObject {
 };
 ```
 
-### Function Binding System
+
+### IJSGameLogicContext Interface (M4-T8 Async Architecture)
+```cpp
+// Abstract interface for JavaScript game logic execution context
+// Enables Engine to invoke game-specific JavaScript without tight coupling
+class IJSGameLogicContext {
+public:
+    virtual ~IJSGameLogicContext() = default;
+    
+    // Execute JavaScript update logic on worker thread
+    virtual void UpdateJSWorkerThread(float deltaTime,
+                                     EntityStateBuffer* entityBuffer,
+                                     RenderCommandQueue* commandQueue) = 0;
+    
+    // Execute JavaScript render logic on worker thread
+    virtual void RenderJSWorkerThread(float deltaTime,
+                                     CameraStateBuffer* cameraBuffer,
+                                     RenderCommandQueue* commandQueue) = 0;
+    
+    // Handle JavaScript exception from worker thread
+    virtual void HandleJSException(char const* errorMessage,
+                                  char const* stackTrace) = 0;
+};
+
+// Usage: Implement in Game class
+class Game : public IJSGameLogicContext {
+    void UpdateJSWorkerThread(float deltaTime, EntityStateBuffer* entityBuffer,
+                             RenderCommandQueue* commandQueue) override {
+        v8::Locker locker(m_v8Isolate);
+        v8::Isolate::Scope isolateScope(m_v8Isolate);
+        v8::HandleScope handleScope(m_v8Isolate);
+        
+        // Call JSEngine.update() through ScriptSubsystem
+        m_scriptSubsystem->ExecuteScript("JSEngine.update(" + 
+                                        std::to_string(deltaTime) + ")");
+    }
+    
+    void RenderJSWorkerThread(float deltaTime, CameraStateBuffer* cameraBuffer,
+                             RenderCommandQueue* commandQueue) override {
+        // Similar pattern for JSEngine.render()
+    }
+    
+    void HandleJSException(char const* errorMessage, char const* stackTrace) override {
+        g_logSubsystem->LogError(std::string("JavaScript Error: ") + errorMessage);
+        // Attempt hot-reload or recovery
+    }
+};
+
+// Engine uses interface through JSGameLogicJob
+JSGameLogicJob* job = new JSGameLogicJob(gameContext,  // IJSGameLogicContext*
+                                         commandQueue,
+                                         entityBuffer,
+                                         cameraBuffer);
+m_jobSystem->QueueJob(job);
+```
+
+
 ```cpp
 using ScriptFunction = std::function<std::any(std::vector<std::any> const&)>;
 
@@ -214,7 +271,17 @@ A: Scripts access engine systems through registered scriptable objects (like `In
 ### Q: How is memory managed between C++ and JavaScript?
 A: V8 handles JavaScript memory automatically. C++ objects use shared_ptr for safe cross-boundary management.
 
-### Q: Is the scripting system thread-safe?
+
+### Q: What is IJSGameLogicContext and why is it needed?
+A: It's an abstract interface that decouples Engine from Game implementation. Engine's JSGameLogicJob uses this interface to invoke JavaScript logic without depending on concrete Game class, following Dependency Inversion Principle.
+
+### Q: How do I implement IJSGameLogicContext?
+A: Inherit from IJSGameLogicContext in your Game class, implement UpdateJSWorkerThread() and RenderJSWorkerThread() methods, and pass Game instance to JSGameLogicJob. Use v8::Locker for thread safety.
+
+### Q: Why separate Update and Render methods in IJSGameLogicContext?
+A: Mirrors JavaScript JSEngine.update()/render() pattern, allows different buffer management (entity vs camera), and enables future optimizations like skipping render on slow frames.
+
+
 A: V8 isolates provide thread isolation. Each V8Subsystem instance should be used from a single thread.
 
 ## Related Files
@@ -223,8 +290,11 @@ A: V8 isolates provide thread isolation. Each V8Subsystem instance should be use
 - `V8Subsystem.cpp` - Main V8 integration implementation
 - `IScriptableObject.cpp` - Base scriptable object implementation
 
-### Script Interfaces
-- `InputScriptInterface.cpp` - Input system JavaScript bindings
+
+### Async Architecture Interface
+- `IJSGameLogicContext.hpp` - Game logic context interface for dependency inversion
+
+ - Input system JavaScript bindings
 - `InputScriptInterface.hpp` - Input API exposure definitions
 
 ### Integration Examples
@@ -235,6 +305,15 @@ The module is designed to be extended with additional scriptable interfaces for:
 - Game-specific object interactions
 
 ## Changelog
+
+- 2025-10-27: **M4-T8 Async Architecture Refactoring**
+  - Introduced IJSGameLogicContext interface for dependency inversion
+  - Decouples Engine from Game implementation (SOLID principles)
+  - Enables async JavaScript execution on worker thread
+  - Provides UpdateJSWorkerThread() and RenderJSWorkerThread() interfaces
+  - Supports thread-safe state buffer integration
+  - Facilitates testing with mock implementations
+  - Enables Engine library compilation without Game code
 
 - 2025-10-07: **Method Registry Pattern for Scriptable Objects**
   - Introduced `InitializeMethodRegistry()` virtual method for structured method registration
