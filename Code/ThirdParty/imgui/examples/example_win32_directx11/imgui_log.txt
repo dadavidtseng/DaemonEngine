@@ -1,0 +1,728 @@
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (665, 201)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (0.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (655, 201)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (2.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (655, 201)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (0.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (655, 200)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (0.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (655, 200)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (0.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (655, 200)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (0.0, 0.0)
+    io.MouseDelta: (0.0, 0.0)
+(?)
+[ Copy "Hello, world!" to clipboard ]
+### Window options ###
+### Widgets ###
+### Layout & Scrolling ###
+### Popups & Modal windows ###
+### Tables & Columns ###
+### Inputs & Focus ###
+> Inputs (?)
+    Mouse pos: (654, 201)
+    Mouse delta: (0, 0)
+    Mouse down:
+    Mouse wheel: 0.0
+    Mouse clicked count:
+    Keys down:
+    Keys mods: 
+    Chars queue:
+> Outputs (?)
+    io.WantCaptureMouse: 1
+    io.WantCaptureMouseUnlessPopupClose: 1
+    io.WantCaptureKeyboard: 1
+    io.WantTextInput: 0
+    io.WantSetMousePos: 0
+    io.NavActive: 1, io.NavVisible: 0
+    > WantCapture override
+        (?)
+        { None } SetNextFrameWantCaptureMouse() on hover
+        { None } SetNextFrameWantCaptureKeyboard() on hover
+> Shortcuts
+    [x] ImGuiInputFlags_Repeat
+    ( ) ImGuiInputFlags_RouteActive
+    (x) ImGuiInputFlags_RouteFocused (default)
+    ( ) ImGuiInputFlags_RouteGlobal
+    [ ] ImGuiInputFlags_RouteOverFocused
+    [ ] ImGuiInputFlags_RouteOverActive
+    [ ] ImGuiInputFlags_RouteUnlessBgFocused
+    ( ) ImGuiInputFlags_RouteAlways
+    --- Using SetNextItemShortcut()
+    Ctrl+S
+    [ Save ]
+    Alt+F
+    { 0.500 } Factor
+    --- Using Shortcut()
+    Ctrl+A
+    IsWindowFocused: 1, Shortcut: ...
+Press CTRL+A and see who receives it!
+--------------------------------
+(in WindowA)
+IsWindowFocused: 0, Shortcut: ...
+(in ChildD: not using same Shortcut)
+IsWindowFocused: 0
+(in ChildE: using same Shortcut)
+IsWindowFocused: 0, Shortcut: ...
+[ Open Popup ]
+> Mouse Cursors
+    Current mouse cursor = 0: Arrow
+    [x] io.BackendFlags: HasMouseCursors
+    Hover to see mouse cursors: (?)
+    Mouse cursor 0: Arrow
+    Mouse cursor 1: TextInput
+    Mouse cursor 2: ResizeAll
+    Mouse cursor 3: ResizeNS
+    Mouse cursor 4: ResizeEW
+    Mouse cursor 5: ResizeNESW
+    Mouse cursor 6: ResizeNWSE
+    Mouse cursor 7: Hand
+    Mouse cursor 8: Wait
+    Mouse cursor 9: Progress
+    Mouse cursor 10: NotAllowed
+> Tabbing
+    Use TAB/SHIFT+TAB to cycle through keyboard editable fields.
+    { hello } 1
+    { hello } 2
+    { hello } 3
+    { hello } 4 (tab skip) (?)
+    { hello } 5
+> Focus from code
+    [ Focus on 1 ] [ Focus on 2 ] [ Focus on 3 ]
+    { click on a button to set focus } 1
+    { click on a button to set focus } 2
+    { click on a button to set focus } 3 (tab skip) (?)
+    Item with focus: <none>
+    [ Focus on X ] [ Focus on Y ] [ Focus on Z ]
+    { 0.000 } { 0.000 } { 0.000 } Float3
+    NB: Cursor & selection are preserved when refocusing last used item in code.
+> Dragging
+    You can use ImGui::GetMouseDragDelta(0) to query for the dragged amount on any widget.
+    IsMouseDragging(0):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(1):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    IsMouseDragging(2):
+      w/ default threshold: 0,
+      w/ zero threshold: 0,
+      w/ large threshold: 0,
+    [ Drag Me ]
+    GetMouseDragDelta(0):
+      w/ default threshold: (0.0, 0.0)
+      w/ zero threshold: (-1.0, 1.0)
+    io.MouseDelta: (0.0, 0.0)
