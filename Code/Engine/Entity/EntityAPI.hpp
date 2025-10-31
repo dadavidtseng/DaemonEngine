@@ -35,20 +35,16 @@
 // Author: M4-T8 Engine Refactoring
 // Date: 2025-10-26
 //----------------------------------------------------------------------------------------------------
-
 #pragma once
-
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Entity/EntityID.hpp"
 #include "Engine/Renderer/RenderCommand.hpp"
 #include "Engine/Script/ScriptCommon.hpp"
-#include "Engine/Entity/EntityID.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include <any>
-#include <functional>
 #include <unordered_map>
 
-//----------------------------------------------------------------------------------------------------
-// Forward Declarations
+//-Forward-Declaration--------------------------------------------------------------------------------
 class RenderCommandQueue;
 class ScriptSubsystem;
 
@@ -60,34 +56,34 @@ using CallbackID = uint64_t;
 // ScriptCallback Type Definition (shared with CameraAPI)
 using ScriptCallback = std::any;
 
-//----------------------------------------------------------------------------------------------------
-// EntityAPI
-//
-// High-level entity management API for JavaScript integration.
-// Handles entity creation, updates, and destruction through render command queue.
-//
-// Usage Pattern (from JavaScript):
-//
-// Entity Creation (Async):
-//   entity.createMesh('cube', {
-//       position: {x: 5, y: 0, z: 0},  // X-forward, Y-left, Z-up
-//       scale: 1.0,
-//       color: {r: 255, g: 0, b: 0, a: 255}
-//   }, (entityId) => {
-//       console.log('Entity created:', entityId);
-//   });
-//
-// Entity Update (Sync):
-//   entity.updatePosition(entityId, {x: 10, y: 0, z: 0});  // Absolute
-//   entity.moveBy(entityId, {dx: 1, dy: 0, dz: 0});        // Relative (+X = forward)
-//   entity.updateOrientation(entityId, {yaw: 45, pitch: 0, roll: 0});
-//   entity.updateColor(entityId, {r: 0, g: 255, b: 0, a: 255});
-//
-// Error Resilience:
-//   - JavaScript callback errors are caught and logged
-//   - C++ rendering continues with last valid state
-//   - Invalid entityIds are ignored with warning logs
-//----------------------------------------------------------------------------------------------------
+///----------------------------------------------------------------------------------------------------
+/// EntityAPI
+///
+/// High-level entity management API for JavaScript integration.
+/// Handles entity creation, updates, and destruction through render command queue.
+///
+/// Usage Pattern (from JavaScript):
+///
+/// Entity Creation (Async):
+///   entity.createMesh('cube', {
+///       position: {x: 5, y: 0, z: 0},  // X-forward, Y-left, Z-up
+///       scale: 1.0,
+///       color: {r: 255, g: 0, b: 0, a: 255}
+///   }, (entityId) => {
+///       console.log('Entity created:', entityId);
+///   });
+///
+/// Entity Update (Sync):
+///   entity.updatePosition(entityId, {x: 10, y: 0, z: 0});  // Absolute
+///   entity.moveBy(entityId, {dx: 1, dy: 0, dz: 0});        // Relative (+X = forward)
+///   entity.updateOrientation(entityId, {yaw: 45, pitch: 0, roll: 0});
+///   entity.updateColor(entityId, {r: 0, g: 255, b: 0, a: 255});
+///
+/// Error Resilience:
+///   - JavaScript callback errors are caught and logged
+///   - C++ rendering continues with last valid state
+///   - Invalid entityIds are ignored with warning logs
+///----------------------------------------------------------------------------------------------------
 class EntityAPI
 {
 public:

@@ -8,9 +8,9 @@
 #include "Engine/Core/Job.hpp"
 #include <algorithm>
 #include <thread>
-#include <algorithm>
 
-#include "ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Global JobSystem instance
@@ -42,6 +42,8 @@ JobSystem::~JobSystem()
 //----------------------------------------------------------------------------------------------------
 void JobSystem::Startup()
 {
+    DAEMON_LOG(LogCore, eLogVerbosity::Display, StringFormat("(GEngine::Startup)(start)JobSystem started"));
+
     if (m_isRunning)
     {
         return; // Already started
