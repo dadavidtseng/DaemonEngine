@@ -9,14 +9,15 @@
 NamedStrings g_gameConfigBlackboard;
 
 //----------------------------------------------------------------------------------------------------
-AudioSystem*           g_audio             = nullptr;
-JobSystem*             g_jobSystem         = nullptr;
-Renderer*              g_renderer          = nullptr;
-RandomNumberGenerator* g_rng               = nullptr;
-Window*                g_window            = nullptr;
-ResourceSubsystem*     g_resourceSubsystem = nullptr;
-ScriptSubsystem*       g_scriptSubsystem   = nullptr;
-KADIWebSocketSubsystem* g_kadiSubsystem    = nullptr;
+AudioSystem*            g_audio             = nullptr;
+JobSystem*              g_jobSystem         = nullptr;
+Renderer*               g_renderer          = nullptr;
+RandomNumberGenerator*  g_rng               = nullptr;
+Window*                 g_window            = nullptr;
+ResourceSubsystem*      g_resourceSubsystem = nullptr;
+ScriptSubsystem*        g_scriptSubsystem   = nullptr;
+KADIWebSocketSubsystem* g_kadiSubsystem     = nullptr;
+ImGuiSubsystem*         g_imgui             = nullptr;
 
 
 // //----------------------------------------------------------------------------------------------------

@@ -23,6 +23,7 @@ class HotReloadSubsystem;
 class InputSystem;
 class JobSystem;
 class LogSubsystem;
+class ImGuiSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
@@ -40,6 +41,7 @@ extern RandomNumberGenerator* g_rng;
 extern Window*                g_window;
 extern ResourceSubsystem*     g_resourceSubsystem;
 extern ScriptSubsystem*       g_scriptSubsystem;
+extern ImGuiSubsystem*        g_imgui;
 
 // Forward declaration for KADI subsystem
 class KADIWebSocketSubsystem;

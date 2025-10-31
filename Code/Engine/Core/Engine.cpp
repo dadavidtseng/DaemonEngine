@@ -2,30 +2,30 @@
 // GEngine.cpp
 // Global engine singleton implementation
 //----------------------------------------------------------------------------------------------------
-
-#include <algorithm>
 #include "Game/EngineBuildPreferences.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Engine.hpp"
 
-#include "DevConsole.hpp"
-#include "EngineCommon.hpp"
-#include "ErrorWarningAssert.hpp"
-#include "LogSubsystem.hpp"
-#include "Engine/Core/JobSystem.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/JobSystem.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Network/KADIWebSocketSubsystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Platform/WindowCommon.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
+#include "Engine/UI/ImGuiSubsystem.hpp"
 #ifndef ENGINE_DISABLE_SCRIPT
 #include "Engine/Script/ScriptSubsystem.hpp"
 #endif
-#include "Engine/Network/KADIWebSocketSubsystem.hpp"
-
-// using namespace Engine;
+//----------------------------------------------------------------------------------------------------
+#include <algorithm>
 
 //----------------------------------------------------------------------------------------------------
 GEngine& GEngine::Get()
@@ -75,7 +75,7 @@ void GEngine::Construct()
         subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        bEnableLogSubsystem         = std::ranges::find(coreSubsystems, "LogSubsystem") != coreSubsystems.end();
+        bEnableLogSubsystem        = std::ranges::find(coreSubsystems, "LogSubsystem") != coreSubsystems.end();
     }
 
     if (bEnableLogSubsystem)
@@ -337,6 +337,37 @@ void GEngine::Construct()
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
+#pragma region ImGuiSubsystem
+    // Check if ImGuiSubsystem should be enabled from core subsystems list
+    bool enableImGui = true;  // Default: enabled
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableImGui                = std::ranges::find(coreSubsystems, "ImGuiSubsystem") != coreSubsystems.end();
+    }
+
+    if (enableImGui && g_renderer && g_window)
+    {
+        sImGuiSubsystemConfig imguiConfig;
+        imguiConfig.m_renderer = g_renderer;
+        imguiConfig.m_window   = g_window;
+        g_imgui                = new ImGuiSubsystem(imguiConfig);
+        DebuggerPrintf("ImGuiSubsystem: ENABLED\n");
+    }
+    else
+    {
+        g_imgui = nullptr;
+        if (!enableImGui)
+        {
+            DebuggerPrintf("ImGuiSubsystem: DISABLED (from config)\n");
+        }
+        else
+        {
+            DebuggerPrintf("ImGuiSubsystem: DISABLED (missing Renderer or Window)\n");
+        }
+    }
+#pragma endregion
+    //------------------------------------------------------------------------------------------------
 #pragma region DevConsole
     // Check if DevConsole should be enabled from core subsystems list
     bool enableDevConsole = true;  // Default: enabled
@@ -573,6 +604,7 @@ void GEngine::Destruct()
     ENGINE_SAFE_RELEASE(g_input);
     ENGINE_SAFE_RELEASE(g_resourceSubsystem);
     ENGINE_SAFE_RELEASE(g_devConsole);
+    ENGINE_SAFE_RELEASE(g_imgui);
     ENGINE_SAFE_RELEASE(g_renderer);
     ENGINE_SAFE_RELEASE(g_window);
     ENGINE_SAFE_RELEASE(g_eventSystem);
@@ -589,7 +621,7 @@ void GEngine::Startup()
     sDebugRenderConfig.m_fontName = "DaemonFont";
 #pragma endregion
 
-    if (g_devConsole)
+    if (g_devConsole != nullptr)
     {
         g_devConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
         g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Mouse) Aim");
@@ -612,76 +644,82 @@ void GEngine::Startup()
     }
 
     // Startup core subsystems (check for null before calling)
-    if (g_logSubsystem)
+    if (g_logSubsystem != nullptr)
     {
         g_logSubsystem->Startup();
-        DebuggerPrintf("LogSubsystem started\n");
+        DebuggerPrintf("(GEngine::Startup)LogSubsystem started\n");
     }
 
-    if (g_jobSystem)
+    if (g_jobSystem != nullptr)
     {
         g_jobSystem->Startup();
-        DebuggerPrintf("JobSystem started\n");
     }
 
-    if (g_eventSystem)
+    if (g_eventSystem != nullptr)
     {
         g_eventSystem->Startup();
-        DebuggerPrintf("EventSystem started\n");
+        DebuggerPrintf("(GEngine::Startup)EventSystem started\n");
     }
 
-    if (g_window)
+    if (g_window != nullptr)
     {
         g_window->Startup();
-        DebuggerPrintf("Window started\n");
+        DebuggerPrintf("(GEngine::Startup)Window started\n");
     }
 
-    if (g_renderer)
+    if (g_renderer != nullptr)
     {
         g_renderer->Startup();
-        DebuggerPrintf("Renderer started\n");
+        DebuggerPrintf("(GEngine::Startup)Renderer started\n");
     }
 
-    if (g_devConsole)
+    if (g_imgui != nullptr)
+    {
+        g_imgui->Startup();
+        DebuggerPrintf("(GEngine::Startup)ImGuiSubsystem started\n");
+    }
+
+
+    if (g_devConsole != nullptr)
     {
         g_devConsole->StartUp();
-        DebuggerPrintf("DevConsole started\n");
+        DebuggerPrintf("(GEngine::Startup)DevConsole started\n");
     }
 
-    if (g_resourceSubsystem)
+    if (g_resourceSubsystem != nullptr)
     {
         g_resourceSubsystem->Startup();
-        DebuggerPrintf("ResourceSubsystem started\n");
+        DebuggerPrintf("(GEngine::Startup)ResourceSubsystem started\n");
     }
 
-    if (g_renderer)
+    if (g_renderer != nullptr)
     {
         DebugRenderSystemStartup(sDebugRenderConfig);
-        DebuggerPrintf("DebugRenderSystem started\n");
+        DebuggerPrintf("(GEngine::Startup)DebugRenderSystem started\n");
     }
 
     // Conditionally startup optional subsystems
-    if (g_input)
+    if (g_input != nullptr)
     {
         g_input->Startup();
-        DebuggerPrintf("InputSystem started\n");
+        DebuggerPrintf("(GEngine::Startup)InputSystem started\n");
     }
 
-    if (g_audio)
+    if (g_audio != nullptr)
     {
         g_audio->Startup();
-        DebuggerPrintf("AudioSystem started\n");
+        DebuggerPrintf("(GEngine::Startup)AudioSystem started\n");
     }
 
 #ifndef ENGINE_DISABLE_SCRIPT
-    if (g_scriptSubsystem)
+    if (g_scriptSubsystem != nullptr)
     {
         g_scriptSubsystem->Startup();
         DebuggerPrintf("ScriptSubsystem started\n");
     }
 #endif
 
-    if (g_kadiSubsystem)
+    if (g_kadiSubsystem != nullptr)
     {
         g_kadiSubsystem->Startup();
         DebuggerPrintf("KADIWebSocketSubsystem started\n");
@@ -734,6 +772,12 @@ void GEngine::Shutdown()
     {
         g_devConsole->Shutdown();
         DebuggerPrintf("DevConsole shutdown\n");
+    }
+
+    if (g_imgui)
+    {
+        g_imgui->Shutdown();
+        DebuggerPrintf("ImGuiSubsystem shutdown\n");
     }
 
     if (g_renderer)

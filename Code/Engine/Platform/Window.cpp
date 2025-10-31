@@ -12,11 +12,14 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/UI/ImGuiSubsystem.hpp"
 
 #define CONSOLE_HANDLER
 
 #include <chrono>
 #include <dxgi1_2.h>
+
+#include "Engine/Core/DevConsole.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // 全域控制台控制代碼，供 LogSubsystem 使用
@@ -82,6 +85,12 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
                                                  WPARAM const wParam,
                                                  LPARAM const lParam)
 {
+    // ImGui Win32 message handling via subsystem (with DevConsole-aware input capture)
+    if (g_imgui && g_imgui->ProcessWin32Message(windowHandle, wmMessageCode, wParam, lParam))
+    {
+        return TRUE;  // ImGui subsystem handled the message
+    }
+
     InputSystem* input = nullptr;
 
     if (Window::s_mainWindow != nullptr &&
@@ -177,10 +186,12 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND const   windowHandle,
             return 0;
         }
 
-    default: ;
+    default:
+        {
+            // Let Windows handle the message
+            return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);
+        }
     }
-
-    return DefWindowProc(windowHandle, wmMessageCode, wParam, lParam);
 }
 
 

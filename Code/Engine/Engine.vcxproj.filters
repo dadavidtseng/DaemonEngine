@@ -130,6 +130,12 @@
     <Filter Include="ThirdParty\JSON">
       <UniqueIdentifier>{348d2b99-84ed-41bb-bb90-4904b78d7a14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\ImGui">
+      <UniqueIdentifier>{8a5dbfe2-d919-4f0f-8c0b-786e84c8bff8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\UI">
+      <UniqueIdentifier>{22f800a9-d1de-404b-b5dd-1ce4c29903b9}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine\Renderer\Script">
       <UniqueIdentifier>{cf71cf3f-2647-4e69-86c6-83343bc7e115}</UniqueIdentifier>
     </Filter>
@@ -507,6 +513,25 @@
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClCompile>
+    <!-- Dear ImGui v1.92.4 Source Files -->
+    <ClCompile Include="../ThirdParty/imgui/imgui.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../ThirdParty/imgui/imgui_draw.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../ThirdParty/imgui/imgui_tables.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../ThirdParty/imgui/imgui_widgets.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_dx11.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Core\ClockScriptInterface.cpp">
       <Filter>Engine\Core\Script</Filter>
@@ -541,6 +566,10 @@
     <ClCompile Include="Entity\EntityScriptInterface.cpp">
       <Filter>Engine\Entity</Filter>
     </ClCompile>
+    <ClCompile Include="UI\ImGuiSubsystem.cpp">
+      <Filter>Engine\UI</Filter>
+    </ClCompile>
+    <!-- Dear ImGui Integration -->
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -942,6 +971,31 @@
     <ClInclude Include="../ThirdParty/Noise/SmoothNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>
+    <!-- Dear ImGui v1.92.4 Headers -->
+    <ClInclude Include="../ThirdParty/imgui/imgui.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/imgui_internal.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/imconfig.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/imstb_rectpack.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/imstb_textedit.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/imstb_truetype.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_dx11.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_win32.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Core\ClockScriptInterface.hpp">
       <Filter>Engine\Core\Script</Filter>
@@ -1006,6 +1060,10 @@
     <ClInclude Include="Entity\EntityScriptInterface.hpp">
       <Filter>Engine\Entity</Filter>
     </ClInclude>
+    <ClInclude Include="UI\ImGuiSubsystem.hpp">
+      <Filter>Engine\UI</Filter>
+    </ClInclude>
+    <!-- Dear ImGui Integration -->
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Entity\EntityAPI.cpp">

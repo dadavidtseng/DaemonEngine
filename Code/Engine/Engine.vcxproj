@@ -116,7 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;$(SolutionDir)../Engine/Code/ThirdParty/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -136,7 +136,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;$(SolutionDir)../Engine/Code/ThirdParty/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -159,7 +159,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;$(SolutionDir)../Engine/Code/ThirdParty/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -179,7 +179,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/Zc:__cplusplus /std:c++20 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/;$(SolutionDir)../Engine/Code/ThirdParty/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -201,6 +201,13 @@
     <ClCompile Include="../ThirdParty/Noise/RawNoise.cpp" />
     <ClCompile Include="../ThirdParty/Noise/SmoothNoise.cpp" />
     <ClCompile Include="../ThirdParty/TinyXML2/tinyxml2.cpp" />
+    <!-- Dear ImGui v1.92.4 - Immediate Mode GUI Library -->
+    <ClCompile Include="../ThirdParty/imgui/imgui.cpp" />
+    <ClCompile Include="../ThirdParty/imgui/imgui_draw.cpp" />
+    <ClCompile Include="../ThirdParty/imgui/imgui_tables.cpp" />
+    <ClCompile Include="../ThirdParty/imgui/imgui_widgets.cpp" />
+    <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_dx11.cpp" />
+    <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp" />
     <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
@@ -215,6 +222,7 @@
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
+    <ClCompile Include="UI\ImGuiSubsystem.cpp" />
     <ClCompile Include="Widget\IWidget.cpp" />
     <ClCompile Include="Widget\WidgetSubsystem.cpp" />
   </ItemGroup>
@@ -379,6 +387,15 @@
     <ClInclude Include="../ThirdParty/stb/stb_image.h" />
     <ClInclude Include="../ThirdParty/TinyXML2/tinyxml2.h" />
     <ClInclude Include="..\ThirdParty\json\json.hpp" />
+    <!-- Dear ImGui v1.92.4 Headers -->
+    <ClInclude Include="../ThirdParty/imgui/imgui.h" />
+    <ClInclude Include="../ThirdParty/imgui/imgui_internal.h" />
+    <ClInclude Include="../ThirdParty/imgui/imconfig.h" />
+    <ClInclude Include="../ThirdParty/imgui/imstb_rectpack.h" />
+    <ClInclude Include="../ThirdParty/imgui/imstb_textedit.h" />
+    <ClInclude Include="../ThirdParty/imgui/imstb_truetype.h" />
+    <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_dx11.h" />
+    <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_win32.h" />
     <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\ClockScriptInterface.hpp" />
@@ -400,6 +417,7 @@
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
     <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Script\IJSGameLogicContext.hpp" />
+    <ClInclude Include="UI\ImGuiSubsystem.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />
   </ItemGroup>

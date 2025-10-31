@@ -9,6 +9,11 @@
 #include "Engine/Core/Rgba8.hpp"
 
 //----------------------------------------------------------------------------------------------------
+#if defined ERROR
+#undef ERROR
+#endif
+
+//-Forward-Declaration--------------------------------------------------------------------------------
 class BitmapFont;
 class Camera;
 class Renderer;
@@ -44,7 +49,7 @@ struct sDevConsoleConfig
 {
     Renderer* m_defaultRenderer   = nullptr;
     Camera*   m_defaultCamera     = nullptr;
-    String    m_defaultFontName   = "SquirrelFixedFont";
+    String    m_defaultFontName   = "DaemonFont";
     float     m_defaultFontAspect = 1.f;
     float     m_maxLinesDisplay   = 29.5f;
     int       m_maxCommandHistory = 128;
@@ -61,6 +66,7 @@ class DevConsole
 public:
     explicit DevConsole(sDevConsoleConfig config);
     ~DevConsole() = default;
+
     void StartUp();
     void Shutdown();
     void BeginFrame();
