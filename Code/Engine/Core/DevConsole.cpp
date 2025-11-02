@@ -572,10 +572,15 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
         renderer.DrawVertexArray(static_cast<int>(insertionPointVerts.size()), insertionPointVerts.data());
     }
 
-    std::vector<sDevConsoleLine> reversedLines = m_lines;
-    std::reverse(reversedLines.begin(), reversedLines.end());
+    std::vector<sDevConsoleLine> reversedLines;
+    {
+        std::lock_guard lock(m_consoleMutex);
+        reversedLines = m_lines;
+    }
 
-    for (size_t i = 0; i < m_lines.size(); ++i)
+    std::ranges::reverse(reversedLines);
+
+    for (size_t i = 0; i < reversedLines.size(); ++i)
     {
         commandTextBounds.m_maxs.y = bounds.m_maxs.y + static_cast<float>(i + 1) * lineHeight;
         commandTextBounds.m_mins.y = commandTextBounds.m_maxs.y - lineHeight;

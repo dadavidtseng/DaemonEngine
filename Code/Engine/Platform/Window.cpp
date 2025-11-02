@@ -4,22 +4,16 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Platform/Window.hpp"
-
-#include <iostream>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/UI/ImGuiSubsystem.hpp"
-
-#define CONSOLE_HANDLER
-
-#include <chrono>
+//----------------------------------------------------------------------------------------------------
 #include <dxgi1_2.h>
-
-#include "Engine/Core/DevConsole.hpp"
+#include <iostream>
 
 //----------------------------------------------------------------------------------------------------
 // 全域控制台控制代碼，供 LogSubsystem 使用

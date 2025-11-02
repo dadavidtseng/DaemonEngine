@@ -195,6 +195,11 @@ void InputSystem::EndFrame()
 			++completedIt;
 		}
 	}
+
+	for (int keyCode = 0; keyCode < NUM_KEYCODES; ++keyCode)
+	{
+		m_keyStates[keyCode].m_wasKeyDownLastFrame = m_keyStates[keyCode].m_isKeyDown;
+	}
 }
 
 bool InputSystem::WasKeyJustPressed(unsigned char const keyCode) const
