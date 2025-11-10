@@ -1,6 +1,16 @@
 # Daemon Engine - Game Engine Architecture
 
 **Changelog**
+- 2025-11-09: **JobSystem Shutdown Pattern Documentation**
+  - Documented proper shutdown sequence for applications using JobSystem
+  - **Critical Pattern**: Stop JobSystem BEFORE deleting objects that worker threads access
+  - **Example**: SimpleMiner's three-stage shutdown prevents crashes and memory leaks
+    1. `g_jobSystem->Shutdown()` - Stop all worker threads
+    2. Delete game objects (chunks, world, entities)
+    3. `GEngine::Get().Shutdown()` - Destroy engine systems
+  - Prevents race conditions where workers access deleted memory
+  - Allows proper DirectX resource cleanup before device destruction
+  - See SimpleMiner's App.cpp for reference implementation
 - 2025-10-27: **M4-T8 Async Architecture Refactoring**
   - Introduced Entity module with async entity management API (EntityAPI, EntityScriptInterface)
   - Added generic StateBuffer template for lock-free double-buffering in Core module

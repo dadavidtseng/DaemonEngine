@@ -988,13 +988,14 @@ bool BaseWebSocketSubsystem::CreateClientThread(SOCKET clientSocket)
 void BaseWebSocketSubsystem::CleanupClientThreads()
 {
     // Join and remove finished client threads (non-blocking cleanup)
-    std::lock_guard<std::mutex> lock(m_clientThreadsMutex);
+    std::lock_guard lock(m_clientThreadsMutex);
 
     // Remove finished threads using erase-remove idiom
     m_clientThreads.erase(
         std::remove_if(m_clientThreads.begin(), m_clientThreads.end(),
             [](std::unique_ptr<std::thread> const& thread)
             {
+                UNUSED(thread)
                 // Check if thread has finished (we can't directly check this in C++11/14)
                 // For now, we'll just keep all threads until Stop() is called
                 // In a more advanced implementation, we could use std::future or condition variables

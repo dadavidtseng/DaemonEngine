@@ -130,7 +130,7 @@ public:
 	// Rationale: Full copy ensures front buffer is stable snapshot for rendering
 	void SwapBuffers()
 	{
-		std::lock_guard<std::mutex> lock(m_swapMutex);
+		std::lock_guard lock(m_swapMutex);
 
 		// Copy back buffer → front buffer (full deep copy)
 		// This ensures front buffer is stable snapshot for rendering

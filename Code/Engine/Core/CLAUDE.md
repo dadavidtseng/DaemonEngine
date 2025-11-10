@@ -339,6 +339,17 @@ A: Yes. Worker thread writes to back buffer (lock-free), main thread reads from 
 
 ## Changelog
 
+- 2025-11-09: **JobSystem Shutdown Pattern Documentation**
+  - Documented critical shutdown sequence for applications using JobSystem
+  - **Problem**: Worker threads accessing deleted objects causes crashes and memory leaks
+  - **Solution**: Call `g_jobSystem->Shutdown()` BEFORE deleting worker-accessed objects
+  - **Reference Implementation**: SimpleMiner's App.cpp demonstrates three-stage shutdown:
+    1. Stop all worker threads via `g_jobSystem->Shutdown()`
+    2. Delete game objects (allows proper resource cleanup)
+    3. Destroy engine systems including Renderer
+  - **Key Insight**: JobSystem::Shutdown() waits for ALL workers to exit cleanly
+  - Prevents race conditions and DirectX resource cleanup failures
+  - Application developers must follow this pattern for thread-safe shutdown
 - 2025-10-27: **M4-T8 Async Architecture Refactoring**
   - Added StateBuffer.hpp template for generic double-buffered state containers
   - Provides lock-free reads/writes with brief locked swap operations
