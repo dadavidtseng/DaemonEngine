@@ -312,6 +312,9 @@
     <ClCompile Include="Math/Sphere3.cpp">
       <Filter>Engine\Math\Primitive3D</Filter>
     </ClCompile>
+    <ClCompile Include="Math/Curve1D.cpp">
+      <Filter>Engine\Math\Util</Filter>
+    </ClCompile>
     <ClCompile Include="Math/Curve2D.cpp">
       <Filter>Engine\Math\Util</Filter>
     </ClCompile>
@@ -736,6 +739,9 @@
     </ClInclude>
     <ClInclude Include="Math/Sphere3.hpp">
       <Filter>Engine\Math\Primitive3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Math/Curve1D.hpp">
+      <Filter>Engine\Math\Util</Filter>
     </ClInclude>
     <ClInclude Include="Math/Curve2D.hpp">
       <Filter>Engine\Math\Util</Filter>
