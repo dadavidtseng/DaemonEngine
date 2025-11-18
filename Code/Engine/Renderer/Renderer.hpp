@@ -100,6 +100,7 @@ public:
     ConstantBuffer* CreateConstantBuffer(unsigned int size) const;
     IndexBuffer*    CreateIndexBuffer(unsigned int size, unsigned int stride) const;
     VertexBuffer*   CreateVertexBuffer(unsigned int size, unsigned int stride) const;
+    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
 
     void DrawVertexBuffer(VertexBuffer const* vbo, unsigned int vertexCount);
     void DrawIndexedVertexBuffer(VertexBuffer const* vbo, IndexBuffer const* ibo, unsigned int indexCount);
@@ -144,7 +145,7 @@ private:
     Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);
     bool    CompileShaderToByteCode(std::vector<unsigned char>& out_byteCode, char const* name, char const* source, char const* entryPoint, char const* target);
 
-    void            BindConstantBuffer(int slot, ConstantBuffer const* cbo) const;
+
     void            BindIndexBuffer(IndexBuffer const* ibo) const;
     void            BindVertexBuffer(VertexBuffer const* vbo) const;
     void            SetStatesIfChanged();

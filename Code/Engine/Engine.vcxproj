@@ -220,6 +220,7 @@
     <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
     <ClCompile Include="Renderer\CameraStateBuffer.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
+    <ClCompile Include="Renderer\RenderCommand.cpp" />
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="UI\ImGuiSubsystem.cpp" />

@@ -15,27 +15,22 @@
 // Allocates ring buffer with specified capacity.
 // Initializes atomic indices and statistics counters.
 //----------------------------------------------------------------------------------------------------
-RenderCommandQueue::RenderCommandQueue(size_t capacity)
-    : m_buffer(nullptr)
-    , m_capacity(capacity)
-    , m_head(0)
-    , m_tail(0)
-    , m_totalSubmitted(0)
-    , m_totalConsumed(0)
+RenderCommandQueue::RenderCommandQueue(size_t const capacity)
+    : m_capacity(capacity)
 {
-	// Validate capacity (must be > 0)
-	if (capacity == 0)
-	{
-		ERROR_AND_DIE("RenderCommandQueue: Capacity must be greater than zero");
-	}
+    // Validate capacity (must be > 0)
+    if (capacity == 0)
+    {
+        ERROR_AND_DIE("RenderCommandQueue: Capacity must be greater than zero");
+    }
 
-	// Allocate ring buffer storage
-	m_buffer = new RenderCommand[m_capacity];
+    // Allocate ring buffer storage
+    m_buffer = new RenderCommand[m_capacity];
 
-	DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
-	           Stringf("RenderCommandQueue: Initialized with capacity %llu (%.2f KB)",
-	                   static_cast<uint64_t>(m_capacity),
-	                   (m_capacity * sizeof(RenderCommand)) / 1024.0f));
+    DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
+               Stringf("RenderCommandQueue: Initialized with capacity %llu (%.2f KB)",
+                   static_cast<uint64_t>(m_capacity),
+                   (m_capacity * sizeof(RenderCommand)) / 1024.f));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -46,19 +41,19 @@ RenderCommandQueue::RenderCommandQueue(size_t capacity)
 //----------------------------------------------------------------------------------------------------
 RenderCommandQueue::~RenderCommandQueue()
 {
-	// Log final statistics
-	uint64_t totalSubmitted = m_totalSubmitted.load(std::memory_order_relaxed);
-	uint64_t totalConsumed  = m_totalConsumed.load(std::memory_order_relaxed);
+    // Log final statistics
+    uint64_t totalSubmitted = m_totalSubmitted.load(std::memory_order_relaxed);
+    uint64_t totalConsumed  = m_totalConsumed.load(std::memory_order_relaxed);
 
-	DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
-	           Stringf("RenderCommandQueue: Shutdown - Total submitted: %llu, Total consumed: %llu, Lost: %llu",
-	                   totalSubmitted,
-	                   totalConsumed,
-	                   totalSubmitted - totalConsumed));
+    DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
+               Stringf("RenderCommandQueue: Shutdown - Total submitted: %llu, Total consumed: %llu, Lost: %llu",
+                   totalSubmitted,
+                   totalConsumed,
+                   totalSubmitted - totalConsumed));
 
-	// Deallocate buffer
-	delete[] m_buffer;
-	m_buffer = nullptr;
+    // Deallocate buffer
+    delete[] m_buffer;
+    m_buffer = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -83,30 +78,30 @@ RenderCommandQueue::~RenderCommandQueue()
 //----------------------------------------------------------------------------------------------------
 bool RenderCommandQueue::Submit(RenderCommand const& command)
 {
-	// Load current producer position (relaxed ordering sufficient for SPSC)
-	size_t currentTail = m_tail.load(std::memory_order_relaxed);
-	size_t nextTail    = NextIndex(currentTail);
+    // Load current producer position (relaxed ordering sufficient for SPSC)
+    size_t currentTail = m_tail.load(std::memory_order_relaxed);
+    size_t nextTail    = NextIndex(currentTail);
 
-	// Load current consumer position (acquire ordering to synchronize with consumer's release)
-	size_t currentHead = m_head.load(std::memory_order_acquire);
+    // Load current consumer position (acquire ordering to synchronize with consumer's release)
+    size_t currentHead = m_head.load(std::memory_order_acquire);
 
-	// Check if queue is full (next tail would equal head)
-	if (nextTail == currentHead)
-	{
-		// Queue full - backpressure triggered
-		return false;
-	}
+    // Check if queue is full (next tail would equal head)
+    if (nextTail == currentHead)
+    {
+        // Queue full - backpressure triggered
+        return false;
+    }
 
-	// Write command to buffer
-	m_buffer[currentTail] = command;
+    // Write command to buffer
+    m_buffer[currentTail] = command;
 
-	// Update producer tail position (release ordering to ensure command data is visible)
-	m_tail.store(nextTail, std::memory_order_release);
+    // Update producer tail position (release ordering to ensure command data is visible)
+    m_tail.store(nextTail, std::memory_order_release);
 
-	// Increment submission counter
-	m_totalSubmitted.fetch_add(1, std::memory_order_relaxed);
+    // Increment submission counter
+    m_totalSubmitted.fetch_add(1, std::memory_order_relaxed);
 
-	return true;
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -117,18 +112,18 @@ bool RenderCommandQueue::Submit(RenderCommand const& command)
 //----------------------------------------------------------------------------------------------------
 size_t RenderCommandQueue::GetApproximateSize() const
 {
-	size_t currentHead = m_head.load(std::memory_order_relaxed);
-	size_t currentTail = m_tail.load(std::memory_order_relaxed);
+    size_t currentHead = m_head.load(std::memory_order_relaxed);
+    size_t currentTail = m_tail.load(std::memory_order_relaxed);
 
-	// Calculate size with wraparound handling
-	if (currentTail >= currentHead)
-	{
-		return currentTail - currentHead;
-	}
-	else
-	{
-		return m_capacity - (currentHead - currentTail);
-	}
+    // Calculate size with wraparound handling
+    if (currentTail >= currentHead)
+    {
+        return currentTail - currentHead;
+    }
+    else
+    {
+        return m_capacity - (currentHead - currentTail);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -139,9 +134,9 @@ size_t RenderCommandQueue::GetApproximateSize() const
 //----------------------------------------------------------------------------------------------------
 bool RenderCommandQueue::IsEmpty() const
 {
-	size_t currentHead = m_head.load(std::memory_order_relaxed);
-	size_t currentTail = m_tail.load(std::memory_order_relaxed);
-	return currentHead == currentTail;
+    size_t currentHead = m_head.load(std::memory_order_relaxed);
+    size_t currentTail = m_tail.load(std::memory_order_relaxed);
+    return currentHead == currentTail;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -152,10 +147,10 @@ bool RenderCommandQueue::IsEmpty() const
 //----------------------------------------------------------------------------------------------------
 bool RenderCommandQueue::IsFull() const
 {
-	size_t currentTail = m_tail.load(std::memory_order_relaxed);
-	size_t nextTail    = NextIndex(currentTail);
-	size_t currentHead = m_head.load(std::memory_order_relaxed);
-	return nextTail == currentHead;
+    size_t currentTail = m_tail.load(std::memory_order_relaxed);
+    size_t nextTail    = NextIndex(currentTail);
+    size_t currentHead = m_head.load(std::memory_order_relaxed);
+    return nextTail == currentHead;
 }
 
 //----------------------------------------------------------------------------------------------------

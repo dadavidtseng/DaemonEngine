@@ -572,6 +572,9 @@
     <ClCompile Include="UI\ImGuiSubsystem.cpp">
       <Filter>Engine\UI</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\RenderCommand.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
     <!-- Dear ImGui Integration -->
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->

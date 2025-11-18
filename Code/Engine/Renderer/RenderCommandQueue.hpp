@@ -158,7 +158,7 @@ private:
 	//------------------------------------------------------------------------------------------------
 
 	// Ring buffer storage (dynamically allocated array)
-	RenderCommand* m_buffer;
+	RenderCommand* m_buffer = nullptr;
 	size_t         m_capacity;  // Power of 2 preferred for modulo optimization
 
 	//------------------------------------------------------------------------------------------------
@@ -167,17 +167,17 @@ private:
 
 	// Producer writes to m_tail, reads m_head
 	// Aligned to cache line to prevent false sharing
-	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_head;  // Consumer write, producer read
+	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_head = 0;  // Consumer write, producer read
 
 	// Consumer writes to m_head, reads m_tail
 	// Aligned to cache line to prevent false sharing
-	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_tail;  // Producer write, consumer read
+	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_tail = 0;  // Producer write, consumer read
 
 	//------------------------------------------------------------------------------------------------
 	// Statistics (Atomic Counters)
 	//------------------------------------------------------------------------------------------------
-	std::atomic<uint64_t> m_totalSubmitted;  // Total commands submitted (overflow expected)
-	std::atomic<uint64_t> m_totalConsumed;   // Total commands consumed (overflow expected)
+	std::atomic<uint64_t> m_totalSubmitted = 0;  // Total commands submitted (overflow expected)
+	std::atomic<uint64_t> m_totalConsumed  = 0;   // Total commands consumed (overflow expected)
 
 	//------------------------------------------------------------------------------------------------
 	// Helper Methods
