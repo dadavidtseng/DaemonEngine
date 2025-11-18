@@ -4,15 +4,11 @@
 //----------------------------------------------------------------------------------------------------
 
 #include "Engine/Entity/EntityScriptInterface.hpp"
-#include "Engine/Entity/EntityAPI.hpp"
-
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Script/ScriptTypeExtractor.hpp"
-
-#include <unordered_map>
-
-#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
+#include "Engine/Entity/EntityAPI.hpp"
+#include "Engine/Script/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // Construction / Destruction
@@ -45,7 +41,8 @@ void EntityScriptInterface::InitializeMethodRegistry()
 }
 
 //----------------------------------------------------------------------------------------------------
-ScriptMethodResult EntityScriptInterface::CallMethod(String const& methodName, ScriptArgs const& args)
+ScriptMethodResult EntityScriptInterface::CallMethod(String const&     methodName,
+                                                     ScriptArgs const& args)
 {
     // Look up method in registry
     auto it = m_methodRegistry.find(methodName);

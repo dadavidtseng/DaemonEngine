@@ -34,92 +34,92 @@
 //----------------------------------------------------------------------------------------------------
 
 EntityAPI::EntityAPI(RenderCommandQueue* commandQueue,
-                     ScriptSubsystem* scriptSubsystem)
-	: m_commandQueue(commandQueue)
-	, m_scriptSubsystem(scriptSubsystem)
-	, m_nextEntityId(1)      // Start entity IDs at 1 (0 reserved for invalid)
-	, m_nextCallbackId(1)
+                     ScriptSubsystem*    scriptSubsystem)
+    : m_commandQueue(commandQueue)
+      , m_scriptSubsystem(scriptSubsystem)
+      , m_nextEntityId(1)      // Start entity IDs at 1 (0 reserved for invalid)
+      , m_nextCallbackId(1)
 {
-	GUARANTEE_OR_DIE(m_commandQueue != nullptr, "EntityAPI: RenderCommandQueue is nullptr!");
-	GUARANTEE_OR_DIE(m_scriptSubsystem != nullptr, "EntityAPI: ScriptSubsystem is nullptr!");
+    GUARANTEE_OR_DIE(m_commandQueue != nullptr, "EntityAPI: RenderCommandQueue is nullptr!");
+    GUARANTEE_OR_DIE(m_scriptSubsystem != nullptr, "EntityAPI: ScriptSubsystem is nullptr!");
 
-	DebuggerPrintf("EntityAPI: Initialized (M4-T8)\n");
+    DebuggerPrintf("EntityAPI: Initialized (M4-T8)\n");
 }
 
 //----------------------------------------------------------------------------------------------------
 EntityAPI::~EntityAPI()
 {
-	// Log any pending callbacks that were never executed
-	if (!m_pendingCallbacks.empty())
-	{
-		DebuggerPrintf("EntityAPI: Warning - %zu pending callbacks not executed at shutdown\n",
-		               m_pendingCallbacks.size());
-	}
+    // Log any pending callbacks that were never executed
+    if (!m_pendingCallbacks.empty())
+    {
+        DebuggerPrintf("EntityAPI: Warning - %zu pending callbacks not executed at shutdown\n",
+                       m_pendingCallbacks.size());
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 // Entity Creation/Destruction
 //----------------------------------------------------------------------------------------------------
 
-CallbackID EntityAPI::CreateMesh(std::string const& meshType,
-                                 Vec3 const& position,
-                                 float scale,
-                                 Rgba8 const& color,
+CallbackID EntityAPI::CreateMesh(std::string const&    meshType,
+                                 Vec3 const&           position,
+                                 float                 scale,
+                                 Rgba8 const&          color,
                                  ScriptCallback const& callback)
 {
-	// Generate unique entity ID
-	EntityID entityId = GenerateEntityID();
+    // Generate unique entity ID
+    EntityID entityId = GenerateEntityID();
 
-	// Generate unique callback ID
-	CallbackID callbackId = GenerateCallbackID();
+    // Generate unique callback ID
+    CallbackID callbackId = GenerateCallbackID();
 
-	DebuggerPrintf("[TRACE] EntityAPI::CreateMesh - meshType=%s, entityId=%llu, callbackId=%llu, pos=(%.1f,%.1f,%.1f), scale=%.1f\n",
-	               meshType.c_str(), entityId, callbackId, position.x, position.y, position.z, scale);
+    DebuggerPrintf("[TRACE] EntityAPI::CreateMesh - meshType=%s, entityId=%llu, callbackId=%llu, pos=(%.1f,%.1f,%.1f), scale=%.1f\n",
+                   meshType.c_str(), entityId, callbackId, position.x, position.y, position.z, scale);
 
-	// Store callback for later execution
-	PendingCallback pendingCallback;
-	pendingCallback.callback = callback;
-	pendingCallback.resultId = entityId;
-	pendingCallback.ready = false;
-	m_pendingCallbacks[callbackId] = pendingCallback;
+    // Store callback for later execution
+    PendingCallback pendingCallback;
+    pendingCallback.callback       = callback;
+    pendingCallback.resultId       = entityId;
+    pendingCallback.ready          = false;
+    m_pendingCallbacks[callbackId] = pendingCallback;
 
-	// Create mesh creation command
-	MeshCreationData meshData;
-	meshData.meshType = meshType;
-	meshData.position = position;
-	meshData.radius = scale;
-	meshData.color = color;
+    // Create mesh creation command
+    MeshCreationData meshData;
+    meshData.meshType = meshType;
+    meshData.position = position;
+    meshData.radius   = scale;
+    meshData.color    = color;
 
-	RenderCommand command(RenderCommandType::CREATE_MESH, entityId, meshData);
+    RenderCommand command(RenderCommandType::CREATE_MESH, entityId, meshData);
 
-	// Submit command to queue
-	bool submitted = SubmitCommand(command);
-	if (!submitted)
-	{
-		DebuggerPrintf("EntityAPI::CreateMesh - Queue full! Dropping mesh creation for entity %llu\n", entityId);
-		m_pendingCallbacks[callbackId].ready = true;
-		m_pendingCallbacks[callbackId].resultId = 0;  // 0 = creation failed
-	}
-	else
-	{
-		DebuggerPrintf("[TRACE] EntityAPI::CreateMesh - Command submitted successfully to queue\n");
-		m_pendingCallbacks[callbackId].ready = true;
-	}
+    // Submit command to queue
+    bool submitted = SubmitCommand(command);
+    if (!submitted)
+    {
+        DebuggerPrintf("EntityAPI::CreateMesh - Queue full! Dropping mesh creation for entity %llu\n", entityId);
+        m_pendingCallbacks[callbackId].ready    = true;
+        m_pendingCallbacks[callbackId].resultId = 0;  // 0 = creation failed
+    }
+    else
+    {
+        DebuggerPrintf("[TRACE] EntityAPI::CreateMesh - Command submitted successfully to queue\n");
+        m_pendingCallbacks[callbackId].ready = true;
+    }
 
-	return callbackId;
+    return callbackId;
 }
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::DestroyEntity(EntityID entityId)
 {
-	// Create destroy command
-	RenderCommand command(RenderCommandType::DESTROY_ENTITY, entityId, std::monostate{});
+    // Create destroy command
+    RenderCommand command(RenderCommandType::DESTROY_ENTITY, entityId, std::monostate{});
 
-	bool submitted = SubmitCommand(command);
-	if (!submitted)
-	{
-		DebuggerPrintf("EntityAPI::DestroyEntity - Queue full! Dropping destroy for entity %llu\n", entityId);
-	}
+    bool submitted = SubmitCommand(command);
+    if (!submitted)
+    {
+        DebuggerPrintf("EntityAPI::DestroyEntity - Queue full! Dropping destroy for entity %llu\n", entityId);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -128,63 +128,63 @@ void EntityAPI::DestroyEntity(EntityID entityId)
 
 void EntityAPI::UpdatePosition(EntityID entityId, Vec3 const& position)
 {
-	// Create entity update command with position
-	EntityUpdateData updateData;
-	updateData.position = position;
+    // Create entity update command with position
+    EntityUpdateData updateData;
+    updateData.position = position;
 
-	RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
+    RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
 
-	bool submitted = SubmitCommand(command);
-	if (!submitted)
-	{
-		DebuggerPrintf("EntityAPI::UpdatePosition - Queue full! Dropping position update for entity %llu\n", entityId);
-	}
+    bool submitted = SubmitCommand(command);
+    if (!submitted)
+    {
+        DebuggerPrintf("EntityAPI::UpdatePosition - Queue full! Dropping position update for entity %llu\n", entityId);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::MoveBy(EntityID entityId, Vec3 const& delta)
 {
-	// PHASE 2 SIMPLIFICATION: Convert delta to absolute position update
-	DebuggerPrintf("EntityAPI::MoveBy - Not fully implemented in Phase 2! Use UpdatePosition instead.\n");
+    // PHASE 2 SIMPLIFICATION: Convert delta to absolute position update
+    DebuggerPrintf("EntityAPI::MoveBy - Not fully implemented in Phase 2! Use UpdatePosition instead.\n");
 
-	// Create update command with delta (will be interpreted as absolute position for now)
-	EntityUpdateData updateData;
-	updateData.position = delta;
+    // Create update command with delta (will be interpreted as absolute position for now)
+    EntityUpdateData updateData;
+    updateData.position = delta;
 
-	RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
-	SubmitCommand(command);
+    RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
+    SubmitCommand(command);
 }
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::UpdateOrientation(EntityID entityId, EulerAngles const& orientation)
 {
-	// Create entity update command with orientation
-	EntityUpdateData updateData;
-	updateData.orientation = orientation;
+    // Create entity update command with orientation
+    EntityUpdateData updateData;
+    updateData.orientation = orientation;
 
-	RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
+    RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
 
-	bool submitted = SubmitCommand(command);
-	if (!submitted)
-	{
-		DebuggerPrintf("EntityAPI::UpdateOrientation - Queue full! Dropping orientation update for entity %llu\n", entityId);
-	}
+    bool submitted = SubmitCommand(command);
+    if (!submitted)
+    {
+        DebuggerPrintf("EntityAPI::UpdateOrientation - Queue full! Dropping orientation update for entity %llu\n", entityId);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::UpdateColor(EntityID entityId, Rgba8 const& color)
 {
-	// Create entity update command with color
-	EntityUpdateData updateData;
-	updateData.color = color;
+    // Create entity update command with color
+    EntityUpdateData updateData;
+    updateData.color = color;
 
-	RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
+    RenderCommand command(RenderCommandType::UPDATE_ENTITY, entityId, updateData);
 
-	bool submitted = SubmitCommand(command);
-	if (!submitted)
-	{
-		DebuggerPrintf("EntityAPI::UpdateColor - Queue full! Dropping color update for entity %llu\n", entityId);
-	}
+    bool submitted = SubmitCommand(command);
+    if (!submitted)
+    {
+        DebuggerPrintf("EntityAPI::UpdateColor - Queue full! Dropping color update for entity %llu\n", entityId);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -193,61 +193,61 @@ void EntityAPI::UpdateColor(EntityID entityId, Rgba8 const& color)
 
 void EntityAPI::ExecutePendingCallbacks()
 {
-	// Execute all ready callbacks
-	// Note: This is called on JavaScript worker thread, so V8 locking is required
+    // Execute all ready callbacks
+    // Note: This is called on JavaScript worker thread, so V8 locking is required
 
-	// Log when we have pending callbacks (diagnostic)
-	if (!m_pendingCallbacks.empty())
-	{
-		size_t readyCount = 0;
-		for (auto const& pair : m_pendingCallbacks)
-		{
-			if (pair.second.ready) readyCount++;
-		}
+    // Log when we have pending callbacks (diagnostic)
+    if (!m_pendingCallbacks.empty())
+    {
+        size_t readyCount = 0;
+        for (auto const& pair : m_pendingCallbacks)
+        {
+            if (pair.second.ready) readyCount++;
+        }
 
-		if (readyCount > 0)
-		{
-			DAEMON_LOG(LogScript, eLogVerbosity::Log,
-				Stringf("EntityAPI::ExecutePendingCallbacks - Processing %zu ready callbacks (out of %zu total)",
-					readyCount, m_pendingCallbacks.size()));
-		}
-	}
+        if (readyCount > 0)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Log,
+                       Stringf("EntityAPI::ExecutePendingCallbacks - Processing %zu ready callbacks (out of %zu total)",
+                           readyCount, m_pendingCallbacks.size()));
+        }
+    }
 
-	for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end(); )
-	{
-		CallbackID callbackId = it->first;
-		PendingCallback& pending = it->second;
+    for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end();)
+    {
+        CallbackID       callbackId = it->first;
+        PendingCallback& pending    = it->second;
 
-		if (pending.ready)
-		{
-			// Execute callback with result ID
-			ExecuteCallback(callbackId, pending.resultId);
+        if (pending.ready)
+        {
+            // Execute callback with result ID
+            ExecuteCallback(callbackId, pending.resultId);
 
-			// Remove from pending map
-			it = m_pendingCallbacks.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
+            // Remove from pending map
+            it = m_pendingCallbacks.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::NotifyCallbackReady(CallbackID callbackId, EntityID resultId)
 {
-	// Find callback in pending map
-	auto it = m_pendingCallbacks.find(callbackId);
-	if (it != m_pendingCallbacks.end())
-	{
-		// Mark as ready and update result ID
-		it->second.ready = true;
-		it->second.resultId = resultId;
-	}
-	else
-	{
-		DebuggerPrintf("EntityAPI::NotifyCallbackReady - Callback %llu not found!\n", callbackId);
-	}
+    // Find callback in pending map
+    auto it = m_pendingCallbacks.find(callbackId);
+    if (it != m_pendingCallbacks.end())
+    {
+        // Mark as ready and update result ID
+        it->second.ready    = true;
+        it->second.resultId = resultId;
+    }
+    else
+    {
+        DebuggerPrintf("EntityAPI::NotifyCallbackReady - Callback %llu not found!\n", callbackId);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -256,13 +256,13 @@ void EntityAPI::NotifyCallbackReady(CallbackID callbackId, EntityID resultId)
 
 EntityID EntityAPI::GenerateEntityID()
 {
-	return m_nextEntityId++;
+    return m_nextEntityId++;
 }
 
 //----------------------------------------------------------------------------------------------------
 CallbackID EntityAPI::GenerateCallbackID()
 {
-	return m_nextCallbackId++;
+    return m_nextCallbackId++;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -271,147 +271,148 @@ CallbackID EntityAPI::GenerateCallbackID()
 
 bool EntityAPI::SubmitCommand(RenderCommand const& command)
 {
-	// Submit command to queue
-	bool success = m_commandQueue->Submit(command);
+    // Submit command to queue
+    bool success = m_commandQueue->Submit(command);
 
-	if (!success)
-	{
-		// Queue full - backpressure triggered
-		DebuggerPrintf("EntityAPI: RenderCommandQueue FULL! Command dropped.\n");
-	}
+    if (!success)
+    {
+        // Queue full - backpressure triggered
+        DebuggerPrintf("EntityAPI: RenderCommandQueue FULL! Command dropped.\n");
+    }
 
-	return success;
+    return success;
 }
 
 //----------------------------------------------------------------------------------------------------
-void EntityAPI::ExecuteCallback(CallbackID callbackId, EntityID resultId)
+void EntityAPI::ExecuteCallback(CallbackID callbackId,
+                                EntityID   resultId)
 {
-	// Find callback
-	auto it = m_pendingCallbacks.find(callbackId);
-	if (it == m_pendingCallbacks.end())
-	{
-		DAEMON_LOG(LogScript, eLogVerbosity::Warning,
-			Stringf("EntityAPI::ExecuteCallback - Callback %llu not found!", callbackId));
-		return;
-	}
+    // Find callback
+    auto it = m_pendingCallbacks.find(callbackId);
+    if (it == m_pendingCallbacks.end())
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                   Stringf("EntityAPI::ExecuteCallback - Callback %llu not found!", callbackId));
+        return;
+    }
 
-	ScriptCallback const& callback = it->second.callback;
+    ScriptCallback const& callback = it->second.callback;
 
-	// Phase 2b: Execute JavaScript callback with V8 locking
-	DAEMON_LOG(LogScript, eLogVerbosity::Log,
-		Stringf("EntityAPI::ExecuteCallback - Executing callback %llu with resultId %llu",
-			callbackId, resultId));
+    // Phase 2b: Execute JavaScript callback with V8 locking
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+               Stringf("EntityAPI::ExecuteCallback - Executing callback %llu with resultId %llu",
+                   callbackId, resultId));
 
-	// Get V8 isolate from ScriptSubsystem
-	v8::Isolate* isolate = m_scriptSubsystem->GetIsolate();
-	if (!isolate)
-	{
-		DAEMON_LOG(LogScript, eLogVerbosity::Error,
-			"EntityAPI::ExecuteCallback - V8 isolate is null!");
-		return;
-	}
+    // Get V8 isolate from ScriptSubsystem
+    v8::Isolate* isolate = m_scriptSubsystem->GetIsolate();
+    if (!isolate)
+    {
+        DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                   "EntityAPI::ExecuteCallback - V8 isolate is null!");
+        return;
+    }
 
-	// Execute callback with V8 locking (CRITICAL for thread safety)
-	{
-		v8::Locker locker(isolate);
-		v8::Isolate::Scope isolate_scope(isolate);
-		v8::HandleScope handle_scope(isolate);
-		v8::TryCatch try_catch(isolate);
+    // Execute callback with V8 locking (CRITICAL for thread safety)
+    {
+        v8::Locker         locker(isolate);
+        v8::Isolate::Scope isolate_scope(isolate);
+        v8::HandleScope    handle_scope(isolate);
+        v8::TryCatch       try_catch(isolate);
 
-		try
-		{
-			// Extract v8::Function from std::any
-			v8::Global<v8::Function>* globalFuncPtr = nullptr;
+        try
+        {
+            // Extract v8::Function from std::any
+            v8::Global<v8::Function>* globalFuncPtr = nullptr;
 
-			try
-			{
-				globalFuncPtr = std::any_cast<v8::Global<v8::Function>*>(callback);
-			}
-			catch (std::bad_any_cast const&)
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					"EntityAPI::ExecuteCallback - Failed to extract callback as v8::Global<v8::Function>*");
-				return;
-			}
+            try
+            {
+                globalFuncPtr = std::any_cast<v8::Global<v8::Function>*>(callback);
+            }
+            catch (std::bad_any_cast const&)
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           "EntityAPI::ExecuteCallback - Failed to extract callback as v8::Global<v8::Function>*");
+                return;
+            }
 
-			if (!globalFuncPtr)
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					"EntityAPI::ExecuteCallback - Callback pointer is null");
-				return;
-			}
+            if (!globalFuncPtr)
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           "EntityAPI::ExecuteCallback - Callback pointer is null");
+                return;
+            }
 
-			v8::Local<v8::Function> callbackFunc = globalFuncPtr->Get(isolate);
+            v8::Local<v8::Function> callbackFunc = globalFuncPtr->Get(isolate);
 
-			if (callbackFunc.IsEmpty())
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					"EntityAPI::ExecuteCallback - Callback function is empty");
-				return;
-			}
+            if (callbackFunc.IsEmpty())
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           "EntityAPI::ExecuteCallback - Callback function is empty");
+                return;
+            }
 
-			// Get V8 context from ScriptSubsystem
-			void* contextPtr = m_scriptSubsystem->GetV8Context();
-			if (!contextPtr)
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					"EntityAPI::ExecuteCallback - Failed to get V8 context from ScriptSubsystem");
-				return;
-			}
+            // Get V8 context from ScriptSubsystem
+            void* contextPtr = m_scriptSubsystem->GetV8Context();
+            if (!contextPtr)
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           "EntityAPI::ExecuteCallback - Failed to get V8 context from ScriptSubsystem");
+                return;
+            }
 
-			v8::Local<v8::Context>* contextLocalPtr = static_cast<v8::Local<v8::Context>*>(contextPtr);
-			v8::Local<v8::Context> context = *contextLocalPtr;
+            v8::Local<v8::Context>* contextLocalPtr = static_cast<v8::Local<v8::Context>*>(contextPtr);
+            v8::Local<v8::Context>  context         = *contextLocalPtr;
 
-			if (context.IsEmpty())
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					"EntityAPI::ExecuteCallback - V8 context is empty after retrieval!");
-				return;
-			}
+            if (context.IsEmpty())
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           "EntityAPI::ExecuteCallback - V8 context is empty after retrieval!");
+                return;
+            }
 
-			v8::Context::Scope context_scope(context);
+            v8::Context::Scope context_scope(context);
 
-			// Create JavaScript number from entityId
-			v8::Local<v8::Number> resultIdValue = v8::Number::New(isolate, static_cast<double>(resultId));
+            // Create JavaScript number from entityId
+            v8::Local<v8::Number> resultIdValue = v8::Number::New(isolate, static_cast<double>(resultId));
 
-			// Prepare arguments array
-			v8::Local<v8::Value> argv[1] = { resultIdValue };
+            // Prepare arguments array
+            v8::Local<v8::Value> argv[1] = {resultIdValue};
 
-			// Call JavaScript function: callback(entityId)
-			v8::MaybeLocal<v8::Value> result = callbackFunc->Call(context, v8::Undefined(isolate), 1, argv);
+            // Call JavaScript function: callback(entityId)
+            v8::MaybeLocal<v8::Value> result = callbackFunc->Call(context, v8::Undefined(isolate), 1, argv);
 
-			// Check for JavaScript exceptions
-			if (try_catch.HasCaught())
-			{
-				v8::Local<v8::Message> message = try_catch.Message();
-				v8::String::Utf8Value error(isolate, try_catch.Exception());
-				DAEMON_LOG(LogScript, eLogVerbosity::Error,
-					Stringf("EntityAPI::ExecuteCallback - JavaScript callback error: %s", *error));
-				return;
-			}
+            // Check for JavaScript exceptions
+            if (try_catch.HasCaught())
+            {
+                v8::Local<v8::Message> message = try_catch.Message();
+                v8::String::Utf8Value  error(isolate, try_catch.Exception());
+                DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                           Stringf("EntityAPI::ExecuteCallback - JavaScript callback error: %s", *error));
+                return;
+            }
 
-			if (result.IsEmpty())
-			{
-				DAEMON_LOG(LogScript, eLogVerbosity::Warning,
-					"EntityAPI::ExecuteCallback - Callback returned empty result");
-			}
+            if (result.IsEmpty())
+            {
+                DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+                           "EntityAPI::ExecuteCallback - Callback returned empty result");
+            }
 
-			DAEMON_LOG(LogScript, eLogVerbosity::Log,
-				Stringf("EntityAPI::ExecuteCallback - Callback %llu executed successfully", callbackId));
-		}
-		catch (std::bad_any_cast const& e)
-		{
-			DAEMON_LOG(LogScript, eLogVerbosity::Error,
-				Stringf("EntityAPI::ExecuteCallback - Failed to cast callback to v8::Global<v8::Function>: %s",
-					e.what()));
-		}
-		catch (std::exception const& e)
-		{
-			DAEMON_LOG(LogScript, eLogVerbosity::Error,
-				Stringf("EntityAPI::ExecuteCallback - Unexpected exception: %s", e.what()));
-		}
-	}
-	// V8 lock automatically released here
+            DAEMON_LOG(LogScript, eLogVerbosity::Log,
+                       Stringf("EntityAPI::ExecuteCallback - Callback %llu executed successfully", callbackId));
+        }
+        catch (std::bad_any_cast const& e)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                       Stringf("EntityAPI::ExecuteCallback - Failed to cast callback to v8::Global<v8::Function>: %s",
+                           e.what()));
+        }
+        catch (std::exception const& e)
+        {
+            DAEMON_LOG(LogScript, eLogVerbosity::Error,
+                       Stringf("EntityAPI::ExecuteCallback - Unexpected exception: %s", e.what()));
+        }
+    }
+    // V8 lock automatically released here
 }
 
 //----------------------------------------------------------------------------------------------------

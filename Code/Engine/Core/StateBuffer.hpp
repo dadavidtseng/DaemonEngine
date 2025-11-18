@@ -73,113 +73,111 @@ template <typename TStateContainer>
 class StateBuffer
 {
 public:
-	//------------------------------------------------------------------------------------------------
-	// Construction / Destruction
-	//------------------------------------------------------------------------------------------------
-	StateBuffer()
-	    : m_frontBuffer(&m_bufferA)
-	    , m_backBuffer(&m_bufferB)
-	    , m_totalSwaps(0)
-	{
-	}
+    //------------------------------------------------------------------------------------------------
+    // Construction / Destruction
+    //------------------------------------------------------------------------------------------------
+    StateBuffer()
+        : m_frontBuffer(&m_bufferA)
+          , m_backBuffer(&m_bufferB)
+          , m_totalSwaps(0)
+    {
+    }
 
-	~StateBuffer()
-	{
-	}
+    ~StateBuffer() = default;
 
-	// Non-copyable, non-movable (contains mutex)
-	StateBuffer(StateBuffer const&)            = delete;
-	StateBuffer& operator=(StateBuffer const&) = delete;
-	StateBuffer(StateBuffer&&)                 = delete;
-	StateBuffer& operator=(StateBuffer&&)      = delete;
+    // Non-copyable, non-movable (contains mutex)
+    StateBuffer(StateBuffer const&)            = delete;
+    StateBuffer& operator=(StateBuffer const&) = delete;
+    StateBuffer(StateBuffer&&)                 = delete;
+    StateBuffer& operator=(StateBuffer&&)      = delete;
 
-	//------------------------------------------------------------------------------------------------
-	// Buffer Access (Thread-Safe)
-	//------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    // Buffer Access (Thread-Safe)
+    //------------------------------------------------------------------------------------------------
 
-	// Get front buffer for rendering (Main Thread, lock-free read)
-	// Returns: Const pointer to current front buffer (safe for concurrent reads)
-	// Thread Safety: Lock-free, safe to call from main thread while worker updates back buffer
-	TStateContainer const* GetFrontBuffer() const
-	{
-		return m_frontBuffer;
-	}
+    // Get front buffer for rendering (Main Thread, lock-free read)
+    // Returns: Const pointer to current front buffer (safe for concurrent reads)
+    // Thread Safety: Lock-free, safe to call from main thread while worker updates back buffer
+    TStateContainer const* GetFrontBuffer() const
+    {
+        return m_frontBuffer;
+    }
 
-	// Get back buffer for writing (Worker Thread, lock-free write)
-	// Returns: Mutable pointer to current back buffer (single-writer guarantee)
-	// Thread Safety: Lock-free, assumes single worker thread (no concurrent writers)
-	TStateContainer* GetBackBuffer()
-	{
-		return m_backBuffer;
-	}
+    // Get back buffer for writing (Worker Thread, lock-free write)
+    // Returns: Mutable pointer to current back buffer (single-writer guarantee)
+    // Thread Safety: Lock-free, assumes single worker thread (no concurrent writers)
+    TStateContainer* GetBackBuffer()
+    {
+        return m_backBuffer;
+    }
 
-	//------------------------------------------------------------------------------------------------
-	// Buffer Swap (Frame Boundary, Main Thread Only)
-	//------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    // Buffer Swap (Frame Boundary, Main Thread Only)
+    //------------------------------------------------------------------------------------------------
 
-	// Swap front/back buffers and copy data (locked operation)
-	//
-	// Algorithm:
-	//   1. Acquire mutex lock
-	//   2. Copy back buffer → new front buffer (full deep copy)
-	//   3. Swap buffer pointers
-	//   4. Release mutex lock
-	//
-	// Performance: O(n) where n = number of elements (< 1ms for 1000 elements)
-	// Thread Safety: Locked operation, call from main thread only
-	// Rationale: Full copy ensures front buffer is stable snapshot for rendering
-	void SwapBuffers()
-	{
-		std::lock_guard lock(m_swapMutex);
+    // Swap front/back buffers and copy data (locked operation)
+    //
+    // Algorithm:
+    //   1. Acquire mutex lock
+    //   2. Copy back buffer → new front buffer (full deep copy)
+    //   3. Swap buffer pointers
+    //   4. Release mutex lock
+    //
+    // Performance: O(n) where n = number of elements (< 1ms for 1000 elements)
+    // Thread Safety: Locked operation, call from main thread only
+    // Rationale: Full copy ensures front buffer is stable snapshot for rendering
+    void SwapBuffers()
+    {
+        std::lock_guard lock(m_swapMutex);
 
-		// Copy back buffer → front buffer (full deep copy)
-		// This ensures front buffer is stable snapshot for rendering
-		*m_frontBuffer = *m_backBuffer;
+        // Copy back buffer → front buffer (full deep copy)
+        // This ensures front buffer is stable snapshot for rendering
+        *m_frontBuffer = *m_backBuffer;
 
-		// Swap buffer pointers (now back buffer becomes old front buffer)
-		std::swap(m_frontBuffer, m_backBuffer);
+        // Swap buffer pointers (now back buffer becomes old front buffer)
+        std::swap(m_frontBuffer, m_backBuffer);
 
-		// Increment swap counter for profiling
-		++m_totalSwaps;
-	}
+        // Increment swap counter for profiling
+        ++m_totalSwaps;
+    }
 
-	//------------------------------------------------------------------------------------------------
-	// Monitoring / Debugging
-	//------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    // Monitoring / Debugging
+    //------------------------------------------------------------------------------------------------
 
-	// Get element count in front buffer (approximate, for monitoring only)
-	// Thread Safety: Lock-free read, may race with SwapBuffers()
-	size_t GetElementCount() const
-	{
-		return m_frontBuffer->size();
-	}
+    // Get element count in front buffer (approximate, for monitoring only)
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    size_t GetElementCount() const
+    {
+        return m_frontBuffer->size();
+    }
 
-	// Get total swaps performed (for profiling)
-	// Thread Safety: Lock-free read, may race with SwapBuffers()
-	uint64_t GetTotalSwaps() const
-	{
-		return m_totalSwaps;
-	}
+    // Get total swaps performed (for profiling)
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    uint64_t GetTotalSwaps() const
+    {
+        return m_totalSwaps;
+    }
 
 private:
-	//------------------------------------------------------------------------------------------------
-	// Double-Buffer Storage
-	//------------------------------------------------------------------------------------------------
-	TStateContainer m_bufferA;  // Buffer A (front or back)
-	TStateContainer m_bufferB;  // Buffer B (front or back)
+    //------------------------------------------------------------------------------------------------
+    // Double-Buffer Storage
+    //------------------------------------------------------------------------------------------------
+    TStateContainer m_bufferA;  // Buffer A (front or back)
+    TStateContainer m_bufferB;  // Buffer B (front or back)
 
-	TStateContainer* m_frontBuffer;  // Pointer to current front buffer (read by main thread)
-	TStateContainer* m_backBuffer;   // Pointer to current back buffer (written by worker thread)
+    TStateContainer* m_frontBuffer;  // Pointer to current front buffer (read by main thread)
+    TStateContainer* m_backBuffer;   // Pointer to current back buffer (written by worker thread)
 
-	//------------------------------------------------------------------------------------------------
-	// Synchronization
-	//------------------------------------------------------------------------------------------------
-	mutable std::mutex m_swapMutex;  // Protects buffer swap operation
+    //------------------------------------------------------------------------------------------------
+    // Synchronization
+    //------------------------------------------------------------------------------------------------
+    mutable std::mutex m_swapMutex;  // Protects buffer swap operation
 
-	//------------------------------------------------------------------------------------------------
-	// Statistics
-	//------------------------------------------------------------------------------------------------
-	uint64_t m_totalSwaps;  // Total buffer swaps performed (profiling counter)
+    //------------------------------------------------------------------------------------------------
+    // Statistics
+    //------------------------------------------------------------------------------------------------
+    uint64_t m_totalSwaps;  // Total buffer swaps performed (profiling counter)
 };
 
 //----------------------------------------------------------------------------------------------------
