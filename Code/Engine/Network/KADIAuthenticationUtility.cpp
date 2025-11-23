@@ -7,12 +7,12 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
-// OpenSSL includes (will be available after vcpkg installs OpenSSL)
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/x509.h>  // For i2d_PUBKEY() and d2i_PUBKEY()
+// OpenSSL includes - using ThirdParty prebuilt OpenSSL 3.6.0
+#include <ThirdParty/openssl/include/openssl/evp.h>
+#include <ThirdParty/openssl/include/openssl/rand.h>
+#include <ThirdParty/openssl/include/openssl/bio.h>
+#include <ThirdParty/openssl/include/openssl/buffer.h>
+#include <ThirdParty/openssl/include/openssl/x509.h>  // For i2d_PUBKEY() and d2i_PUBKEY()
 
 #include <memory>
 #include <cstring>
