@@ -228,6 +228,9 @@
     <ClCompile Include="Core/Clock.cpp">
       <Filter>Engine\Core\Time</Filter>
     </ClCompile>
+    <ClCompile Include="Core/CallbackQueue.cpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClCompile>
     <ClCompile Include="Core/Time.cpp">
       <Filter>Engine\Core\Time</Filter>
     </ClCompile>
@@ -658,6 +661,9 @@
     </ClInclude>
     <ClInclude Include="Core/Clock.hpp">
       <Filter>Engine\Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/CallbackQueue.hpp">
+      <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/Time.hpp">
       <Filter>Engine\Core\Time</Filter>
