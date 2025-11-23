@@ -57,6 +57,12 @@ void Window::Shutdown()
     DX_SAFE_RELEASE(m_swapChain)
     DX_SAFE_RELEASE(m_renderTargetView)
     ShowWindow((HWND)m_windowHandle, SW_HIDE);
+
+#ifdef CONSOLE_HANDLER
+    // Free the console allocated during startup
+    // This ensures proper cleanup of console resources and stream redirections
+    FreeConsole();
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------

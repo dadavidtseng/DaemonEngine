@@ -26,6 +26,9 @@ public:
     unsigned int GetSize() const;
     unsigned int GetStride() const;
 
+    // Leak tracking
+    static void PrintLeakReport();
+
 private:
     /// A buffer interface accesses a buffer resource, which is unstructured memory.
     /// Buffers typically store vertex or index data.
@@ -34,4 +37,8 @@ private:
     ID3D11Device* m_device = nullptr;
     unsigned int  m_size   = 0;
     unsigned int  m_stride = 0;
+
+    // Leak tracking counters
+    static int s_totalCreated;
+    static int s_totalDeleted;
 };

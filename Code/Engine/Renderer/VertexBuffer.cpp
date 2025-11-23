@@ -10,7 +10,12 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
-VertexBuffer::VertexBuffer(ID3D11Device*      device,
+// Static leak tracking counters
+int VertexBuffer::s_totalCreated = 0;
+int VertexBuffer::s_totalDeleted = 0;
+
+//----------------------------------------------------------------------------------------------------
+ VertexBuffer::VertexBuffer(ID3D11Device*      device,
                            unsigned int const size,
                            unsigned int const stride)
     : m_device(device),
@@ -18,6 +23,7 @@ VertexBuffer::VertexBuffer(ID3D11Device*      device,
       m_stride(stride)
 {
     Create();
+    s_totalCreated++;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -27,6 +33,7 @@ VertexBuffer::~VertexBuffer()
     {
         m_buffer->Release();
         m_buffer = nullptr;
+        s_totalDeleted++;
     }
 }
 
@@ -96,4 +103,27 @@ unsigned int VertexBuffer::GetSize() const
 unsigned int VertexBuffer::GetStride() const
 {
     return m_stride;
+}
+
+//----------------------------------------------------------------------------------------------------
+void VertexBuffer::PrintLeakReport()
+{
+    int stillAlive = s_totalCreated - s_totalDeleted;
+
+    DebuggerPrintf("========================================\n");
+    DebuggerPrintf("[VertexBuffer] LEAK REPORT:\n");
+    DebuggerPrintf("[VertexBuffer]   Total Created: %d\n", s_totalCreated);
+    DebuggerPrintf("[VertexBuffer]   Total Deleted: %d\n", s_totalDeleted);
+    DebuggerPrintf("[VertexBuffer]   Still Alive:   %d\n", stillAlive);
+
+    if (stillAlive == 0)
+    {
+        DebuggerPrintf("[VertexBuffer]   No leaks detected.\n");
+    }
+    else
+    {
+        DebuggerPrintf("[VertexBuffer]   WARNING: %d buffer(s) leaked!\n", stillAlive);
+    }
+
+    DebuggerPrintf("========================================\n");
 }

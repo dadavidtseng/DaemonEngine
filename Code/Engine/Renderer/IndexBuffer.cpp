@@ -10,6 +10,11 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
+// Static leak tracking counters
+int IndexBuffer::s_totalCreated = 0;
+int IndexBuffer::s_totalDeleted = 0;
+
+//----------------------------------------------------------------------------------------------------
 IndexBuffer::IndexBuffer(ID3D11Device*      device,
                          unsigned int const size,
                          unsigned int const stride)
@@ -18,6 +23,7 @@ IndexBuffer::IndexBuffer(ID3D11Device*      device,
       m_stride(stride)
 {
     Create();
+    s_totalCreated++;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -27,6 +33,7 @@ IndexBuffer::~IndexBuffer()
     {
         m_buffer->Release();
         m_buffer = nullptr;
+        s_totalDeleted++;
     }
 }
 
@@ -72,4 +79,27 @@ unsigned int IndexBuffer::GetSize() const
 unsigned int IndexBuffer::GetStride() const
 {
     return m_stride;
+}
+
+//----------------------------------------------------------------------------------------------------
+void IndexBuffer::PrintLeakReport()
+{
+    int stillAlive = s_totalCreated - s_totalDeleted;
+
+    DebuggerPrintf("========================================\n");
+    DebuggerPrintf("[IndexBuffer] LEAK REPORT:\n");
+    DebuggerPrintf("[IndexBuffer]   Total Created: %d\n", s_totalCreated);
+    DebuggerPrintf("[IndexBuffer]   Total Deleted: %d\n", s_totalDeleted);
+    DebuggerPrintf("[IndexBuffer]   Still Alive:   %d\n", stillAlive);
+
+    if (stillAlive == 0)
+    {
+        DebuggerPrintf("[IndexBuffer]   No leaks detected.\n");
+    }
+    else
+    {
+        DebuggerPrintf("[IndexBuffer]   WARNING: %d buffer(s) leaked!\n", stillAlive);
+    }
+
+    DebuggerPrintf("========================================\n");
 }
