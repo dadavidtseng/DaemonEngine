@@ -4,6 +4,7 @@
 //----------------------------------------------------------------------------------------------------
 
 #include "Engine/Renderer/CameraAPI.hpp"
+#include "Engine/Core/CallbackQueue.hpp"
 #include "Engine/Renderer/CameraStateBuffer.hpp"
 #include "Engine/Renderer/RenderCommandQueue.hpp"
 #include "Engine/Script/ScriptSubsystem.hpp"
@@ -83,11 +84,16 @@ CallbackID CameraAPI::CreateCamera(Vec3 const& position,
 	pendingCallback.ready = false;  // Will be set to true by NotifyCallbackReady()
 	m_pendingCallbacks[callbackId] = pendingCallback;
 
+	DAEMON_LOG(LogScript, eLogVerbosity::Log,
+		Stringf("[CALLBACK FLOW] CreateCamera - Stored callback %llu for camera %llu (ready=false)",
+			callbackId, cameraId));
+
 	// Create camera creation command
 	CameraCreationData cameraData;
 	cameraData.position = position;
 	cameraData.orientation = orientation;
 	cameraData.type = type;
+	cameraData.callbackId = callbackId;  // Phase 2.3: Pass callbackId for async notification
 
 	RenderCommand command(RenderCommandType::CREATE_CAMERA, cameraId, cameraData);
 
@@ -101,11 +107,8 @@ CallbackID CameraAPI::CreateCamera(Vec3 const& position,
 		m_pendingCallbacks[callbackId].ready = true;
 		m_pendingCallbacks[callbackId].resultId = 0;  // 0 = creation failed
 	}
-	else
-	{
-		// Success - mark callback as ready immediately (simplified Phase 2 approach)
-		m_pendingCallbacks[callbackId].ready = true;
-	}
+	// Phase 2.3 FIX: Do NOT mark callback as ready immediately!
+	// Callback will be marked ready by command processor calling NotifyCallbackReady()
 
 	return callbackId;
 }
@@ -385,10 +388,12 @@ uintptr_t CameraAPI::GetCameraHandle(EntityID cameraId) const
 // Callback Execution
 //----------------------------------------------------------------------------------------------------
 
-void CameraAPI::ExecutePendingCallbacks()
+void CameraAPI::ExecutePendingCallbacks(CallbackQueue* callbackQueue)
 {
-	// Execute all ready callbacks
-	// Note: This is called on JavaScript worker thread, so V8 locking is required
+	// Phase 2.2: Enqueue callbacks to CallbackQueue instead of executing directly
+	// Note: This is called on C++ main thread, enqueues for JavaScript worker thread
+
+	GUARANTEE_OR_DIE(callbackQueue != nullptr, "CameraAPI::ExecutePendingCallbacks - CallbackQueue is nullptr!");
 
 	// Log when we have pending callbacks (diagnostic)
 	if (!m_pendingCallbacks.empty())
@@ -402,34 +407,50 @@ void CameraAPI::ExecutePendingCallbacks()
 		if (readyCount > 0)
 		{
 			DAEMON_LOG(LogScript, eLogVerbosity::Log,
-				Stringf("CameraAPI::ExecutePendingCallbacks - Processing %zu ready callbacks (out of %zu total)",
+				Stringf("CameraAPI::ExecutePendingCallbacks - Enqueuing %zu ready callbacks (out of %zu total)",
 					readyCount, m_pendingCallbacks.size()));
 		}
 	}
 
-	for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end(); )
+	for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end(); ++it)
 	{
 		CallbackID callbackId = it->first;
 		PendingCallback& pending = it->second;
 
 		if (pending.ready)
 		{
-			// Execute callback with result ID
-			ExecuteCallback(callbackId, pending.resultId);
+			// Create CallbackData from pending callback
+			CallbackData data;
+			data.callbackId = callbackId;
+			data.resultId = pending.resultId;
+			data.errorMessage = "";  // Empty = success
+			data.type = CallbackType::CAMERA_CREATED;
 
-			// Remove from pending map
-			it = m_pendingCallbacks.erase(it);
-		}
-		else
-		{
-			++it;
+			// Enqueue callback to CallbackQueue (async, lock-free)
+			bool enqueued = callbackQueue->Enqueue(data);
+
+			if (!enqueued)
+			{
+				// Backpressure: Queue full - log warning
+				DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+					Stringf("CameraAPI::ExecutePendingCallbacks - CallbackQueue full! Dropped callback %llu for camera %llu",
+						callbackId, pending.resultId));
+			}
+
+			// Phase 2.3 FIX: Do NOT erase here! Callback will be erased after execution in ExecuteCallback()
+			// Callback ownership remains in m_pendingCallbacks until ExecuteCallback() is called
 		}
 	}
 }
 
+
 //----------------------------------------------------------------------------------------------------
 void CameraAPI::NotifyCallbackReady(CallbackID callbackId, EntityID resultId)
 {
+	DAEMON_LOG(LogScript, eLogVerbosity::Log,
+		Stringf("[CALLBACK FLOW] NotifyCallbackReady - Looking for callback %llu with resultId %llu",
+			callbackId, resultId));
+
 	// Find callback in pending map
 	auto it = m_pendingCallbacks.find(callbackId);
 	if (it != m_pendingCallbacks.end())
@@ -437,9 +458,16 @@ void CameraAPI::NotifyCallbackReady(CallbackID callbackId, EntityID resultId)
 		// Mark as ready and update result ID
 		it->second.ready = true;
 		it->second.resultId = resultId;
+
+		DAEMON_LOG(LogScript, eLogVerbosity::Log,
+			Stringf("[CALLBACK FLOW] NotifyCallbackReady - Callback %llu marked ready=true, resultId=%llu",
+				callbackId, resultId));
 	}
 	else
 	{
+		DAEMON_LOG(LogScript, eLogVerbosity::Error,
+			Stringf("[CALLBACK FLOW] NotifyCallbackReady - Callback %llu NOT FOUND in pending map!",
+				callbackId));
 		DebuggerPrintf("CameraAPI::NotifyCallbackReady - Callback %llu not found!\n", callbackId);
 	}
 }
@@ -615,6 +643,13 @@ void CameraAPI::ExecuteCallback(CallbackID callbackId, EntityID resultId)
 		}
 	}
 	// V8 lock automatically released here
+
+	// Phase 2.3 FIX: Remove callback from pending map after successful execution
+	// This prevents memory leaks and allows callbacks to be reused
+	m_pendingCallbacks.erase(callbackId);
+
+	DAEMON_LOG(LogScript, eLogVerbosity::Log,
+		Stringf("[CALLBACK FLOW] ExecuteCallback - Callback %llu removed from pending map", callbackId));
 }
 
 //----------------------------------------------------------------------------------------------------

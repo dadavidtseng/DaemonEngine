@@ -117,6 +117,7 @@ struct CameraCreationData
 	Vec3        position;      // World-space position (X-forward, Y-left, Z-up)
 	EulerAngles orientation;   // Yaw, Pitch, Roll in degrees
 	std::string type;          // "world" (3D perspective) or "screen" (2D orthographic)
+	uint64_t    callbackId;    // Phase 2.3: CallbackID for async notification
 };
 
 //----------------------------------------------------------------------------------------------------

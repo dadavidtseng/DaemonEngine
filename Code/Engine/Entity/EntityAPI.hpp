@@ -47,6 +47,7 @@
 //-Forward-Declaration--------------------------------------------------------------------------------
 class RenderCommandQueue;
 class ScriptSubsystem;
+class CallbackQueue;
 
 //----------------------------------------------------------------------------------------------------
 // CallbackID Type Definition (shared with CameraAPI)
@@ -143,10 +144,15 @@ public:
 	// Execute pending callbacks with results
 	// Called by App::Update() after processing render commands
 	// Executes callbacks on JavaScript worker thread with V8 locking
-	void ExecutePendingCallbacks();
+	void ExecutePendingCallbacks(CallbackQueue* callbackQueue);
 
 	// Register a callback completion (called by command processor)
 	void NotifyCallbackReady(CallbackID callbackId, EntityID resultId);
+
+	// Execute a single callback (with error handling to prevent C++ crash)
+	// Phase 2.3: Made public to allow CallbackQueue consumer to invoke callbacks
+	// Called by App::Update() after dequeuing from CallbackQueue
+	void ExecuteCallback(CallbackID callbackId, EntityID resultId);
 
 	//------------------------------------------------------------------------------------------------
 	// ID Generation (for HighLevelEntityAPI coordination)
@@ -187,9 +193,6 @@ private:
 
 	// Submit render command to queue (with error handling)
 	bool SubmitCommand(RenderCommand const& command);
-
-	// Execute a single callback (with error handling to prevent C++ crash)
-	void ExecuteCallback(CallbackID callbackId, EntityID resultId);
 };
 
 //----------------------------------------------------------------------------------------------------

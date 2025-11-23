@@ -138,11 +138,16 @@ bool CameraScriptInterface::SetProperty(String const& propertyName, std::any con
 
 ScriptMethodResult CameraScriptInterface::ExecuteCreateCamera(ScriptArgs const& args)
 {
+	DAEMON_LOG(LogScript, eLogVerbosity::Log,
+		Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - ENTRY with %zu args", args.size()));
+
 	// FLATTENED API: V8 binding cannot handle nested objects
 	// Signature: create(posX, posY, posZ, yaw, pitch, roll, type, callback)
 	// Total: 8 arguments (6 doubles + 1 string + 1 function)
 	if (args.size() != 8)
 	{
+		DAEMON_LOG(LogScript, eLogVerbosity::Error,
+			Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - WRONG ARG COUNT: expected 8, got %zu", args.size()));
 		return ScriptMethodResult::Error("camera.create: Expected 8 arguments (posX, posY, posZ, yaw, pitch, roll, type, callback), got " +
 		                                  std::to_string(args.size()));
 	}
@@ -164,10 +169,16 @@ ScriptMethodResult CameraScriptInterface::ExecuteCreateCamera(ScriptArgs const& 
 		// Extract type (string)
 		std::string type = std::any_cast<std::string>(args[6]);
 
+		DAEMON_LOG(LogScript, eLogVerbosity::Log,
+			Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - Calling CameraAPI::CreateCamera (pos=[%.2f,%.2f,%.2f], type=%s)",
+				posX, posY, posZ, type.c_str()));
+
 		// Extract callback (function)
 		auto callbackOpt = ExtractCallback(args[7]);
 		if (!callbackOpt.has_value())
 		{
+			DAEMON_LOG(LogScript, eLogVerbosity::Error,
+				Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - Invalid callback function"));
 			return ScriptMethodResult::Error("camera.create: Invalid callback function");
 		}
 
@@ -177,6 +188,9 @@ ScriptMethodResult CameraScriptInterface::ExecuteCreateCamera(ScriptArgs const& 
 		                                                   type,
 		                                                   callbackOpt.value());
 
+		DAEMON_LOG(LogScript, eLogVerbosity::Log,
+			Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - CameraAPI returned callbackId=%llu", callbackId));
+
 		// Return callback ID as double (JavaScript numbers are IEEE-754 doubles)
 		// V8 cannot directly marshal uint64_t, so we explicitly cast to double
 		double callbackIdDouble = static_cast<double>(callbackId);
@@ -184,6 +198,8 @@ ScriptMethodResult CameraScriptInterface::ExecuteCreateCamera(ScriptArgs const& 
 	}
 	catch (std::bad_any_cast const& e)
 	{
+		DAEMON_LOG(LogScript, eLogVerbosity::Error,
+			Stringf("[CALLBACK FLOW] CameraScriptInterface::ExecuteCreateCamera - Type conversion error: %s", e.what()));
 		return ScriptMethodResult::Error("camera.create: Type conversion error - " + std::string(e.what()));
 	}
 }

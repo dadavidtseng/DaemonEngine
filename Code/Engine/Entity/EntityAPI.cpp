@@ -4,6 +4,7 @@
 //----------------------------------------------------------------------------------------------------
 
 #include "Engine/Entity/EntityAPI.hpp"
+#include "Engine/Core/CallbackQueue.hpp"
 #include "Engine/Renderer/RenderCommandQueue.hpp"
 #include "Engine/Script/ScriptSubsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -191,47 +192,61 @@ void EntityAPI::UpdateColor(EntityID entityId, Rgba8 const& color)
 // Callback Execution
 //----------------------------------------------------------------------------------------------------
 
-void EntityAPI::ExecutePendingCallbacks()
+void EntityAPI::ExecutePendingCallbacks(CallbackQueue* callbackQueue)
 {
-    // Execute all ready callbacks
-    // Note: This is called on JavaScript worker thread, so V8 locking is required
+	// Phase 2.2: Enqueue callbacks to CallbackQueue instead of executing directly
+	// Note: This is called on C++ main thread, enqueues for JavaScript worker thread
 
-    // Log when we have pending callbacks (diagnostic)
-    if (!m_pendingCallbacks.empty())
-    {
-        size_t readyCount = 0;
-        for (auto const& pair : m_pendingCallbacks)
-        {
-            if (pair.second.ready) readyCount++;
-        }
+	GUARANTEE_OR_DIE(callbackQueue != nullptr, "EntityAPI::ExecutePendingCallbacks - CallbackQueue is nullptr!");
 
-        if (readyCount > 0)
-        {
-            DAEMON_LOG(LogScript, eLogVerbosity::Log,
-                       Stringf("EntityAPI::ExecutePendingCallbacks - Processing %zu ready callbacks (out of %zu total)",
-                           readyCount, m_pendingCallbacks.size()));
-        }
-    }
+	// Log when we have pending callbacks (diagnostic)
+	if (!m_pendingCallbacks.empty())
+	{
+		size_t readyCount = 0;
+		for (auto const& pair : m_pendingCallbacks)
+		{
+			if (pair.second.ready) readyCount++;
+		}
 
-    for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end();)
-    {
-        CallbackID       callbackId = it->first;
-        PendingCallback& pending    = it->second;
+		if (readyCount > 0)
+		{
+			DAEMON_LOG(LogScript, eLogVerbosity::Log,
+			           Stringf("EntityAPI::ExecutePendingCallbacks - Enqueuing %zu ready callbacks (out of %zu total)",
+			               readyCount, m_pendingCallbacks.size()));
+		}
+	}
 
-        if (pending.ready)
-        {
-            // Execute callback with result ID
-            ExecuteCallback(callbackId, pending.resultId);
+	for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end(); ++it)
+	{
+		CallbackID       callbackId = it->first;
+		PendingCallback& pending    = it->second;
 
-            // Remove from pending map
-            it = m_pendingCallbacks.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
+		if (pending.ready)
+		{
+			// Create CallbackData from pending callback
+			CallbackData data;
+			data.callbackId = callbackId;
+			data.resultId = pending.resultId;
+			data.errorMessage = "";  // Empty = success
+			data.type = CallbackType::ENTITY_CREATED;
+
+			// Enqueue callback to CallbackQueue (async, lock-free)
+			bool enqueued = callbackQueue->Enqueue(data);
+
+			if (!enqueued)
+			{
+				// Backpressure: Queue full - log warning
+				DAEMON_LOG(LogScript, eLogVerbosity::Warning,
+				           Stringf("EntityAPI::ExecutePendingCallbacks - CallbackQueue full! Dropped callback %llu for entity %llu",
+				               callbackId, pending.resultId));
+			}
+
+			// Phase 2.3 FIX: Do NOT erase here! Callback will be erased after execution in ExecuteCallback()
+			// Callback ownership remains in m_pendingCallbacks until ExecuteCallback() is called
+		}
+	}
 }
+
 
 //----------------------------------------------------------------------------------------------------
 void EntityAPI::NotifyCallbackReady(CallbackID callbackId, EntityID resultId)
@@ -413,6 +428,13 @@ void EntityAPI::ExecuteCallback(CallbackID callbackId,
         }
     }
     // V8 lock automatically released here
+
+    // Phase 2.3 FIX: Remove callback from pending map after successful execution
+    // This prevents memory leaks and allows callbacks to be reused
+    m_pendingCallbacks.erase(callbackId);
+
+    DAEMON_LOG(LogScript, eLogVerbosity::Log,
+               Stringf("[CALLBACK FLOW] ExecuteCallback - Callback %llu removed from pending map", callbackId));
 }
 
 //----------------------------------------------------------------------------------------------------
