@@ -395,22 +395,22 @@ void CameraAPI::ExecutePendingCallbacks(CallbackQueue* callbackQueue)
 
 	GUARANTEE_OR_DIE(callbackQueue != nullptr, "CameraAPI::ExecutePendingCallbacks - CallbackQueue is nullptr!");
 
-	// Log when we have pending callbacks (diagnostic)
-	if (!m_pendingCallbacks.empty())
-	{
-		size_t readyCount = 0;
-		for (auto const& pair : m_pendingCallbacks)
-		{
-			if (pair.second.ready) readyCount++;
-		}
-
-		if (readyCount > 0)
-		{
-			DAEMON_LOG(LogScript, eLogVerbosity::Log,
-				Stringf("CameraAPI::ExecutePendingCallbacks - Enqueuing %zu ready callbacks (out of %zu total)",
-					readyCount, m_pendingCallbacks.size()));
-		}
-	}
+	// // Log when we have pending callbacks (diagnostic)
+	// if (!m_pendingCallbacks.empty())
+	// {
+	// 	size_t readyCount = 0;
+	// 	for (auto const& pair : m_pendingCallbacks)
+	// 	{
+	// 		if (pair.second.ready) readyCount++;
+	// 	}
+	//
+	// 	if (readyCount > 0)
+	// 	{
+	// 		DAEMON_LOG(LogScript, eLogVerbosity::Log,
+	// 			Stringf("CameraAPI::ExecutePendingCallbacks - Enqueuing %zu ready callbacks (out of %zu total)",
+	// 				readyCount, m_pendingCallbacks.size()));
+	// 	}
+	// }
 
 	for (auto it = m_pendingCallbacks.begin(); it != m_pendingCallbacks.end(); ++it)
 	{
