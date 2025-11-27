@@ -384,6 +384,7 @@
     <ClCompile Include="Core\ConsoleOutputDevice.cpp" />
     <ClCompile Include="Core/Clock.cpp" />
     <ClCompile Include="Core/CallbackQueue.cpp" />
+    <ClCompile Include="Core/CallbackQueueScriptInterface.cpp" />
     <ClCompile Include="Core/DevConsole.cpp" />
     <ClCompile Include="Core/ErrorWarningAssert.cpp" />
     <ClCompile Include="Core/EventSystem.cpp" />
@@ -579,6 +580,7 @@
   <ItemGroup Label="CoreModuleHeaders">
     <!-- Core Engine System Headers -->
     <ClInclude Include="Core/CallbackQueue.hpp" />
+    <ClInclude Include="Core/CallbackQueueScriptInterface.hpp" />
     <ClInclude Include="Core/Clock.hpp" />
     <ClInclude Include="Core/DevConsole.hpp" />
     <ClInclude Include="Core/ErrorWarningAssert.hpp" />
