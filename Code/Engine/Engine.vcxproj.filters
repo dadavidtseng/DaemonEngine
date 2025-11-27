@@ -578,6 +578,9 @@
     <ClCompile Include="Renderer\RenderCommand.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Core/CallbackQueueScriptInterface.cpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClCompile>
     <!-- Dear ImGui Integration -->
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -1077,6 +1080,9 @@
     </ClInclude>
     <ClInclude Include="UI\ImGuiSubsystem.hpp">
       <Filter>Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/CallbackQueueScriptInterface.hpp">
+      <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <!-- Dear ImGui Integration -->
   </ItemGroup>
