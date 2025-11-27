@@ -115,6 +115,54 @@ class MCPWebSocketSubsystem : public BaseWebSocketSubsystem {
     // MCP event handling
     virtual void OnMCPResponse(String const& response);
 };
+
+// KADI Broker Integration API (Assignment 7 Integration)
+class KADIWebSocketSubsystem {
+    // Lifecycle
+    void Startup();
+    void Shutdown();
+    void BeginFrame();
+    void EndFrame();
+
+    // Connection Management
+    void Connect(std::string const& brokerUrl, std::string const& publicKey, std::string const& privateKey);
+    void Disconnect();
+    bool IsConnected() const;
+    eKADIConnectionState GetConnectionState() const;
+
+    // Tool Management (MCP Tool Registration)
+    void RegisterTools(nlohmann::json const& tools);
+    void SendToolResult(int requestId, nlohmann::json const& result);
+    void SendToolError(int requestId, std::string const& errorMessage);
+
+    // Event System
+    void SubscribeToEvents(std::vector<std::string> const& channels);
+    void PublishEvent(std::string const& channel, nlohmann::json const& data);
+
+    // Callback Registration
+    void SetToolInvokeCallback(KADIToolInvokeCallback callback);
+    void SetEventDeliveryCallback(KADIEventDeliveryCallback callback);
+    void SetConnectionStateCallback(KADIConnectionStateCallback callback);
+
+    // Message Sending
+    void QueueMessage(std::string const& message);
+};
+
+// KADI Connection States
+enum class eKADIConnectionState {
+    DISCONNECTED,      // Not connected to broker
+    CONNECTING,        // Connection in progress
+    CONNECTED,         // WebSocket connection established, not authenticated
+    AUTHENTICATING,    // Sending hello and authentication
+    AUTHENTICATED,     // Authentication complete
+    REGISTERING_TOOLS, // Registering capabilities
+    READY              // Fully connected and operational
+};
+
+// KADI Callbacks
+using KADIToolInvokeCallback = std::function<void(int requestId, std::string const& toolName, nlohmann::json const& arguments)>;
+using KADIEventDeliveryCallback = std::function<void(std::string const& channel, nlohmann::json const& data)>;
+using KADIConnectionStateCallback = std::function<void(eKADIConnectionState oldState, eKADIConnectionState newState)>;
 ```
 
 ### Message System
@@ -322,6 +370,12 @@ The Network module includes comprehensive message handling:
 - **WebSocket**: Modern protocol for real-time bidirectional communication
 - **Chrome DevTools Protocol (CDP)**: Browser debugging and automation support
 - **Model Context Protocol (MCP)**: AI integration and context management
+- **KADI Broker Protocol**: Game-to-AI integration with tool registration, authentication, and event delivery
+  - **Assignment 7 Integration**: Primary system for AI agent control via Claude Desktop/Code
+  - **Tool Registration**: Expose game functions as MCP tools (spawn agent, mine block, etc.)
+  - **Authentication**: Public/private key authentication with KADI broker
+  - **Event System**: Subscribe/publish pattern for game state updates
+  - **Heartbeat**: Automatic connection health monitoring with ping/pong
 - **Connection Management**: Automatic client tracking and connection health monitoring
 - **Message Framing**: Proper message boundaries and data integrity
 
@@ -335,12 +389,21 @@ The Network module includes comprehensive message handling:
 
 ## Changelog
 
+- 2025-11-24: **Network Module Documentation Updated for Assignment 7**
+  - Added comprehensive `KADIWebSocketSubsystem` documentation for KADI broker integration
+  - Documented KADI connection states (DISCONNECTED → READY 7-state flow)
+  - Documented MCP tool registration API for game function exposure
+  - Documented authentication flow with public/private key pairs
+  - Documented event subscribe/publish system for game state updates
+  - Added Assignment 7 integration notes (AI agent control, Claude Desktop/Code)
+  - Updated protocol support section with KADI broker details
 - 2025-10-01: **Major Network Module Refactoring** - Modular WebSocket Architecture
   - Removed monolithic `NetworkWebsocketSubsystem` (1,274 lines deleted)
   - Created modular WebSocket architecture with base class and specialized implementations
   - Added `BaseWebSocketSubsystem` - Abstract base for WebSocket connections
   - Added `ChromeDevToolsWebSocketSubsystem` - Chrome DevTools Protocol support
   - Added `MCPWebSocketSubsystem` - Model Context Protocol integration for AI systems
+  - Added `KADIWebSocketSubsystem` - KADI broker protocol for game-to-AI integration
   - Renamed `NetworkSubsystem` → `NetworkTCPSubsystem` for clarity (TCP-specific implementation)
   - Improved separation of concerns between TCP and WebSocket protocols
   - Updated Visual Studio project files with new modular structure
