@@ -30,6 +30,11 @@
 //----------------------------------------------------------------------------------------------------
 #include <mutex>
 #include <cstdint>
+#include <exception>
+
+#include "ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // StateBuffer Template Class
@@ -80,6 +85,7 @@ public:
         : m_frontBuffer(&m_bufferA)
           , m_backBuffer(&m_bufferB)
           , m_totalSwaps(0)
+          , m_swapErrorCount(0)
     {
     }
 
@@ -119,26 +125,73 @@ public:
     //
     // Algorithm:
     //   1. Acquire mutex lock
-    //   2. Copy back buffer → new front buffer (full deep copy)
-    //   3. Swap buffer pointers
-    //   4. Release mutex lock
+    //   2. Validate buffer state (Phase 3.1 error recovery)
+    //   3. Copy back buffer → new front buffer (full deep copy) - wrapped in try-catch
+    //   4. Swap buffer pointers
+    //   5. Release mutex lock
     //
     // Performance: O(n) where n = number of elements (< 1ms for 1000 elements)
     // Thread Safety: Locked operation, call from main thread only
     // Rationale: Full copy ensures front buffer is stable snapshot for rendering
+    //
+    // Error Recovery (Phase 3.1):
+    //   - On exception, stale front buffer preserved (rendering continues with old state)
+    //   - Error count incremented for monitoring
+    //   - Exception details logged via DAEMON_LOG
     void SwapBuffers()
     {
         std::lock_guard lock(m_swapMutex);
 
-        // Copy back buffer → front buffer (full deep copy)
-        // This ensures front buffer is stable snapshot for rendering
-        *m_frontBuffer = *m_backBuffer;
+        // Phase 3.1: Validate buffer state before copy
+        if (!ValidateStateBuffer())
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::SwapBuffers - Buffer validation failed, skipping swap");
+            ++m_swapErrorCount;
+            return;
+        }
 
-        // Swap buffer pointers (now back buffer becomes old front buffer)
-        std::swap(m_frontBuffer, m_backBuffer);
+        // Phase 3.1: Wrap copy operation in try-catch for error recovery
+        try
+        {
+            // Copy back buffer → front buffer (full deep copy)
+            // This ensures front buffer is stable snapshot for rendering
+            *m_frontBuffer = *m_backBuffer;
 
-        // Increment swap counter for profiling
-        ++m_totalSwaps;
+            // Swap buffer pointers (now back buffer becomes old front buffer)
+            std::swap(m_frontBuffer, m_backBuffer);
+
+            // Increment swap counter for profiling
+            ++m_totalSwaps;
+            DAEMON_LOG(LogCore, eLogVerbosity::Display,StringFormat("StateBuffer::SwapBuffers - Success (total swaps: {})", m_totalSwaps));
+
+        }
+        catch (std::bad_alloc const& e)
+        {
+            // Memory allocation failure during copy
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::SwapBuffers - Memory allocation failed: %s. Preserving stale front buffer.",
+                       e.what());
+            ++m_swapErrorCount;
+            // Stale front buffer preserved - rendering continues with old state
+        }
+        catch (std::exception const& e)
+        {
+            // Generic exception during copy
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::SwapBuffers - Exception during buffer copy: %s. Preserving stale front buffer.",
+                       e.what());
+            ++m_swapErrorCount;
+            // Stale front buffer preserved - rendering continues with old state
+        }
+        catch (...)
+        {
+            // Unknown exception during copy
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::SwapBuffers - Unknown exception during buffer copy. Preserving stale front buffer.");
+            ++m_swapErrorCount;
+            // Stale front buffer preserved - rendering continues with old state
+        }
     }
 
     //------------------------------------------------------------------------------------------------
@@ -159,6 +212,24 @@ public:
         return m_totalSwaps;
     }
 
+    //------------------------------------------------------------------------------------------------
+    // Error Monitoring (Phase 3.1)
+    //------------------------------------------------------------------------------------------------
+
+    // Get total swap errors encountered (for monitoring)
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    uint64_t GetSwapErrorCount() const
+    {
+        return m_swapErrorCount;
+    }
+
+    // Check if any swap errors have occurred
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    bool HasSwapErrors() const
+    {
+        return m_swapErrorCount > 0;
+    }
+
 private:
     //------------------------------------------------------------------------------------------------
     // Double-Buffer Storage
@@ -177,7 +248,67 @@ private:
     //------------------------------------------------------------------------------------------------
     // Statistics
     //------------------------------------------------------------------------------------------------
-    uint64_t m_totalSwaps;  // Total buffer swaps performed (profiling counter)
+    uint64_t m_totalSwaps;       // Total buffer swaps performed (profiling counter)
+    uint64_t m_swapErrorCount;   // Phase 3.1: Total swap errors encountered (error monitoring)
+
+    //------------------------------------------------------------------------------------------------
+    // Buffer Validation (Phase 3.1)
+    //------------------------------------------------------------------------------------------------
+
+    // Validate buffer state before swap operation
+    // Returns: true if buffers are valid, false if corruption detected
+    // Called: At start of SwapBuffers() before copy operation
+    //
+    // Checks performed:
+    //   - Front buffer pointer not null
+    //   - Back buffer pointer not null
+    //   - Front buffer points to internal storage (m_bufferA or m_bufferB)
+    //   - Back buffer points to internal storage (m_bufferA or m_bufferB)
+    //   - No aliasing (front != back)
+    bool ValidateStateBuffer() const
+    {
+        // Check front buffer pointer
+        if (m_frontBuffer == nullptr)
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::ValidateStateBuffer - Front buffer pointer is null");
+            return false;
+        }
+
+        // Check back buffer pointer
+        if (m_backBuffer == nullptr)
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::ValidateStateBuffer - Back buffer pointer is null");
+            return false;
+        }
+
+        // Check front buffer points to internal storage
+        if (m_frontBuffer != &m_bufferA && m_frontBuffer != &m_bufferB)
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::ValidateStateBuffer - Front buffer points to invalid storage");
+            return false;
+        }
+
+        // Check back buffer points to internal storage
+        if (m_backBuffer != &m_bufferA && m_backBuffer != &m_bufferB)
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::ValidateStateBuffer - Back buffer points to invalid storage");
+            return false;
+        }
+
+        // Check no aliasing (front and back must be different buffers)
+        if (m_frontBuffer == m_backBuffer)
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::ValidateStateBuffer - Buffer aliasing detected (front == back)");
+            return false;
+        }
+
+        return true;
+    }
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -224,4 +355,25 @@ private:
 //   - StateBuffer<EntityStateMap>: Double-buffered entity state
 //   - StateBuffer<CameraStateMap>: Double-buffered camera state
 //   - StateBuffer<ParticleStateMap>: Double-buffered particle state (future)
+//
+// Phase 3.1: Error Recovery Design (SwapBuffers Error Handling)
+//   Goal:
+//     - Prevent crashes from exceptions during buffer copy
+//     - Enable graceful degradation (rendering continues with stale data)
+//     - Provide monitoring hooks for error detection
+//
+//   Implementation:
+//     - ValidateStateBuffer(): Pre-copy validation (null checks, aliasing detection)
+//     - Try-catch wrapping: Catches std::bad_alloc, std::exception, and unknown exceptions
+//     - Error counter: m_swapErrorCount incremented on each failure
+//     - DAEMON_LOG: Error details logged for debugging
+//
+//   Recovery Behavior:
+//     - On validation failure: Skip swap, preserve stale front buffer
+//     - On copy exception: Catch error, preserve stale front buffer
+//     - Main thread continues rendering with last valid state
+//
+//   Monitoring API:
+//     - GetSwapErrorCount(): Returns total errors encountered
+//     - HasSwapErrors(): Quick boolean check for any errors
 //----------------------------------------------------------------------------------------------------
