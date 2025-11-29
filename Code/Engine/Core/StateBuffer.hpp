@@ -163,7 +163,7 @@ public:
 
             // Increment swap counter for profiling
             ++m_totalSwaps;
-            DAEMON_LOG(LogCore, eLogVerbosity::Display,StringFormat("StateBuffer::SwapBuffers - Success (total swaps: {})", m_totalSwaps));
+            // DAEMON_LOG(LogCore, eLogVerbosity::Display,StringFormat("StateBuffer::SwapBuffers - Success (total swaps: {})", m_totalSwaps));
 
         }
         catch (std::bad_alloc const& e)
