@@ -30,6 +30,7 @@
 #include "Engine/Entity/EntityID.hpp"
 #include <mutex>
 #include <unordered_map>
+#include <atomic>
 
 //----------------------------------------------------------------------------------------------------
 // CameraStateBuffer Class
@@ -148,6 +149,19 @@ public:
 	// Thread Safety: Lock-free read, may race with SwapBuffers()
 	uint64_t GetTotalSwaps() const { return m_totalSwaps; }
 
+	//------------------------------------------------------------------------------------------------
+	// Dirty Tracking (Phase 4.1)
+	//------------------------------------------------------------------------------------------------
+
+	// Check if back buffer has pending changes
+	// Returns: true if GetBackBuffer() was called since last SwapBuffers()
+	// Thread Safety: Lock-free read with relaxed ordering (monitoring only)
+	bool IsDirty() const { return m_isDirty.load(std::memory_order_relaxed); }
+
+	// Get count of skipped swaps due to clean buffer (for profiling)
+	// Thread Safety: Lock-free read, may race with SwapBuffers()
+	uint64_t GetSkippedSwaps() const { return m_skippedSwaps; }
+
 private:
 	//------------------------------------------------------------------------------------------------
 	// Double-Buffer Storage
@@ -180,6 +194,12 @@ private:
 	// Statistics
 	//------------------------------------------------------------------------------------------------
 	uint64_t m_totalSwaps;  // Total buffer swaps performed (profiling counter)
+
+	//------------------------------------------------------------------------------------------------
+	// Dirty Tracking (Phase 4.1)
+	//------------------------------------------------------------------------------------------------
+	std::atomic<bool> m_isDirty{false};  // True if back buffer has pending changes
+	uint64_t m_skippedSwaps{0};          // Total swaps skipped due to clean buffer
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -210,8 +230,12 @@ private:
 //   - Main thread reads active camera via GetActiveCameraID()
 //   - No locking needed (atomic EntityID read/write on modern platforms)
 //
-// Future Optimizations (Phase 4):
-//   - Dirty tracking: Only rebuild changed cameras in cache
+// Implemented Optimization (Phase 4.1):
+//   - Buffer-level dirty tracking: Skip swap when no changes
+//   - Reduces overhead for static scenes significantly
+//
+// Future Optimizations (Phase 4.2+):
+//   - Per-camera dirty tracking: Only rebuild changed cameras in cache
 //   - Multi-camera rendering: Support multiple simultaneous active cameras
 //   - Camera pools: Preallocated storage to avoid allocation per frame
 //----------------------------------------------------------------------------------------------------

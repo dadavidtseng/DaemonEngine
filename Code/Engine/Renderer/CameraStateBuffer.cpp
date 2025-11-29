@@ -67,6 +67,9 @@ CameraStateMap const* CameraStateBuffer::GetFrontBuffer() const
 //----------------------------------------------------------------------------------------------------
 CameraStateMap* CameraStateBuffer::GetBackBuffer()
 {
+    // Phase 4.1: Mark buffer as dirty when worker requests write access
+    m_isDirty.store(true, std::memory_order_release);
+
     // Lock-free write from worker thread
     // Returns mutable pointer for single-writer pattern
     return m_backBuffer;
@@ -78,6 +81,14 @@ CameraStateMap* CameraStateBuffer::GetBackBuffer()
 
 void CameraStateBuffer::SwapBuffers()
 {
+    // Phase 4.1: Check dirty flag before acquiring lock (optimization)
+    // If buffer hasn't been modified, skip the expensive copy operation
+    if (!m_isDirty.load(std::memory_order_acquire))
+    {
+        ++m_skippedSwaps;
+        return;
+    }
+
     // Lock during swap to prevent concurrent access
     std::lock_guard lock(m_swapMutex);
 
@@ -180,6 +191,9 @@ void CameraStateBuffer::SwapBuffers()
 
     // Increment swap counter for profiling
     ++m_totalSwaps;
+
+    // Phase 4.1: Reset dirty flag after successful copy
+    m_isDirty.store(false, std::memory_order_release);
 }
 
 //----------------------------------------------------------------------------------------------------
