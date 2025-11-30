@@ -109,9 +109,31 @@ void CameraStateBuffer::SwapBuffers()
         }
     }
 
-    // Full copy: back buffer → new front buffer
-    // Phase 2b: Simple strategy, optimize in Phase 4 if profiling shows need
-    *m_frontBuffer = *m_backBuffer;
+    // Phase 4.2: Per-key dirty tracking optimization
+    if (m_dirtyTrackingEnabled)
+    {
+        std::lock_guard dirtyLock(m_dirtyKeysMutex);
+
+        if (!m_dirtyKeys.empty())
+        {
+            // Copy only dirty cameras (O(d) where d = dirty count)
+            for (auto const& cameraId : m_dirtyKeys)
+            {
+                auto it = m_backBuffer->find(cameraId);
+                if (it != m_backBuffer->end())
+                {
+                    (*m_frontBuffer)[cameraId] = it->second;
+                }
+            }
+            m_dirtyKeys.clear();
+        }
+    }
+    else
+    {
+        // Phase 4.1: Full buffer copy (O(n) where n = total cameras)
+        // Phase 2b: Simple strategy, optimize in Phase 4 if profiling shows need
+        *m_frontBuffer = *m_backBuffer;
+    }
 
     // Swap pointers (cheap, no data copy)
     std::swap(m_frontBuffer, m_backBuffer);
@@ -223,4 +245,23 @@ size_t CameraStateBuffer::GetCameraCount() const
     // Lock-free read (approximate count, may be stale)
     // Used for monitoring only, not critical for correctness
     return m_frontBuffer->size();
+}
+
+//----------------------------------------------------------------------------------------------------
+// Per-Key Dirty Tracking (Phase 4.2)
+//----------------------------------------------------------------------------------------------------
+
+void CameraStateBuffer::EnableDirtyTracking(bool enable)
+{
+    m_dirtyTrackingEnabled = enable;
+}
+
+//----------------------------------------------------------------------------------------------------
+void CameraStateBuffer::MarkDirty(EntityID cameraId)
+{
+    if (!m_dirtyTrackingEnabled) return;
+
+    m_isDirty.store(true, std::memory_order_release);
+    std::lock_guard lock(m_dirtyKeysMutex);
+    m_dirtyKeys.insert(cameraId);
 }

@@ -31,6 +31,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <atomic>
+#include <unordered_set>
 
 //----------------------------------------------------------------------------------------------------
 // CameraStateBuffer Class
@@ -162,6 +163,21 @@ public:
 	// Thread Safety: Lock-free read, may race with SwapBuffers()
 	uint64_t GetSkippedSwaps() const { return m_skippedSwaps; }
 
+	//------------------------------------------------------------------------------------------------
+	// Per-Key Dirty Tracking (Phase 4.2)
+	//------------------------------------------------------------------------------------------------
+
+	// Enable/disable per-key dirty tracking optimization
+	// When enabled: SwapBuffers() copies only dirty cameras (O(d) where d = dirty count)
+	// When disabled: SwapBuffers() copies entire buffer (O(n) where n = total cameras)
+	// Thread Safety: Should be called before any GetBackBuffer() calls (setup only)
+	void EnableDirtyTracking(bool enable);
+
+	// Mark specific camera as dirty (call after modifying camera in back buffer)
+	// Thread Safety: Thread-safe with mutex protection
+	// Performance: O(1) unordered_set insert
+	void MarkDirty(EntityID cameraId);
+
 private:
 	//------------------------------------------------------------------------------------------------
 	// Double-Buffer Storage
@@ -200,6 +216,13 @@ private:
 	//------------------------------------------------------------------------------------------------
 	std::atomic<bool> m_isDirty{false};  // True if back buffer has pending changes
 	uint64_t m_skippedSwaps{0};          // Total swaps skipped due to clean buffer
+
+	//------------------------------------------------------------------------------------------------
+	// Per-Key Dirty Tracking (Phase 4.2)
+	//------------------------------------------------------------------------------------------------
+	std::unordered_set<EntityID> m_dirtyKeys;  // Set of dirty camera IDs (Phase 4.2)
+	mutable std::mutex m_dirtyKeysMutex;       // Protects m_dirtyKeys access
+	bool m_dirtyTrackingEnabled{false};        // Enable per-key optimization
 };
 
 //----------------------------------------------------------------------------------------------------
