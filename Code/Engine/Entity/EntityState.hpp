@@ -44,7 +44,6 @@
 //   - radius: Uniform scale (single float, no separate scale vector)
 //   - meshType: Simple string-based mesh selection ("cube", "sphere", "grid", etc.)
 //   - isActive: Active flag (true = render, false = skip)
-//   - vertexBufferHandle: Handle to persistent vertex buffer/VAO (0 = invalid)
 //   - cameraType: Camera type for entity-based camera selection ("world" or "screen")
 //
 // Usage:
@@ -61,7 +60,6 @@ struct EntityState
     float       radius;            // Uniform scale (single float, no separate scale vector)
     std::string meshType;          // "cube", "sphere", "grid", etc. (Phase 1 simplicity)
     bool        isActive;          // Active flag (true = render, false = skip)
-    int         vertexBufferHandle;  // Phase 2: Handle to persistent vertex buffer/VAO (0 = invalid)
     std::string cameraType;        // Phase 2: Camera type for entity-based camera selection ("world" or "screen")
 
     // Default constructor (identity state)
@@ -72,20 +70,18 @@ struct EntityState
           radius(1.0f),
           meshType("cube"),
           isActive(true),
-          vertexBufferHandle(0),
           cameraType("world")  // Default to world camera (3D entities)
     {
     }
 
     // Explicit constructor
-    EntityState(Vec3 const& pos, EulerAngles const& orient, Rgba8 const& col, float r, std::string const& type, bool active = true, int vbHandle = 0, std::string const& camType = "world")
+    EntityState(Vec3 const& pos, EulerAngles const& orient, Rgba8 const& col, float r, std::string const& type, bool active = true, std::string const& camType = "world")
         : position(pos),
           orientation(orient),
           color(col),
           radius(r),
           meshType(type),
           isActive(active),
-          vertexBufferHandle(vbHandle),
           cameraType(camType)  // Default to world camera if not specified
     {
     }
