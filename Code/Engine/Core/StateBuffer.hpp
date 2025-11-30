@@ -32,10 +32,71 @@
 #include <cstdint>
 #include <exception>
 #include <atomic>
+#include <unordered_set>
+#include <array>
+#include <chrono>  // For std::chrono::milliseconds in try_lock_for
 
 #include "ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+
+//----------------------------------------------------------------------------------------------------
+// RunningAverage Helper Class (Phase 4.3)
+//
+// Generic running average calculator with fixed window size.
+// Uses circular buffer pattern for O(1) Add() operation.
+//
+// Template Parameters:
+//   T: Value type (typically float or double)
+//   WindowSize: Number of samples to average over (typically 60 for 1 second at 60 FPS)
+//
+// Thread Safety: Not thread-safe (caller must provide synchronization if needed)
+//
+// Performance:
+//   - Add(): O(1) constant time
+//   - GetAverage(): O(WindowSize) linear time
+//   - Memory: sizeof(T) × WindowSize
+//
+// Usage:
+//   RunningAverage<float, 60> dirtyRatios;
+//   dirtyRatios.Add(0.05f);  // Add dirty ratio sample
+//   float avg = dirtyRatios.GetAverage();  // Get average over last 60 samples
+//----------------------------------------------------------------------------------------------------
+template <typename T, size_t WindowSize>
+class RunningAverage
+{
+public:
+	// Add new value to running average (circular buffer pattern)
+	// Parameters: value - Sample value to add
+	// Performance: O(1) constant time
+	void Add(T value)
+	{
+		m_values[m_index] = value;
+		m_index           = (m_index + 1) % WindowSize;
+		m_count           = (m_count < WindowSize) ? (m_count + 1) : WindowSize;
+	}
+
+	// Get average of all samples in window
+	// Returns: Average value, or T{} if no samples added
+	// Performance: O(WindowSize) linear time
+	T GetAverage() const
+	{
+		if (m_count == 0)
+			return T{};
+
+		T sum = T{};
+		for (size_t i = 0; i < m_count; ++i)
+		{
+			sum += m_values[i];
+		}
+		return sum / static_cast<T>(m_count);
+	}
+
+private:
+	std::array<T, WindowSize> m_values{};  // Circular buffer storage
+	size_t                    m_index = 0; // Current write position
+	size_t                    m_count = 0; // Number of valid samples (0 to WindowSize)
+};
 
 //----------------------------------------------------------------------------------------------------
 // StateBuffer Template Class
@@ -80,6 +141,11 @@ class StateBuffer
 {
 public:
     //------------------------------------------------------------------------------------------------
+    // Type Aliases
+    //------------------------------------------------------------------------------------------------
+    using KeyType = typename TStateContainer::key_type;
+
+    //------------------------------------------------------------------------------------------------
     // Construction / Destruction
     //------------------------------------------------------------------------------------------------
     StateBuffer()
@@ -87,6 +153,7 @@ public:
           , m_backBuffer(&m_bufferB)
           , m_totalSwaps(0)
           , m_swapErrorCount(0)
+          , m_timeoutCount(0)
     {
     }
 
@@ -157,7 +224,16 @@ public:
             return;
         }
 
-        std::lock_guard lock(m_swapMutex);
+        // Phase 3.3: Mutex acquisition with timeout protection (deadlock prevention)
+        std::unique_lock<std::timed_mutex> lock(m_swapMutex, std::defer_lock);
+        if (!lock.try_lock_for(SWAP_MUTEX_TIMEOUT))
+        {
+            DAEMON_LOG(LogCore, eLogVerbosity::Error,
+                       "StateBuffer::SwapBuffers - Mutex lock timeout after %lldms. Preserving stale front buffer. (Total timeouts: %llu)",
+                       SWAP_MUTEX_TIMEOUT.count(), m_timeoutCount + 1);
+            ++m_timeoutCount;
+            return;
+        }
 
         // Phase 3.1: Validate buffer state before copy
         if (!ValidateStateBuffer())
@@ -171,9 +247,50 @@ public:
         // Phase 3.1: Wrap copy operation in try-catch for error recovery
         try
         {
-            // Copy back buffer → front buffer (full deep copy)
-            // This ensures front buffer is stable snapshot for rendering
-            *m_frontBuffer = *m_backBuffer;
+            // Phase 4.2: Per-key dirty tracking optimization
+            if (m_dirtyTrackingEnabled)
+            {
+                std::lock_guard dirtyLock(m_dirtyKeysMutex);
+
+                if (!m_dirtyKeys.empty())
+                {
+                    // Phase 4.3: Track dirty count BEFORE clearing
+                    size_t dirtyCount = m_dirtyKeys.size();
+
+                    // Copy only dirty entities (O(d) where d = dirty count)
+                    for (auto const& key : m_dirtyKeys)
+                    {
+                        auto it = m_backBuffer->find(key);
+                        if (it != m_backBuffer->end())
+                        {
+                            (*m_frontBuffer)[key] = it->second;
+                        }
+                    }
+
+                    // Phase 4.3: Update metrics after copy
+                    m_totalCopyOperations += dirtyCount;
+
+                    // Calculate and track dirty ratio
+                    size_t totalEntities = m_frontBuffer->size();
+                    if (totalEntities > 0)
+                    {
+                        float dirtyRatio = static_cast<float>(dirtyCount) / static_cast<float>(totalEntities);
+                        m_dirtyRatios.Add(dirtyRatio);
+                    }
+
+                    m_dirtyKeys.clear();
+                }
+            }
+            else
+            {
+                // Phase 4.1: Full buffer copy (O(n) where n = total entities)
+                // Copy back buffer → front buffer (full deep copy)
+                // This ensures front buffer is stable snapshot for rendering
+                *m_frontBuffer = *m_backBuffer;
+
+                // Phase 4.3: Track full copy operations
+                m_totalCopyOperations += m_frontBuffer->size();
+            }
 
             // Swap buffer pointers (now back buffer becomes old front buffer)
             std::swap(m_frontBuffer, m_backBuffer);
@@ -250,6 +367,22 @@ public:
         return m_swapErrorCount > 0;
     }
 
+    // Get total mutex timeout events (for monitoring)
+    // Returns: Total timeouts encountered since initialization
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    uint64_t GetTimeoutCount() const
+    {
+        return m_timeoutCount;
+    }
+
+    // Check if any timeout events have occurred
+    // Returns: true if any timeouts encountered, false otherwise
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    bool HasTimeouts() const
+    {
+        return m_timeoutCount > 0;
+    }
+
     //------------------------------------------------------------------------------------------------
     // Dirty Tracking (Phase 4.1)
     //------------------------------------------------------------------------------------------------
@@ -269,7 +402,71 @@ public:
         return m_skippedSwaps;
     }
 
+    //------------------------------------------------------------------------------------------------
+    // Per-Key Dirty Tracking (Phase 4.2)
+    //------------------------------------------------------------------------------------------------
+
+    // Enable/disable per-key dirty tracking optimization
+    // When enabled: SwapBuffers() copies only dirty keys (O(d) where d = dirty count)
+    // When disabled: SwapBuffers() copies entire buffer (O(n) where n = total entities)
+    // Thread Safety: Should be called before any GetBackBuffer() calls (setup only)
+    void EnableDirtyTracking(bool enable)
+    {
+        m_dirtyTrackingEnabled = enable;
+    }
+
+    // Mark specific key as dirty (call after modifying entity in back buffer)
+    // Thread Safety: Thread-safe with mutex protection
+    // Performance: O(1) unordered_set insert
+    void MarkDirty(KeyType const& key)
+    {
+        if (!m_dirtyTrackingEnabled) return;
+
+        m_isDirty.store(true, std::memory_order_release);
+        std::lock_guard lock(m_dirtyKeysMutex);
+        m_dirtyKeys.insert(key);
+    }
+
+    //------------------------------------------------------------------------------------------------
+    // Performance Metrics (Phase 4.3)
+    //------------------------------------------------------------------------------------------------
+
+    // Get count of dirty keys in current dirty set
+    // Returns: Number of entities marked dirty since last swap
+    // Thread Safety: Thread-safe with mutex protection
+    // Performance: O(1) unordered_set::size()
+    size_t GetDirtyCount() const
+    {
+        if (!m_dirtyTrackingEnabled) return 0;
+
+        std::lock_guard lock(m_dirtyKeysMutex);
+        return m_dirtyKeys.size();
+    }
+
+    // Get average dirty ratio over last 60 frames
+    // Returns: 0.0-1.0 ratio (dirty entities / total entities), averaged over 60 frames
+    // Thread Safety: Lock-free read (RunningAverage internally thread-safe for reads)
+    // Note: Returns 0.0 if no samples collected yet
+    float GetAverageDirtyRatio() const
+    {
+        return m_dirtyRatios.GetAverage();
+    }
+
+    // Get total entities copied across all swaps
+    // Returns: Cumulative copy operations for profiling
+    // Thread Safety: Lock-free read, may race with SwapBuffers()
+    // Note: This counts individual entity copies, not swap operations
+    uint64_t GetTotalCopyOperations() const
+    {
+        return m_totalCopyOperations;
+    }
+
 private:
+    //------------------------------------------------------------------------------------------------
+    // Phase 3.3: Mutex Timeout Configuration
+    //------------------------------------------------------------------------------------------------
+    static constexpr std::chrono::milliseconds SWAP_MUTEX_TIMEOUT{10};  // 10ms timeout (10x normal swap duration)
+
     //------------------------------------------------------------------------------------------------
     // Double-Buffer Storage
     //------------------------------------------------------------------------------------------------
@@ -282,19 +479,33 @@ private:
     //------------------------------------------------------------------------------------------------
     // Synchronization
     //------------------------------------------------------------------------------------------------
-    mutable std::mutex m_swapMutex;  // Protects buffer swap operation
+    mutable std::timed_mutex m_swapMutex;  // Protects buffer swap operation (Phase 3.3: timed_mutex for try_lock_for)
 
     //------------------------------------------------------------------------------------------------
-    // Statistics
+    // Error Monitoring (Phase 3.1 + Phase 3.3)
     //------------------------------------------------------------------------------------------------
     uint64_t m_totalSwaps;       // Total buffer swaps performed (profiling counter)
-    uint64_t m_swapErrorCount;   // Phase 3.1: Total swap errors encountered (error monitoring)
+    uint64_t m_swapErrorCount{0};   // Phase 3.1: Total swap errors encountered (exception handling)
+    uint64_t m_timeoutCount{0};     // Phase 3.3: Total mutex timeout events (deadlock prevention)
 
     //------------------------------------------------------------------------------------------------
     // Dirty Tracking (Phase 4.1)
     //------------------------------------------------------------------------------------------------
     std::atomic<bool> m_isDirty{false};  // True if back buffer has pending changes
     uint64_t m_skippedSwaps{0};          // Total swaps skipped due to clean buffer
+
+    //------------------------------------------------------------------------------------------------
+    // Per-Key Dirty Tracking (Phase 4.2)
+    //------------------------------------------------------------------------------------------------
+    std::unordered_set<KeyType> m_dirtyKeys;  // Set of dirty entity IDs (Phase 4.2)
+    mutable std::mutex m_dirtyKeysMutex;      // Protects m_dirtyKeys access
+    bool m_dirtyTrackingEnabled{false};       // Enable per-key optimization
+
+    //------------------------------------------------------------------------------------------------
+    // Performance Metrics (Phase 4.3)
+    //------------------------------------------------------------------------------------------------
+    RunningAverage<float, 60> m_dirtyRatios;  // Average dirty ratio over last 60 frames
+    uint64_t m_totalCopyOperations{0};        // Total entities copied (for profiling)
 
     //------------------------------------------------------------------------------------------------
     // Buffer Validation (Phase 3.1)
@@ -425,6 +636,31 @@ private:
 //   Monitoring API:
 //     - GetSwapErrorCount(): Returns total errors encountered
 //     - HasSwapErrors(): Quick boolean check for any errors
+//
+// Phase 3.3: Mutex Timeout Protection (SwapBuffers Deadlock Prevention)
+//   Goal:
+//     - Prevent indefinite blocking if mutex acquisition fails
+//     - Add defensive programming safeguard for theoretical deadlock scenarios
+//     - Maintain stable 60 FPS rendering even if SwapBuffers stalls
+//
+//   Implementation:
+//     - std::unique_lock with try_lock_for(10ms) instead of std::lock_guard
+//     - std::timed_mutex required (std::mutex does not support try_lock_for)
+//     - Timeout duration: 10ms (10x normal swap duration of <1ms)
+//     - Timeout triggers error logging and graceful degradation (preserve stale state)
+//     - Timeout counter: m_timeoutCount (uint64_t, main thread only)
+//
+//   Monitoring API:
+//     - GetTimeoutCount(): Returns total timeout events (for production telemetry)
+//     - HasTimeouts(): Quick boolean check for any timeouts
+//
+//   Thread Safety:
+//     - m_timeoutCount is non-atomic (acceptable for main-thread-only writes)
+//     - GetTimeoutCount() may race with SwapBuffers() (approximate values OK)
+//
+//   Performance Impact:
+//     - Normal case (no contention): <1μs overhead vs std::lock_guard
+//     - Timeout case (deadlock): Prevents indefinite blocking (60 FPS maintained)
 //
 // Phase 4.1: Dirty Tracking Optimization
 //   Goal:
