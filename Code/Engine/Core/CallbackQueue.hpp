@@ -1,77 +1,44 @@
 //----------------------------------------------------------------------------------------------------
 // CallbackQueue.hpp
-// Phase 2: Async Architecture - Lock-Free SPSC Callback Queue
+// Phase 1: Command Queue Refactoring - Callback Queue
 //
 // Purpose:
 //   Thread-safe, lock-free Single-Producer-Single-Consumer (SPSC) ring buffer for
 //   Main render thread (C++) → JavaScript worker thread callback communication.
+//   Now inherits from CommandQueueBase<CallbackData> template.
 //
 // Design Rationale:
-//   - SPSC over MPMC: Simpler, faster (single writer = Main thread)
-//   - Ring buffer over linked list: Cache-friendly, bounded memory
-//   - Lock-free over mutex: Predictable latency, no priority inversion
-//   - Bounded capacity: Backpressure prevents memory runaway
+//   - Inherits SPSC implementation from CommandQueueBase (eliminates ~150 lines)
+//   - Maintains Enqueue/DequeueAll API for backward compatibility
+//   - Enqueue() wraps Submit(), DequeueAll() wraps ConsumeAll()
 //
 // Thread Safety Model:
-//   - Producer (Main Thread): Writes to m_tail, reads m_head (atomic)
-//   - Consumer (JS Worker): Writes to m_head, reads m_tail (atomic)
-//   - Cache-line separation: Prevents false sharing between head/tail
+//   - Producer (Main Thread): Calls Enqueue() to queue callbacks
+//   - Consumer (JS Worker): Calls DequeueAll() to process callbacks
+//   - Inherited from CommandQueueBase: Cache-line separated atomic indices
 //
 // Performance Characteristics:
 //   - Enqueue: O(1), lock-free, < 1µs latency
 //   - Dequeue: O(n) where n = callbacks per frame (typically 1-10)
 //   - Memory: Fixed ~4 KB (100 callbacks × ~40 bytes)
 //
-// Author: Phase 2 - Async Architecture Implementation
-// Date: 2025-11-18
+// Author: Phase 1 - Command Queue Refactoring
+// Date: 2025-11-30
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
-// Suppress C4324: Structure padding warning for cache-line alignment
-// This warning is intentional - we WANT the compiler to add padding for optimal performance
-#pragma warning(push)
-#pragma warning(disable: 4324)
+#include "Engine/Core/CommandQueueBase.hpp"
+#include "Engine/Core/CallbackData.hpp"
 
-//----------------------------------------------------------------------------------------------------
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
 #include <functional>
-#include <string>
-
-//----------------------------------------------------------------------------------------------------
-// CallbackType
-//
-// Enum for different types of callbacks that can be enqueued.
-//----------------------------------------------------------------------------------------------------
-enum class CallbackType : uint8_t
-{
-	ENTITY_CREATED,
-	CAMERA_CREATED,
-	RESOURCE_LOADED,
-	GENERIC
-};
-
-//----------------------------------------------------------------------------------------------------
-// CallbackData
-//
-// Data structure for C++→JavaScript callback messages.
-// Size: ~40 bytes (8+8+24+4 with padding)
-//----------------------------------------------------------------------------------------------------
-struct CallbackData
-{
-	uint64_t     callbackId;      // Unique callback identifier (JavaScript-generated)
-	uint64_t     resultId;        // EntityID or CameraID returned from C++
-	std::string  errorMessage;    // Empty = success, non-empty = error description
-	CallbackType type;            // Type of callback for type-specific handling
-};
 
 //----------------------------------------------------------------------------------------------------
 // CallbackQueue
 //
 // Lock-free SPSC ring buffer for asynchronous callback delivery.
+// Inherits core SPSC implementation from CommandQueueBase<CallbackData>.
 //
 // Usage Pattern:
 //
@@ -95,18 +62,17 @@ struct CallbackData
 //   - Empty queue → DequeueAll() returns immediately
 //
 // Thread Safety Guarantees:
-//   - Single producer (main thread), single consumer (JS worker)
+//   - Inherited from CommandQueueBase: Single producer, single consumer
 //   - Lock-free progress guarantee
 //   - No blocking operations (conditional wait/notify not required)
 //----------------------------------------------------------------------------------------------------
-class CallbackQueue
+class CallbackQueue : public CommandQueueBase<CallbackData>
 {
 public:
 	//------------------------------------------------------------------------------------------------
 	// Constants
 	//------------------------------------------------------------------------------------------------
 	static constexpr size_t DEFAULT_CAPACITY = 100;   // 100 callbacks ≈ 4 KB
-	static constexpr size_t CACHE_LINE_SIZE  = 64;    // Modern CPU cache line size
 
 	//------------------------------------------------------------------------------------------------
 	// Construction / Destruction
@@ -114,34 +80,32 @@ public:
 	explicit CallbackQueue(size_t capacity = DEFAULT_CAPACITY);
 	~CallbackQueue();
 
-	// Non-copyable, non-movable (contains atomic members)
+	// Non-copyable, non-movable (inherited from base)
 	CallbackQueue(CallbackQueue const&)            = delete;
 	CallbackQueue& operator=(CallbackQueue const&) = delete;
 	CallbackQueue(CallbackQueue&&)                 = delete;
 	CallbackQueue& operator=(CallbackQueue&&)      = delete;
 
 	//------------------------------------------------------------------------------------------------
-	// Producer API (Main Render Thread - C++)
+	// Producer API (Main Render Thread - C++) - Wrappers for compatibility
 	//------------------------------------------------------------------------------------------------
 
 	// Enqueue a callback to the queue (non-blocking)
+	// Wraps CommandQueueBase::Submit() for backward API compatibility
 	// Returns:
 	//   true  - Callback successfully enqueued
 	//   false - Queue full (backpressure triggered)
 	//
 	// Thread Safety: Safe to call from single producer thread only
 	// Performance: O(1), lock-free, < 1µs latency
-	bool Enqueue(CallbackData const& callback);
-
-	// Get current queue size (approximate, for monitoring only)
-	// Warning: Value may be stale due to concurrent consumer
-	size_t GetApproximateSize() const;
+	bool Enqueue(CallbackData const& callback) { return Submit(callback); }
 
 	//------------------------------------------------------------------------------------------------
-	// Consumer API (JavaScript Worker Thread)
+	// Consumer API (JavaScript Worker Thread) - Wrappers for compatibility
 	//------------------------------------------------------------------------------------------------
 
 	// Dequeue all available callbacks using a callback processor
+	// Wraps CommandQueueBase::ConsumeAll() for backward API compatibility
 	// The processor is called for each callback in FIFO order
 	//
 	// Template Processor Signature:
@@ -159,94 +123,30 @@ public:
 	// Thread Safety: Safe to call from single consumer thread only
 	// Performance: O(n) where n = number of callbacks in queue
 	template <typename ProcessorFunc>
-	void DequeueAll(ProcessorFunc&& processor);
-
-	// Get queue capacity (fixed at construction)
-	size_t GetCapacity() const { return m_capacity; }
+	void DequeueAll(ProcessorFunc&& processor) { ConsumeAll(std::forward<ProcessorFunc>(processor)); }
 
 	//------------------------------------------------------------------------------------------------
-	// Monitoring / Debugging
+	// Monitoring API - Wrappers for compatibility
 	//------------------------------------------------------------------------------------------------
 
-	// Check if queue is empty (approximate, may change immediately after call)
-	bool IsEmpty() const;
+	// Get total callbacks enqueued since creation (wraps GetTotalSubmitted)
+	uint64_t GetTotalEnqueued() const { return GetTotalSubmitted(); }
 
-	// Check if queue is full (approximate, may change immediately after call)
-	bool IsFull() const;
-
-	// Get total callbacks enqueued since creation (atomic counter)
-	uint64_t GetTotalEnqueued() const { return m_totalEnqueued.load(std::memory_order_relaxed); }
-
-	// Get total callbacks dequeued since creation (atomic counter)
-	uint64_t GetTotalDequeued() const { return m_totalDequeued.load(std::memory_order_relaxed); }
-
-private:
-	//------------------------------------------------------------------------------------------------
-	// Ring Buffer Implementation
-	//------------------------------------------------------------------------------------------------
-
-	// Ring buffer storage (dynamically allocated array)
-	CallbackData* m_buffer = nullptr;
-	size_t        m_capacity;  // Power of 2 preferred for modulo optimization
+	// Get total callbacks dequeued since creation (wraps GetTotalConsumed)
+	uint64_t GetTotalDequeued() const { return GetTotalConsumed(); }
 
 	//------------------------------------------------------------------------------------------------
-	// Atomic Indices (Cache-Line Separated)
+	// Inherited Public API (from CommandQueueBase)
 	//------------------------------------------------------------------------------------------------
-
-	// Producer writes to m_tail, reads m_head
-	// Aligned to cache line to prevent false sharing
-	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_head = 0;  // Consumer write, producer read
-
-	// Consumer writes to m_head, reads m_tail
-	// Aligned to cache line to prevent false sharing
-	alignas(CACHE_LINE_SIZE) std::atomic<size_t> m_tail = 0;  // Producer write, consumer read
-
-	//------------------------------------------------------------------------------------------------
-	// Statistics (Atomic Counters)
-	//------------------------------------------------------------------------------------------------
-	std::atomic<uint64_t> m_totalEnqueued = 0;  // Total callbacks enqueued (overflow expected)
-	std::atomic<uint64_t> m_totalDequeued = 0;  // Total callbacks dequeued (overflow expected)
-
-	//------------------------------------------------------------------------------------------------
-	// Helper Methods
-	//------------------------------------------------------------------------------------------------
-
-	// Get next index in ring buffer (wraps around at capacity)
-	size_t NextIndex(size_t index) const { return (index + 1) % m_capacity; }
+	// bool Submit(CallbackData const& callback);               ← Used by Enqueue()
+	// template <typename ProcessorFunc> void ConsumeAll(...);  ← Used by DequeueAll()
+	// size_t GetApproximateSize() const;                       ← Direct inheritance
+	// size_t GetCapacity() const;                              ← Direct inheritance
+	// bool IsEmpty() const;                                    ← Direct inheritance
+	// bool IsFull() const;                                     ← Direct inheritance
+	// uint64_t GetTotalSubmitted() const;                      ← Wrapped by GetTotalEnqueued()
+	// uint64_t GetTotalConsumed() const;                       ← Wrapped by GetTotalDequeued()
 };
-
-//----------------------------------------------------------------------------------------------------
-// Template Implementation (must be in header for template instantiation)
-//----------------------------------------------------------------------------------------------------
-
-template <typename ProcessorFunc>
-void CallbackQueue::DequeueAll(ProcessorFunc&& processor)
-{
-	// Load current consumer position (relaxed ordering sufficient for SPSC)
-	size_t currentHead = m_head.load(std::memory_order_relaxed);
-
-	// Load current producer position (acquire ordering to synchronize with producer's release)
-	size_t currentTail = m_tail.load(std::memory_order_acquire);
-
-	// Process all callbacks from head to tail
-	while (currentHead != currentTail)
-	{
-		// Read callback from buffer
-		CallbackData const& callback = m_buffer[currentHead];
-
-		// Invoke processor callback
-		processor(callback);
-
-		// Advance head index
-		currentHead = NextIndex(currentHead);
-
-		// Increment dequeue counter
-		m_totalDequeued.fetch_add(1, std::memory_order_relaxed);
-	}
-
-	// Update consumer head position (release ordering to synchronize with producer's acquire)
-	m_head.store(currentHead, std::memory_order_release);
-}
 
 //----------------------------------------------------------------------------------------------------
 // Design Notes
@@ -278,6 +178,3 @@ void CallbackQueue::DequeueAll(ProcessorFunc&& processor)
 //   - No dropped callbacks under typical load (< 10 callbacks/frame)
 //   - JavaScript worker thread processes callbacks without blocking C++
 //----------------------------------------------------------------------------------------------------
-
-// Restore warning settings
-#pragma warning(pop)
