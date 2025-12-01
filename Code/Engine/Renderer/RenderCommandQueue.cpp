@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------------------------------
 // RenderCommandQueue.cpp
-// Phase 1: Async Architecture - Lock-Free SPSC Command Queue Implementation
+// Phase 1: Command Queue Refactoring - Render Command Queue Implementation
 //----------------------------------------------------------------------------------------------------
 
 #include "Engine/Renderer/RenderCommandQueue.hpp"
@@ -12,172 +12,89 @@
 //----------------------------------------------------------------------------------------------------
 // Constructor
 //
-// Allocates ring buffer with specified capacity.
-// Initializes atomic indices and statistics counters.
+// Initializes CommandQueueBase with specified capacity.
+// Logs queue initialization for monitoring.
 //----------------------------------------------------------------------------------------------------
 RenderCommandQueue::RenderCommandQueue(size_t const capacity)
-    : m_capacity(capacity)
+	: CommandQueueBase<RenderCommand>(capacity)  // Initialize base template
 {
-    // Validate capacity (must be > 0)
-    if (capacity == 0)
-    {
-        ERROR_AND_DIE("RenderCommandQueue: Capacity must be greater than zero");
-    }
+	// Validate capacity (must be > 0)
+	if (capacity == 0)
+	{
+		ERROR_AND_DIE("RenderCommandQueue: Capacity must be greater than zero");
+	}
 
-    // Allocate ring buffer storage
-    m_buffer = new RenderCommand[m_capacity];
-
-    DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
-               Stringf("RenderCommandQueue: Initialized with capacity %llu (%.2f KB)",
-                   static_cast<uint64_t>(m_capacity),
-                   (m_capacity * sizeof(RenderCommand)) / 1024.f));
+	DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
+	           Stringf("RenderCommandQueue: Initialized with capacity %llu (%.2f KB)",
+	               static_cast<uint64_t>(capacity),
+	               (capacity * sizeof(RenderCommand)) / 1024.f));
 }
 
 //----------------------------------------------------------------------------------------------------
 // Destructor
 //
-// Deallocates ring buffer storage.
-// Logs statistics for debugging/profiling.
+// Logs final statistics for debugging/profiling.
+// Base class (CommandQueueBase) handles buffer deallocation.
 //----------------------------------------------------------------------------------------------------
 RenderCommandQueue::~RenderCommandQueue()
 {
-    // Log final statistics
-    uint64_t totalSubmitted = m_totalSubmitted.load(std::memory_order_relaxed);
-    uint64_t totalConsumed  = m_totalConsumed.load(std::memory_order_relaxed);
+	// Log final statistics
+	uint64_t totalSubmitted = GetTotalSubmitted();
+	uint64_t totalConsumed  = GetTotalConsumed();
 
-    DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
-               Stringf("RenderCommandQueue: Shutdown - Total submitted: %llu, Total consumed: %llu, Lost: %llu",
-                   totalSubmitted,
-                   totalConsumed,
-                   totalSubmitted - totalConsumed));
-
-    // Deallocate buffer
-    delete[] m_buffer;
-    m_buffer = nullptr;
+	DAEMON_LOG(LogRenderer, eLogVerbosity::Log,
+	           Stringf("RenderCommandQueue: Shutdown - Total submitted: %llu, Total consumed: %llu, Lost: %llu",
+	               totalSubmitted,
+	               totalConsumed,
+	               totalSubmitted - totalConsumed));
 }
 
 //----------------------------------------------------------------------------------------------------
-// Submit (Producer API)
+// OnQueueFull (Virtual Hook Override)
 //
-// Enqueues a command to the ring buffer (non-blocking, lock-free).
-//
-// Algorithm:
-//   1. Load current tail (producer write position)
-//   2. Calculate next tail position
-//   3. Load current head (consumer read position) with acquire semantics
-//   4. Check if queue is full (next tail == head)
-//   5. If not full: Write command, advance tail with release semantics
-//
-// Memory Ordering:
-//   - m_head.load (acquire): Ensures consumer's updates are visible to producer
-//   - m_tail.store (release): Ensures command data is visible to consumer before tail update
-//
-// Returns:
-//   true  - Command successfully enqueued
-//   false - Queue full (backpressure)
+// Called by CommandQueueBase::Submit() when queue is full.
+// Logs warning for monitoring/debugging.
 //----------------------------------------------------------------------------------------------------
-bool RenderCommandQueue::Submit(RenderCommand const& command)
+void RenderCommandQueue::OnQueueFull()
 {
-    // Load current producer position (relaxed ordering sufficient for SPSC)
-    size_t currentTail = m_tail.load(std::memory_order_relaxed);
-    size_t nextTail    = NextIndex(currentTail);
-
-    // Load current consumer position (acquire ordering to synchronize with consumer's release)
-    size_t currentHead = m_head.load(std::memory_order_acquire);
-
-    // Check if queue is full (next tail would equal head)
-    if (nextTail == currentHead)
-    {
-        // Queue full - backpressure triggered
-        return false;
-    }
-
-    // Write command to buffer
-    m_buffer[currentTail] = command;
-
-    // Update producer tail position (release ordering to ensure command data is visible)
-    m_tail.store(nextTail, std::memory_order_release);
-
-    // Increment submission counter
-    m_totalSubmitted.fetch_add(1, std::memory_order_relaxed);
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// GetApproximateSize (Monitoring API)
-//
-// Returns current queue size (difference between tail and head).
-// Value may be stale due to concurrent consumer, use for monitoring only.
-//----------------------------------------------------------------------------------------------------
-size_t RenderCommandQueue::GetApproximateSize() const
-{
-    size_t currentHead = m_head.load(std::memory_order_relaxed);
-    size_t currentTail = m_tail.load(std::memory_order_relaxed);
-
-    // Calculate size with wraparound handling
-    if (currentTail >= currentHead)
-    {
-        return currentTail - currentHead;
-    }
-    else
-    {
-        return m_capacity - (currentHead - currentTail);
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-// IsEmpty (Monitoring API)
-//
-// Returns true if queue appears empty.
-// Value may change immediately after call due to concurrent producer.
-//----------------------------------------------------------------------------------------------------
-bool RenderCommandQueue::IsEmpty() const
-{
-    size_t currentHead = m_head.load(std::memory_order_relaxed);
-    size_t currentTail = m_tail.load(std::memory_order_relaxed);
-    return currentHead == currentTail;
-}
-
-//----------------------------------------------------------------------------------------------------
-// IsFull (Monitoring API)
-//
-// Returns true if queue appears full.
-// Value may change immediately after call due to concurrent consumer.
-//----------------------------------------------------------------------------------------------------
-bool RenderCommandQueue::IsFull() const
-{
-    size_t currentTail = m_tail.load(std::memory_order_relaxed);
-    size_t nextTail    = NextIndex(currentTail);
-    size_t currentHead = m_head.load(std::memory_order_relaxed);
-    return nextTail == currentHead;
+	DAEMON_LOG(LogRenderer, eLogVerbosity::Warning,
+	           Stringf("RenderCommandQueue: Queue full! Capacity: %llu, Submitted: %llu, Consumed: %llu",
+	               static_cast<uint64_t>(GetCapacity()),
+	               GetTotalSubmitted(),
+	               GetTotalConsumed()));
 }
 
 //----------------------------------------------------------------------------------------------------
 // Implementation Notes
 //
-// Lock-Free Progress Guarantee:
+// Template Inheritance Benefits:
+//   - Eliminates ~200 lines of duplicate SPSC implementation (Submit, ConsumeAll, monitoring)
+//   - All lock-free ring buffer logic inherited from CommandQueueBase<RenderCommand>
+//   - Zero performance overhead (template instantiation at compile time)
+//   - Maintains exact same public API (zero breaking changes)
+//
+// Lock-Free Progress Guarantee (Inherited from CommandQueueBase):
 //   - Submit() always completes in bounded time (no blocking)
 //   - ConsumeAll() always completes in bounded time (no blocking)
 //   - No mutex, no conditional wait, no priority inversion
 //
-// Backpressure Strategy (Phase 1):
+// Backpressure Strategy:
 //   - When queue full, Submit() returns false immediately
-//   - Producer (JavaScript) should log warning and drop command
-//   - Future optimization: Dynamic capacity expansion or priority queue
+//   - OnQueueFull() hook logs warning for monitoring
+//   - Producer (JavaScript) should handle backpressure (drop or retry)
 //
-// Performance Profiling Hooks:
-//   - m_totalSubmitted / m_totalConsumed for throughput monitoring
+// Performance Profiling:
+//   - GetTotalSubmitted() / GetTotalConsumed() for throughput monitoring
 //   - GetApproximateSize() for queue depth monitoring
-//   - Can add high-resolution timer in Submit() for latency profiling
+//   - OnSubmit() / OnConsume() hooks available for custom profiling
 //
-// Memory Safety:
-//   - Ring buffer allocated in constructor, deallocated in destructor
+// Memory Safety (Inherited from CommandQueueBase):
+//   - Ring buffer allocated in base constructor, deallocated in base destructor
 //   - No dangling pointers (buffer lifetime = queue lifetime)
 //   - RenderCommand is copyable, no ownership issues
 //
 // Thread Safety Validation:
 //   - Run under Thread Sanitizer (TSan) to detect data races
-//   - Atomic operations should satisfy happens-before relationships
-//   - Cache-line padding should prevent false sharing
+//   - Atomic operations satisfy happens-before relationships
+//   - Cache-line padding prevents false sharing
 //----------------------------------------------------------------------------------------------------
