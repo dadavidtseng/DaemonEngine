@@ -665,7 +665,13 @@
     <ClInclude Include="Core/Clock.hpp">
       <Filter>Engine\Core\Time</Filter>
     </ClInclude>
+    <ClInclude Include="Core/CallbackData.hpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClInclude>
     <ClInclude Include="Core/CallbackQueue.hpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/CommandQueueBase.hpp">
       <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/Time.hpp">

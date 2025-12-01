@@ -579,9 +579,11 @@
   </ItemGroup>
   <ItemGroup Label="CoreModuleHeaders">
     <!-- Core Engine System Headers -->
+    <ClInclude Include="Core/CallbackData.hpp" />
     <ClInclude Include="Core/CallbackQueue.hpp" />
     <ClInclude Include="Core/CallbackQueueScriptInterface.hpp" />
     <ClInclude Include="Core/Clock.hpp" />
+    <ClInclude Include="Core/CommandQueueBase.hpp" />
     <ClInclude Include="Core/DevConsole.hpp" />
     <ClInclude Include="Core/ErrorWarningAssert.hpp" />
     <ClInclude Include="Core/EventSystem.hpp" />
