@@ -5,12 +5,18 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 //----------------------------------------------------------------------------------------------------
+#include "Game/EngineBuildPreferences.hpp"  // Phase 2: Required for ENGINE_SCRIPTING_ENABLED
 #include "Engine/Script/IScriptableObject.hpp"
 
 //----------------------------------------------------------------------------------------------------
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class AudioSystem;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+class AudioCommandQueue;
+class CallbackQueue;
+#endif
 
 //----------------------------------------------------------------------------------------------------
 /// @brief JavaScript interface for AudioSystem integration providing comprehensive audio control
@@ -41,6 +47,18 @@ public:
     ScriptMethodResult CallMethod(String const& methodName, ScriptArgs const& args) override;
     std::any           GetProperty(String const& propertyName) const override;
     bool               SetProperty(String const& propertyName, std::any const& value) override;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    /// @brief Configure command queue for async audio command processing from JavaScript
+    ///
+    /// @param commandQueue Pointer to AudioCommandQueue for submitting async commands
+    /// @param callbackQueue Pointer to CallbackQueue for receiving async results
+    ///
+    /// @remark Must be called to enable async audio methods (loadSoundAsync, playSoundAsync, etc.)
+    /// @remark Pointers stored by reference - caller retains ownership
+    /// @warning commandQueue and callbackQueue must remain valid for interface lifetime
+    void SetCommandQueue(AudioCommandQueue* commandQueue, CallbackQueue* callbackQueue);
+#endif
 
 private:
     AudioSystem* m_audioSystem = nullptr;
@@ -73,10 +91,31 @@ private:
     ScriptMethodResult ExecuteIsValidSoundID(ScriptArgs const& args);
     ScriptMethodResult ExecuteIsValidPlaybackID(ScriptArgs const& args);
 
+#ifdef ENGINE_SCRIPTING_ENABLED
+    // === ASYNC AUDIO METHODS (via AudioCommandQueue) ===
+    ScriptMethodResult ExecuteLoadSoundAsync(ScriptArgs const& args);
+    ScriptMethodResult ExecutePlaySoundAsync(ScriptArgs const& args);
+    ScriptMethodResult ExecuteStopSoundAsync(ScriptArgs const& args);
+    ScriptMethodResult ExecuteSetVolumeAsync(ScriptArgs const& args);
+    ScriptMethodResult ExecuteUpdate3DPositionAsync(ScriptArgs const& args);
+#endif
+
     // === VALIDATION AND SECURITY ===
     bool ValidateSoundPath(String const& soundPath) const;
     bool ValidateVolume(float volume) const;
     bool ValidateBalance(float balance) const;
     bool ValidateSpeed(float speed) const;
     bool ValidatePosition(float x, float y, float z) const;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+private:
+    // === ASYNC COMMAND QUEUE (for JavaScript async audio) ===
+    AudioCommandQueue* m_commandQueue  = nullptr;
+    CallbackQueue*     m_callbackQueue = nullptr;
+
+    // === CALLBACK ID GENERATION ===
+    uint64_t m_nextCallbackId = 1; // Auto-increment for unique callback IDs
+
+    uint64_t GenerateCallbackId();
+#endif
 };

@@ -153,9 +153,13 @@
   <!-- Source Files-->
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="SourceFiles">
+    <ClCompile Include="Audio\AudioCommandQueue.cpp" />
     <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Audio\AudioCommandQueue.cpp">
+      <Filter>Engine\Audio</Filter>
+    </ClCompile>
     <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
@@ -587,10 +591,21 @@
   <!-- Header Files -->
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="HeaderFiles">
+    <ClInclude Include="Audio\AudioCommand.hpp" />
+    <ClInclude Include="Audio\AudioCommandQueue.hpp" />
     <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
+    <ClInclude Include="Audio\AudioCommand.hpp">
+      <Filter>Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\AudioCommandQueue.hpp">
+      <Filter>Engine\Audio</Filter>
+    </ClInclude>
     <ClInclude Include="Audio\AudioSystem.hpp">
+      <Filter>Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\AudioTypes.hpp">
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="Core\Engine.hpp">

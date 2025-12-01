@@ -13,6 +13,13 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
+#ifdef ENGINE_SCRIPTING_ENABLED
+#include "Engine/Audio/AudioCommand.hpp"
+#include "Engine/Audio/AudioCommandQueue.hpp"
+#include "Engine/Core/CallbackQueue.hpp"
+#include "Engine/Core/CallbackData.hpp"
+#endif
+
 //----------------------------------------------------------------------------------------------------
 AudioScriptInterface::AudioScriptInterface(AudioSystem* audioSystem)
     : m_audioSystem(audioSystem)
@@ -53,6 +60,15 @@ void AudioScriptInterface::InitializeMethodRegistry()
     // === UTILITY METHODS ===
     m_methodRegistry["isValidSoundID"]    = [this](ScriptArgs const& args) { return ExecuteIsValidSoundID(args); };
     m_methodRegistry["isValidPlaybackID"] = [this](ScriptArgs const& args) { return ExecuteIsValidPlaybackID(args); };
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    // === ASYNC AUDIO METHODS (via AudioCommandQueue) ===
+    m_methodRegistry["loadSoundAsync"]         = [this](ScriptArgs const& args) { return ExecuteLoadSoundAsync(args); };
+    m_methodRegistry["playSoundAsync"]         = [this](ScriptArgs const& args) { return ExecutePlaySoundAsync(args); };
+    m_methodRegistry["stopSoundAsync"]         = [this](ScriptArgs const& args) { return ExecuteStopSoundAsync(args); };
+    m_methodRegistry["setVolumeAsync"]         = [this](ScriptArgs const& args) { return ExecuteSetVolumeAsync(args); };
+    m_methodRegistry["update3DPositionAsync"]  = [this](ScriptArgs const& args) { return ExecuteUpdate3DPositionAsync(args); };
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -128,7 +144,35 @@ std::vector<ScriptMethodInfo> AudioScriptInterface::GetAvailableMethods() const
         ScriptMethodInfo("isValidPlaybackID",
                          "Check if playback ID is valid",
                          {"number"},
-                         "bool")
+                         "bool"),
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+        // === ASYNC AUDIO METHODS (via AudioCommandQueue) ===
+        ScriptMethodInfo("loadSoundAsync",
+                         "Load sound file asynchronously (returns callbackId immediately)",
+                         {"string"},
+                         "number"),
+
+        ScriptMethodInfo("playSoundAsync",
+                         "Play sound asynchronously with volume and loop control",
+                         {"number", "number", "bool"},
+                         "void"),
+
+        ScriptMethodInfo("stopSoundAsync",
+                         "Stop sound playback asynchronously",
+                         {"number"},
+                         "void"),
+
+        ScriptMethodInfo("setVolumeAsync",
+                         "Set playback volume asynchronously",
+                         {"number", "number"},
+                         "void"),
+
+        ScriptMethodInfo("update3DPositionAsync",
+                         "Update 3D spatial position asynchronously",
+                         {"number", "number", "number", "number"},
+                         "void")
+#endif
     };
 }
 
@@ -652,3 +696,313 @@ bool AudioScriptInterface::ValidatePosition(float x, float y, float z) const
     return (std::isfinite(x) && std::isfinite(y) && std::isfinite(z) &&
         std::abs(x) < 10000.0f && std::abs(y) < 10000.0f && std::abs(z) < 10000.0f);
 }
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+//----------------------------------------------------------------------------------------------------
+// ASYNC AUDIO METHODS (via AudioCommandQueue)
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+// SetCommandQueue
+//
+// Configure command queue for async audio operations from JavaScript.
+//----------------------------------------------------------------------------------------------------
+void AudioScriptInterface::SetCommandQueue(AudioCommandQueue* commandQueue, CallbackQueue* callbackQueue)
+{
+    m_commandQueue  = commandQueue;
+    m_callbackQueue = callbackQueue;
+
+    DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+               Stringf("AudioScriptInterface: Command queue configured (commandQueue=%p, callbackQueue=%p)",
+                   commandQueue, callbackQueue));
+}
+
+//----------------------------------------------------------------------------------------------------
+// GenerateCallbackId
+//
+// Generate unique callback ID for async operation tracking.
+//----------------------------------------------------------------------------------------------------
+uint64_t AudioScriptInterface::GenerateCallbackId()
+{
+    return m_nextCallbackId++;
+}
+
+//----------------------------------------------------------------------------------------------------
+// ExecuteLoadSoundAsync
+//
+// JavaScript signature: loadSoundAsync(soundPath) → returns callbackId
+// Parameters:
+//   - soundPath: string (e.g., "Data/Audio/explosion.mp3")
+// Returns: callbackId (number) for tracking async result
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult AudioScriptInterface::ExecuteLoadSoundAsync(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "loadSoundAsync");
+    if (!result.success) return result;
+
+    // Check if command queue is configured
+    if (!m_commandQueue || !m_callbackQueue)
+    {
+        return ScriptMethodResult::Error("Async audio not enabled - call SetCommandQueue first");
+    }
+
+    try
+    {
+        String soundPath = ScriptTypeExtractor::ExtractString(args[0]);
+
+        // Validate sound path
+        if (!ValidateSoundPath(soundPath))
+        {
+            return ScriptMethodResult::Error("Invalid sound file path: " + soundPath);
+        }
+
+        // Generate unique callback ID
+        uint64_t callbackId = GenerateCallbackId();
+
+        // Create LOAD_SOUND command
+        AudioCommand cmd{
+            AudioCommandType::LOAD_SOUND,
+            0, // soundId not used for LOAD_SOUND
+            SoundLoadData{soundPath, callbackId}
+        };
+
+        // Submit command to queue
+        bool submitted = m_commandQueue->Submit(cmd);
+        if (!submitted)
+        {
+            return ScriptMethodResult::Error("Audio command queue full - try again later");
+        }
+
+        DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+                   Stringf("AudioScriptInterface: loadSoundAsync submitted - path='%s', callbackId=%llu",
+                       soundPath.c_str(), callbackId));
+
+        // Return callbackId immediately (async result via CallbackQueue later)
+        return ScriptMethodResult::Success(static_cast<double>(callbackId));
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to submit loadSoundAsync: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// ExecutePlaySoundAsync
+//
+// JavaScript signature: playSoundAsync(soundId, volume, looped)
+// Parameters:
+//   - soundId: number (from loadSoundAsync callback)
+//   - volume: number (0.0 - 1.0)
+//   - looped: boolean (true = loop continuously)
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult AudioScriptInterface::ExecutePlaySoundAsync(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 3, "playSoundAsync");
+    if (!result.success) return result;
+
+    // Check if command queue is configured
+    if (!m_commandQueue)
+    {
+        return ScriptMethodResult::Error("Async audio not enabled - call SetCommandQueue first");
+    }
+
+    try
+    {
+        SoundID soundId = static_cast<SoundID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        float   volume  = ScriptTypeExtractor::ExtractFloat(args[1]);
+        bool    looped  = ScriptTypeExtractor::ExtractBool(args[2]);
+
+        // Validate volume
+        if (!ValidateVolume(volume))
+        {
+            return ScriptMethodResult::Error("Volume must be between 0.0 and 1.0");
+        }
+
+        // Create PLAY_SOUND command (2D, no position)
+        AudioCommand cmd{
+            AudioCommandType::PLAY_SOUND,
+            soundId,
+            SoundPlayData{volume, looped, Vec3{0.f, 0.f, 0.f}}
+        };
+
+        // Submit command to queue
+        bool submitted = m_commandQueue->Submit(cmd);
+        if (!submitted)
+        {
+            return ScriptMethodResult::Error("Audio command queue full - try again later");
+        }
+
+        DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+                   Stringf("AudioScriptInterface: playSoundAsync submitted - soundId=%llu, volume=%.2f, looped=%d",
+                       soundId, volume, looped));
+
+        return ScriptMethodResult::Success("Sound playback queued successfully");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to submit playSoundAsync: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// ExecuteStopSoundAsync
+//
+// JavaScript signature: stopSoundAsync(playbackId)
+// Parameters:
+//   - playbackId: number (from StartSound result)
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult AudioScriptInterface::ExecuteStopSoundAsync(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "stopSoundAsync");
+    if (!result.success) return result;
+
+    // Check if command queue is configured
+    if (!m_commandQueue)
+    {
+        return ScriptMethodResult::Error("Async audio not enabled - call SetCommandQueue first");
+    }
+
+    try
+    {
+        SoundPlaybackID playbackId = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+
+        // Create STOP_SOUND command (soundId field is actually playbackId)
+        AudioCommand cmd{
+            AudioCommandType::STOP_SOUND,
+            playbackId,
+            SoundStopData{}
+        };
+
+        // Submit command to queue
+        bool submitted = m_commandQueue->Submit(cmd);
+        if (!submitted)
+        {
+            return ScriptMethodResult::Error("Audio command queue full - try again later");
+        }
+
+        DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+                   Stringf("AudioScriptInterface: stopSoundAsync submitted - playbackId=%llu", playbackId));
+
+        return ScriptMethodResult::Success("Sound stop queued successfully");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to submit stopSoundAsync: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// ExecuteSetVolumeAsync
+//
+// JavaScript signature: setVolumeAsync(playbackId, volume)
+// Parameters:
+//   - playbackId: number
+//   - volume: number (0.0 - 1.0)
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult AudioScriptInterface::ExecuteSetVolumeAsync(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 2, "setVolumeAsync");
+    if (!result.success) return result;
+
+    // Check if command queue is configured
+    if (!m_commandQueue)
+    {
+        return ScriptMethodResult::Error("Async audio not enabled - call SetCommandQueue first");
+    }
+
+    try
+    {
+        SoundPlaybackID playbackId = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        float           volume     = ScriptTypeExtractor::ExtractFloat(args[1]);
+
+        // Validate volume
+        if (!ValidateVolume(volume))
+        {
+            return ScriptMethodResult::Error("Volume must be between 0.0 and 1.0");
+        }
+
+        // Create SET_VOLUME command (soundId field is actually playbackId)
+        AudioCommand cmd{
+            AudioCommandType::SET_VOLUME,
+            playbackId,
+            VolumeUpdateData{volume}
+        };
+
+        // Submit command to queue
+        bool submitted = m_commandQueue->Submit(cmd);
+        if (!submitted)
+        {
+            return ScriptMethodResult::Error("Audio command queue full - try again later");
+        }
+
+        DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+                   Stringf("AudioScriptInterface: setVolumeAsync submitted - playbackId=%llu, volume=%.2f",
+                       playbackId, volume));
+
+        return ScriptMethodResult::Success("Volume update queued successfully");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to submit setVolumeAsync: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// ExecuteUpdate3DPositionAsync
+//
+// JavaScript signature: update3DPositionAsync(playbackId, x, y, z)
+// Parameters:
+//   - playbackId: number
+//   - x, y, z: number (world-space 3D coordinates)
+//----------------------------------------------------------------------------------------------------
+ScriptMethodResult AudioScriptInterface::ExecuteUpdate3DPositionAsync(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 4, "update3DPositionAsync");
+    if (!result.success) return result;
+
+    // Check if command queue is configured
+    if (!m_commandQueue)
+    {
+        return ScriptMethodResult::Error("Async audio not enabled - call SetCommandQueue first");
+    }
+
+    try
+    {
+        SoundPlaybackID playbackId = static_cast<SoundPlaybackID>(ScriptTypeExtractor::ExtractDouble(args[0]));
+        float           x          = ScriptTypeExtractor::ExtractFloat(args[1]);
+        float           y          = ScriptTypeExtractor::ExtractFloat(args[2]);
+        float           z          = ScriptTypeExtractor::ExtractFloat(args[3]);
+
+        // Validate position
+        if (!ValidatePosition(x, y, z))
+        {
+            return ScriptMethodResult::Error("Invalid 3D position coordinates");
+        }
+
+        // Create UPDATE_3D_POSITION command (soundId field is actually playbackId)
+        AudioCommand cmd{
+            AudioCommandType::UPDATE_3D_POSITION,
+            playbackId,
+            Position3DUpdateData{Vec3{x, y, z}}
+        };
+
+        // Submit command to queue
+        bool submitted = m_commandQueue->Submit(cmd);
+        if (!submitted)
+        {
+            return ScriptMethodResult::Error("Audio command queue full - try again later");
+        }
+
+        DAEMON_LOG(LogAudio, eLogVerbosity::Log,
+                   Stringf("AudioScriptInterface: update3DPositionAsync submitted - playbackId=%llu, pos=(%.2f, %.2f, %.2f)",
+                       playbackId, x, y, z));
+
+        return ScriptMethodResult::Success("3D position update queued successfully");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to submit update3DPositionAsync: " + String(e.what()));
+    }
+}
+
+#endif // ENGINE_SCRIPTING_ENABLED

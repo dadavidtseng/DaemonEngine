@@ -360,6 +360,7 @@
     <ClCompile Include="../ThirdParty/imgui/imgui_widgets.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_dx11.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp" />
+    <ClCompile Include="Audio\AudioCommandQueue.cpp" />
     <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
@@ -552,8 +553,11 @@
     <ClInclude Include="../ThirdParty/imgui/imstb_truetype.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_dx11.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_win32.h" />
+    <ClInclude Include="Audio\AudioCommand.hpp" />
+    <ClInclude Include="Audio\AudioCommandQueue.hpp" />
     <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Audio\AudioTypes.hpp" />
     <ClInclude Include="Core\ClockScriptInterface.hpp" />
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
