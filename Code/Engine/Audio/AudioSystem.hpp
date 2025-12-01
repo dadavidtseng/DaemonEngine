@@ -5,39 +5,21 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 //----------------------------------------------------------------------------------------------------
+#include "Game/EngineBuildPreferences.hpp"  // Phase 2: Required for ENGINE_SCRIPTING_ENABLED
+#include "Engine/Audio/AudioTypes.hpp"
 #include "Engine/Core/StringUtils.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "ThirdParty/fmod/fmod.hpp"
 //----------------------------------------------------------------------------------------------------
 #include <map>
 
-//----------------------------------------------------------------------------------------------------
-/// @brief Unique identifier for loaded sound resources in the audio system
-///
-/// @remark Used as a handle to reference loaded sound files. Obtained from CreateOrGetSound().
-/// @see MISSING_SOUND_ID for invalid sound identification
-//----------------------------------------------------------------------------------------------------
-using SoundID = size_t;
-
-//----------------------------------------------------------------------------------------------------
-/// @brief Unique identifier for active sound playback instances
-///
-/// @remark Tracks individual playing sound instances. Multiple playbacks can use the same SoundID.
-/// @remark Obtained from StartSound() or StartSoundAt() calls for playback control.
-/// @see MISSING_SOUND_ID for invalid playback identification
-//----------------------------------------------------------------------------------------------------
-using SoundPlaybackID = size_t;
-
-//----------------------------------------------------------------------------------------------------
-/// @brief Sentinel value indicating invalid or missing sound/playback IDs
-///
-/// @remark Used for error checking and initialization of sound ID variables.
-/// @remark Equivalent to SIZE_MAX for maximum size_t value as invalid marker.
-//----------------------------------------------------------------------------------------------------
-size_t constexpr MISSING_SOUND_ID = static_cast<size_t>(-1);
-
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct Vec3;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+class AudioCommandQueue;
+class CallbackQueue;
+#endif
 
 //----------------------------------------------------------------------------------------------------
 /// @brief Audio system dimensionality specification for sound processing
@@ -140,6 +122,24 @@ public:
     ///
     /// @remark Currently reserved for future frame-end processing requirements.
     virtual void EndFrame();
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    //----------------------------------------------------------------------------------------------------
+    /// @brief Configure command queue for async JavaScript → C++ audio command processing
+    ///
+    /// @param commandQueue Pointer to AudioCommandQueue for receiving commands (nullptr to disable)
+    /// @param callbackQueue Pointer to CallbackQueue for sending async results back to JavaScript
+    ///
+    /// @remark Must be called before JavaScript can submit audio commands via command queue.
+    /// @remark Only available when ENGINE_SCRIPTING_ENABLED is defined (JavaScript integration).
+    /// @remark Pointers stored by reference - caller retains ownership and lifetime management.
+    ///
+    /// @warning commandQueue and callbackQueue must remain valid for AudioSystem lifetime.
+    /// @warning Passing nullptr disables async command processing (legacy synchronous mode).
+    /// @see ProcessPendingCommands() for command consumption on audio thread
+    //----------------------------------------------------------------------------------------------------
+    void SetCommandQueue(AudioCommandQueue* commandQueue, CallbackQueue* callbackQueue);
+#endif
 
     //----------------------------------------------------------------------------------------------------
     /// @brief Load sound file and return handle for playback operations
@@ -355,6 +355,21 @@ public:
     FMOD_VECTOR CreateZeroVector() const;
 
 protected:
+#ifdef ENGINE_SCRIPTING_ENABLED
+    //------------------------------------------------------------------------------------------------
+    /// @brief Process all pending audio commands from JavaScript worker thread
+    ///
+    /// @remark Consumes commands from AudioCommandQueue and executes corresponding audio operations.
+    /// @remark Called automatically from BeginFrame() when command queue is configured.
+    /// @remark Protected to allow derived classes to customize command processing timing.
+    ///
+    /// @warning Only processes commands if SetCommandQueue() was called with valid queue pointers.
+    /// @warning Command processing happens on audio thread (main thread) - thread-safe with SPSC queue.
+    /// @see SetCommandQueue() for queue configuration, AudioCommand.hpp for command types
+    //------------------------------------------------------------------------------------------------
+    void ProcessPendingCommands();
+#endif
+
     //------------------------------------------------------------------------------------------------
     /// @brief FMOD system instance for low-level audio operations and resource management
     ///
@@ -402,4 +417,30 @@ private:
     /// @see AudioSystem constructor for configuration parameter passing
     //------------------------------------------------------------------------------------------------
     sAudioSystemConfig m_audioConfig;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    //------------------------------------------------------------------------------------------------
+    /// @brief Command queue for receiving async audio commands from JavaScript worker thread
+    ///
+    /// @remark Pointer to externally-owned AudioCommandQueue (lifetime managed by caller).
+    /// @remark nullptr when async command processing is disabled (legacy synchronous mode).
+    /// @remark Set via SetCommandQueue() - commands consumed by ProcessPendingCommands().
+    ///
+    /// @warning Must remain valid for AudioSystem lifetime if non-null.
+    /// @see SetCommandQueue(), ProcessPendingCommands()
+    //------------------------------------------------------------------------------------------------
+    AudioCommandQueue* m_commandQueue = nullptr;
+
+    //------------------------------------------------------------------------------------------------
+    /// @brief Callback queue for sending async operation results back to JavaScript
+    ///
+    /// @remark Pointer to externally-owned CallbackQueue (lifetime managed by caller).
+    /// @remark Used to return results from LOAD_SOUND and other async operations.
+    /// @remark Set via SetCommandQueue() alongside m_commandQueue.
+    ///
+    /// @warning Must remain valid for AudioSystem lifetime if non-null.
+    /// @see SetCommandQueue(), CallbackData.hpp for callback structure
+    //------------------------------------------------------------------------------------------------
+    CallbackQueue* m_callbackQueue = nullptr;
+#endif
 };
