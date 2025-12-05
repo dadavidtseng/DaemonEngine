@@ -36,7 +36,6 @@
 #include <array>
 #include <chrono>  // For std::chrono::milliseconds in try_lock_for
 
-#include "ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
@@ -66,36 +65,35 @@ template <typename T, size_t WindowSize>
 class RunningAverage
 {
 public:
-	// Add new value to running average (circular buffer pattern)
-	// Parameters: value - Sample value to add
-	// Performance: O(1) constant time
-	void Add(T value)
-	{
-		m_values[m_index] = value;
-		m_index           = (m_index + 1) % WindowSize;
-		m_count           = (m_count < WindowSize) ? (m_count + 1) : WindowSize;
-	}
+    // Add new value to running average (circular buffer pattern)
+    // Parameters: value - Sample value to add
+    // Performance: O(1) constant time
+    void Add(T value)
+    {
+        m_values[m_index] = value;
+        m_index           = (m_index + 1) % WindowSize;
+        m_count           = (m_count < WindowSize) ? (m_count + 1) : WindowSize;
+    }
 
-	// Get average of all samples in window
-	// Returns: Average value, or T{} if no samples added
-	// Performance: O(WindowSize) linear time
-	T GetAverage() const
-	{
-		if (m_count == 0)
-			return T{};
+    // Get average of all samples in window
+    // Returns: Average value, or T{} if no samples added
+    // Performance: O(WindowSize) linear time
+    T GetAverage() const
+    {
+        if (m_count == 0) return T{};
 
-		T sum = T{};
-		for (size_t i = 0; i < m_count; ++i)
-		{
-			sum += m_values[i];
-		}
-		return sum / static_cast<T>(m_count);
-	}
+        T sum = T{};
+        for (size_t i = 0; i < m_count; ++i)
+        {
+            sum += m_values[i];
+        }
+        return sum / static_cast<T>(m_count);
+    }
 
 private:
-	std::array<T, WindowSize> m_values{};  // Circular buffer storage
-	size_t                    m_index = 0; // Current write position
-	size_t                    m_count = 0; // Number of valid samples (0 to WindowSize)
+    std::array<T, WindowSize> m_values{};  // Circular buffer storage
+    size_t                    m_index = 0; // Current write position
+    size_t                    m_count = 0; // Number of valid samples (0 to WindowSize)
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -217,9 +215,10 @@ public:
         {
             ++m_skippedSwaps;
             // Temporary diagnostic - remove after verification
-            if (m_skippedSwaps % 60 == 0) {
+            if (m_skippedSwaps % 60 == 0)
+            {
                 DAEMON_LOG(LogCore, eLogVerbosity::Display,
-                    StringFormat("StateBuffer: Skipped {} swaps (clean buffer)", m_skippedSwaps));
+                           StringFormat("StateBuffer: Skipped {} swaps (clean buffer)", m_skippedSwaps));
             }
             return;
         }
@@ -301,7 +300,6 @@ public:
             // Phase 4.1: Reset dirty flag after successful copy
             m_isDirty.store(false, std::memory_order_release);
             // DAEMON_LOG(LogCore, eLogVerbosity::Display,StringFormat("StateBuffer::SwapBuffers - Success (total swaps: {})", m_totalSwaps));
-
         }
         catch (std::bad_alloc const& e)
         {
@@ -410,7 +408,7 @@ public:
     // When enabled: SwapBuffers() copies only dirty keys (O(d) where d = dirty count)
     // When disabled: SwapBuffers() copies entire buffer (O(n) where n = total entities)
     // Thread Safety: Should be called before any GetBackBuffer() calls (setup only)
-    void EnableDirtyTracking(bool enable)
+    void EnableDirtyTracking(bool const enable)
     {
         m_dirtyTrackingEnabled = enable;
     }
@@ -492,20 +490,20 @@ private:
     // Dirty Tracking (Phase 4.1)
     //------------------------------------------------------------------------------------------------
     std::atomic<bool> m_isDirty{false};  // True if back buffer has pending changes
-    uint64_t m_skippedSwaps{0};          // Total swaps skipped due to clean buffer
+    uint64_t          m_skippedSwaps{0};          // Total swaps skipped due to clean buffer
 
     //------------------------------------------------------------------------------------------------
     // Per-Key Dirty Tracking (Phase 4.2)
     //------------------------------------------------------------------------------------------------
     std::unordered_set<KeyType> m_dirtyKeys;  // Set of dirty entity IDs (Phase 4.2)
-    mutable std::mutex m_dirtyKeysMutex;      // Protects m_dirtyKeys access
-    bool m_dirtyTrackingEnabled{false};       // Enable per-key optimization
+    mutable std::mutex          m_dirtyKeysMutex;      // Protects m_dirtyKeys access
+    bool                        m_dirtyTrackingEnabled{false};       // Enable per-key optimization
 
     //------------------------------------------------------------------------------------------------
     // Performance Metrics (Phase 4.3)
     //------------------------------------------------------------------------------------------------
     RunningAverage<float, 60> m_dirtyRatios;  // Average dirty ratio over last 60 frames
-    uint64_t m_totalCopyOperations{0};        // Total entities copied (for profiling)
+    uint64_t                  m_totalCopyOperations{0};        // Total entities copied (for profiling)
 
     //------------------------------------------------------------------------------------------------
     // Buffer Validation (Phase 3.1)
