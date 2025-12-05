@@ -476,7 +476,10 @@
     <!-- Resource Management System - Asset pipeline -->
     <ClCompile Include="Resource/ResourceCache.cpp" />
     <ClCompile Include="Resource/ResourceCommon.cpp" />
+    <ClCompile Include="Resource/ResourceCommandQueue.cpp" />
     <ClCompile Include="Resource/ResourceHandle.cpp" />
+    <ClCompile Include="Resource/ResourceLoadJob.cpp" />
+    <ClCompile Include="Resource/ResourceScriptInterface.cpp" />
     <ClCompile Include="Resource/ResourceSubsystem.cpp" />
     <!-- Resource Loaders -->
     <ClCompile Include="Resource/AnimationLoader.cpp" />
@@ -680,8 +683,12 @@
   <ItemGroup Label="ResourceSubsystemHeaders">
     <!-- Resource Management System Headers -->
     <ClInclude Include="Resource/ResourceCache.hpp" />
+    <ClInclude Include="Resource/ResourceCommand.hpp" />
+    <ClInclude Include="Resource/ResourceCommandQueue.hpp" />
     <ClInclude Include="Resource/ResourceCommon.hpp" />
     <ClInclude Include="Resource/ResourceHandle.hpp" />
+    <ClInclude Include="Resource/ResourceLoadJob.hpp" />
+    <ClInclude Include="Resource/ResourceScriptInterface.hpp" />
     <ClInclude Include="Resource/ResourceSubsystem.hpp" />
     <!-- Resource Loader Headers -->
     <ClInclude Include="Resource/AnimationLoader.hpp" />

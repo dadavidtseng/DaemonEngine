@@ -424,7 +424,16 @@
     <ClCompile Include="Resource/ResourceCommon.cpp">
       <Filter>Engine\Resource</Filter>
     </ClCompile>
+    <ClCompile Include="Resource/ResourceCommandQueue.cpp">
+      <Filter>Engine\Resource</Filter>
+    </ClCompile>
     <ClCompile Include="Resource/ResourceHandle.cpp">
+      <Filter>Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ResourceLoadJob.cpp">
+      <Filter>Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource/ResourceScriptInterface.cpp">
       <Filter>Engine\Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource/AnimationLoader.cpp">
@@ -878,10 +887,22 @@
     <ClInclude Include="Resource/ResourceCache.hpp">
       <Filter>Engine\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="Resource/ResourceCommand.hpp">
+      <Filter>Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ResourceCommandQueue.hpp">
+      <Filter>Engine\Resource</Filter>
+    </ClInclude>
     <ClInclude Include="Resource/ResourceCommon.hpp">
       <Filter>Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceHandle.hpp">
+      <Filter>Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ResourceLoadJob.hpp">
+      <Filter>Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/ResourceScriptInterface.hpp">
       <Filter>Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource/AnimationLoader.hpp">
