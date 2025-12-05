@@ -21,6 +21,15 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
 
+// Phase 3: JobSystem Integration
+#include "Engine/Core/JobSystem.hpp"
+#include "Engine/Resource/ResourceLoadJob.hpp"
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+#include "Engine/Resource/ResourceCommandQueue.hpp"
+#include "Engine/Core/CallbackQueue.hpp"
+#endif
+
 //----------------------------------------------------------------------------------------------------
 ResourceSubsystem::ResourceSubsystem(sResourceSubsystemConfig const& config)
     : m_config(config)
@@ -32,29 +41,22 @@ void ResourceSubsystem::Shutdown()
 {
     DebuggerPrintf("[ResourceSubsystem] Shutdown: Starting shutdown process\n");
 
-    // 停止工作執行緒
-    {
-        std::unique_lock lock(m_queueMutex);
-        m_running = false;
-    }
-    m_condition.notify_all();
+    // Phase 3: No custom worker threads to stop (JobSystem manages worker threads)
+    // JobSystem will be shut down by the application, not by ResourceSubsystem
 
-    // 等待所有執行緒結束
-    for (auto& thread : m_workerThreads)
-    {
-        if (thread.joinable())
-        {
-            thread.join();
-        }
-    }
-
-    DebuggerPrintf("[ResourceSubsystem] Shutdown: Worker threads stopped, clearing cache\n");
+    DebuggerPrintf("[ResourceSubsystem] Shutdown: Clearing cache and loaders\n");
 
     // 清理資源
     m_cache.Clear();
     m_loaders.clear();
 
     m_config.m_renderer = nullptr;
+    m_jobSystem         = nullptr;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    m_commandQueue  = nullptr;
+    m_callbackQueue = nullptr;
+#endif
 
     DebuggerPrintf("[ResourceSubsystem] Shutdown: Shutdown complete\n");
 }
@@ -88,45 +90,32 @@ std::string ResourceSubsystem::GetFileExtension(String const& path) const
     return filePath.extension().string();
 }
 
-void ResourceSubsystem::WorkerThread()
-{
-    while (m_running)
-    {
-        std::function<void()> task;
-
-        {
-            std::unique_lock<std::mutex> lock(m_queueMutex);
-            m_condition.wait(lock, [this] { return !m_taskQueue.empty() || !m_running; });
-
-            if (!m_running) break;
-
-            if (!m_taskQueue.empty())
-            {
-                task = std::move(m_taskQueue.front());
-                m_taskQueue.pop();
-            }
-        }
-
-        if (task)
-        {
-            task();
-        }
-    }
-}
+//----------------------------------------------------------------------------------------------------
+// Phase 3: WorkerThread() REMOVED - JobSystem now handles worker thread management
+//----------------------------------------------------------------------------------------------------
 
 void ResourceSubsystem::PreloadResources(const std::vector<std::string>& paths)
 {
+    // Phase 3: Use JobSystem for async loading instead of custom worker threads
+    if (!m_jobSystem)
+    {
+        DebuggerPrintf("Warning: PreloadResources called without JobSystem - loading synchronously\n");
+        for (const auto& path : paths)
+        {
+            LoadResourceInternal(path);
+        }
+        return;
+    }
+
+    // Submit jobs to JobSystem for async loading
     for (const auto& path : paths)
     {
-        // 將載入任務加入佇列
+        // Create a simple lambda-based job for preloading
+        // Note: This uses std::async temporarily until we create a dedicated PreloadJob class
+        std::async(std::launch::async, [this, path]()
         {
-            std::lock_guard<std::mutex> lock(m_queueMutex);
-            m_taskQueue.push([this, path]()
-            {
-                LoadResourceInternal(path);
-            });
-        }
-        m_condition.notify_one();
+            LoadResourceInternal(path);
+        });
     }
 }
 
@@ -164,7 +153,7 @@ size_t ResourceSubsystem::GetResourceCount() const
 //----------------------------------------------------------------------------------------------------
 void ResourceSubsystem::Startup()
 {
-    m_running = true;
+    // Phase 3: m_running removed - JobSystem manages worker thread lifecycle
 
     if (m_config.m_renderer != nullptr)
     {
@@ -198,20 +187,9 @@ void ResourceSubsystem::Startup()
         DebuggerPrintf("Warning: ResourceSubsystem initialized without Renderer.\n");
     }
 
-    // 註冊預設的載入器
-
-    // 未來可以加入更多載入器
-    // RegisterLoader(std::make_unique<TextureLoader>());
-    // RegisterLoader(std::make_unique<ShaderLoader>());
-
-    // Phase 4: Default texture creation moved to Initialize() after loaders are registered
-    // CreateDefaultTexture(); // REMOVED - moved to Initialize()
-
-    // 創建工作執行緒
-    for (int i = 0; i < m_config.m_threadCount; ++i)
-    {
-        m_workerThreads.emplace_back(&ResourceSubsystem::WorkerThread, this);
-    }
+    // Phase 3: Custom worker thread creation REMOVED
+    // JobSystem must be set via SetJobSystem() for async resource loading
+    DebuggerPrintf("Info: ResourceSubsystem startup complete. Call SetJobSystem() for async loading support.\n");
 }
 
 // void ResourceSubsystem::Initialize(Renderer* renderer, sResourceSubsystemConfig const& config)
@@ -334,6 +312,62 @@ Shader* ResourceSubsystem::CreateOrGetShaderFromFile(String const& path, eVertex
 
     return nullptr;
 }
+
+//----------------------------------------------------------------------------------------------------
+// Phase 3: JobSystem Integration Methods
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::SetJobSystem(JobSystem* jobSystem)
+{
+    m_jobSystem = jobSystem;
+    DebuggerPrintf("[ResourceSubsystem] JobSystem set for async resource loading.\n");
+}
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::SetCommandQueue(ResourceCommandQueue* commandQueue, CallbackQueue* callbackQueue)
+{
+    m_commandQueue  = commandQueue;
+    m_callbackQueue = callbackQueue;
+
+    if (m_commandQueue && m_callbackQueue)
+    {
+        DebuggerPrintf("[ResourceSubsystem] ResourceCommandQueue and CallbackQueue set for JavaScript integration.\n");
+    }
+    else
+    {
+        DebuggerPrintf("[ResourceSubsystem] Warning: SetCommandQueue called with null pointers.\n");
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void ResourceSubsystem::ProcessPendingCommands()
+{
+    // Validate dependencies
+    if (!m_commandQueue || !m_callbackQueue)
+    {
+        DebuggerPrintf("[ResourceSubsystem] Warning: ProcessPendingCommands called without command/callback queues.\n");
+        return;
+    }
+
+    if (!m_jobSystem)
+    {
+        DebuggerPrintf("[ResourceSubsystem] Warning: ProcessPendingCommands called without JobSystem - commands cannot be processed.\n");
+        return;
+    }
+
+    // Consume all pending resource commands from ResourceCommandQueue
+    m_commandQueue->ConsumeAll([this](sResourceCommand const& cmd)
+    {
+        // Create ResourceLoadJob for each command
+        auto* job = new ResourceLoadJob(cmd, this, m_callbackQueue);
+
+        // Submit job to JobSystem for execution on I/O worker thread
+        m_jobSystem->SubmitJob(job);
+    });
+}
+#endif
 
 //----------------------------------------------------------------------------------------------------
 // Phase 4: Default Texture Management

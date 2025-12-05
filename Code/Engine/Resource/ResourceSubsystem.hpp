@@ -4,13 +4,11 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <condition_variable>
 #include <functional>
 #include <future>
 #include <memory>
-#include <queue>
-#include <thread>
 #include <vector>
+#include "Game/EngineBuildPreferences.hpp"  // Phase 3: Required for ENGINE_SCRIPTING_ENABLED
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Resource/IResourceLoader.hpp"
 #include "Engine/Resource/ResourceCache.hpp"
@@ -18,18 +16,25 @@
 #include "Engine/Renderer/RenderCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
+// Forward declarations
 class Texture;
 class BitmapFont;
 class Shader;
 class Renderer;
 class TextureResource;
 class TextureLoader;
+class JobSystem;
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+class ResourceCommandQueue;
+class CallbackQueue;
+#endif
 
 //----------------------------------------------------------------------------------------------------
 struct sResourceSubsystemConfig
 {
     Renderer* m_renderer    = nullptr;
-    int       m_threadCount = 0;
+    int       m_threadCount = 0;  // Deprecated: JobSystem now manages worker threads
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -65,9 +70,14 @@ public:
     }
 
     // 異步載入資源
+    // Phase 3: Uses std::async temporarily for API compatibility
+    // TODO: Refactor to use JobSystem internally while maintaining std::future return type
     template <typename T>
     std::future<ResourceHandle<T>> LoadResourceAsync(String const& path)
     {
+        // Note: std::async creates its own thread, bypassing JobSystem
+        // This is acceptable for now to preserve existing C++ API
+        // JavaScript resource loading uses ResourceCommandQueue → JobSystem path instead
         return std::async(std::launch::async, [this, path]()
         {
             return LoadResource<T>(path);
@@ -100,6 +110,23 @@ public:
     // Default texture access (Phase 4: Migration from Renderer)
      ResourceHandle<TextureResource> GetDefaultTexture();
 
+    //------------------------------------------------------------------------------------------------
+    // Phase 3: JobSystem Integration
+    //------------------------------------------------------------------------------------------------
+    // Set JobSystem pointer for async resource loading via I/O worker threads
+    void SetJobSystem(JobSystem* jobSystem);
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    // Set ResourceCommandQueue and CallbackQueue for JavaScript integration
+    // Must be called after SetJobSystem() if JavaScript resource loading is needed
+    void SetCommandQueue(ResourceCommandQueue* commandQueue, CallbackQueue* callbackQueue);
+
+    // Process pending resource loading commands from ResourceCommandQueue
+    // Creates ResourceLoadJob instances and submits to JobSystem
+    // Called from main thread (typically in App::Update or similar)
+    void ProcessPendingCommands();
+#endif
+
 private:
     // Helper method to create default white texture
     void                     CreateDefaultTexture();
@@ -117,18 +144,18 @@ private:
     std::shared_ptr<IResource> LoadResourceInternal(String const& path);
     String                     GetFileExtension(String const& path) const;
 
-    // 工作執行緒
-    void WorkerThread();
-
     ResourceCache                                 m_cache;
     std::vector<std::unique_ptr<IResourceLoader>> m_loaders;
 
-    // 多執行緒支援
-    std::vector<std::thread>          m_workerThreads;
-    std::queue<std::function<void()>> m_taskQueue;
-    std::mutex                        m_queueMutex;
-    std::condition_variable           m_condition;
-    bool                              m_running = false;
+    //------------------------------------------------------------------------------------------------
+    // Phase 3: JobSystem Integration (replaces custom worker threads)
+    //------------------------------------------------------------------------------------------------
+    JobSystem* m_jobSystem = nullptr;  // JobSystem for async I/O operations
+
+#ifdef ENGINE_SCRIPTING_ENABLED
+    ResourceCommandQueue* m_commandQueue  = nullptr;  // Command queue from JavaScript
+    CallbackQueue*        m_callbackQueue = nullptr;  // Callback queue to JavaScript
+#endif
 
     // 記憶體管理
     size_t m_memoryLimit = 0;
