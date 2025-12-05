@@ -21,6 +21,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/UI/ImGuiSubsystem.hpp"
+#include "Engine/Widget/WidgetSubsystem.hpp"
 #ifndef ENGINE_DISABLE_SCRIPT
 #include "Engine/Script/ScriptSubsystem.hpp"
 #endif
@@ -416,6 +417,29 @@ void GEngine::Construct()
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
+#pragma region WidgetSubsystem
+    // Check if WidgetSubsystem should be enabled from core subsystems list
+    bool enableWidgetSubsystem = true;  // Default: enabled
+    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    {
+        auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
+        enableWidgetSubsystem      = std::find(coreSubsystems.begin(), coreSubsystems.end(), "WidgetSubsystem") != coreSubsystems.end();
+    }
+
+    if (enableWidgetSubsystem)
+    {
+        sWidgetSubsystemConfig widgetConfig;
+        // Use default config values (initialWidgetCapacity=64, initialOwnerCapacity=32)
+        g_widgetSubsystem = new WidgetSubsystem(widgetConfig);
+        DebuggerPrintf("WidgetSubsystem: ENABLED\n");
+    }
+    else
+    {
+        g_widgetSubsystem = nullptr;
+        DebuggerPrintf("WidgetSubsystem: DISABLED (from config)\n");
+    }
+#pragma endregion
+    //------------------------------------------------------------------------------------------------
 #pragma region AudioSystem
     // Check if AudioSystem is enabled in config
     bool enableAudio = true;  // Default: enabled
@@ -724,6 +748,13 @@ void GEngine::Startup()
         g_kadiSubsystem->Startup();
         DebuggerPrintf("KADIWebSocketSubsystem started\n");
     }
+
+    // Assignment 7: Start WidgetSubsystem
+    if (g_widgetSubsystem != nullptr)
+    {
+        g_widgetSubsystem->StartUp();
+        DebuggerPrintf("WidgetSubsystem started\n");
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -734,6 +765,13 @@ void GEngine::Shutdown()
     {
         g_kadiSubsystem->Shutdown();
         DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
+    }
+
+    // Assignment 7: Shutdown WidgetSubsystem
+    if (g_widgetSubsystem)
+    {
+        g_widgetSubsystem->ShutDown();
+        DebuggerPrintf("WidgetSubsystem shutdown\n");
     }
 
 #ifndef ENGINE_DISABLE_SCRIPT

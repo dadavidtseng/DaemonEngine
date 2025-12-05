@@ -18,6 +18,7 @@ ResourceSubsystem*      g_resourceSubsystem = nullptr;
 ScriptSubsystem*        g_scriptSubsystem   = nullptr;
 KADIWebSocketSubsystem* g_kadiSubsystem     = nullptr;
 ImGuiSubsystem*         g_imgui             = nullptr;
+WidgetSubsystem*        g_widgetSubsystem   = nullptr;
 
 
 // //----------------------------------------------------------------------------------------------------

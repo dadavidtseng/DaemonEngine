@@ -24,6 +24,7 @@ class InputSystem;
 class JobSystem;
 class LogSubsystem;
 class ImGuiSubsystem;
+class WidgetSubsystem;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief declared in EngineCommon.hpp, defined in EngineCommon.cpp
@@ -42,6 +43,7 @@ extern Window*                g_window;
 extern ResourceSubsystem*     g_resourceSubsystem;
 extern ScriptSubsystem*       g_scriptSubsystem;
 extern ImGuiSubsystem*        g_imgui;
+extern WidgetSubsystem*       g_widgetSubsystem;
 
 // Forward declaration for KADI subsystem
 class KADIWebSocketSubsystem;
