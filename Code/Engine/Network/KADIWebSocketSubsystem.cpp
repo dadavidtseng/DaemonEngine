@@ -438,6 +438,24 @@ void KADIWebSocketSubsystem::CompleteAuthentication(std::string const& agentId)
 // Tool Management
 //----------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------
+// Agent Configuration
+//----------------------------------------------------------------------------------------------------
+
+void KADIWebSocketSubsystem::SetDisplayName(std::string const& displayName)
+{
+    if (m_protocolAdapter)
+    {
+        // Cast to KADIProtocolV1Adapter to access SetDisplayName
+        auto* v1Adapter = dynamic_cast<KADIProtocolV1Adapter*>(m_protocolAdapter.get());
+        if (v1Adapter)
+        {
+            v1Adapter->SetDisplayName(displayName);
+            DebuggerPrintf("KADIWebSocketSubsystem: Display name set to '%s'\n", displayName.c_str());
+        }
+    }
+}
+
 void KADIWebSocketSubsystem::RegisterTools(nlohmann::json const& tools)
 {
     if (m_connectionState < eKADIConnectionState::AUTHENTICATED)
@@ -931,19 +949,49 @@ void KADIWebSocketSubsystem::WebSocketThreadMain()
             while (!receivedData.empty())
             {
                 std::string decodedMessage = DecodeWebSocketFrame(receivedData);
-                if (decodedMessage.empty())
+                if (decodedMessage.empty() && m_lastDecodedOpcode == eWebSocketOpcode::TEXT_FRAME)
                 {
-                    // Not enough data for complete frame yet
+                    // Not enough data for complete frame yet (and not a control frame with empty payload)
                     break;
                 }
 
-                // DIAGNOSTIC: Log WebSocket thread message reception
-                DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
-                           StringFormat("[KADI DIAGNOSTIC] WebSocket thread received message (length={}): {}",
-                                        decodedMessage.length(), decodedMessage));
+                // Handle WebSocket control frames (PING, PONG, CLOSE)
+                if (m_lastDecodedOpcode == eWebSocketOpcode::PING)
+                {
+                    // RFC 6455: PING frame received - respond with PONG containing same payload
+                    DebuggerPrintf("KADIWebSocketSubsystem: Received WebSocket PING, sending PONG\n");
+                    SendWebSocketPong(decodedMessage);
+                    receivedData.clear();
+                    continue; // Don't queue PING for main thread - it's protocol-level
+                }
+                else if (m_lastDecodedOpcode == eWebSocketOpcode::PONG)
+                {
+                    // Unsolicited PONG (we don't send WebSocket PINGs, broker sends them to us)
+                    DebuggerPrintf("KADIWebSocketSubsystem: Received WebSocket PONG (unexpected)\n");
+                    receivedData.clear();
+                    continue; // Don't queue PONG for main thread
+                }
+                else if (m_lastDecodedOpcode == eWebSocketOpcode::CLOSE)
+                {
+                    // Server initiated close
+                    DebuggerPrintf("KADIWebSocketSubsystem: Received WebSocket CLOSE frame from server\n");
+                    m_threadRunning = false;
+                    receivedData.clear();
+                    break;
+                }
 
-                // Queue message for main thread processing
-                ReceiveMessageInternal(decodedMessage);
+                // Only queue data frames (TEXT/BINARY) for main thread processing
+                if (m_lastDecodedOpcode == eWebSocketOpcode::TEXT_FRAME ||
+                    m_lastDecodedOpcode == eWebSocketOpcode::BINARY_FRAME)
+                {
+                    // DIAGNOSTIC: Log WebSocket thread message reception
+                    DAEMON_LOG(LogNetwork, eLogVerbosity::Display,
+                               StringFormat("[KADI DIAGNOSTIC] WebSocket thread received message (length={}): {}",
+                                            decodedMessage.length(), decodedMessage));
+
+                    // Queue message for main thread processing
+                    ReceiveMessageInternal(decodedMessage);
+                }
 
                 // Remove processed frame from buffer
                 // Note: This is simplified - a production implementation would track frame boundaries
@@ -1104,6 +1152,9 @@ std::string KADIWebSocketSubsystem::EncodeWebSocketFrame(std::string const& payl
 
 //----------------------------------------------------------------------------------------------------
 // Decode WebSocket frame (copied from BaseWebSocketSubsystem)
+// Returns empty string for control frames (PING/PONG/CLOSE) that are handled internally
+// Returns payload for data frames (TEXT/BINARY)
+// Sets m_lastDecodedOpcode for caller to check frame type
 //----------------------------------------------------------------------------------------------------
 std::string KADIWebSocketSubsystem::DecodeWebSocketFrame(std::string const& frame)
 {
@@ -1118,7 +1169,9 @@ std::string KADIWebSocketSubsystem::DecodeWebSocketFrame(std::string const& fram
     uint64_t         payloadLength = secondByte & 0x7F;
 
     UNUSED(isFinal);
-    UNUSED(opcode);
+
+    // Store opcode for caller to check
+    m_lastDecodedOpcode = opcode;
 
     size_t headerLength = 2;
 
@@ -1230,6 +1283,29 @@ void KADIWebSocketSubsystem::CloseSocket(SOCKET socket)
     if (socket != INVALID_SOCKET_VALUE)
     {
         closesocket(socket);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// SendWebSocketPong - Respond to WebSocket PING frames (RFC 6455 Section 5.5.3)
+// PONG frame must echo back the PING payload
+//----------------------------------------------------------------------------------------------------
+void KADIWebSocketSubsystem::SendWebSocketPong(std::string const& payload)
+{
+    if (m_clientSocket == INVALID_SOCKET_VALUE)
+    {
+        DebuggerPrintf("KADIWebSocketSubsystem: Cannot send PONG - socket invalid\n");
+        return;
+    }
+
+    std::string pongFrame = EncodeWebSocketFrame(payload, eWebSocketOpcode::PONG);
+    if (SendRawDataToSocket(m_clientSocket, pongFrame))
+    {
+        DebuggerPrintf("KADIWebSocketSubsystem: Sent WebSocket PONG (payload size=%zu)\n", payload.size());
+    }
+    else
+    {
+        DebuggerPrintf("KADIWebSocketSubsystem: Failed to send WebSocket PONG\n");
     }
 }
 

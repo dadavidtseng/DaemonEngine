@@ -53,7 +53,7 @@ std::string KADIProtocolV1Adapter::SerializeToolRegistration(nlohmann::json cons
 	nlohmann::json params = {
 		{"tools", tools},
 		{"networks", nlohmann::json::array({"global"})},
-		{"displayName", "ProtogameJS3D Agent"}
+		{"displayName", m_displayName}  // Use configurable display name
 	};
 
 	nlohmann::json request = CreateRequest("kadi.agent.register", params);

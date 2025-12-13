@@ -102,6 +102,9 @@ public:
     void SetEventDeliveryCallback(KADIEventDeliveryCallback callback) { m_eventDeliveryCallback = callback; }
     void SetConnectionStateCallback(KADIConnectionStateCallback callback) { m_connectionStateCallback = callback; }
 
+    // Agent Configuration
+    void SetDisplayName(std::string const& displayName);
+
     // Message Sending
     void QueueMessage(std::string const& message);
 
@@ -155,6 +158,7 @@ private:
     bool        SendRawDataToSocket(SOCKET socket, std::string const& data);
     std::string ReceiveDataFromSocket(SOCKET socket);
     void        CloseSocket(SOCKET socket);
+    void        SendWebSocketPong(std::string const& payload); // Respond to WebSocket PING frames
 
     // Member Variables
     std::unique_ptr<IKADIProtocolAdapter> m_protocolAdapter;
@@ -180,6 +184,7 @@ private:
     // WebSocket Client Socket (Phase 2)
     SOCKET            m_clientSocket;
     std::atomic<bool> m_isWebSocketUpgraded;
+    eWebSocketOpcode  m_lastDecodedOpcode = eWebSocketOpcode::TEXT_FRAME; // Last decoded frame's opcode
 
     // Callbacks
     KADIToolInvokeCallback      m_toolInvokeCallback;

@@ -45,6 +45,14 @@ public:
 	std::string SerializePing() override;
 
 	//----------------------------------------------------------------------------------------------------
+	// Configuration
+	//----------------------------------------------------------------------------------------------------
+
+	/// @brief Set the display name for this agent (used in tool registration)
+	/// @param displayName Human-readable agent name (e.g., "SimpleMiner Agent")
+	void SetDisplayName(std::string const& displayName) { m_displayName = displayName; }
+
+	//----------------------------------------------------------------------------------------------------
 	// Deserialization (Incoming Messages)
 	//----------------------------------------------------------------------------------------------------
 
@@ -83,4 +91,9 @@ private:
 	// ID Mapping (for broker compatibility with string IDs)
 	//----------------------------------------------------------------------------------------------------
 	std::map<int, std::string> m_idMapping;  // Maps hashed int IDs back to original string IDs
+
+	//----------------------------------------------------------------------------------------------------
+	// Agent Configuration
+	//----------------------------------------------------------------------------------------------------
+	std::string m_displayName = "Unnamed Agent";  // Default display name
 };
