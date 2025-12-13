@@ -25,8 +25,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Entity/EntityID.hpp"
+#include "Engine/Renderer/DebugRenderSystem.hpp"  // For eDebugRenderMode
 
 #include <optional>
 #include <string>
@@ -49,7 +52,19 @@ enum class RenderCommandType : uint8_t
 	UPDATE_CAMERA_TYPE, // Change camera type (world/screen)
 	DESTROY_CAMERA,     // Remove camera from rendering
 	CREATE_LIGHT,       // Create new light source
-	UPDATE_LIGHT        // Update light properties
+	UPDATE_LIGHT,       // Update light properties
+
+	// Phase 4: Debug Render Commands
+	DEBUG_ADD_LINE,       // Add debug line primitive
+	DEBUG_ADD_POINT,      // Add debug point primitive
+	DEBUG_ADD_SPHERE,     // Add debug sphere primitive
+	DEBUG_ADD_AABB,       // Add debug AABB primitive
+	DEBUG_ADD_BASIS,      // Add debug basis (XYZ arrows)
+	DEBUG_ADD_WORLD_TEXT, // Add 3D world-space text primitive
+	DEBUG_ADD_SCREEN_TEXT,// Add 2D screen-space text primitive
+	DEBUG_UPDATE_COLOR,   // Update debug primitive color
+	DEBUG_CLEAR_ALL,      // Clear all debug primitives
+	DEBUG_REMOVE          // Remove specific debug primitive
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -141,6 +156,118 @@ struct CameraTypeUpdateData
 };
 
 //----------------------------------------------------------------------------------------------------
+// Phase 4: Debug Render Command Payloads
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+// DebugLineData
+// Payload for DEBUG_ADD_LINE command
+//----------------------------------------------------------------------------------------------------
+struct DebugLineData
+{
+	Vec3  start;
+	Vec3  end;
+	Rgba8 startColor;
+	Rgba8 endColor;
+	float radius;
+	float duration;  // 0 = permanent, -1 = single frame, >0 = seconds
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugPointData
+// Payload for DEBUG_ADD_POINT command
+//----------------------------------------------------------------------------------------------------
+struct DebugPointData
+{
+	Vec3  position;
+	Rgba8 color;
+	float radius;
+	float duration;
+	bool  isBillboard;  // Face camera
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugSphereData
+// Payload for DEBUG_ADD_SPHERE command
+//----------------------------------------------------------------------------------------------------
+struct DebugSphereData
+{
+	Vec3  center;
+	float radius;
+	Rgba8 color;
+	float duration;
+	bool  isSolid;  // Solid vs wireframe
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugAABBData
+// Payload for DEBUG_ADD_AABB command
+//----------------------------------------------------------------------------------------------------
+struct DebugAABBData
+{
+	Vec3  minBounds;
+	Vec3  maxBounds;
+	Rgba8 color;
+	float duration;
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugBasisData
+// Payload for DEBUG_ADD_BASIS command
+// Visualizes a coordinate system with colored XYZ arrows
+//----------------------------------------------------------------------------------------------------
+struct DebugBasisData
+{
+	Vec3  position;
+	Vec3  iBasis;  // I-axis (typically red, forward)
+	Vec3  jBasis;  // J-axis (typically green, left)
+	Vec3  kBasis;  // K-axis (typically blue, up)
+	float duration;
+	float axisLength;  // Length of each axis arrow
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugWorldTextData
+// Payload for DEBUG_ADD_WORLD_TEXT command
+// Renders text in 3D world-space with transformation and alignment control
+//----------------------------------------------------------------------------------------------------
+struct DebugWorldTextData
+{
+	std::string      text;
+	Mat44            transform;   // World-space transformation matrix
+	float            fontSize;
+	Vec2             alignment;   // Text alignment (0-1 range, 0.5=center)
+	float            duration;
+	Rgba8            color;
+	eDebugRenderMode mode;        // Depth testing mode (ALWAYS, USE_DEPTH, X_RAY)
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugScreenTextData
+// Payload for DEBUG_ADD_SCREEN_TEXT command
+// Renders text in 2D screen-space at pixel coordinates
+//----------------------------------------------------------------------------------------------------
+struct DebugScreenTextData
+{
+	std::string text;
+	Vec2        position;  // Screen-space position (pixels)
+	float       fontSize;
+	Vec2        alignment; // Text alignment (0-1 range, 0.5=center)
+	float       duration;
+	Rgba8       color;
+};
+
+//----------------------------------------------------------------------------------------------------
+// DebugColorUpdateData
+// Payload for DEBUG_UPDATE_COLOR command
+// Updates color of existing debug primitive
+//----------------------------------------------------------------------------------------------------
+struct DebugColorUpdateData
+{
+	Rgba8 newColor;
+};
+
+//----------------------------------------------------------------------------------------------------
 // RenderCommand
 //
 // Type-safe command structure using std::variant for payload storage.
@@ -162,7 +289,7 @@ struct RenderCommand
 	EntityID          entityId;  // Target entity (0 for camera)
 
 	// Type-safe payload using std::variant
-	// std::monostate for commands without payload (e.g., DESTROY_ENTITY, SET_ACTIVE_CAMERA, DESTROY_CAMERA)
+	// std::monostate for commands without payload (e.g., DESTROY_ENTITY, SET_ACTIVE_CAMERA, DESTROY_CAMERA, DEBUG_CLEAR_ALL, DEBUG_REMOVE)
 	std::variant<std::monostate,
 	             MeshCreationData,
 	             EntityUpdateData,
@@ -170,7 +297,15 @@ struct RenderCommand
 	             CameraUpdateData,
 	             CameraTypeUpdateData,
 	             LightCreationData,
-	             LightUpdateData>
+	             LightUpdateData,
+	             DebugLineData,
+	             DebugPointData,
+	             DebugSphereData,
+	             DebugAABBData,
+	             DebugBasisData,
+	             DebugWorldTextData,
+	             DebugScreenTextData,
+	             DebugColorUpdateData>
 	    data;
 
 	// Default constructor (required for array initialization)
