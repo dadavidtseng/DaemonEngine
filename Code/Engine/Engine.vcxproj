@@ -360,6 +360,7 @@
     <ClCompile Include="../ThirdParty/imgui/imgui_widgets.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_dx11.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp" />
+    <ClCompile Include="Audio\AudioAPI.cpp" />
     <ClCompile Include="Audio\AudioCommandQueue.cpp" />
     <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
@@ -446,6 +447,7 @@
     <ClCompile Include="Renderer/BitmapFont.cpp" />
     <ClCompile Include="Renderer/Camera.cpp" />
     <ClCompile Include="Renderer/ConstantBuffer.cpp" />
+    <ClCompile Include="Renderer/DebugRenderAPI.cpp" />
     <ClCompile Include="Renderer/DebugRenderSystem.cpp" />
     <ClCompile Include="Renderer/Image.cpp" />
     <ClCompile Include="Renderer/IndexBuffer.cpp" />
@@ -556,9 +558,12 @@
     <ClInclude Include="../ThirdParty/imgui/imstb_truetype.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_dx11.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_win32.h" />
+    <ClInclude Include="Audio\AudioAPI.hpp" />
     <ClInclude Include="Audio\AudioCommand.hpp" />
     <ClInclude Include="Audio\AudioCommandQueue.hpp" />
     <ClInclude Include="Audio\AudioScriptInterface.hpp" />
+    <ClInclude Include="Audio\AudioState.hpp" />
+    <ClInclude Include="Audio\AudioStateBuffer.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Audio\AudioTypes.hpp" />
     <ClInclude Include="Core\ClockScriptInterface.hpp" />
@@ -652,6 +657,10 @@
     <ClInclude Include="Renderer/BitmapFont.hpp" />
     <ClInclude Include="Renderer/Camera.hpp" />
     <ClInclude Include="Renderer/ConstantBuffer.hpp" />
+    <ClInclude Include="Renderer/DebugRenderAPI.hpp" />
+    <ClInclude Include="Renderer/DebugRenderCommand.hpp" />
+    <ClInclude Include="Renderer/DebugRenderCommandQueue.hpp" />
+    <ClInclude Include="Renderer/DebugRenderStateBuffer.hpp" />
     <ClInclude Include="Renderer/DebugRenderSystem.hpp" />
     <ClInclude Include="Renderer/DefaultShader.hpp" />
     <ClInclude Include="Renderer/Image.hpp" />

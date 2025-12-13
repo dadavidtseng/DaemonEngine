@@ -697,6 +697,16 @@ void GEngine::Startup()
         DebuggerPrintf("(GEngine::Startup)Renderer started\n");
     }
 
+    // KADI initialization moved here (Option A: immediately after Renderer, before resource loading)
+    // This ensures MCP tools are registered quickly (~50ms), before Claude Desktop typically connects
+    // Previously: KADI initialized last (after 17 seconds of resource loading)
+    // Now: KADI connects and registers tools before textures/shaders load
+    if (g_kadiSubsystem != nullptr)
+    {
+        g_kadiSubsystem->Startup();
+        DebuggerPrintf("KADIWebSocketSubsystem started\n");
+    }
+
     if (g_imgui != nullptr)
     {
         g_imgui->Startup();
@@ -743,12 +753,6 @@ void GEngine::Startup()
     }
 #endif
 
-    if (g_kadiSubsystem != nullptr)
-    {
-        g_kadiSubsystem->Startup();
-        DebuggerPrintf("KADIWebSocketSubsystem started\n");
-    }
-
     // Assignment 7: Start WidgetSubsystem
     if (g_widgetSubsystem != nullptr)
     {
@@ -761,11 +765,6 @@ void GEngine::Startup()
 void GEngine::Shutdown()
 {
     // Shutdown optional subsystems conditionally (reverse order)
-    if (g_kadiSubsystem)
-    {
-        g_kadiSubsystem->Shutdown();
-        DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
-    }
 
     // Assignment 7: Shutdown WidgetSubsystem
     if (g_widgetSubsystem)
@@ -816,6 +815,13 @@ void GEngine::Shutdown()
     {
         g_imgui->Shutdown();
         DebuggerPrintf("ImGuiSubsystem shutdown\n");
+    }
+
+    // KADI shutdown moved here to match new startup order (after ImGui, before Renderer)
+    if (g_kadiSubsystem)
+    {
+        g_kadiSubsystem->Shutdown();
+        DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
     }
 
     if (g_renderer)
