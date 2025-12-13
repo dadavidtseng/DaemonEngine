@@ -11,30 +11,35 @@
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
+class DebugRenderAPI;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief JavaScript interface for DebugRenderSystem integration providing debug visualization control
 ///
-/// @remark Exposes DebugRenderSystem global C-style API to JavaScript for debug rendering operations
-///         including control, output, and geometry drawing functions for development and debugging.
+/// @remark Phase 4: Updated to use DebugRenderAPI for async command submission to RenderCommandQueue
+///         instead of calling global DebugRenderSystem functions directly (synchronous).
 ///
 /// @remark Implements method registry pattern for efficient JavaScript method dispatch and
 ///         provides type-safe parameter validation for all debug rendering operations.
 ///
-/// @remark Note: DebugRenderSystem uses global C-style functions, so this interface wraps those
-///         global functions rather than managing an instance pointer.
+/// @remark Architecture: JavaScript → ScriptInterface → DebugRenderAPI → RenderCommandQueue
+///                       → App::ProcessRenderCommands() → DebugRenderStateBuffer
+///                       → App::RenderDebugPrimitives() → DebugRenderSystem (global functions)
 ///
+/// @see DebugRenderAPI.hpp for async command submission layer
 /// @see DebugRenderSystem.hpp for underlying debug rendering implementation
 /// @see IScriptableObject for JavaScript integration framework
 //----------------------------------------------------------------------------------------------------
 class DebugRenderSystemScriptInterface : public IScriptableObject
 {
 public:
-    /// @brief Construct DebugRenderSystemScriptInterface for debug rendering operations
+    /// @brief Construct DebugRenderSystemScriptInterface with DebugRenderAPI for async operations
     ///
-    /// @remark DebugRenderSystem uses global functions, no instance pointer needed.
+    /// @param debugRenderAPI Pointer to DebugRenderAPI for async command submission (NO OWNERSHIP)
+    ///
+    /// @remark Phase 4: Constructor now requires DebugRenderAPI pointer (replaces parameterless constructor)
     /// @remark Automatically initializes method registry for efficient JavaScript dispatch.
-    DebugRenderSystemScriptInterface();
+    explicit DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI);
 
     std::vector<ScriptMethodInfo> GetAvailableMethods() const override;
     StringList                    GetAvailableProperties() const override;
@@ -51,6 +56,7 @@ private:
     ScriptMethodResult ExecuteSetVisible(ScriptArgs const& args);
     ScriptMethodResult ExecuteSetHidden(ScriptArgs const& args);
     ScriptMethodResult ExecuteClear(ScriptArgs const& args);
+    ScriptMethodResult ExecuteClearAll(ScriptArgs const& args);
 
     // === OUTPUT METHODS ===
     ScriptMethodResult ExecuteBeginFrame(ScriptArgs const& args);
@@ -77,4 +83,7 @@ private:
     bool ValidatePosition(float x, float y, float z) const;
     bool ValidateDuration(float duration) const;
     int  StringToDebugRenderMode(String const& modeStr) const;
+
+    // === MEMBER VARIABLES (Phase 4) ===
+    DebugRenderAPI* m_debugRenderAPI = nullptr;  // Async API for command submission (NO OWNERSHIP)
 };

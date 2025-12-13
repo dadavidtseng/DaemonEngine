@@ -7,6 +7,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/DebugRenderSystem.hpp"
+#include "Engine/Renderer/DebugRenderAPI.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -18,8 +19,11 @@
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
-DebugRenderSystemScriptInterface::DebugRenderSystemScriptInterface()
+DebugRenderSystemScriptInterface::DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI)
+    : m_debugRenderAPI(debugRenderAPI)
 {
+    GUARANTEE_OR_DIE(m_debugRenderAPI != nullptr, "DebugRenderSystemScriptInterface: debugRenderAPI cannot be null");
+
     // Initialize method registry for efficient dispatch
     DebugRenderSystemScriptInterface::InitializeMethodRegistry();
 }
@@ -31,6 +35,7 @@ void DebugRenderSystemScriptInterface::InitializeMethodRegistry()
     m_methodRegistry["setVisible"] = [this](ScriptArgs const& args) { return ExecuteSetVisible(args); };
     m_methodRegistry["setHidden"]  = [this](ScriptArgs const& args) { return ExecuteSetHidden(args); };
     m_methodRegistry["clear"]      = [this](ScriptArgs const& args) { return ExecuteClear(args); };
+    m_methodRegistry["clearAll"]   = [this](ScriptArgs const& args) { return ExecuteClearAll(args); };
 
     // === OUTPUT METHODS ===
     m_methodRegistry["beginFrame"]   = [this](ScriptArgs const& args) { return ExecuteBeginFrame(args); };
@@ -69,7 +74,12 @@ std::vector<ScriptMethodInfo> DebugRenderSystemScriptInterface::GetAvailableMeth
                          "void"),
 
         ScriptMethodInfo("clear",
-                         "Clear all debug rendering objects",
+                         "Clear all debug rendering objects from DebugRenderSystem",
+                         {},
+                         "void"),
+
+        ScriptMethodInfo("clearAll",
+                         "Clear all debug primitives from StateBuffer (use when changing game states)",
                          {},
                          "void"),
 
@@ -247,6 +257,25 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteClear(ScriptArgs con
 }
 
 //----------------------------------------------------------------------------------------------------
+ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteClearAll(ScriptArgs const& args)
+{
+    auto result = ScriptTypeExtractor::ValidateArgCount(args, 0, "clearAll");
+    if (!result.success) return result;
+
+    try
+    {
+        // Clear the StateBuffer by calling DebugRenderAPI::ClearAll()
+        // This sends a DEBUG_CLEAR_ALL command to clear the back buffer
+        m_debugRenderAPI->ClearAll();
+        return ScriptMethodResult::Success("Debug primitives cleared from StateBuffer");
+    }
+    catch (const std::exception& e)
+    {
+        return ScriptMethodResult::Error("Failed to clearAll: " + String(e.what()));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 // OUTPUT METHODS
 //----------------------------------------------------------------------------------------------------
 
@@ -370,12 +399,14 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldPoint(Script
             return ScriptMethodResult::Error("Duration must be non-negative");
         }
 
-        Vec3              pos(x, y, z);
-        Rgba8             color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
-        eDebugRenderMode  mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
+        Vec3   pos(x, y, z);
+        Rgba8  color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
 
-        DebugAddWorldPoint(pos, radius, duration, color, color, mode);
-        return ScriptMethodResult::Success("World point added");
+        // Phase 4: Use DebugRenderAPI for async command submission instead of direct call
+        // Note: isBillboard=false for standard world point (non-billboard)
+        uint32_t primitiveId = m_debugRenderAPI->AddPoint(pos, color, radius, duration, false);
+
+        return ScriptMethodResult::Success(static_cast<double>(primitiveId));
     }
     catch (const std::exception& e)
     {
@@ -423,8 +454,12 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldLine(ScriptA
         Rgba8             color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
         eDebugRenderMode  mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
 
-        DebugAddWorldLine(start, end, radius, duration, color, color, mode);
-        return ScriptMethodResult::Success("World line added");
+        // Phase 4: Use DebugRenderAPI for async command submission instead of direct call
+        // OLD (Synchronous): DebugAddWorldLine(start, end, radius, duration, color, color, mode);
+        // NEW (Async): Submit command to RenderCommandQueue
+        uint32_t primitiveId = m_debugRenderAPI->AddLine(start, end, color, color, radius, duration);
+
+        return ScriptMethodResult::Success(static_cast<double>(primitiveId));  // Return primitive ID to JavaScript
     }
     catch (const std::exception& e)
     {
@@ -514,12 +549,14 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldWireSphere(S
             return ScriptMethodResult::Error("Duration must be non-negative");
         }
 
-        Vec3              center(x, y, z);
-        Rgba8             color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
-        eDebugRenderMode  mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
+        Vec3   center(x, y, z);
+        Rgba8  color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
 
-        DebugAddWorldWireSphere(center, radius, duration, color, color, mode);
-        return ScriptMethodResult::Success("World wire sphere added");
+        // Phase 4: Use DebugRenderAPI for async command submission instead of direct call
+        // Note: isSolid=false for wireframe sphere
+        uint32_t primitiveId = m_debugRenderAPI->AddSphere(center, radius, color, duration, false);
+
+        return ScriptMethodResult::Success(static_cast<double>(primitiveId));
     }
     catch (const std::exception& e)
     {
@@ -633,8 +670,9 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddWorldText(ScriptA
         Rgba8             color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
         eDebugRenderMode  mode = static_cast<eDebugRenderMode>(StringToDebugRenderMode(modeStr));
 
-        DebugAddWorldText(text, transform, textHeight, alignment, duration, color, color, mode);
-        return ScriptMethodResult::Success("World text added");
+        // Submit async command through DebugRenderAPI (RenderCommandQueue → StateBuffer flow)
+        uint64_t primitiveId = m_debugRenderAPI->AddWorldText(text, transform, textHeight, alignment, duration, color, mode);
+        return ScriptMethodResult::Success("World text added with ID: " + std::to_string(primitiveId));
     }
     catch (const std::exception& e)
     {
@@ -778,8 +816,9 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteAddScreenText(Script
         Vec2  alignment(alignX, alignY);
         Rgba8 color(static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), static_cast<unsigned char>(a));
 
-        DebugAddScreenText(text, position, size, alignment, duration, color, color);
-        return ScriptMethodResult::Success("Screen text added");
+        // Submit async command through DebugRenderAPI (RenderCommandQueue → StateBuffer flow)
+        uint64_t primitiveId = m_debugRenderAPI->AddScreenText(text, position, size, alignment, duration, color);
+        return ScriptMethodResult::Success("Screen text added with ID: " + std::to_string(primitiveId));
     }
     catch (const std::exception& e)
     {

@@ -114,7 +114,7 @@ private:
 	//   - type: string ("cube", "sphere", "grid", "plane")
 	//   - properties: object {position: {x, y, z}, scale: number, color: {r, g, b, a}}
 	//   - callback: function (entityId) => {...}
-	ScriptMethodResult ExecuteCreateMesh(ScriptArgs const& args);
+	ScriptMethodResult ExecuteCreateMesh(ScriptArgs const& args) const;
 
 	// Update entity position (absolute, world-space)
 	// JavaScript signature: updatePosition(entityId, position)

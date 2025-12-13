@@ -116,7 +116,7 @@ bool EntityScriptInterface::SetProperty(String const& propertyName, std::any con
 // Entity Management Methods
 //----------------------------------------------------------------------------------------------------
 
-ScriptMethodResult EntityScriptInterface::ExecuteCreateMesh(ScriptArgs const& args)
+ScriptMethodResult EntityScriptInterface::ExecuteCreateMesh(ScriptArgs const& args) const
 {
     // Debug logging
     DebuggerPrintf("[DEBUG] ExecuteCreateMesh called with %zu arguments\n", args.size());
