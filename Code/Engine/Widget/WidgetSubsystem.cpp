@@ -72,16 +72,12 @@ void WidgetSubsystem::Update()
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::Render() const
 {
-    // DEBUG: Log widget count
-    DebuggerPrintf("[WIDGET_SUBSYSTEM] Render() called - Widget count: %d\n", static_cast<int>(m_widgets.size()));
 
     // Render all widgets in z-order
     for (auto& widget : m_widgets)
     {
         if (widget && widget->IsVisible() && !widget->IsGarbage())
         {
-            DebuggerPrintf("[WIDGET_SUBSYSTEM] Rendering widget: %s (visible=%d, garbage=%d)\n",
-                widget->GetName().c_str(), widget->IsVisible(), widget->IsGarbage());
             widget->Render();
         }
     }
@@ -116,10 +112,6 @@ void WidgetSubsystem::AddWidget(WidgetPtr const& widget,
     widget->SetZOrder(zOrder);
     m_widgets.push_back(widget);
     m_bNeedsSorting = true;
-
-    // DEBUG: Confirm widget addition
-    DebuggerPrintf("[WIDGET_SUBSYSTEM] AddWidget() - Added widget '%s' with zOrder=%d, Total widgets=%d\n",
-        widget->GetName().c_str(), zOrder, static_cast<int>(m_widgets.size()));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -228,6 +220,19 @@ std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByOwner(uint64_t ownerID) cons
 std::vector<WidgetPtr> WidgetSubsystem::GetAllWidgets() const
 {
     return m_widgets;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool WidgetSubsystem::HasModalWidget() const
+{
+    for (auto const& widget : m_widgets)
+    {
+        if (widget && widget->IsModal() && widget->IsVisible() && !widget->IsGarbage())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------

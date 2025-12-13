@@ -52,6 +52,7 @@ public:
     WidgetPtr              FindWidgetByName(String const& name) const;
     std::vector<WidgetPtr> GetWidgetsByOwner(uint64_t ownerID) const;
     std::vector<WidgetPtr> GetAllWidgets() const;
+    bool                   HasModalWidget() const;  // Returns true if any modal widget is visible
 
     // Viewport Management
     void      SetViewportWidget(WidgetPtr const& widget);

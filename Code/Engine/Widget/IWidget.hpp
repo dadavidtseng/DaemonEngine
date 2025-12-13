@@ -38,6 +38,7 @@ public:
     virtual bool     IsVisible() const;
     virtual bool     IsTick() const;
     virtual bool     IsGarbage() const;
+    virtual bool     IsModal() const;  // Returns true if widget blocks input to lower layers (default: false)
 
     // Setters
     virtual void SetOwner(uint64_t ownerID);

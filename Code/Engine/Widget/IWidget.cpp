@@ -85,6 +85,12 @@ bool IWidget::IsGarbage() const
 }
 
 //----------------------------------------------------------------------------------------------------
+bool IWidget::IsModal() const
+{
+    return false;  // Default: widgets do not block input to lower layers
+}
+
+//----------------------------------------------------------------------------------------------------
 void IWidget::SetOwner(uint64_t ownerID)
 {
     m_ownerID = ownerID;
