@@ -92,7 +92,6 @@ public:
     //   Updates entity state buffer based on JavaScript logic
     //   Submits render commands to command queue
     virtual void UpdateJSWorkerThread(float               deltaTime,
-                                      EntityStateBuffer*  entityBuffer,
                                       RenderCommandQueue* commandQueue) = 0;
 
     // Execute JavaScript render logic on worker thread
@@ -113,7 +112,6 @@ public:
     //   Updates camera state buffer based on JavaScript logic
     //   Submits rendering commands to command queue
     virtual void RenderJSWorkerThread(float               deltaTime,
-                                      CameraStateBuffer*  cameraBuffer,
                                       RenderCommandQueue* commandQueue) = 0;
 
     //------------------------------------------------------------------------------------------------
