@@ -87,6 +87,7 @@ void GEngine::Construct()
         try
         {
             std::ifstream configFile("Data/Config/LogConfig.json");
+
             if (configFile.is_open())
             {
                 nlohmann::json jsonConfig;
@@ -94,7 +95,7 @@ void GEngine::Construct()
                 config = sLogSubsystemConfig::FromJSON(jsonConfig);
 
                 // Simple success message (we can't use LogSubsystem yet as it's not initialized)
-                DebuggerPrintf("Loaded LogSubsystem config from JSON\n");
+                DebuggerPrintf("(GEngine::Construct)Loaded LogSubsystem config from JSON\n");
             }
             else
             {
@@ -151,7 +152,7 @@ void GEngine::Construct()
         }
 
         g_logSubsystem = new LogSubsystem(config);
-        DebuggerPrintf("LogSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)LogSubsystem: ENABLED\n");
     }
     else
     {
@@ -163,6 +164,7 @@ void GEngine::Construct()
 #pragma region EventSystem
     // Check if EventSystem should be enabled from core subsystems list
     bool enableEventSystem = true;  // Default: enabled
+
     if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
@@ -184,14 +186,17 @@ void GEngine::Construct()
     //------------------------------------------------------------------------------------------------
 #pragma region JobSystem
     // Check if JobSystem should be enabled from core subsystems list
-    bool enableJobSystem = true;  // Default: enabled
-    if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
+    bool bEnableJobSystem = true;  // Default: enabled
+
+    if (bHasEngineSubsystemConfig &&
+        subsystemConfig.contains("core") &&
+        subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        enableJobSystem            = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
+        bEnableJobSystem            = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
     }
 
-    if (enableJobSystem)
+    if (bEnableJobSystem)
     {
         int totalCores = static_cast<int>(std::thread::hardware_concurrency());
         // if (totalCores < 3) totalCores = 3;  // Minimum: main thread + 1 IO + 1 generic
@@ -217,6 +222,7 @@ void GEngine::Construct()
 #pragma region InputSystem
     // Check if InputSystem is enabled in config
     bool enableInput = true;  // Default: enabled
+    
     if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input"))
     {
         enableInput = subsystemConfig["subsystems"]["input"].value("enabled", true);

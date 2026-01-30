@@ -37,8 +37,8 @@ void TransformVertexArray3D(VertexList_PCUTBN& verts, Mat44 const& transform);
 
 void AddVertsForDisc2D(VertexList_PCU& verts, Vec2 const& discCenter, float discRadius, Rgba8 const& fillColor = Rgba8::WHITE);
 void AddVertsForDisc2D(VertexList_PCU& verts, Vec2 const& discCenter, float discRadius, float thickness, Rgba8 const& outlineColor = Rgba8::WHITE);
-void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float discRadius, Vec3 const& normalDirection, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForDisc2D(VertexList_PCU& verts, Disc2 const& disc, Rgba8 const& color = Rgba8::WHITE);
+void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float discRadius, Vec3 const& normalDirection, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForLineSegment2D(VertexList_PCU& verts, Vec2 const& startPosition, Vec2 const& endPosition, float thickness, bool isInfinite, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForLineSegment2D(VertexList_PCU& verts, LineSegment2 const& lineSegment, float thickness, bool isInfinite, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForTriangle2D(VertexList_PCU& verts, Vec2 const& ccw0, Vec2 const& ccw1, Vec2 const& ccw2, Rgba8 const& color = Rgba8::WHITE);

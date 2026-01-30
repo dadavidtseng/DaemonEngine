@@ -111,8 +111,7 @@ public:
     //   Calls into JSEngine.render() through ScriptSubsystem
     //   Updates camera state buffer based on JavaScript logic
     //   Submits rendering commands to command queue
-    virtual void RenderJSWorkerThread(float               deltaTime,
-                                      RenderCommandQueue* commandQueue) = 0;
+    virtual void RenderJSWorkerThread(float deltaTime, RenderCommandQueue* commandQueue) = 0;
 
     //------------------------------------------------------------------------------------------------
     // Error Handling Interface (Worker Thread)
@@ -134,8 +133,7 @@ public:
     //   Attempt hot-reload recovery
     //   Signal main thread of error state
     //   Continue worker thread execution with last known good state
-    virtual void HandleJSException(char const* errorMessage,
-                                   char const* stackTrace) = 0;
+    virtual void HandleJSException(char const* errorMessage, char const* stackTrace) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------

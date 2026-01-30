@@ -106,6 +106,7 @@ void AddVertsForDisc2D(VertexList_PCU& verts,
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void AddVertsForDisc2D(VertexList_PCU& verts,
                        Vec2 const&     discCenter,
                        float const     discRadius,
@@ -145,6 +146,18 @@ void AddVertsForDisc2D(VertexList_PCU& verts,
     }
 }
 
+//----------------------------------------------------------------------------------------------------
+void AddVertsForDisc2D(VertexList_PCU& verts,
+                       Disc2 const&    disc,
+                       Rgba8 const&    color)
+{
+    AddVertsForDisc2D(verts,
+                      disc.m_position,
+                      disc.m_radius,
+                      color);
+}
+
+//----------------------------------------------------------------------------------------------------
 void AddVertsForDisc3D(VertexList_PCU& verts,
                        Vec3 const&     discCenter,
                        float const     discRadius,
@@ -179,17 +192,6 @@ void AddVertsForDisc3D(VertexList_PCU& verts,
         verts.emplace_back(startOuterPosition, color);
         verts.emplace_back(endOuterPosition, color);
     }
-}
-
-//----------------------------------------------------------------------------------------------------
-void AddVertsForDisc2D(VertexList_PCU& verts,
-                       Disc2 const&    disc,
-                       Rgba8 const&    color)
-{
-    AddVertsForDisc2D(verts,
-                      disc.m_position,
-                      disc.m_radius,
-                      color);
 }
 
 //----------------------------------------------------------------------------------------------------

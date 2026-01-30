@@ -42,7 +42,9 @@ public:
     Mat44 GetRenderToClipTransform() const;
 
     Vec2 GetOrthographicBottomLeft() const;
+    Vec2 GetOrthographicBottomRight() const;
     Vec2 GetOrthographicTopRight() const;
+    Vec2 GetOrthographicTopLeft() const;
     void Translate2D(Vec2 const& translation);
 
     Mat44 GetOrthographicMatrix() const;

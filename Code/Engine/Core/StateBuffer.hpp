@@ -26,18 +26,16 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
-
 //----------------------------------------------------------------------------------------------------
-#include <mutex>
-#include <cstdint>
-#include <exception>
-#include <atomic>
-#include <unordered_set>
-#include <array>
-#include <chrono>  // For std::chrono::milliseconds in try_lock_for
-
-#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <array>
+#include <atomic>
+#include <chrono>  // For std::chrono::milliseconds in try_lock_for
+#include <exception>
+#include <mutex>
+#include <unordered_set>
 
 //----------------------------------------------------------------------------------------------------
 // RunningAverage Helper Class (Phase 4.3)

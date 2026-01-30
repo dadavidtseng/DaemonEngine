@@ -151,16 +151,28 @@ Vec2 Camera::GetOrthographicBottomLeft() const
 }
 
 //----------------------------------------------------------------------------------------------------
+Vec2 Camera::GetOrthographicBottomRight() const
+{
+    return Vec2(m_orthographicTopRight.x, m_orthographicBottomLeft.y);
+}
+
+//----------------------------------------------------------------------------------------------------
 Vec2 Camera::GetOrthographicTopRight() const
 {
     return m_orthographicTopRight;
 }
 
 //----------------------------------------------------------------------------------------------------
+Vec2 Camera::GetOrthographicTopLeft() const
+{
+    return Vec2(m_orthographicBottomLeft.x, m_orthographicTopRight.y);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Camera::Translate2D(Vec2 const& translation)
 {
     m_orthographicBottomLeft += translation;
-    m_orthographicTopRight += translation;
+    m_orthographicTopRight   += translation;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -367,8 +379,8 @@ Vec3 Camera::PerspectiveScreenPosToWorld(Vec2 const& screenPos) const
 
     // Step 4: 根據螢幕座標偏移 (0.5, 0.5) 為中心
     Vec3 worldPos = nearCenter;
-    worldPos -= jBasis * ((screenPos.x - 0.5f) * w); // 往右是 -j（因為 j 是 left）
-    worldPos += kBasis * ((screenPos.y - 0.5f) * h); // 往上是 +k（因為 k 是 up）
+    worldPos      -= jBasis * ((screenPos.x - 0.5f) * w); // 往右是 -j（因為 j 是 left）
+    worldPos      += kBasis * ((screenPos.y - 0.5f) * h); // 往上是 +k（因為 k 是 up）
 
     return worldPos;
 }
@@ -386,8 +398,8 @@ Ray3 Camera::ScreenPosToWorldRay(Vec2 const& screenPos) const
     float h        = 2.f * m_perspectiveFar * SinDegrees(m_perspectiveFOV * 0.5f) / CosDegrees(m_perspectiveFOV * 0.5f);
     float w        = h * m_perspectiveAspect;
     Vec3  farWorld = m_position + iBasis * m_perspectiveFar;
-    farWorld -= jBasis * (screenPos.x - 0.5f) * w;
-    farWorld += kBasis * (screenPos.y - 0.5f) * h;
+    farWorld       -= jBasis * (screenPos.x - 0.5f) * w;
+    farWorld       += kBasis * (screenPos.y - 0.5f) * h;
 
     // Create ray from near to far
     Ray3 ray = Ray3(nearWorld, (farWorld - nearWorld).GetNormalized(), 10.f);
