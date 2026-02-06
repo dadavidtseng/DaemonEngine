@@ -4,12 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <string>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Mat44.hpp"
-#include "Engine/Math/Vec2.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;

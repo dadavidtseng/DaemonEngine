@@ -4,10 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/DebugRenderSystem.hpp"
-
-#include <algorithm>
-#include <mutex>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
