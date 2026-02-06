@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/RaycastUtils.hpp"
 //----------------------------------------------------------------------------------------------------
+#include "ConvexHull2.hpp"
+#include "Plane2.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -820,6 +822,77 @@ RaycastResult3D RaycastVsPlane3D(Vec3 const&   rayStartPosition,
     result.m_rayForwardNormal = rayForwardNormal;
     result.m_rayMaxLength     = maxLength;
     result.m_rayStartPosition = rayStartPosition;
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+RaycastResult2D RaycastVsConvexHull2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, ConvexHull2 const& convexHull)
+{
+    RaycastResult2D result;
+    result.m_rayStartPosition = rayStartPosition;
+    result.m_rayForwardNormal = rayForwardNormal;
+    result.m_rayMaxLength     = maxLength;
+
+    // Use slab method: track entry and exit distances
+    float tEnter = 0.f;
+    float tExit  = maxLength;
+    Vec2  enterNormal;
+
+    for (Plane2 const& plane : convexHull.m_boundingPlanes)
+    {
+        float vd = DotProduct2D(rayForwardNormal, plane.m_normal);
+        float v0 = plane.GetAltitudeOfPoint(rayStartPosition);
+
+        // Ray parallel to plane
+        if (abs(vd) < 0.0001f)
+        {
+            // If outside, no intersection
+            if (v0 > 0.f)
+            {
+                return result; // Miss
+            }
+            continue;
+        }
+
+        float t = -v0 / vd;
+
+        // Entering the half-space (moving towards inside)
+        if (vd < 0.f)
+        {
+            if (t > tEnter)
+            {
+                tEnter      = t;
+                enterNormal = plane.m_normal;
+            }
+        }
+        // Exiting the half-space (moving towards outside)
+        else
+        {
+            if (t < tExit)
+            {
+                tExit = t;
+            }
+        }
+
+        // Early exit if no intersection possible
+        if (tEnter > tExit)
+        {
+            return result; // Miss
+        }
+    }
+
+    // Check if intersection is within ray bounds
+    if (tEnter < 0.f || tEnter > maxLength)
+    {
+        return result; // Miss
+    }
+
+    // Hit!
+    result.m_didImpact      = true;
+    result.m_impactLength   = tEnter;
+    result.m_impactPosition = rayStartPosition + rayForwardNormal * tEnter;
+    result.m_impactNormal   = enterNormal;
 
     return result;
 }

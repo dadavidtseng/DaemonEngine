@@ -14,6 +14,8 @@
 struct FloatRange;
 struct OBB3;
 struct Plane3;
+struct AABB2;
+struct ConvexHull2;
 
 //----------------------------------------------------------------------------------------------------
 enum class eAABB2HitType : int8_t
@@ -99,3 +101,8 @@ RaycastResult3D RaycastVsAABB3D(Vec3 const& rayStartPosition, Vec3 const& rayFor
 RaycastResult3D RaycastVsCylinderZ3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Vec2 const& cylinderCenterXY, FloatRange const& cylinderMinMaxZ, float cylinderRadius);
 RaycastResult3D RaycastVsOBB3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, OBB3 const& obb3);
 RaycastResult3D RaycastVsPlane3D(Vec3 const& rayStartPosition, Vec3 const& rayForwardNormal, float maxLength, Plane3 const& plane3);
+
+//----------------------------------------------------------------------------------------------------
+// Additional 2D raycast functions
+//----------------------------------------------------------------------------------------------------
+RaycastResult2D RaycastVsConvexHull2D(Vec2 const& rayStartPosition, Vec2 const& rayForwardNormal, float maxLength, ConvexHull2 const& convexHull);
