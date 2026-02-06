@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Math/MathUtils.hpp"
 
+#include "ConvexHull2.hpp"
+#include "Plane2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -1572,4 +1574,53 @@ float CustomFunkyEasingFunction(float const t)
 {
     if (t < 0.8f) return SmoothStart3(t);
     return 1.f - 0.1f * (1.f - t);
+}
+
+//----------------------------------------------------------------------------------------------------
+// Convex Hull and Plane Utilities
+//----------------------------------------------------------------------------------------------------
+
+bool IsPointInsideConvexHull2D(Vec2 const& point, ConvexHull2 const& convexHull)
+{
+    // A point is inside a convex hull if it's on the inside (negative) side of all planes
+    for (Plane2 const& plane : convexHull.m_boundingPlanes)
+    {
+        float altitude = plane.GetAltitudeOfPoint(point);
+        if (altitude > 0.1f) // Outside this plane (with small epsilon for numerical stability)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+Vec2 GetPlaneIntersection2D(Plane2 const& planeA, Plane2 const& planeB)
+{
+    // Solve for intersection point of two 2D planes (lines)
+    // Plane equation: normal.x * x + normal.y * y = distanceFromOrigin
+    //
+    // n1.x * x + n1.y * y = d1
+    // n2.x * x + n2.y * y = d2
+    //
+    // Using Cramer's rule:
+    // x = (d1 * n2.y - d2 * n1.y) / (n1.x * n2.y - n2.x * n1.y)
+    // y = (n1.x * d2 - n2.x * d1) / (n1.x * n2.y - n2.x * n1.y)
+
+    Vec2 const& n1 = planeA.m_normal;
+    Vec2 const& n2 = planeB.m_normal;
+    float d1 = planeA.m_distanceFromOrigin;
+    float d2 = planeB.m_distanceFromOrigin;
+
+    float determinant = n1.x * n2.y - n2.x * n1.y;
+
+    // Parallel planes (no intersection or infinite intersections)
+    if (abs(determinant) < 0.0001f)
+    {
+        return Vec2::ZERO; // Return origin as fallback
+    }
+
+    float x = (d1 * n2.y - d2 * n1.y) / determinant;
+    float y = (n1.x * d2 - n2.x * d1) / determinant;
+
+    return Vec2(x, y);
 }

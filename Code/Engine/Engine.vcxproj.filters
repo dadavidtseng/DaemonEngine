@@ -597,6 +597,9 @@
       <Filter>Engine\Audio</Filter>
     </ClCompile>
     <!-- Dear ImGui Integration -->
+    <ClCompile Include="Math\ConvexHull2.cpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -1145,6 +1148,9 @@
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <!-- Dear ImGui Integration -->
+    <ClInclude Include="Math\ConvexHull2.hpp">
+      <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Entity\EntityAPI.cpp">

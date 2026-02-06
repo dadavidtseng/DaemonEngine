@@ -368,6 +368,7 @@
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Entity\EntityScriptInterface.cpp" />
+    <ClCompile Include="Math\ConvexHull2.cpp" />
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
     <ClCompile Include="Entity\EntityAPI.cpp" />
     <ClCompile Include="Renderer\CameraAPI.cpp" />
@@ -576,6 +577,7 @@
     <ClInclude Include="Entity\EntityScriptInterface.hpp" />
     <ClInclude Include="Entity\EntityState.hpp" />
     <ClInclude Include="Entity\EntityStateBuffer.hpp" />
+    <ClInclude Include="Math\ConvexHull2.hpp" />
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraAPI.hpp" />
     <ClInclude Include="Renderer\CameraScriptInterface.hpp" />

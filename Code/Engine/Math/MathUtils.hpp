@@ -20,6 +20,8 @@ struct Vec2;
 struct Vec3;
 struct Vec4;
 struct Mat44;
+struct ConvexHull2;
+struct Plane2;
 
 //----------------------------------------------------------------------------------------------------
 float constexpr PI        = 3.14159265358979323846f;
@@ -197,3 +199,9 @@ float SmoothStep6(float t);
 float Hesitate3(float t);
 float Hesitate5(float t);
 float CustomFunkyEasingFunction(float t);
+
+//----------------------------------------------------------------------------------------------------
+// Convex Hull and Plane Utilities
+//----------------------------------------------------------------------------------------------------
+bool IsPointInsideConvexHull2D(Vec2 const& point, ConvexHull2 const& convexHull);
+Vec2 GetPlaneIntersection2D(Plane2 const& planeA, Plane2 const& planeB);
