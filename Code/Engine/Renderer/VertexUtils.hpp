@@ -13,6 +13,7 @@
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
 
+struct ConvexPoly2;
 //----------------------------------------------------------------------------------------------------
 struct AABB3;
 struct Capsule2;
@@ -41,6 +42,7 @@ void AddVertsForDisc2D(VertexList_PCU& verts, Disc2 const& disc, Rgba8 const& co
 void AddVertsForDisc3D(VertexList_PCU& verts, Vec3 const& discCenter, float discRadius, Vec3 const& normalDirection, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForLineSegment2D(VertexList_PCU& verts, Vec2 const& startPosition, Vec2 const& endPosition, float thickness, bool isInfinite, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForLineSegment2D(VertexList_PCU& verts, LineSegment2 const& lineSegment, float thickness, bool isInfinite, Rgba8 const& color = Rgba8::WHITE);
+void AddVertsForConvexPoly2D(VertexList_PCU& verts, ConvexPoly2 const& convexPoly2, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForTriangle2D(VertexList_PCU& verts, Vec2 const& ccw0, Vec2 const& ccw1, Vec2 const& ccw2, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForTriangle2D(VertexList_PCU& verts, Triangle2 const& triangle, Rgba8 const& color = Rgba8::WHITE);
 void AddVertsForAABB2D(VertexList_PCU& verts, AABB2 const& aabb2Box, Rgba8 const& color = Rgba8::WHITE, Vec2 const& uvMins = Vec2::ZERO, Vec2 const& uvMaxs = Vec2::ONE);

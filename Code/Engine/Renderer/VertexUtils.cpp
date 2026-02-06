@@ -10,6 +10,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Capsule2.hpp"
+#include "Engine/Math/ConvexHull2.hpp"
 #include "Engine/Math/Disc2.hpp"
 #include "Engine/Math/LineSegment2.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -257,6 +258,25 @@ void AddVertsForLineSegment2D(VertexList_PCU&     verts,
                              thickness,
                              isInfinite,
                              color);
+}
+
+//----------------------------------------------------------------------------------------------------
+void AddVertsForConvexPoly2D(VertexList_PCU& verts, ConvexPoly2 const& convexPoly2, Rgba8 const& color)
+{
+    std::vector<Vec2> const& points = convexPoly2.GetVertexArray();
+    int numPoints = static_cast<int>(points.size());
+
+    if (numPoints < 3)
+    {
+        return;
+    }
+
+    // Triangulate the convex polygon using fan triangulation
+    Vec2 const& center = points[0];
+    for (int i = 1; i < numPoints - 1; ++i)
+    {
+        AddVertsForTriangle2D(verts, center, points[i], points[i + 1], color);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
