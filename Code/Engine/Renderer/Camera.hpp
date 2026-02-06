@@ -46,6 +46,7 @@ public:
     Vec2 GetOrthographicTopRight() const;
     Vec2 GetOrthographicTopLeft() const;
     void Translate2D(Vec2 const& translation);
+    Vec2 GetCursorWorldPosition(Vec2 const& normalizedCursorPos) const;
 
     Mat44 GetOrthographicMatrix() const;
     Mat44 GetPerspectiveMatrix() const;

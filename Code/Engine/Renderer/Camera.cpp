@@ -176,6 +176,13 @@ void Camera::Translate2D(Vec2 const& translation)
 }
 
 //----------------------------------------------------------------------------------------------------
+Vec2 Camera::GetCursorWorldPosition(Vec2 const& normalizedCursorPos) const
+{
+    AABB2 worldBounds(m_orthographicBottomLeft, m_orthographicTopRight);
+    return worldBounds.GetPointAtUV(normalizedCursorPos);
+}
+
+//----------------------------------------------------------------------------------------------------
 Mat44 Camera::GetOrthographicMatrix() const
 {
     Vec2 const  orthographicTopLeft  = m_orthographicBottomLeft;
