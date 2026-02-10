@@ -6,19 +6,14 @@
 #include "Engine/Widget/IWidget.hpp"
 
 //----------------------------------------------------------------------------------------------------
-IWidget::IWidget()
-{
-}
+IWidget::IWidget() = default;
 
 //----------------------------------------------------------------------------------------------------
-IWidget::~IWidget()
-{
-}
+IWidget::~IWidget() = default;
 
 //----------------------------------------------------------------------------------------------------
 void IWidget::BeginFrame()
 {
-    // Derived classes can override this method
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -33,19 +28,16 @@ void IWidget::Render()
 //----------------------------------------------------------------------------------------------------
 void IWidget::Draw() const
 {
-    // Derived classes must implement this method to draw UI
 }
 
 //----------------------------------------------------------------------------------------------------
 void IWidget::Update()
 {
-    // Derived classes can override this method
 }
 
 //----------------------------------------------------------------------------------------------------
 void IWidget::EndFrame()
 {
-    // Derived classes can override this method
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -100,11 +92,10 @@ void IWidget::SetOwner(uint64_t ownerID)
 void IWidget::SetZOrder(int zOrder)
 {
     m_zOrder = zOrder;
-    // Note: WidgetSubsystem is responsible for triggering re-sort
 }
 
 //----------------------------------------------------------------------------------------------------
-void IWidget::SetName(const String& name)
+void IWidget::SetName(String const& name)
 {
     m_name = name;
 }

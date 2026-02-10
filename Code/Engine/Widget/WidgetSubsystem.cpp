@@ -19,14 +19,11 @@ WidgetSubsystem::WidgetSubsystem(sWidgetSubsystemConfig const& config)
 }
 
 //----------------------------------------------------------------------------------------------------
-WidgetSubsystem::~WidgetSubsystem()
-{
-}
+WidgetSubsystem::~WidgetSubsystem() = default;
 
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::StartUp()
 {
-    // Clear all containers
     m_widgets.clear();
     m_ownerWidgetsMapping.clear();
     m_viewportWidget = nullptr;
@@ -36,7 +33,6 @@ void WidgetSubsystem::StartUp()
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::BeginFrame()
 {
-    // Call BeginFrame on all widgets
     for (auto& widget : m_widgets)
     {
         if (widget && !widget->IsGarbage())
@@ -49,17 +45,14 @@ void WidgetSubsystem::BeginFrame()
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::Update()
 {
-    // Cleanup garbage widgets
     CleanupGarbageWidgets();
 
-    // Re-sort if necessary
     if (m_bNeedsSorting)
     {
         SortWidgetsByZOrder();
         m_bNeedsSorting = false;
     }
 
-    // Update all widgets that need ticking
     for (auto& widget : m_widgets)
     {
         if (widget && widget->IsTick() && !widget->IsGarbage())
@@ -72,8 +65,6 @@ void WidgetSubsystem::Update()
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::Render() const
 {
-
-    // Render all widgets in z-order
     for (auto& widget : m_widgets)
     {
         if (widget && widget->IsVisible() && !widget->IsGarbage())
@@ -86,7 +77,6 @@ void WidgetSubsystem::Render() const
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::EndFrame()
 {
-    // Call EndFrame on all widgets
     for (auto& widget : m_widgets)
     {
         if (widget && !widget->IsGarbage())
@@ -134,7 +124,6 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr const& widget)
 {
     if (!widget) return;
 
-    // Remove from main list
     auto it = std::find(m_widgets.begin(), m_widgets.end(), widget);
     if (it != m_widgets.end())
     {
@@ -143,19 +132,19 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr const& widget)
 
     // Remove from owner mapping
     uint64_t ownerID = widget->GetOwner();
-    if (ownerID != 0 && m_ownerWidgetsMapping.find(ownerID) != m_ownerWidgetsMapping.end())
+    auto     mapIt   = m_ownerWidgetsMapping.find(ownerID);
+    if (ownerID != 0 && mapIt != m_ownerWidgetsMapping.end())
     {
-        auto& ownerWidgets = m_ownerWidgetsMapping[ownerID];
+        auto& ownerWidgets = mapIt->second;
         auto  ownerIt      = std::find(ownerWidgets.begin(), ownerWidgets.end(), widget);
         if (ownerIt != ownerWidgets.end())
         {
             ownerWidgets.erase(ownerIt);
         }
 
-        // Remove the owner entry if no widgets remain
         if (ownerWidgets.empty())
         {
-            m_ownerWidgetsMapping.erase(ownerID);
+            m_ownerWidgetsMapping.erase(mapIt);
         }
     }
 }
@@ -168,7 +157,6 @@ void WidgetSubsystem::RemoveAllWidgetsFromOwner(uint64_t ownerID)
     auto it = m_ownerWidgetsMapping.find(ownerID);
     if (it != m_ownerWidgetsMapping.end())
     {
-        // Remove all widgets belonging to this owner from the main list
         for (auto& widget : it->second)
         {
             auto mainIt = std::find(m_widgets.begin(), m_widgets.end(), widget);
@@ -178,7 +166,6 @@ void WidgetSubsystem::RemoveAllWidgetsFromOwner(uint64_t ownerID)
             }
         }
 
-        // Remove from owner mapping
         m_ownerWidgetsMapping.erase(it);
     }
 }
@@ -252,7 +239,7 @@ void WidgetSubsystem::SortWidgetsByZOrder()
 {
     if (m_widgets.empty()) return;
     std::sort(m_widgets.begin(), m_widgets.end(),
-              [](const WidgetPtr& a, const WidgetPtr& b)
+              [](WidgetPtr const& a, WidgetPtr const& b)
               {
                   return a->GetZOrder() < b->GetZOrder();
               });
@@ -261,10 +248,9 @@ void WidgetSubsystem::SortWidgetsByZOrder()
 //----------------------------------------------------------------------------------------------------
 void WidgetSubsystem::CleanupGarbageWidgets()
 {
-    // Remove widgets marked as garbage
     m_widgets.erase(
         std::remove_if(m_widgets.begin(), m_widgets.end(),
-                       [](const WidgetPtr& widget)
+                       [](WidgetPtr const& widget)
                        {
                            return !widget || widget->IsGarbage();
                        }),
@@ -276,7 +262,7 @@ void WidgetSubsystem::CleanupGarbageWidgets()
         auto& widgets = pair.second;
         widgets.erase(
             std::remove_if(widgets.begin(), widgets.end(),
-                           [](const WidgetPtr& widget)
+                           [](WidgetPtr const& widget)
                            {
                                return !widget || widget->IsGarbage();
                            }),
