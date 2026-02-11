@@ -1,5 +1,6 @@
 .spec-workflow/
 .playwright-mcp/
+.serena
 
 # Sphinx documentation build output
 Docs/build/

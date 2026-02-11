@@ -510,6 +510,9 @@
     <ClCompile Include="Script/ScriptTypeExtractor.cpp">
       <Filter>Engine\Script</Filter>
     </ClCompile>
+    <ClCompile Include="Script/GenericCommandScriptInterface.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
     <ClCompile Include="Widget\IWidget.cpp">
       <Filter>Engine\Widget</Filter>
     </ClCompile>
@@ -577,6 +580,15 @@
     </ClCompile>
     <ClCompile Include="Core/CallbackQueueScriptInterface.cpp">
       <Filter>Engine\Core\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/GenericCommandExecutor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/GenericCommandQueue.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/HandlerResult.cpp">
+      <Filter>Engine\Core</Filter>
     </ClCompile>
     <ClCompile Include="Renderer/Camera.cpp">
       <Filter>Engine\Renderer\Camera</Filter>
@@ -1001,6 +1013,9 @@
     <ClInclude Include="Script/ScriptTypeExtractor.hpp">
       <Filter>Engine\Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script/GenericCommandScriptInterface.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
     <ClInclude Include="Widget\IWidget.hpp">
       <Filter>Engine\Widget</Filter>
     </ClInclude>
@@ -1125,6 +1140,18 @@
     </ClInclude>
     <ClInclude Include="Core/CallbackQueueScriptInterface.hpp">
       <Filter>Engine\Core\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/GenericCommand.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/GenericCommandExecutor.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/GenericCommandQueue.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/HandlerResult.hpp">
+      <Filter>Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\CameraStateBuffer.hpp">
       <Filter>Engine\Renderer\Camera</Filter>
