@@ -362,17 +362,14 @@
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp" />
     <ClCompile Include="Audio\AudioAPI.cpp" />
     <ClCompile Include="Audio\AudioCommandQueue.cpp" />
-    <ClCompile Include="Audio\AudioScriptInterface.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
-    <ClCompile Include="Entity\EntityScriptInterface.cpp" />
     <ClCompile Include="Math\ConvexHull2.cpp" />
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
     <ClCompile Include="Entity\EntityAPI.cpp" />
     <ClCompile Include="Renderer\CameraAPI.cpp" />
-    <ClCompile Include="Renderer\CameraScriptInterface.cpp" />
     <ClCompile Include="Renderer\CameraStateBuffer.cpp" />
     <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
     <ClCompile Include="Renderer\RenderCommand.cpp" />
@@ -567,7 +564,6 @@
     <ClInclude Include="Audio\AudioAPI.hpp" />
     <ClInclude Include="Audio\AudioCommand.hpp" />
     <ClInclude Include="Audio\AudioCommandQueue.hpp" />
-    <ClInclude Include="Audio\AudioScriptInterface.hpp" />
     <ClInclude Include="Audio\AudioState.hpp" />
     <ClInclude Include="Audio\AudioStateBuffer.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
@@ -579,17 +575,15 @@
     <ClInclude Include="Core\StateBuffer.hpp" />
     <ClInclude Include="Entity\EntityAPI.hpp" />
     <ClInclude Include="Entity\EntityID.hpp" />
-    <ClInclude Include="Entity\EntityScriptInterface.hpp" />
     <ClInclude Include="Entity\EntityState.hpp" />
     <ClInclude Include="Entity\EntityStateBuffer.hpp" />
     <ClInclude Include="Math\ConvexHull2.hpp" />
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraAPI.hpp" />
-    <ClInclude Include="Renderer\CameraScriptInterface.hpp" />
     <ClInclude Include="Renderer\CameraState.hpp" />
     <ClInclude Include="Renderer\CameraStateBuffer.hpp" />
-    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
+    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <ClInclude Include="Resource\AudioResource.hpp" />
     <ClInclude Include="Script\IJSGameLogicContext.hpp" />
     <ClInclude Include="UI\ImGuiSubsystem.hpp" />

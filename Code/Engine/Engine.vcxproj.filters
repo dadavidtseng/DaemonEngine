@@ -153,9 +153,6 @@
     <ClCompile Include="Audio\AudioAPI.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\AudioCommandQueue.cpp">
-      <Filter>Engine\Audio</Filter>
-    </ClCompile>
     <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
@@ -569,9 +566,6 @@
     <ClCompile Include="Renderer/RenderCommandQueue.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Entity\EntityScriptInterface.cpp">
-      <Filter>Engine\Entity</Filter>
-    </ClCompile>
     <ClCompile Include="UI\ImGuiSubsystem.cpp">
       <Filter>Engine\UI</Filter>
     </ClCompile>
@@ -599,18 +593,15 @@
     <ClCompile Include="Renderer\CameraStateBuffer.cpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\CameraScriptInterface.cpp">
-      <Filter>Engine\Renderer\Camera</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Audio\AudioScriptInterface.cpp">
-      <Filter>Engine\Audio</Filter>
-    </ClCompile>
     <!-- Dear ImGui Integration -->
     <ClCompile Include="Math\ConvexHull2.cpp">
       <Filter>Engine\Math\Primitive2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\AudioCommandQueue.cpp">
+      <Filter>Engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp">
+      <Filter>Engine\Renderer\Debug</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -621,9 +612,6 @@
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="Audio\AudioCommand.hpp">
-      <Filter>Engine\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\AudioCommandQueue.hpp">
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="Audio\AudioState.hpp">
@@ -1132,9 +1120,6 @@
     <ClInclude Include="Entity\EntityStateBuffer.hpp">
       <Filter>Engine\Entity</Filter>
     </ClInclude>
-    <ClInclude Include="Entity\EntityScriptInterface.hpp">
-      <Filter>Engine\Entity</Filter>
-    </ClInclude>
     <ClInclude Include="UI\ImGuiSubsystem.hpp">
       <Filter>Engine\UI</Filter>
     </ClInclude>
@@ -1165,18 +1150,15 @@
     <ClInclude Include="Renderer\CameraState.hpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\CameraScriptInterface.hpp">
-      <Filter>Engine\Renderer\Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\AudioScriptInterface.hpp">
-      <Filter>Engine\Audio</Filter>
-    </ClInclude>
     <!-- Dear ImGui Integration -->
     <ClInclude Include="Math\ConvexHull2.hpp">
       <Filter>Engine\Math\Primitive2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\AudioCommandQueue.hpp">
+      <Filter>Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp">
+      <Filter>Engine\Renderer\Debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

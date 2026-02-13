@@ -234,12 +234,12 @@ public:
     // Hot-reload configuration and control
     void SetHotReloadEnabled(bool enabled);
     bool IsHotReloadEnabled() const { return m_hotReloadEnabled; }
-    
+
     // File watching management
     void AddWatchedFile(const std::string& relativePath);
     void RemoveWatchedFile(const std::string& relativePath);
     std::vector<std::string> GetWatchedFiles() const;
-    
+
     // Manual reload trigger
     void ReloadScript(const std::string& relativePath);
 
@@ -364,15 +364,15 @@ private:
     //------------------------------------------------------------------------------------------------
     // Hot-reload components and state
     //------------------------------------------------------------------------------------------------
-    
+
     // Core hot-reload components
     std::unique_ptr<FileWatcher>    m_fileWatcher;
     std::unique_ptr<ScriptReloader> m_scriptReloader;
-    
+
     // Hot-reload configuration
     bool        m_hotReloadEnabled{false};
     std::string m_projectRoot;
-    
+
     // Thread-safe event queue for main thread processing
     std::queue<std::string> m_pendingFileChanges;
     mutable std::mutex      m_fileChangeQueueMutex;

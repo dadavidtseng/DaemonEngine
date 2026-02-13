@@ -23,12 +23,11 @@
 #if !defined( ENGINE_DISABLE_AUDIO )
 
 #ifdef ENGINE_SCRIPTING_ENABLED
+#include <variant>
 #include "Engine/Audio/AudioCommand.hpp"
 #include "Engine/Audio/AudioCommandQueue.hpp"
 #include "Engine/Core/CallbackQueue.hpp"
-#include "Engine/Core/CallbackData.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include <variant>
 #endif
 
 
@@ -73,9 +72,6 @@ void AudioSystem::Shutdown()
 //----------------------------------------------------------------------------------------------------
 void AudioSystem::BeginFrame()
 {
-#ifdef ENGINE_SCRIPTING_ENABLED
-    ProcessPendingCommands();
-#endif
     m_fmodSystem->update();
 }
 
@@ -356,176 +352,4 @@ FMOD_VECTOR AudioSystem::CreateZeroVector() const
 
     return vector;
 }
-
-#ifdef ENGINE_SCRIPTING_ENABLED
-//----------------------------------------------------------------------------------------------------
-// SetCommandQueue
-//
-// Configure command queue for async audio command processing from JavaScript.
-// Stores pointers to externally-owned queues (caller retains ownership).
-//----------------------------------------------------------------------------------------------------
-void AudioSystem::SetCommandQueue(AudioCommandQueue* commandQueue, CallbackQueue* callbackQueue)
-{
-    m_commandQueue  = commandQueue;
-    m_callbackQueue = callbackQueue;
-
-    DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-               Stringf("AudioSystem: Command queue configured (commandQueue=%p, callbackQueue=%p)",
-                   commandQueue, callbackQueue));
-}
-
-//----------------------------------------------------------------------------------------------------
-// ProcessPendingCommands
-//
-// Consume all pending audio commands from JavaScript and execute corresponding operations.
-// Called automatically from BeginFrame() when command queue is configured.
-//
-// Command Processing:
-//   LOAD_SOUND        → CreateOrGetSound() + CallbackQueue result
-//   PLAY_SOUND        → StartSound() or StartSoundAt() based on position
-//   STOP_SOUND        → StopSound()
-//   SET_VOLUME        → SetSoundPlaybackVolume() (or master volume if soundId == 0)
-//   UPDATE_3D_POSITION → SetSoundPosition()
-//----------------------------------------------------------------------------------------------------
-void AudioSystem::ProcessPendingCommands()
-{
-    if (!m_commandQueue)
-    {
-        return; // Command queue not configured - skip processing
-    }
-
-    m_commandQueue->ConsumeAll([this](AudioCommand const& cmd) {
-        switch (cmd.type)
-        {
-        case AudioCommandType::LOAD_SOUND:
-        {
-            auto const& data = std::get<SoundLoadData>(cmd.data);
-
-            // Attempt to load sound file
-            SoundID const loadedSoundId = CreateOrGetSound(data.soundPath, eAudioSystemSoundDimension::Sound2D);
-
-            // Send result back to JavaScript via callback queue
-            if (m_callbackQueue)
-            {
-                if (loadedSoundId != MISSING_SOUND_ID)
-                {
-                    // Success: Return SoundID
-                    CallbackData result;
-                    result.callbackId    = data.callbackId;
-                    result.resultId      = loadedSoundId;
-                    result.errorMessage  = ""; // Empty = success
-                    result.type          = CallbackType::RESOURCE_LOADED;
-                    m_callbackQueue->Submit(result);
-
-                    DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-                               Stringf("AudioSystem: LOAD_SOUND success - path='%s', soundId=%llu, callbackId=%llu",
-                                   data.soundPath.c_str(), loadedSoundId, data.callbackId));
-                }
-                else
-                {
-                    // Failure: Return error message
-                    CallbackData result;
-                    result.callbackId    = data.callbackId;
-                    result.resultId      = MISSING_SOUND_ID;
-                    result.errorMessage  = "Failed to load sound: " + data.soundPath;
-                    result.type          = CallbackType::RESOURCE_LOADED;
-                    m_callbackQueue->Submit(result);
-
-                    DAEMON_LOG(LogAudio, eLogVerbosity::Warning,
-                               Stringf("AudioSystem: LOAD_SOUND failed - path='%s', callbackId=%llu",
-                                   data.soundPath.c_str(), data.callbackId));
-                }
-            }
-            break;
-        }
-
-        case AudioCommandType::PLAY_SOUND:
-        {
-            auto const& data = std::get<SoundPlayData>(cmd.data);
-
-            SoundPlaybackID playbackId = MISSING_SOUND_ID;
-
-            // Check if 3D positioned sound (position != zero)
-            if (data.position.x != 0.f || data.position.y != 0.f || data.position.z != 0.f)
-            {
-                // 3D positioned sound
-                playbackId = StartSoundAt(cmd.soundId, data.position, data.looped, data.volume);
-            }
-            else
-            {
-                // 2D non-positioned sound
-                playbackId = StartSound(cmd.soundId, data.looped, data.volume);
-            }
-
-            if (playbackId != MISSING_SOUND_ID)
-            {
-                DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-                           Stringf("AudioSystem: PLAY_SOUND - soundId=%llu, playbackId=%llu, volume=%.2f, looped=%d",
-                               cmd.soundId, playbackId, data.volume, data.looped));
-            }
-            else
-            {
-                DAEMON_LOG(LogAudio, eLogVerbosity::Warning,
-                           Stringf("AudioSystem: PLAY_SOUND failed - soundId=%llu (invalid or not loaded)",
-                               cmd.soundId));
-            }
-            break;
-        }
-
-        case AudioCommandType::STOP_SOUND:
-        {
-            // cmd.soundId is actually SoundPlaybackID for STOP_SOUND
-            StopSound(cmd.soundId);
-
-            DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-                       Stringf("AudioSystem: STOP_SOUND - playbackId=%llu", cmd.soundId));
-            break;
-        }
-
-        case AudioCommandType::SET_VOLUME:
-        {
-            auto const& data = std::get<VolumeUpdateData>(cmd.data);
-
-            if (cmd.soundId == 0)
-            {
-                // Master volume control (not yet implemented in AudioSystem)
-                // Future: Add m_masterVolume member and apply to all playback instances
-                DAEMON_LOG(LogAudio, eLogVerbosity::Warning,
-                           Stringf("AudioSystem: SET_VOLUME for master volume not yet implemented (volume=%.2f)",
-                               data.volume));
-            }
-            else
-            {
-                // Per-playback volume (cmd.soundId is SoundPlaybackID)
-                SetSoundPlaybackVolume(cmd.soundId, data.volume);
-
-                DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-                           Stringf("AudioSystem: SET_VOLUME - playbackId=%llu, volume=%.2f",
-                               cmd.soundId, data.volume));
-            }
-            break;
-        }
-
-        case AudioCommandType::UPDATE_3D_POSITION:
-        {
-            auto const& data = std::get<Position3DUpdateData>(cmd.data);
-
-            // cmd.soundId is SoundPlaybackID for 3D position updates
-            SetSoundPosition(cmd.soundId, data.position);
-
-            DAEMON_LOG(LogAudio, eLogVerbosity::Log,
-                       Stringf("AudioSystem: UPDATE_3D_POSITION - playbackId=%llu, pos=(%.2f, %.2f, %.2f)",
-                           cmd.soundId, data.position.x, data.position.y, data.position.z));
-            break;
-        }
-
-        default:
-            DAEMON_LOG(LogAudio, eLogVerbosity::Warning,
-                       Stringf("AudioSystem: Unknown AudioCommandType=%d", static_cast<int>(cmd.type)));
-            break;
-        }
-    });
-}
-#endif // ENGINE_SCRIPTING_ENABLED
-
 #endif // !defined( ENGINE_DISABLE_AUDIO )
