@@ -11,6 +11,7 @@
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
+class CameraAPI;
 class DebugRenderAPI;
 
 //----------------------------------------------------------------------------------------------------
@@ -36,10 +37,11 @@ public:
     /// @brief Construct DebugRenderSystemScriptInterface with DebugRenderAPI for async operations
     ///
     /// @param debugRenderAPI Pointer to DebugRenderAPI for async command submission (NO OWNERSHIP)
+    /// @param cameraAPI      Pointer to CameraAPI for resolving cameraId → Camera* (NO OWNERSHIP, optional)
     ///
     /// @remark Phase 4: Constructor now requires DebugRenderAPI pointer (replaces parameterless constructor)
     /// @remark Automatically initializes method registry for efficient JavaScript dispatch.
-    explicit DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI);
+    explicit DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI, CameraAPI* cameraAPI = nullptr);
 
     std::vector<ScriptMethodInfo> GetAvailableMethods() const override;
     StringList                    GetAvailableProperties() const override;
@@ -86,4 +88,5 @@ private:
 
     // === MEMBER VARIABLES (Phase 4) ===
     DebugRenderAPI* m_debugRenderAPI = nullptr;  // Async API for command submission (NO OWNERSHIP)
+    CameraAPI*      m_cameraAPI      = nullptr;  // For resolving cameraId → Camera* (NO OWNERSHIP)
 };

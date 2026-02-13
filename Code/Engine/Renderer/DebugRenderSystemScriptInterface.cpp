@@ -9,6 +9,7 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/DebugRenderAPI.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Renderer/CameraAPI.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
@@ -19,8 +20,9 @@
 #include "Engine/Script/ScriptTypeExtractor.hpp"
 
 //----------------------------------------------------------------------------------------------------
-DebugRenderSystemScriptInterface::DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI)
+DebugRenderSystemScriptInterface::DebugRenderSystemScriptInterface(DebugRenderAPI* debugRenderAPI, CameraAPI* cameraAPI)
     : m_debugRenderAPI(debugRenderAPI)
+    , m_cameraAPI(cameraAPI)
 {
     GUARANTEE_OR_DIE(m_debugRenderAPI != nullptr, "DebugRenderSystemScriptInterface: debugRenderAPI cannot be null");
 
@@ -303,13 +305,20 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteRenderWorld(ScriptAr
 
     try
     {
-        // Extract camera handle (pointer as number)
-        double cameraHandle = ScriptTypeExtractor::ExtractDouble(args[0]);
-        Camera* camera = reinterpret_cast<Camera*>(static_cast<uintptr_t>(cameraHandle));
+        // Extract cameraId and resolve to Camera* via CameraAPI
+        int cameraId = ScriptTypeExtractor::ExtractInt(args[0]);
+
+        if (!m_cameraAPI)
+        {
+            return ScriptMethodResult::Error("CameraAPI not available for renderWorld");
+        }
+
+        uintptr_t handle = m_cameraAPI->GetCameraHandle(static_cast<unsigned long long>(cameraId));
+        Camera*   camera = reinterpret_cast<Camera*>(handle);
 
         if (!camera)
         {
-            return ScriptMethodResult::Error("Invalid camera handle");
+            return ScriptMethodResult::Error("Invalid cameraId: " + std::to_string(cameraId));
         }
 
         DebugRenderWorld(*camera);
@@ -329,13 +338,20 @@ ScriptMethodResult DebugRenderSystemScriptInterface::ExecuteRenderScreen(ScriptA
 
     try
     {
-        // Extract camera handle (pointer as number)
-        double cameraHandle = ScriptTypeExtractor::ExtractDouble(args[0]);
-        Camera* camera = reinterpret_cast<Camera*>(static_cast<uintptr_t>(cameraHandle));
+        // Extract cameraId and resolve to Camera* via CameraAPI
+        int cameraId = ScriptTypeExtractor::ExtractInt(args[0]);
+
+        if (!m_cameraAPI)
+        {
+            return ScriptMethodResult::Error("CameraAPI not available for renderScreen");
+        }
+
+        uintptr_t handle = m_cameraAPI->GetCameraHandle(static_cast<unsigned long long>(cameraId));
+        Camera*   camera = reinterpret_cast<Camera*>(handle);
 
         if (!camera)
         {
-            return ScriptMethodResult::Error("Invalid camera handle");
+            return ScriptMethodResult::Error("Invalid cameraId: " + std::to_string(cameraId));
         }
 
         DebugRenderScreen(*camera);
