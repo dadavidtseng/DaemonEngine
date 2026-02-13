@@ -17,7 +17,7 @@
 //       void UpdateJSWorkerThread(float deltaTime, ...) override { ... }
 //   };
 //
-//   JSGameLogicJob* job = new JSGameLogicJob(gameContext, commandQueue, entityBuffer);
+//   JSGameLogicJob* job = new JSGameLogicJob(gameContext, entityBuffer, callbackQueue);
 //
 // Thread Safety:
 //   - Interface methods called from worker thread
@@ -29,12 +29,6 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
-
-//----------------------------------------------------------------------------------------------------
-// Forward Declarations
-//----------------------------------------------------------------------------------------------------
-class RenderCommandQueue;
-class CameraStateBuffer;
 
 //----------------------------------------------------------------------------------------------------
 // IJSGameLogicContext Interface
@@ -78,40 +72,27 @@ public:
     //
     // Parameters:
     //   - deltaTime: Time since last frame (seconds)
-    //   - entityBuffer: Back buffer for entity state updates (worker thread writes)
-    //   - commandQueue: Render command queue for C++ communication
     //
     // Thread Safety:
     //   - Called from worker thread
     //   - Must acquire v8::Locker before V8 API calls
-    //   - entityBuffer: Write to back buffer only (safe)
-    //   - commandQueue: Lock-free SPSC queue (safe)
     //
-    // Future Implementation (Phase 2):
+    // Implementation:
     //   Calls into JSEngine.update() through ScriptSubsystem
-    //   Updates entity state buffer based on JavaScript logic
-    //   Submits render commands to command queue
-    virtual void UpdateJSWorkerThread(float               deltaTime,
-                                      RenderCommandQueue* commandQueue) = 0;
+    virtual void UpdateJSWorkerThread(float deltaTime) = 0;
 
     // Execute JavaScript render logic on worker thread
     //
     // Parameters:
     //   - deltaTime: Time since last frame (seconds)
-    //   - cameraBuffer: Back buffer for camera state updates (worker thread writes)
-    //   - commandQueue: Render command queue for C++ communication
     //
     // Thread Safety:
     //   - Called from worker thread
     //   - Must acquire v8::Locker before V8 API calls
-    //   - cameraBuffer: Write to back buffer only (safe)
-    //   - commandQueue: Lock-free SPSC queue (safe)
     //
-    // Future Implementation (Phase 2):
+    // Implementation:
     //   Calls into JSEngine.render() through ScriptSubsystem
-    //   Updates camera state buffer based on JavaScript logic
-    //   Submits rendering commands to command queue
-    virtual void RenderJSWorkerThread(float deltaTime, RenderCommandQueue* commandQueue) = 0;
+    virtual void RenderJSWorkerThread(float deltaTime) = 0;
 
     //------------------------------------------------------------------------------------------------
     // Error Handling Interface (Worker Thread)
