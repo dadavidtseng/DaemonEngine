@@ -365,6 +365,8 @@
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
+    <ClCompile Include="Core\BufferParser.cpp" />
+    <ClCompile Include="Core\BufferWriter.cpp" />
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Math\ConvexHull2.cpp" />
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
@@ -571,6 +573,8 @@
     <ClInclude Include="Core\ClockScriptInterface.hpp" />
     <ClInclude Include="Core\ConsoleOutputDevice.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
+    <ClInclude Include="Core\BufferParser.hpp" />
+    <ClInclude Include="Core\BufferWriter.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\StateBuffer.hpp" />
     <ClInclude Include="Entity\EntityAPI.hpp" />

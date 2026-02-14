@@ -159,6 +159,12 @@
     <ClCompile Include="Core\Engine.cpp">
       <Filter>Engine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\BufferParser.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BufferWriter.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Core\EngineCommon.cpp">
       <Filter>Engine\Core</Filter>
     </ClCompile>
@@ -627,6 +633,12 @@
       <Filter>Engine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="Core\Engine.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BufferParser.hpp">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BufferWriter.hpp">
       <Filter>Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\EngineCommon.hpp">

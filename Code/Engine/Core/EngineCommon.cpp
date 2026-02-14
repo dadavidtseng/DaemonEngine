@@ -21,6 +21,21 @@ ImGuiSubsystem*         g_imgui             = nullptr;
 WidgetSubsystem*        g_widgetSubsystem   = nullptr;
 
 
+//----------------------------------------------------------------------------------------------------
+eEndianMode GetPlatformLocalEndian()
+{
+    int n = 1;
+    if (*(char*)&n == 1)
+    {
+        return eEndianMode::LITTLE;
+    }
+    else
+    {
+        return eEndianMode::BIG;
+    }
+}
+
+
 // //----------------------------------------------------------------------------------------------------
 // namespace Engine
 // {
