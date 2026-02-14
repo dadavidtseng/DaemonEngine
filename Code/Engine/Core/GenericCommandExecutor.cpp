@@ -312,6 +312,21 @@ void GenericCommandExecutor::ExecutePendingCallbacks(CallbackQueue* callbackQueu
 					}
 				}
 			}
+
+			// Extract resultJson from HandlerResult.data if present (rich JSON payload for GENERIC handlers)
+			auto itJson = pending.result.data.find("resultJson");
+			if (itJson != pending.result.data.end())
+			{
+				try
+				{
+					data.resultJson = std::any_cast<std::string>(itJson->second);
+				}
+				catch (std::bad_any_cast const&)
+				{
+					DAEMON_LOG(LogCore, eLogVerbosity::Warning,
+					           Stringf("GenericCommandExecutor: resultJson in HandlerResult.data has unsupported type for callback %llu", callbackId));
+				}
+			}
 		}
 
 		bool enqueued = callbackQueue->Enqueue(data);

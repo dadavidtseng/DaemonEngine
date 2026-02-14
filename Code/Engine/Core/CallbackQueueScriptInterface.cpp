@@ -153,6 +153,7 @@ ScriptMethodResult CallbackQueueScriptInterface::ExecuteDequeueAll(ScriptArgs co
 		callbackJson["callbackId"]    = cb.callbackId;
 		callbackJson["resultId"]      = cb.resultId;
 		callbackJson["errorMessage"]  = cb.errorMessage;
+		callbackJson["resultJson"]    = cb.resultJson;
 
 		// Convert CallbackType enum to string
 		switch (cb.type)

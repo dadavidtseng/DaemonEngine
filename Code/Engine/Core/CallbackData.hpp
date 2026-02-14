@@ -40,5 +40,6 @@ struct CallbackData
 	uint64_t     callbackId;      // Unique callback identifier (JavaScript-generated)
 	uint64_t     resultId;        // EntityID or CameraID returned from C++
 	std::string  errorMessage;    // Empty = success, non-empty = error description
+	std::string  resultJson;      // Rich JSON result payload (for GENERIC handlers returning structured data)
 	CallbackType type;            // Type of callback for type-specific handling
 };
