@@ -117,6 +117,10 @@ public:
     void    RenderViewportToWindowDX11(Window const& window);
     void    ReadStagingTextureToPixelData();
 
+    // Screenshot capture: captures current frame to PNG or JPEG file
+    // Returns true on success, false on failure. Sets outFilePath to the actual file written.
+    bool    CaptureScreenshot(std::string const& outputDir, std::string const& filename, std::string const& format, int jpegQuality, std::string& outFilePath);
+
 
     // Shadowmap and Bloom
     void     SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot);

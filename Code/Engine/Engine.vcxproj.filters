@@ -1055,6 +1055,9 @@
     <ClInclude Include="../ThirdParty/stb/stb_image.h">
       <Filter>ThirdParty\STB</Filter>
     </ClInclude>
+    <ClInclude Include="../ThirdParty/stb/stb_image_write.h">
+      <Filter>ThirdParty\STB</Filter>
+    </ClInclude>
     <ClInclude Include="../ThirdParty/Noise/RawNoise.hpp">
       <Filter>ThirdParty\Noise</Filter>
     </ClInclude>

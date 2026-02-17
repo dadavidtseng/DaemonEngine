@@ -6,6 +6,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 
 #include <d3d11_1.h>
+#include <filesystem>
 #include <d3dcompiler.h>
 #include <dxgi1_2.h>
 
@@ -29,6 +30,12 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Resource/TextureResource.hpp"
 #include "ThirdParty/stb/stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#pragma warning(push)
+#pragma warning(disable: 4996) // suppress sprintf deprecation in third-party header
+#include "ThirdParty/stb/stb_image_write.h"
+#pragma warning(pop)
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -1501,6 +1508,84 @@ void Renderer::ReadStagingTextureToPixelData()
     m_deviceContext->Unmap(stagingTex, 0);
     stagingTex->Release();
     mainRenderTargetTexture->Release();
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Renderer::CaptureScreenshot(std::string const& outputDir, std::string const& filename,
+                                 std::string const& format, int jpegQuality, std::string& outFilePath)
+{
+    // 1. Capture current frame pixels
+    ReadStagingTextureToPixelData();
+
+    if (m_pixelData.empty())
+    {
+        DebuggerPrintf("CaptureScreenshot: No pixel data captured\n");
+        return false;
+    }
+
+    // 2. Get dimensions from window
+    if (!m_config.m_window)
+    {
+        DebuggerPrintf("CaptureScreenshot: No window available\n");
+        return false;
+    }
+
+    Vec2 const clientDims = m_config.m_window->GetClientDimensions();
+    int const  width      = static_cast<int>(clientDims.x);
+    int const  height     = static_cast<int>(clientDims.y);
+
+    if (width <= 0 || height <= 0)
+    {
+        DebuggerPrintf("CaptureScreenshot: Invalid dimensions %dx%d\n", width, height);
+        return false;
+    }
+
+    // 3. Ensure output directory exists
+    namespace fs = std::filesystem;
+    fs::path dirPath(outputDir);
+    if (!fs::exists(dirPath))
+    {
+        fs::create_directories(dirPath);
+    }
+
+    // 4. Build full file path
+    std::string extension = (format == "jpeg" || format == "jpg") ? ".jpg" : ".png";
+    fs::path    fullPath  = dirPath / (filename + extension);
+    outFilePath           = fullPath.string();
+
+    // 5. Swizzle BGRA → RGBA (DirectX back buffer is B8G8R8A8)
+    int const totalPixels = width * height;
+    for (int i = 0; i < totalPixels; ++i)
+    {
+        int const    offset = i * 4;
+        unsigned char temp  = m_pixelData[offset];     // B
+        m_pixelData[offset]     = m_pixelData[offset + 2]; // B ← R
+        m_pixelData[offset + 2] = temp;                    // R ← B
+    }
+
+    // 6. Write image using stb_image_write
+    int const channels    = 4; // RGBA
+    int const stride      = width * channels;
+    int       writeResult = 0;
+
+    if (format == "jpeg" || format == "jpg")
+    {
+        int quality = (jpegQuality > 0 && jpegQuality <= 100) ? jpegQuality : 90;
+        writeResult = stbi_write_jpg(outFilePath.c_str(), width, height, channels, m_pixelData.data(), quality);
+    }
+    else
+    {
+        writeResult = stbi_write_png(outFilePath.c_str(), width, height, channels, m_pixelData.data(), stride);
+    }
+
+    if (writeResult == 0)
+    {
+        DebuggerPrintf("CaptureScreenshot: Failed to write %s\n", outFilePath.c_str());
+        return false;
+    }
+
+    DebuggerPrintf("CaptureScreenshot: Saved %s (%dx%d)\n", outFilePath.c_str(), width, height);
+    return true;
 }
 
 void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot)
