@@ -120,7 +120,8 @@ std::string KADIProtocolV1Adapter::SerializeEventPublish(std::string const& chan
 {
 	nlohmann::json params = {
 		{"channel", channel},
-		{"data", data}
+		{"data", data},
+		{"networkId", "global"}
 	};
 
 	nlohmann::json request = CreateRequest("kadi.event.publish", params);
