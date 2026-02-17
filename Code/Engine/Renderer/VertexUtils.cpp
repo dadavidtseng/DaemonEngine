@@ -658,11 +658,15 @@ void AddVertsForQuad3D(VertexList_PCUTBN& verts,
     // This assumes right-handed coordinate system (T x B = N).
     Vec3 const normal = CrossProduct3D(tangent, bitangent).GetNormalized();
 
-    // 4. Add the four vertices of the quad with position, color, UV, and TBN data.
-    verts.emplace_back(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal);                                      // Bottom-left
-    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal);    // Bottom-right
-    verts.emplace_back(topRight, color, UVs.m_maxs, tangent, bitangent, normal);                                        // Top-right
-    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal);        // Top-left
+    // 4. Starting at BL, add triangle A with vertexes BL, BR, TR.
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal);
+    verts.emplace_back(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal);
+    verts.emplace_back(topRight, color, UVs.m_maxs, tangent, bitangent, normal);
+
+    // 5. Starting again at BL, add triangle B with vertexes BL, TR, TL.
+    verts.emplace_back(bottomLeft, color, UVs.m_mins, tangent, bitangent, normal);
+    verts.emplace_back(topRight, color, UVs.m_maxs, tangent, bitangent, normal);
+    verts.emplace_back(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal);
 }
 
 //----------------------------------------------------------------------------------------------------

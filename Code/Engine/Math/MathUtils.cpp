@@ -1358,7 +1358,7 @@ Mat44 GetBillboardMatrix(eBillboardType const billboardType, Mat44 const& target
         }
     case eBillboardType::WORLD_UP_FACING:
         {
-            Vec3 forwardDirection = billboardPosition - targetMatrix.GetTranslation3D();
+            Vec3 forwardDirection = targetMatrix.GetTranslation3D() - billboardPosition;
             forwardDirection.z    = 0.f;
 
             iBasis = forwardDirection.GetNormalized();
