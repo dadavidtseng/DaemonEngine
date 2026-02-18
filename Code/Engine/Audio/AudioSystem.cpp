@@ -24,8 +24,6 @@
 
 #ifdef ENGINE_SCRIPTING_ENABLED
 #include <variant>
-#include "Engine/Audio/AudioCommand.hpp"
-#include "Engine/Audio/AudioCommandQueue.hpp"
 #include "Engine/Core/CallbackQueue.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
 #endif

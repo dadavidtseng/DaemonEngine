@@ -43,9 +43,6 @@
     <Filter Include="Engine\Input\Device">
       <UniqueIdentifier>{16168eba-0b31-4571-9396-060854f037f7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Input\Script">
-      <UniqueIdentifier>{c63aed8a-9a69-42fe-afd0-19f057eca0a8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Math">
       <UniqueIdentifier>{079542ae-4702-4358-b6b4-f9dd2170368b}</UniqueIdentifier>
     </Filter>
@@ -78,9 +75,6 @@
     </Filter>
     <Filter Include="Engine\Resource">
       <UniqueIdentifier>{68edbb0c-a828-405d-a294-c0d2e03e41fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Script">
-      <UniqueIdentifier>{8a5dbfe2-d919-4f0f-8c0b-786e84c8bff9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Widget">
       <UniqueIdentifier>{22f800a9-d1de-404b-b5dd-1ce4c29903b9}</UniqueIdentifier>
@@ -145,14 +139,14 @@
     <Filter Include="Engine\Renderer\Camera">
       <UniqueIdentifier>{4cf55b0e-b6e1-4781-857b-53ac61143117}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Script">
+      <UniqueIdentifier>{66a39689-d4ad-4fba-ae44-f5ac9690bab1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Source Files-->
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="SourceFiles">
-    <ClCompile Include="Audio\AudioAPI.cpp">
-      <Filter>Engine\Audio</Filter>
-    </ClCompile>
     <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Engine\Audio</Filter>
     </ClCompile>
@@ -239,9 +233,6 @@
     </ClCompile>
     <ClCompile Include="Core/Timer.cpp">
       <Filter>Engine\Core\Time</Filter>
-    </ClCompile>
-    <ClCompile Include="Input/InputScriptInterface.cpp">
-      <Filter>Engine\Input\Script</Filter>
     </ClCompile>
     <ClCompile Include="Input/AnalogJoystick.cpp">
       <Filter>Engine\Input\Device</Filter>
@@ -408,9 +399,6 @@
     <ClCompile Include="Renderer/LightSubsystem.cpp">
       <Filter>Engine\Renderer\Light</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/DebugRenderAPI.cpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer/DebugRenderSystem.cpp">
       <Filter>Engine\Renderer\Debug</Filter>
     </ClCompile>
@@ -486,36 +474,6 @@
     <ClCompile Include="Resource/ResourceSubsystem.cpp">
       <Filter>Engine\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Script/FileWatcher.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/IScriptableObject.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ModuleLoader.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ModuleRegistry.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ModuleResolver.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ScriptCommon.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ScriptReloader.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ScriptSubsystem.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/ScriptTypeExtractor.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Script/GenericCommandScriptInterface.cpp">
-      <Filter>Engine\Script</Filter>
-    </ClCompile>
     <ClCompile Include="Widget\IWidget.cpp">
       <Filter>Engine\Widget</Filter>
     </ClCompile>
@@ -569,14 +527,8 @@
     <ClCompile Include="Network\KADIScriptInterface.cpp">
       <Filter>Engine\Network\KADI</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer/RenderCommandQueue.cpp">
-      <Filter>Engine\Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="UI\ImGuiSubsystem.cpp">
       <Filter>Engine\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\RenderCommand.cpp">
-      <Filter>Engine\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Core/CallbackQueueScriptInterface.cpp">
       <Filter>Engine\Core\Thread</Filter>
@@ -596,9 +548,6 @@
     <ClCompile Include="Renderer/Camera.cpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\CameraAPI.cpp">
-      <Filter>Engine\Renderer\Camera</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\CameraStateBuffer.cpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClCompile>
@@ -606,23 +555,41 @@
     <ClCompile Include="Math\ConvexHull2.cpp">
       <Filter>Engine\Math\Primitive2D</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\AudioCommandQueue.cpp">
-      <Filter>Engine\Audio</Filter>
+    <ClCompile Include="Script\FileWatcher.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp">
-      <Filter>Engine\Renderer\Debug</Filter>
+    <ClCompile Include="Script\GenericCommandScriptInterface.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\IScriptableObject.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ModuleLoader.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ModuleRegistry.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ModuleResolver.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ScriptCommon.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ScriptReloader.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ScriptSubsystem.cpp">
+      <Filter>Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ScriptTypeExtractor.cpp">
+      <Filter>Engine\Script</Filter>
     </ClCompile>
   </ItemGroup>
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
   <!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <ItemGroup Label="HeaderFiles">
-    <ClInclude Include="Audio\AudioAPI.hpp">
-      <Filter>Engine\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio\AudioCommand.hpp">
-      <Filter>Engine\Audio</Filter>
-    </ClInclude>
     <ClInclude Include="Audio\AudioState.hpp">
       <Filter>Engine\Audio</Filter>
     </ClInclude>
@@ -727,9 +694,6 @@
     </ClInclude>
     <ClInclude Include="Core/Timer.hpp">
       <Filter>Engine\Core\Time</Filter>
-    </ClInclude>
-    <ClInclude Include="Input/InputScriptInterface.hpp">
-      <Filter>Engine\Input\Script</Filter>
     </ClInclude>
     <ClInclude Include="Input/AnalogJoystick.hpp">
       <Filter>Engine\Input\Device</Filter>
@@ -899,19 +863,7 @@
     <ClInclude Include="Renderer/LightSubsystem.hpp">
       <Filter>Engine\Renderer\Light</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/DebugRenderAPI.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer/DebugRenderStateBuffer.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer/DebugRenderSystem.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer/DebugRenderCommand.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer/DebugRenderCommandQueue.hpp">
       <Filter>Engine\Renderer\Debug</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceCache.hpp">
@@ -988,36 +940,6 @@
     </ClInclude>
     <ClInclude Include="Resource/ResourceSubsystem.hpp">
       <Filter>Engine\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/FileWatcher.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/IScriptableObject.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ModuleLoader.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ModuleRegistry.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ModuleResolver.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ScriptCommon.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ScriptReloader.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ScriptSubsystem.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/ScriptTypeExtractor.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="Script/GenericCommandScriptInterface.hpp">
-      <Filter>Engine\Script</Filter>
     </ClInclude>
     <ClInclude Include="Widget\IWidget.hpp">
       <Filter>Engine\Widget</Filter>
@@ -1114,22 +1036,10 @@
     <ClInclude Include="Network\KADIScriptInterface.hpp">
       <Filter>Engine\Network\KADI</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer/RenderCommand.hpp">
-      <Filter>Engine\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer/RenderCommandQueue.hpp">
-      <Filter>Engine\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Script\IJSGameLogicContext.hpp">
-      <Filter>Engine\Script</Filter>
-    </ClInclude>
     <ClInclude Include="Core\StateBuffer.hpp">
       <Filter>Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Entity\EntityID.hpp">
-      <Filter>Engine\Entity</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\EntityAPI.hpp">
       <Filter>Engine\Entity</Filter>
     </ClInclude>
     <ClInclude Include="Entity\EntityState.hpp">
@@ -1168,9 +1078,6 @@
     <ClInclude Include="Renderer/Camera.hpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\CameraAPI.hpp">
-      <Filter>Engine\Renderer\Camera</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\CameraState.hpp">
       <Filter>Engine\Renderer\Camera</Filter>
     </ClInclude>
@@ -1178,16 +1085,38 @@
     <ClInclude Include="Math\ConvexHull2.hpp">
       <Filter>Engine\Math\Primitive2D</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\AudioCommandQueue.hpp">
-      <Filter>Engine\Audio</Filter>
+    <ClInclude Include="Script\FileWatcher.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp">
-      <Filter>Engine\Renderer\Debug</Filter>
+    <ClInclude Include="Script\GenericCommandScriptInterface.hpp">
+      <Filter>Engine\Script</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Entity\EntityAPI.cpp">
-      <Filter>Engine\Entity</Filter>
-    </ClCompile>
+    <ClInclude Include="Script\IJSGameLogicContext.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\IScriptableObject.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ModuleLoader.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ModuleRegistry.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ModuleResolver.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ScriptCommon.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ScriptReloader.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ScriptSubsystem.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ScriptTypeExtractor.hpp">
+      <Filter>Engine\Script</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

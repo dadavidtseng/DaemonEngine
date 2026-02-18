@@ -360,8 +360,6 @@
     <ClCompile Include="../ThirdParty/imgui/imgui_widgets.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_dx11.cpp" />
     <ClCompile Include="../ThirdParty/imgui/backends/imgui_impl_win32.cpp" />
-    <ClCompile Include="Audio\AudioAPI.cpp" />
-    <ClCompile Include="Audio\AudioCommandQueue.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\ClockScriptInterface.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
@@ -370,11 +368,7 @@
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Math\ConvexHull2.cpp" />
     <ClCompile Include="Network\KADIScriptInterface.cpp" />
-    <ClCompile Include="Entity\EntityAPI.cpp" />
-    <ClCompile Include="Renderer\CameraAPI.cpp" />
     <ClCompile Include="Renderer\CameraStateBuffer.cpp" />
-    <ClCompile Include="Renderer\DebugRenderSystemScriptInterface.cpp" />
-    <ClCompile Include="Renderer\RenderCommand.cpp" />
     <!-- Phase 2: RendererScriptInterface.cpp removed - replaced by EntityScriptInterface -->
     <ClCompile Include="Resource\AudioResource.cpp" />
     <ClCompile Include="UI\ImGuiSubsystem.cpp" />
@@ -451,14 +445,12 @@
     <ClCompile Include="Renderer/BitmapFont.cpp" />
     <ClCompile Include="Renderer/Camera.cpp" />
     <ClCompile Include="Renderer/ConstantBuffer.cpp" />
-    <ClCompile Include="Renderer/DebugRenderAPI.cpp" />
     <ClCompile Include="Renderer/DebugRenderSystem.cpp" />
     <ClCompile Include="Renderer/Image.cpp" />
     <ClCompile Include="Renderer/IndexBuffer.cpp" />
     <ClCompile Include="Renderer/Light.cpp" />
     <ClCompile Include="Renderer/LightSubsystem.cpp" />
     <ClCompile Include="Renderer/RenderCommon.cpp" />
-    <ClCompile Include="Renderer/RenderCommandQueue.cpp" />
     <ClCompile Include="Renderer/Renderer.cpp" />
     <ClCompile Include="Renderer/Shader.cpp" />
     <ClCompile Include="Renderer/SpriteAnimDefinition.cpp" />
@@ -473,7 +465,6 @@
   <ItemGroup Label="InputSubsystemSources">
     <!-- Input Handling System - Multi-device support -->
     <ClCompile Include="Input/AnalogJoystick.cpp" />
-    <ClCompile Include="Input/InputScriptInterface.cpp" />
     <ClCompile Include="Input/InputSystem.cpp" />
     <ClCompile Include="Input/KeyButtonState.cpp" />
     <ClCompile Include="Input/XboxController.cpp" />
@@ -522,20 +513,18 @@
     <ClCompile Include="Network\KADIWebSocketSubsystem.cpp" />
     <ClCompile Include="Network\KADIAuthenticationUtility.cpp" />
   </ItemGroup>
-  <ItemGroup Label="ScriptingSubsystemSources">
-    <!-- V8 JavaScript Scripting System - Enterprise integration -->
-    <ClCompile Include="Script/IScriptableObject.cpp" />
-    <ClCompile Include="Script/ScriptTypeExtractor.cpp" />
-    <ClCompile Include="Script/ScriptCommon.cpp" />
-    <ClCompile Include="Script/ScriptReloader.cpp" />
-    <ClCompile Include="Script/FileWatcher.cpp" />
-    <ClCompile Include="Script/ScriptSubsystem.cpp" />
-    <ClCompile Include="Script/ModuleResolver.cpp" />
-    <ClCompile Include="Script/ModuleRegistry.cpp" />
-    <ClCompile Include="Script/ModuleLoader.cpp" />
-    <!-- Standard Script Interfaces (M4-T8: moved from Game) -->
-    <!-- GenericCommand System (Phase 2) -->
-    <ClCompile Include="Script/GenericCommandScriptInterface.cpp" />
+  <ItemGroup Label="ScriptSubsystemSources">
+    <!-- Script Subsystem -->
+    <ClCompile Include="Script\ScriptSubsystem.cpp" />
+    <ClCompile Include="Script\ScriptCommon.cpp" />
+    <ClCompile Include="Script\IScriptableObject.cpp" />
+    <ClCompile Include="Script\ScriptTypeExtractor.cpp" />
+    <ClCompile Include="Script\GenericCommandScriptInterface.cpp" />
+    <ClCompile Include="Script\ModuleLoader.cpp" />
+    <ClCompile Include="Script\ModuleRegistry.cpp" />
+    <ClCompile Include="Script\ModuleResolver.cpp" />
+    <ClCompile Include="Script\ScriptReloader.cpp" />
+    <ClCompile Include="Script\FileWatcher.cpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- Header Files -->
@@ -565,9 +554,6 @@
     <ClInclude Include="../ThirdParty/imgui/imstb_truetype.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_dx11.h" />
     <ClInclude Include="../ThirdParty/imgui/backends/imgui_impl_win32.h" />
-    <ClInclude Include="Audio\AudioAPI.hpp" />
-    <ClInclude Include="Audio\AudioCommand.hpp" />
-    <ClInclude Include="Audio\AudioCommandQueue.hpp" />
     <ClInclude Include="Audio\AudioState.hpp" />
     <ClInclude Include="Audio\AudioStateBuffer.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
@@ -579,19 +565,15 @@
     <ClInclude Include="Core\BufferWriter.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\StateBuffer.hpp" />
-    <ClInclude Include="Entity\EntityAPI.hpp" />
     <ClInclude Include="Entity\EntityID.hpp" />
     <ClInclude Include="Entity\EntityState.hpp" />
     <ClInclude Include="Entity\EntityStateBuffer.hpp" />
     <ClInclude Include="Math\ConvexHull2.hpp" />
     <ClInclude Include="Network\KADIScriptInterface.hpp" />
-    <ClInclude Include="Renderer\CameraAPI.hpp" />
     <ClInclude Include="Renderer\CameraState.hpp" />
     <ClInclude Include="Renderer\CameraStateBuffer.hpp" />
     <!-- Phase 2: RendererScriptInterface.hpp removed - replaced by EntityScriptInterface -->
-    <ClInclude Include="Renderer\DebugRenderSystemScriptInterface.hpp" />
     <ClInclude Include="Resource\AudioResource.hpp" />
-    <ClInclude Include="Script\IJSGameLogicContext.hpp" />
     <ClInclude Include="UI\ImGuiSubsystem.hpp" />
     <ClInclude Include="Widget\IWidget.hpp" />
     <ClInclude Include="Widget\WidgetSubsystem.hpp" />
@@ -670,10 +652,6 @@
     <ClInclude Include="Renderer/BitmapFont.hpp" />
     <ClInclude Include="Renderer/Camera.hpp" />
     <ClInclude Include="Renderer/ConstantBuffer.hpp" />
-    <ClInclude Include="Renderer/DebugRenderAPI.hpp" />
-    <ClInclude Include="Renderer/DebugRenderCommand.hpp" />
-    <ClInclude Include="Renderer/DebugRenderCommandQueue.hpp" />
-    <ClInclude Include="Renderer/DebugRenderStateBuffer.hpp" />
     <ClInclude Include="Renderer/DebugRenderSystem.hpp" />
     <ClInclude Include="Renderer/DefaultShader.hpp" />
     <ClInclude Include="Renderer/Image.hpp" />
@@ -681,8 +659,6 @@
     <ClInclude Include="Renderer/Light.hpp" />
     <ClInclude Include="Renderer/LightSubsystem.hpp" />
     <ClInclude Include="Renderer/RenderCommon.hpp" />
-    <ClInclude Include="Renderer/RenderCommand.hpp" />
-    <ClInclude Include="Renderer/RenderCommandQueue.hpp" />
     <ClInclude Include="Renderer/Renderer.hpp" />
     <ClInclude Include="Renderer/Shader.hpp" />
     <ClInclude Include="Renderer/SpriteAnimDefinition.hpp" />
@@ -697,7 +673,6 @@
   <ItemGroup Label="InputSubsystemHeaders">
     <!-- Input Handling System Headers -->
     <ClInclude Include="Input/AnalogJoystick.hpp" />
-    <ClInclude Include="Input/InputScriptInterface.hpp" />
     <ClInclude Include="Input/InputSystem.hpp" />
     <ClInclude Include="Input/KeyButtonState.hpp" />
     <ClInclude Include="Input/XboxController.hpp" />
@@ -748,20 +723,19 @@
     <ClInclude Include="Network\KADIWebSocketSubsystem.hpp" />
     <ClInclude Include="Network\KADIAuthenticationUtility.hpp" />
   </ItemGroup>
-  <ItemGroup Label="ScriptingSubsystemHeaders">
-    <!-- V8 JavaScript Scripting System Headers -->
-    <ClInclude Include="Script/IScriptableObject.hpp" />
-    <ClInclude Include="Script/ScriptTypeExtractor.hpp" />
-    <ClInclude Include="Script/ScriptCommon.hpp" />
-    <ClInclude Include="Script/ScriptSubsystem.hpp" />
-    <ClInclude Include="Script/FileWatcher.hpp" />
-    <ClInclude Include="Script/ScriptReloader.hpp" />
-    <ClInclude Include="Script/ModuleResolver.hpp" />
-    <ClInclude Include="Script/ModuleRegistry.hpp" />
-    <ClInclude Include="Script/ModuleLoader.hpp" />
-    <!-- Standard Script Interfaces (M4-T8: moved from Game) -->
-    <!-- GenericCommand System (Phase 2) -->
-    <ClInclude Include="Script/GenericCommandScriptInterface.hpp" />
+  <ItemGroup Label="ScriptSubsystemHeaders">
+    <!-- Script Subsystem Headers -->
+    <ClInclude Include="Script\ScriptSubsystem.hpp" />
+    <ClInclude Include="Script\ScriptCommon.hpp" />
+    <ClInclude Include="Script\IScriptableObject.hpp" />
+    <ClInclude Include="Script\ScriptTypeExtractor.hpp" />
+    <ClInclude Include="Script\GenericCommandScriptInterface.hpp" />
+    <ClInclude Include="Script\ModuleLoader.hpp" />
+    <ClInclude Include="Script\ModuleRegistry.hpp" />
+    <ClInclude Include="Script\ModuleResolver.hpp" />
+    <ClInclude Include="Script\ScriptReloader.hpp" />
+    <ClInclude Include="Script\FileWatcher.hpp" />
+    <ClInclude Include="Script\IJSGameLogicContext.hpp" />
   </ItemGroup>
   <!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- NUGET PACKAGE DEPENDENCIES -->

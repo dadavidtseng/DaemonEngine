@@ -17,7 +17,6 @@
 struct Vec3;
 
 #ifdef ENGINE_SCRIPTING_ENABLED
-class AudioCommandQueue;
 class CallbackQueue;
 #endif
 
