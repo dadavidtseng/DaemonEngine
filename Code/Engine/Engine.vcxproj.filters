@@ -581,6 +581,9 @@
     <ClCompile Include="Core/CallbackQueueScriptInterface.cpp">
       <Filter>Engine\Core\Thread</Filter>
     </ClCompile>
+    <ClCompile Include="Core/FrameEventQueueScriptInterface.cpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClCompile>
     <ClCompile Include="Core/GenericCommandExecutor.cpp">
       <Filter>Engine\Core</Filter>
     </ClCompile>
@@ -1139,6 +1142,12 @@
       <Filter>Engine\UI</Filter>
     </ClInclude>
     <ClInclude Include="Core/CallbackQueueScriptInterface.hpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/FrameEventQueue.hpp">
+      <Filter>Engine\Core\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/FrameEventQueueScriptInterface.hpp">
       <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/GenericCommand.hpp">

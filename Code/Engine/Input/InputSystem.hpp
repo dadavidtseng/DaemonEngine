@@ -7,6 +7,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputCommon.hpp"
 #include "Engine/Input/XboxController.hpp"
+#include "Engine/Core/FrameEventQueue.hpp"
 #include <chrono>
 #include <vector>
 #include "ThirdParty/json/json.hpp"
@@ -134,6 +135,9 @@ public:
 
     void SetCursorMode(eCursorMode mode);
 
+    // FrameEventQueue: Event-driven C++ → JS input channel
+    void SetFrameEventQueue(FrameEventQueue* queue);
+
     static bool OnWindowKeyPressed(EventArgs& args);
     static bool OnWindowKeyReleased(EventArgs& args);
     // Phase 6a: Job tracking and status queries
@@ -148,6 +152,7 @@ protected:
 
 private:
     sInputSystemConfig m_config;
+    FrameEventQueue*   m_frameEventQueue = nullptr;  // Optional: event-driven input for JS worker thread
     // Phase 6a: Job tracking system
     std::map<uint32_t, sKeyHoldJob> m_activeKeyHolds;
     std::map<uint32_t, std::chrono::steady_clock::time_point> m_completedJobs;

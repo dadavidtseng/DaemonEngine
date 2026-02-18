@@ -98,6 +98,18 @@ void InputSystem::BeginFrame()
     {
         m_cursorState.m_cursorClientDelta = IntVec2::ZERO;
     }
+
+    // Enqueue cursor update for JS worker thread (every frame)
+    if (m_frameEventQueue)
+    {
+        FrameEvent evt;
+        evt.type      = eFrameEventType::CursorUpdate;
+        evt.cursor.x  = static_cast<float>(m_cursorState.m_cursorClientPosition.x);
+        evt.cursor.y  = static_cast<float>(m_cursorState.m_cursorClientPosition.y);
+        evt.cursor.dx = static_cast<float>(m_cursorState.m_cursorClientDelta.x);
+        evt.cursor.dy = static_cast<float>(m_cursorState.m_cursorClientDelta.y);
+        m_frameEventQueue->Submit(evt);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -227,12 +239,36 @@ bool InputSystem::IsKeyDown(unsigned char const keyCode) const
 void InputSystem::HandleKeyPressed(unsigned char const keyCode)
 {
     m_keyStates[keyCode].m_isKeyDown = true;
+
+    // Enqueue event for JS worker thread (if FrameEventQueue is connected)
+    if (m_frameEventQueue)
+    {
+        FrameEvent evt;
+        evt.type        = eFrameEventType::KeyDown;
+        evt.key.keyCode = keyCode;
+        m_frameEventQueue->Submit(evt);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void InputSystem::HandleKeyReleased(unsigned char const keyCode)
 {
     m_keyStates[keyCode].m_isKeyDown = false;
+
+    // Enqueue event for JS worker thread (if FrameEventQueue is connected)
+    if (m_frameEventQueue)
+    {
+        FrameEvent evt;
+        evt.type        = eFrameEventType::KeyUp;
+        evt.key.keyCode = keyCode;
+        m_frameEventQueue->Submit(evt);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void InputSystem::SetFrameEventQueue(FrameEventQueue* queue)
+{
+    m_frameEventQueue = queue;
 }
 
 //----------------------------------------------------------------------------------------------------

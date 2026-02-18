@@ -387,6 +387,7 @@
     <ClCompile Include="Core/Clock.cpp" />
     <ClCompile Include="Core/CallbackQueue.cpp" />
     <ClCompile Include="Core/CallbackQueueScriptInterface.cpp" />
+    <ClCompile Include="Core/FrameEventQueueScriptInterface.cpp" />
     <ClCompile Include="Core/GenericCommandExecutor.cpp" />
     <ClCompile Include="Core/GenericCommandQueue.cpp" />
     <ClCompile Include="Core/HandlerResult.cpp" />
@@ -600,6 +601,8 @@
     <ClInclude Include="Core/CallbackData.hpp" />
     <ClInclude Include="Core/CallbackQueue.hpp" />
     <ClInclude Include="Core/CallbackQueueScriptInterface.hpp" />
+    <ClInclude Include="Core/FrameEventQueue.hpp" />
+    <ClInclude Include="Core/FrameEventQueueScriptInterface.hpp" />
     <ClInclude Include="Core/GenericCommand.hpp" />
     <ClInclude Include="Core/GenericCommandExecutor.hpp" />
     <ClInclude Include="Core/GenericCommandQueue.hpp" />
