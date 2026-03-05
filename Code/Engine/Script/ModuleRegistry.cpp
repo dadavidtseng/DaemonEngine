@@ -2,6 +2,9 @@
 // ModuleRegistry.cpp
 //----------------------------------------------------------------------------------------------------
 
+#include "Game/EngineBuildPreferences.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
+
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ModuleRegistry.hpp"
 //----------------------------------------------------------------------------------------------------
@@ -318,3 +321,5 @@ bool ModuleRegistry::HasCircularDependencyHelper(std::string const&             
     recursionStack.erase(moduleUrl);
     return false;
 }
+
+#endif // ENGINE_SCRIPTING_ENABLED

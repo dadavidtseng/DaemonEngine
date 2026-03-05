@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ScriptSubsystem.hpp"
 #include "Game/EngineBuildPreferences.hpp"
-#if !defined( ENGINE_DISABLE_SCRIPT )
+#ifdef ENGINE_SCRIPTING_ENABLED
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -2590,4 +2590,4 @@ bool ScriptSubsystem::ExecuteModuleFromSource(String const& moduleCode, String c
 
     return success;
 }
-#endif // !defined( ENGINE_DISABLE_AUDIO )
+#endif // ENGINE_SCRIPTING_ENABLED

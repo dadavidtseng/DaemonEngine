@@ -2,6 +2,9 @@
 // ModuleLoader.cpp
 //----------------------------------------------------------------------------------------------------
 
+#include "Game/EngineBuildPreferences.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
+
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/ModuleLoader.hpp"
 //----------------------------------------------------------------------------------------------------
@@ -711,3 +714,5 @@ std::string ModuleLoader::GetV8ExceptionMessage(v8::Isolate*           isolate,
 
     return result;
 }
+
+#endif // ENGINE_SCRIPTING_ENABLED

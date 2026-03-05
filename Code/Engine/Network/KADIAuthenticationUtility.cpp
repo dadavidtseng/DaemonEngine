@@ -3,6 +3,9 @@
 // Ed25519 cryptographic authentication implementation using OpenSSL
 //----------------------------------------------------------------------------------------------------
 
+#include "Game/EngineBuildPreferences.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
+
 #include "Engine/Network/KADIAuthenticationUtility.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -345,3 +348,5 @@ std::vector<unsigned char> KADIAuthenticationUtility::HexDecode(std::string cons
 
 	return result;
 }
+
+#endif // ENGINE_SCRIPTING_ENABLED

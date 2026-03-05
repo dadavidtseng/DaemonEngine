@@ -3,6 +3,9 @@
 // Chrome DevTools WebSocket Subsystem - inherits WebSocket protocol from BaseWebSocketSubsystem
 //----------------------------------------------------------------------------------------------------
 
+#include "Game/EngineBuildPreferences.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
+
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Network/ChromeDevToolsWebSocketSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
@@ -264,3 +267,5 @@ void ChromeDevToolsWebSocketSubsystem::QueueInspectorMessage(String const& messa
     std::lock_guard<std::mutex> lock(m_messageQueueMutex);
     m_inspectorMessageQueue.push(message);
 }
+
+#endif // ENGINE_SCRIPTING_ENABLED

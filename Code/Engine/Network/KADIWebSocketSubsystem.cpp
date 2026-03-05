@@ -3,6 +3,9 @@
 // WebSocket client subsystem implementation for KADI broker connectivity
 //----------------------------------------------------------------------------------------------------
 
+#include "Game/EngineBuildPreferences.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
+
 #include "Engine/Network/KADIWebSocketSubsystem.hpp"
 #include "Engine/Network/KADIProtocolV1Adapter.hpp"
 #include "Engine/Network/KADIAuthenticationUtility.hpp"
@@ -1435,3 +1438,5 @@ bool KADIWebSocketSubsystem::ValidateServerHandshake(std::string const& response
     DebuggerPrintf("KADIWebSocketSubsystem: m_isWebSocketUpgraded set to TRUE (atomic), waiting for BeginFrame() to detect...\n");
     return true;
 }
+
+#endif // ENGINE_SCRIPTING_ENABLED

@@ -14,7 +14,9 @@
 #include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#ifdef ENGINE_SCRIPTING_ENABLED
 #include "Engine/Network/KADIWebSocketSubsystem.hpp"
+#endif // ENGINE_SCRIPTING_ENABLED
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Platform/WindowCommon.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
@@ -22,7 +24,7 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/UI/ImGuiSubsystem.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
-#ifndef ENGINE_DISABLE_SCRIPT
+#ifdef ENGINE_SCRIPTING_ENABLED
 #include "Engine/Script/ScriptSubsystem.hpp"
 #endif
 //----------------------------------------------------------------------------------------------------
@@ -295,11 +297,13 @@ void GEngine::Construct()
             else if (windowTypeStr == "MINIMIZED") windowConfig.m_windowType = eWindowType::MINIMIZED;
             else if (windowTypeStr == "HIDDEN") windowConfig.m_windowType = eWindowType::HIDDEN;
 
-            windowConfig.m_aspectRatio = platformJsonConfig.value("aspectRatio", 2.0f);
-            windowConfig.m_windowTitle = platformJsonConfig.value("windowTitle", "DEFAULT");
+            windowConfig.m_aspectRatio            = platformJsonConfig.value("aspectRatio", 2.0f);
+            windowConfig.m_windowTitle            = platformJsonConfig.value("windowTitle", "DEFAULT");
+            windowConfig.m_supportMultipleWindows = platformJsonConfig.value("supportMultipleWindows", false);
 
-            DebuggerPrintf("Window: Configured from JSON - Type: %s, AspectRatio: %.1f, Title: %s\n",
-                           windowTypeStr.c_str(), windowConfig.m_aspectRatio, windowConfig.m_windowTitle.c_str());
+            DebuggerPrintf("Window: Configured from JSON - Type: %s, AspectRatio: %.1f, Title: %s, MultiWindow: %s\n",
+                           windowTypeStr.c_str(), windowConfig.m_aspectRatio, windowConfig.m_windowTitle.c_str(),
+                           windowConfig.m_supportMultipleWindows ? "true" : "false");
         }
         else
         {
@@ -483,7 +487,7 @@ void GEngine::Construct()
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
-#ifndef ENGINE_DISABLE_SCRIPT
+#ifdef ENGINE_SCRIPTING_ENABLED
 #pragma region ScriptSubsystem
     // Check if ScriptSubsystem is enabled in config
     bool enableScript = true;  // Default: enabled
@@ -531,7 +535,7 @@ void GEngine::Construct()
         DebuggerPrintf("ScriptSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
-#endif // !ENGINE_DISABLE_SCRIPT
+#endif // ENGINE_SCRIPTING_ENABLED
     //------------------------------------------------------------------------------------------------
 #pragma region Math (RandomNumberGenerator)
     // Check if Math subsystem (RNG) should be enabled
@@ -598,6 +602,7 @@ void GEngine::Construct()
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region KADI (KADIWebSocketSubsystem)
+#ifdef ENGINE_SCRIPTING_ENABLED
     // KADI broker integration for distributed agent communication
     // Implementation available in Engine/Network/KADIWebSocketSubsystem.hpp
 
@@ -618,6 +623,7 @@ void GEngine::Construct()
         g_kadiSubsystem = nullptr;
         DebuggerPrintf("KADIWebSocketSubsystem: DISABLED (from config)\n");
     }
+#endif // ENGINE_SCRIPTING_ENABLED
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 }
@@ -625,11 +631,13 @@ void GEngine::Construct()
 //----------------------------------------------------------------------------------------------------
 void GEngine::Destruct()
 {
+#ifdef ENGINE_SCRIPTING_ENABLED
     ENGINE_SAFE_RELEASE(g_kadiSubsystem);
+#endif // ENGINE_SCRIPTING_ENABLED
     ENGINE_SAFE_RELEASE(g_rng);
-#ifndef ENGINE_DISABLE_SCRIPT
+#ifdef ENGINE_SCRIPTING_ENABLED
     ENGINE_SAFE_RELEASE(g_scriptSubsystem);
-#endif
+#endif // ENGINE_SCRIPTING_ENABLED
     ENGINE_SAFE_RELEASE(g_audio);
     ENGINE_SAFE_RELEASE(g_input);
     ENGINE_SAFE_RELEASE(g_resourceSubsystem);
@@ -707,11 +715,13 @@ void GEngine::Startup()
     // This ensures MCP tools are registered quickly (~50ms), before Claude Desktop typically connects
     // Previously: KADI initialized last (after 17 seconds of resource loading)
     // Now: KADI connects and registers tools before textures/shaders load
+#ifdef ENGINE_SCRIPTING_ENABLED
     if (g_kadiSubsystem != nullptr)
     {
         g_kadiSubsystem->Startup();
         DebuggerPrintf("KADIWebSocketSubsystem started\n");
     }
+#endif // ENGINE_SCRIPTING_ENABLED
 
     if (g_imgui != nullptr)
     {
@@ -751,7 +761,7 @@ void GEngine::Startup()
         DebuggerPrintf("(GEngine::Startup)AudioSystem started\n");
     }
 
-#ifndef ENGINE_DISABLE_SCRIPT
+#ifdef ENGINE_SCRIPTING_ENABLED
     if (g_scriptSubsystem != nullptr)
     {
         g_scriptSubsystem->Startup();
@@ -779,7 +789,7 @@ void GEngine::Shutdown()
         DebuggerPrintf("WidgetSubsystem shutdown\n");
     }
 
-#ifndef ENGINE_DISABLE_SCRIPT
+#ifdef ENGINE_SCRIPTING_ENABLED
     if (g_scriptSubsystem)
     {
         g_scriptSubsystem->Shutdown();
@@ -824,11 +834,13 @@ void GEngine::Shutdown()
     }
 
     // KADI shutdown moved here to match new startup order (after ImGui, before Renderer)
+#ifdef ENGINE_SCRIPTING_ENABLED
     if (g_kadiSubsystem)
     {
         g_kadiSubsystem->Shutdown();
         DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
     }
+#endif // ENGINE_SCRIPTING_ENABLED
 
     if (g_renderer)
     {
