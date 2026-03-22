@@ -402,6 +402,9 @@
     <ClCompile Include="Renderer/DebugRenderSystem.cpp">
       <Filter>Engine\Renderer\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Resource/MeshCache.cpp">
+      <Filter>Engine\Resource</Filter>
+    </ClCompile>
     <ClCompile Include="Resource/ResourceCache.cpp">
       <Filter>Engine\Resource</Filter>
     </ClCompile>
@@ -865,6 +868,9 @@
     </ClInclude>
     <ClInclude Include="Renderer/DebugRenderSystem.hpp">
       <Filter>Engine\Renderer\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource/MeshCache.hpp">
+      <Filter>Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource/ResourceCache.hpp">
       <Filter>Engine\Resource</Filter>

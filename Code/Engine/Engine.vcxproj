@@ -471,6 +471,7 @@
   </ItemGroup>
   <ItemGroup Label="ResourceSubsystemSources">
     <!-- Resource Management System - Asset pipeline -->
+    <ClCompile Include="Resource/MeshCache.cpp" />
     <ClCompile Include="Resource/ResourceCache.cpp" />
     <ClCompile Include="Resource/ResourceCommon.cpp" />
     <ClCompile Include="Resource/ResourceCommandQueue.cpp" />
@@ -679,6 +680,7 @@
   </ItemGroup>
   <ItemGroup Label="ResourceSubsystemHeaders">
     <!-- Resource Management System Headers -->
+    <ClInclude Include="Resource/MeshCache.hpp" />
     <ClInclude Include="Resource/ResourceCache.hpp" />
     <ClInclude Include="Resource/ResourceCommand.hpp" />
     <ClInclude Include="Resource/ResourceCommandQueue.hpp" />
