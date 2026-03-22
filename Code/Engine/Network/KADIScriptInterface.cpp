@@ -108,6 +108,11 @@ std::vector<ScriptMethodInfo> KADIScriptInterface::GetAvailableMethods() const
 		                 {"function"},
 		                 "void"),
 
+		ScriptMethodInfo("setDisplayName",
+		                 "Set agent display name shown in KADI broker observer",
+		                 {"string"},  // displayName
+		                 "void"),
+
 		ScriptMethodInfo("generateKeyPair",
 		                 "Generate new Ed25519 key pair (returns: {publicKey: string, privateKey: string})",
 		                 {},
@@ -135,6 +140,7 @@ ScriptMethodResult KADIScriptInterface::CallMethod(String const& methodName, Scr
 		if (methodName == "onToolInvoke") return ExecuteOnToolInvoke(args);
 		if (methodName == "onEventDelivery") return ExecuteOnEventDelivery(args);
 		if (methodName == "onConnectionStateChange") return ExecuteOnConnectionStateChange(args);
+		if (methodName == "setDisplayName") return ExecuteSetDisplayName(args);
 		if (methodName == "generateKeyPair") return ExecuteGenerateKeyPair(args);
 
 		return ScriptMethodResult::Error("Unknown method: " + methodName);
@@ -524,6 +530,25 @@ ScriptMethodResult KADIScriptInterface::ExecuteOnConnectionStateChange(ScriptArg
 	catch (std::exception const& e)
 	{
 		return ScriptMethodResult::Error("KADI onConnectionStateChange failed: " + String(e.what()));
+	}
+}
+
+ScriptMethodResult KADIScriptInterface::ExecuteSetDisplayName(ScriptArgs const& args)
+{
+	auto result = ScriptTypeExtractor::ValidateArgCount(args, 1, "setDisplayName");
+	if (!result.success) return result;
+
+	try
+	{
+		String displayName = ScriptTypeExtractor::ExtractString(args[0]);
+
+		m_kadiSubsystem->SetDisplayName(std::string(displayName));
+
+		return ScriptMethodResult::Success();
+	}
+	catch (std::exception const& e)
+	{
+		return ScriptMethodResult::Error("KADI setDisplayName failed: " + String(e.what()));
 	}
 }
 

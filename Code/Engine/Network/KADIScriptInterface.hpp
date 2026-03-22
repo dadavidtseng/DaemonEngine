@@ -75,6 +75,7 @@ private:
 	ScriptMethodResult ExecuteOnToolInvoke(ScriptArgs const& args);
 	ScriptMethodResult ExecuteOnEventDelivery(ScriptArgs const& args);
 	ScriptMethodResult ExecuteOnConnectionStateChange(ScriptArgs const& args);
+	ScriptMethodResult ExecuteSetDisplayName(ScriptArgs const& args);
 	ScriptMethodResult ExecuteGenerateKeyPair(ScriptArgs const& args);
 
 	// JavaScript Callbacks (V8::Persistent function storage - Phase 2)
