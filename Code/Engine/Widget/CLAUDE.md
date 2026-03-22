@@ -307,7 +307,7 @@ A: Yes! Create intermediate base classes between IWidget and your concrete widge
 
 ### Reference Implementation
 For A7 implementation patterns, reference:
-- **SimpleMiner ProtogameJS3D**: Existing UI implementation examples
+- **SimpleMiner DaemonAgent**: Existing UI implementation examples
 - **Minecraft UI Screenshots**: For pixel-perfect visual fidelity
 - **Minecraft Wiki - User Interface**: For layout specifications and behavior
 

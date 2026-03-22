@@ -331,7 +331,7 @@ void ScriptSubsystem::Startup()
                     devToolsConfig.enabled     = true;
                     devToolsConfig.host        = m_config.inspectorHost;
                     devToolsConfig.port        = m_config.inspectorPort;
-                    devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+                    devToolsConfig.contextName = "DaemonAgent JavaScript Context";
                 }
             }
             else
@@ -342,7 +342,7 @@ void ScriptSubsystem::Startup()
                 devToolsConfig.enabled     = true;
                 devToolsConfig.host        = m_config.inspectorHost;
                 devToolsConfig.port        = m_config.inspectorPort;
-                devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+                devToolsConfig.contextName = "DaemonAgent JavaScript Context";
             }
         }
         catch (nlohmann::json::exception const& e)
@@ -353,7 +353,7 @@ void ScriptSubsystem::Startup()
             devToolsConfig.enabled     = true;
             devToolsConfig.host        = m_config.inspectorHost;
             devToolsConfig.port        = m_config.inspectorPort;
-            devToolsConfig.contextName = "ProtogameJS3D JavaScript Context";
+            devToolsConfig.contextName = "DaemonAgent JavaScript Context";
         }
 
         m_devToolsServer = std::make_unique<ChromeDevToolsWebSocketSubsystem>(devToolsConfig, this);

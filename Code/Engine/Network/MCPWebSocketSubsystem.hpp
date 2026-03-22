@@ -13,7 +13,7 @@
 //----------------------------------------------------------------------------------------------------
 struct sMCPConfig : sBaseWebSocketConfig
 {
-    String serverName = "ProtogameJS3D MCP Server";
+    String serverName = "DaemonAgent MCP Server";
     String version    = "1.0.0";
 };
 

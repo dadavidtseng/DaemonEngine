@@ -47,7 +47,7 @@ void MCPWebSocketSubsystem::OnClientConnected(SOCKET clientSocket)
                    static_cast<unsigned long long>(clientSocket)));
 
     // Send welcome message (stub implementation)
-    String welcomeMessage = R"({"jsonrpc":"2.0","method":"initialize","params":{"serverInfo":{"name":"ProtogameJS3D MCP Server","version":"1.0.0"}}})";
+    String welcomeMessage = R"({"jsonrpc":"2.0","method":"initialize","params":{"serverInfo":{"name":"DaemonAgent MCP Server","version":"1.0.0"}}})";
     SendToClient(clientSocket, welcomeMessage);
 }
 

@@ -23,7 +23,7 @@ class ScriptSubsystem;
 //----------------------------------------------------------------------------------------------------
 struct sChromeDevToolsConfig : sBaseWebSocketConfig
 {
-    String contextName = "ProtogameJS3D JavaScript Context";
+    String contextName = "DaemonAgent JavaScript Context";
 
     // JSON Parsing (extends base class FromJSON)
     static sChromeDevToolsConfig FromJSON(nlohmann::json const& j)

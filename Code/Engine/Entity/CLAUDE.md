@@ -4,7 +4,7 @@
 
 ## Module Responsibilities
 
-The Entity module provides high-level entity management API for asynchronous JavaScript integration. It handles entity creation, updates, and destruction through a thread-safe command queue system with double-buffered state synchronization. This module was extracted from ProtogameJS3D during M4-T8 refactoring to provide reusable async entity management for any project.
+The Entity module provides high-level entity management API for asynchronous JavaScript integration. It handles entity creation, updates, and destruction through a thread-safe command queue system with double-buffered state synchronization. This module was extracted from DaemonAgent during M4-T8 refactoring to provide reusable async entity management for any project.
 
 ## Entry and Startup
 
@@ -239,7 +239,7 @@ A: EntityAPI logs a warning and ignores the command. Invalid entityIds are handl
 ## Changelog
 
 - 2025-10-27: **M4-T8 Engine Refactoring - Initial Entity Module Creation**
-  - Extracted EntityAPI from ProtogameJS3D::HighLevelEntityAPI
+  - Extracted EntityAPI from DaemonAgent::HighLevelEntityAPI
   - Separated entity management from camera management (Single Responsibility Principle)
   - Introduced async callback system for entity creation
   - Implemented EntityStateBuffer using Core's StateBuffer template
@@ -284,7 +284,7 @@ EntityStateBuffer uses Core's StateBuffer template:
 - V8 locking required for callback execution (v8::Locker)
 
 ### Reusability Across Projects
-Entity module is fully decoupled from ProtogameJS3D:
+Entity module is fully decoupled from DaemonAgent:
 - No game-specific code or dependencies
 - Generic entity state structure
 - Flexible mesh type system (string-based)

@@ -120,7 +120,7 @@ private:
     // Member variables
     //------------------------------------------------------------------------------------------------
 
-    /// @brief Base directory for script files (e.g., "C:/p4/Personal/SD/ProtogameJS3D/Run/Data/Scripts/")
+    /// @brief Base directory for script files (e.g., "C:/GitHub/DaemonAgent/Run/Data/Scripts/")
     std::string m_basePath;
 
     /// @brief Named module registry (name → absolute path)
