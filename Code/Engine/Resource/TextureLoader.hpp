@@ -25,12 +25,15 @@ public:
     std::shared_ptr<IResource> Load(String const& path) override;
     StringList                 GetSupportedExtensions() const override;
 
+public:
+    // Create a GPU texture from an in-memory Image (no caching — ResourceCache handles that)
+    Texture* CreateTextureFromImage(Image const& image);
+
 private:
     ID3D11Device* m_device = nullptr;
 
-    // Internal texture creation (no caching - ResourceCache handles that)
+    // Internal texture creation
     Texture* CreateTextureFromFile(char const* imageFilePath);
-    Texture* CreateTextureFromImage(Image const& image);
 
     // Helper methods
     bool LoadTextureFromFile(String const& path, TextureResource* textureResource);

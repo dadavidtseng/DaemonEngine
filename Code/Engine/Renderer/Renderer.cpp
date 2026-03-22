@@ -397,29 +397,30 @@ void Renderer::Startup()
     m_perFrameCBO         = CreateConstantBuffer(sizeof(sPerFrameConstants));
     m_blurCBO             = CreateConstantBuffer(sizeof(BlurConstants));
 
-    //------------------------------------------------------------------------------------------------
-    // Phase 4: Default texture now managed by ResourceSubsystem
-    // Get the default texture from ResourceSubsystem instead of creating it here
-    // ResourceHandle<TextureResource> defaultTextureHandle = EngineCommon::g_resourceSubsystem->GetDefaultTexture();
-    // if (defaultTextureHandle.IsValid())
-    // {
-    //     m_defaultTexture = defaultTextureHandle->GetRendererTexture();
-    //     m_ownsDefaultTexture = false;  // ResourceSubsystem owns it
-    //     DebuggerPrintf("[Renderer] Loaded default texture from ResourceSubsystem.\n");
-    // }
-    // else
+    // Default texture is loaded in PostStartup() from ResourceSubsystem
+    // (ResourceSubsystem::Startup() runs between Startup() and PostStartup())
+    m_defaultTexture     = nullptr;
+    m_ownsDefaultTexture = false;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::PostStartup()
+{
+    // Load default texture from ResourceSubsystem
+    ResourceHandle<TextureResource> defaultTextureHandle = g_resourceSubsystem->GetDefaultTexture();
+    if (defaultTextureHandle.IsValid())
     {
-        DebuggerPrintf("Warning: Failed to load default texture from ResourceSubsystem. Creating fallback texture.\n");
-        // Fallback: Create a local default texture if ResourceSubsystem failed
-        Image const defaultImage(IntVec2(2, 2), Rgba8::WHITE);
-        m_defaultTexture = CreateTextureFromImage(defaultImage);
-        m_defaultTexture->m_name = "Default_Fallback";
-        m_ownsDefaultTexture = true;  // We own the fallback texture
+        m_defaultTexture     = defaultTextureHandle->GetRendererTexture();
+        m_ownsDefaultTexture = false;  // ResourceSubsystem owns it
+        DebuggerPrintf("[Renderer] Loaded default texture from ResourceSubsystem.\n");
+    }
+    else
+    {
+        ERROR_AND_DIE("Failed to load default texture from ResourceSubsystem");
     }
 
-    m_defaultShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
-    m_currentShader          = CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
-    // m_currentShader = CreateShader("Default", DEFAULT_SHADER_SOURCE);
+    m_defaultShader          = g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default", eVertexType::VERTEX_PCU);
+    m_currentShader          = m_defaultShader;
     // 預先創建 blur shader
     m_blurDownShader      = CreateShader("BlurDown", blurDownShaderSource, eVertexType::VERTEX_PCU);
     m_blurUpShader        = CreateShader("BlurUp", blurUpShaderSource, eVertexType::VERTEX_PCU);
@@ -561,11 +562,6 @@ void Renderer::Shutdown()
         m_dxgiDebugModule = nullptr;
     }
 #endif
-}
-
-void Renderer::Render()
-{
-    ReadStagingTextureToPixelData();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -798,6 +794,8 @@ BitmapFont* Renderer::CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePa
 }
 */
 
+// Phase 6: REMOVED - use ResourceSubsystem::CreateOrGetShaderFromFile() instead
+/*
 //----------------------------------------------------------------------------------------------------
 Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderFilePath,
                                             eVertexType const vertexType)
@@ -812,6 +810,7 @@ Shader* Renderer::CreateOrGetShaderFromFile(char const*       shaderFilePath,
 
     return newShader;
 }
+*/
 
 //----------------------------------------------------------------------------------------------------
 void Renderer::SetBlendMode(eBlendMode const mode)
@@ -931,145 +930,6 @@ void Renderer::DrawIndexedVertexBuffer(VertexBuffer const* vbo,
 
     // Draw
     m_deviceContext->DrawIndexed(indexCount, 0, 0);
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* Renderer::GetTextureForFileName(char const* imageFilePath) const
-{
-    for (Texture* texture : m_loadedTextures)
-    {
-        if (texture && !strcmp(texture->m_name.c_str(), imageFilePath))
-        {
-            return texture;
-        }
-    }
-
-    return nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------
-BitmapFont* Renderer::GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const
-{
-    for (BitmapFont* font : m_loadedFonts)
-    {
-        if (font && !strcmp(font->m_fontFilePathNameWithNoExtension.c_str(), bitmapFontFilePathWithNoExtension))
-        {
-            return font;
-        }
-    }
-
-    return nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------
-Shader* Renderer::GetShaderForFileName(char const* shaderFilePath) const
-{
-    for (Shader* shader : m_loadedShaders)
-    {
-        if (shader && !strcmp(shader->GetName().c_str(), shaderFilePath))
-        {
-            return shader;
-        }
-    }
-
-    return nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromFile(char const* imageFilePath)
-{
-    IntVec2 dimensions    = IntVec2::ZERO; // This will be filled in for us to indicate image width & height
-    int     bytesPerTexel = 0;
-    // This will be filled in for us to indicate how many color components the image had (e.g. 3=RGB=24bit, 4=RGBA=32bit)
-    int constexpr numComponentsRequested = 0; // don't care; we support 3 (24-bit RGB) or 4 (32-bit RGBA)
-
-    // Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
-    stbi_set_flip_vertically_on_load(1); // We prefer uvTexCoords has origin (0,0) at BOTTOM LEFT
-    unsigned char* texelData = stbi_load(imageFilePath,
-                                         &dimensions.x,
-                                         &dimensions.y,
-                                         &bytesPerTexel,
-                                         numComponentsRequested);
-
-    GUARANTEE_OR_DIE(texelData, Stringf("Failed to load image \"%s\"", imageFilePath))
-
-    Image const fileImage(imageFilePath);
-    Texture*    newTexture = CreateTextureFromImage(fileImage);
-
-    // Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
-    stbi_image_free(texelData);
-
-    //m_loadedTextures.push_back(newTexture);
-    return newTexture;
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromData(char const*    name,
-                                         IntVec2 const& dimensions,
-                                         int const      bytesPerTexel,
-                                         uint8_t const* texelData)
-{
-    // Check if the load was successful
-    GUARANTEE_OR_DIE(texelData,
-                     Stringf("CreateTextureFromData failed for \"%s\" - texelData was null!",
-                         name))
-
-    GUARANTEE_OR_DIE(bytesPerTexel >= 3 && bytesPerTexel <= 4,
-                     Stringf("CreateTextureFromData failed for \"%s\" - unsupported BPP=%i (must be 3 or 4)",
-                         name,
-                         bytesPerTexel))
-
-    GUARANTEE_OR_DIE(dimensions.x > 0 && dimensions.y > 0,
-                     Stringf("CreateTextureFromData failed for \"%s\" - illegal texture dimensions (%i x %i)",
-                         name,
-                         dimensions.x, dimensions.y))
-
-    Texture* newTexture      = new Texture();
-    newTexture->m_name       = name;            // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
-    newTexture->m_dimensions = dimensions;
-
-    return newTexture;
-}
-
-//----------------------------------------------------------------------------------------------------
-Texture* Renderer::CreateTextureFromImage(Image const& image)
-{
-    Texture* newTexture      = new Texture();
-    newTexture->m_name       = image.GetImageFilePath();
-    newTexture->m_dimensions = image.GetDimensions();
-
-    D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width                = image.GetDimensions().x;
-    textureDesc.Height               = image.GetDimensions().y;
-    textureDesc.MipLevels            = 1;
-    textureDesc.ArraySize            = 1;
-    textureDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc.Count     = 1;
-    textureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
-    textureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
-
-    D3D11_SUBRESOURCE_DATA textureData;
-    textureData.pSysMem     = image.GetRawData();
-    textureData.SysMemPitch = 4 * image.GetDimensions().x;
-
-    HRESULT hr = m_device->CreateTexture2D(&textureDesc, &textureData, &newTexture->m_texture);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE(Stringf("CreateTextureFromImage failed for image file \"%s\".", image.GetImageFilePath().c_str()))
-    }
-
-    hr = m_device->CreateShaderResourceView(newTexture->m_texture, NULL, &newTexture->m_shaderResourceView);
-
-    if (!SUCCEEDED(hr))
-    {
-        ERROR_AND_DIE(Stringf("CreateShaderResourceView failed for image file \"%s\".", image.GetImageFilePath().c_str()))
-    }
-
-    // NOTE: Textures are now owned by ResourceSubsystem (via TextureResource)
-    // Renderer does not track ownership anymore
-    // m_loadedTextures.push_back(newTexture);
-    return newTexture;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1822,60 +1682,91 @@ void Renderer::RenderViewportToWindow(Window const& window)
     );
 }
 
-void Renderer::RenderViewportToWindowDX11(Window const& window)
+void Renderer::RenderViewportToWindowDX11(Window& window)
 {
     if (!window.m_swapChain || !window.m_renderTargetView) return;
 
-    // 取得子視窗在螢幕上的實際客戶區域位置
-    RECT windowRect, clientRect;
-    GetWindowRect((HWND)window.m_windowHandle, &windowRect);
+    // 取得子視窗目前的客戶區域大小
+    RECT clientRect;
     GetClientRect((HWND)window.m_windowHandle, &clientRect);
+    UINT clientWidth  = (UINT)(clientRect.right - clientRect.left);
+    UINT clientHeight = (UINT)(clientRect.bottom - clientRect.top);
+
+    if (clientWidth == 0 || clientHeight == 0) return;
+
+    // 檢查 back buffer 是否與目前客戶區域大小一致，不一致則 resize
+    ID3D11Texture2D* windowTexture = nullptr;
+    window.m_renderTargetView->GetResource((ID3D11Resource**)&windowTexture);
+    D3D11_TEXTURE2D_DESC dstDesc = {};
+    windowTexture->GetDesc(&dstDesc);
+    windowTexture->Release();
+    windowTexture = nullptr;
+
+    if (dstDesc.Width != clientWidth || dstDesc.Height != clientHeight)
+    {
+        HRESULT hr = ResizeWindowSwapChain(window);
+        if (FAILED(hr) || !window.m_renderTargetView) return;
+    }
 
     // 將客戶區域的左上角轉換為螢幕座標
     POINT clientTopLeft = {0, 0};
     ClientToScreen((HWND)window.m_windowHandle, &clientTopLeft);
 
-    // 計算客戶區域相對於視窗左上角的偏移
-    // int clientOffsetX = clientTopLeft.x - windowRect.left;  // 左邊框寬度
-    // int clientOffsetY = clientTopLeft.y - windowRect.top;   // 標題列高度 + 上邊框
-
-    // 取得主視窗的位置（假設您有主視窗的控制代碼）
+    // 取得主視窗的位置
     RECT mainWindowRect;
-    GetWindowRect((HWND)Window::s_mainWindow->m_windowHandle, &mainWindowRect);  // 需要主視窗控制代碼
+    GetWindowRect((HWND)Window::s_mainWindow->m_windowHandle, &mainWindowRect);
 
     // 計算子視窗客戶區域在主視窗中的相對位置
     int relativeX = clientTopLeft.x - mainWindowRect.left;
     int relativeY = clientTopLeft.y - mainWindowRect.top;
 
-    // 1. 從主視窗 RenderTarget 複製指定區域到子視窗
+    // 取得主 RenderTarget 實際大小（來源邊界）
+    ID3D11Texture2D* mainRenderTargetTexture = nullptr;
+    m_renderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
+    D3D11_TEXTURE2D_DESC srcDesc = {};
+    mainRenderTargetTexture->GetDesc(&srcDesc);
+    int rtWidth  = (int)srcDesc.Width;
+    int rtHeight = (int)srcDesc.Height;
+
+    // 取得 resize 後的 back buffer（大小現在等於 clientWidth x clientHeight）
+    window.m_renderTargetView->GetResource((ID3D11Resource**)&windowTexture);
+
+    // 將來源區域裁剪到 RenderTarget 邊界內
+    int srcLeft   = max(0, relativeX);
+    int srcTop    = max(0, relativeY);
+    int srcRight  = min(relativeX + (int)clientWidth, rtWidth);
+    int srcBottom = min(relativeY + (int)clientHeight, rtHeight);
+
+    if (srcLeft >= srcRight || srcTop >= srcBottom)
+    {
+        // 完全在螢幕外，跳過
+        windowTexture->Release();
+        mainRenderTargetTexture->Release();
+        return;
+    }
+
+    // 左上角被裁剪時的目標偏移
+    int dstX = srcLeft - relativeX;
+    int dstY = srcTop  - relativeY;
+
     D3D11_BOX sourceBox;
-    sourceBox.left   = (UINT)relativeX;
-    sourceBox.top    = (UINT)relativeY;
-    sourceBox.right  = (UINT)(relativeX + clientRect.right);
-    sourceBox.bottom = (UINT)(relativeY + clientRect.bottom);
+    sourceBox.left   = (UINT)srcLeft;
+    sourceBox.top    = (UINT)srcTop;
+    sourceBox.right  = (UINT)srcRight;
+    sourceBox.bottom = (UINT)srcBottom;
     sourceBox.front  = 0;
     sourceBox.back   = 1;
 
-    // 獲取子視窗的 texture
-    ID3D11Texture2D* windowTexture = nullptr;
-    window.m_renderTargetView->GetResource((ID3D11Resource**)&windowTexture);
-    ID3D11Texture2D* mainRenderTargetTexture = nullptr;
-    m_renderTargetView->GetResource((ID3D11Resource**)&mainRenderTargetTexture);
-
-    // 從主 RenderTarget 複製到子視窗
+    // 從主 RenderTarget 複製到子視窗 back buffer（1:1 像素複製，大小完全匹配）
     m_deviceContext->CopySubresourceRegion(
-        windowTexture,          // 目標
-        0,                      // 目標子資源
-        0, 0, 0,               // 目標位置
-        mainRenderTargetTexture, // 來源（主視窗的 texture）
-        0,                      // 來源子資源
-        &sourceBox             // 來源區域
+        windowTexture, 0,
+        (UINT)dstX, (UINT)dstY, 0,
+        mainRenderTargetTexture, 0,
+        &sourceBox
     );
 
     windowTexture->Release();
     mainRenderTargetTexture->Release();
-    // window.m_shouldUpdatePosition = false;
-    // 2. Present 子視窗
     window.m_swapChain->Present(0, 0);
 }
 
@@ -1883,12 +1774,10 @@ HRESULT Renderer::ResizeWindowSwapChain(Window& window) const
 {
     if (!window.m_swapChain) return E_FAIL;
 
-    // 3. 釋放 RenderTargetView
+    // 釋放 RenderTargetView（ResizeBuffers 前必須釋放所有 back buffer 參照）
     if (window.m_renderTargetView)
     {
-        //ULONG refCount = window.m_renderTargetView->Release();
-        // DebuggerPrintf("RTV released, ref count: %lu\n", refCount);
-
+        window.m_renderTargetView->Release();
         window.m_renderTargetView = nullptr;
     }
 

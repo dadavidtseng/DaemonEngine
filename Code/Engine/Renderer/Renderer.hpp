@@ -63,6 +63,7 @@ public:
     static int k_blurConstantSlot;
 
     void Startup();
+    void PostStartup();
     void BeginFrame();
     void EndFrame() const;
     void Shutdown();
@@ -82,13 +83,6 @@ public:
     void BindShader(Shader const* shader) const;
     void BindTexture(Texture const* texture, int slot = 0) const;
     void DrawTexturedQuad(AABB2 const& bounds, Texture const* texture, Rgba8 const& tint, float uniformScaleXY, float rotationDegreesAboutZ);
-
-    // Image CreateImageFromFile(char const* imageFilePath);
-    // Phase 6: REMOVED - use ResourceSubsystem::CreateOrGetBitmapFontFromFile() instead
-    // BitmapFont* CreateOrGetBitmapFontFromFile(char const* bitmapFontFilePathWithNoExtension);
-    Shader* CreateOrGetShaderFromFile(char const* shaderFilePath, eVertexType vertexType = eVertexType::VERTEX_PCU);
-    // Phase 6: REMOVED - use ResourceSubsystem::CreateOrGetTextureFromFile() instead
-    // Texture*    CreateOrGetTextureFromFile(char const* imageFilePath);
 
     void            SetBlendMode(eBlendMode mode);
     void            SetDepthMode(eDepthMode mode);
@@ -110,17 +104,15 @@ public:
     void CopyCPUToGPU(void const* data, unsigned int size, VertexBuffer* vbo) const;
 
     // RendererEx
-    void    Render();
     HRESULT CreateWindowSwapChain(Window& window);
     HRESULT ResizeWindowSwapChain(Window& window) const;
     void    RenderViewportToWindow(Window const& window);
-    void    RenderViewportToWindowDX11(Window const& window);
+    void    RenderViewportToWindowDX11(Window& window);
     void    ReadStagingTextureToPixelData();
 
     // Screenshot capture: captures current frame to PNG or JPEG file
     // Returns true on success, false on failure. Sets outFilePath to the actual file written.
     bool    CaptureScreenshot(std::string const& outputDir, std::string const& filename, std::string const& format, int jpegQuality, std::string& outFilePath);
-
 
     // Shadowmap and Bloom
     void     SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot);
@@ -136,14 +128,6 @@ private:
     void CreateDepthStencilState();
     void CreateSamplerState();
     void CreateRasterizerState();
-
-    Texture*    GetTextureForFileName(char const* imageFilePath) const;
-    BitmapFont* GetBitMapFontForFileName(const char* bitmapFontFilePathWithNoExtension) const;
-    Shader*     GetShaderForFileName(char const* shaderFilePath) const;
-
-    Texture* CreateTextureFromFile(char const* imageFilePath);
-    Texture* CreateTextureFromData(char const* name, IntVec2 const& dimensions, int bytesPerTexel, uint8_t const* texelData);
-    Texture* CreateTextureFromImage(Image const& image);
 
     Shader* CreateShader(char const* shaderName, char const* shaderSource, eVertexType vertexType = eVertexType::VERTEX_PCU);
     Shader* CreateShader(char const* shaderName, eVertexType vertexType = eVertexType::VERTEX_PCU);

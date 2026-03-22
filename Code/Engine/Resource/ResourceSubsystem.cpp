@@ -289,7 +289,9 @@ Shader* ResourceSubsystem::CreateOrGetShaderFromFile(String const& path, eVertex
         {
             if (ShaderLoader* shaderLoader = dynamic_cast<ShaderLoader*>(loader.get()))
             {
-                if (shaderLoader->CanLoad(GetFileExtension(path)))
+                String const ext = GetFileExtension(path);
+                // Allow extensionless paths — ShaderLoader::LoadShader handles .hlsl fallback
+                if (ext.empty() || shaderLoader->CanLoad(ext))
                 {
                     auto shaderResource = shaderLoader->LoadShader(path, vertexType);
                     if (shaderResource)
@@ -406,10 +408,8 @@ void ResourceSubsystem::CreateDefaultTexture()
     // Create TextureResource
     auto defaultTextureRes = std::make_shared<TextureResource>("__default_white__", eResourceType::TEXTURE);
 
-    // Create Renderer::Texture from image using TextureLoader's method
-    // Note: We're accessing private method CreateTextureFromImage, but TextureLoader should expose a public method
-    // For now, we'll create the texture directly using Renderer's method temporarily
-    Texture* texture = m_config.m_renderer->CreateTextureFromImage(defaultImage);
+    // Create Renderer::Texture from image using TextureLoader
+    Texture* texture = textureLoader->CreateTextureFromImage(defaultImage);
     if (texture)
     {
         texture->m_name = "__default_white__";
@@ -436,6 +436,5 @@ ResourceHandle<TextureResource> ResourceSubsystem::GetDefaultTexture()
     //     return ResourceHandle<TextureResource>();
     // }
 
-    // return LoadResource<TextureResource>("__default_white__");
-    return LoadResource<TextureResource>("Data/Images/TestUV.png");
+    return LoadResource<TextureResource>("__default_white__");
 }
