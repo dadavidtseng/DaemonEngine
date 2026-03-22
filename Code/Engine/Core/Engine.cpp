@@ -711,6 +711,18 @@ void GEngine::Startup()
         DebuggerPrintf("(GEngine::Startup)Renderer started\n");
     }
 
+    if (g_resourceSubsystem != nullptr)
+    {
+        g_resourceSubsystem->Startup();
+        DebuggerPrintf("(GEngine::Startup)ResourceSubsystem started\n");
+    }
+
+    if (g_renderer != nullptr)
+    {
+        g_renderer->PostStartup();
+        DebuggerPrintf("(GEngine::Startup)Renderer PostStartup completed\n");
+    }
+
     // KADI initialization moved here (Option A: immediately after Renderer, before resource loading)
     // This ensures MCP tools are registered quickly (~50ms), before Claude Desktop typically connects
     // Previously: KADI initialized last (after 17 seconds of resource loading)
@@ -734,12 +746,6 @@ void GEngine::Startup()
     {
         g_devConsole->StartUp();
         DebuggerPrintf("(GEngine::Startup)DevConsole started\n");
-    }
-
-    if (g_resourceSubsystem != nullptr)
-    {
-        g_resourceSubsystem->Startup();
-        DebuggerPrintf("(GEngine::Startup)ResourceSubsystem started\n");
     }
 
     if (g_renderer != nullptr)
