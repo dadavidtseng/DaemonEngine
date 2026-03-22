@@ -29,6 +29,7 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Entity/EntityID.hpp"
 #include <string>
+#include <cstdint>
 #include <unordered_map>
 
 //----------------------------------------------------------------------------------------------------
@@ -61,6 +62,7 @@ struct EntityState
     std::string meshType;          // "cube", "sphere", "grid", etc. (Phase 1 simplicity)
     bool        isActive;          // Active flag (true = render, false = skip)
     std::string cameraType;        // Phase 2: Camera type for entity-based camera selection ("world" or "screen")
+    uint64_t    textureId;         // Opaque texture handle (0 = default white; from resource.loadTexture callback)
 
     // Default constructor (identity state)
     EntityState()
@@ -70,19 +72,21 @@ struct EntityState
           radius(1.0f),
           meshType("cube"),
           isActive(true),
-          cameraType("world")  // Default to world camera (3D entities)
+          cameraType("world"),  // Default to world camera (3D entities)
+          textureId(0)
     {
     }
 
     // Explicit constructor
-    EntityState(Vec3 const& pos, EulerAngles const& orient, Rgba8 const& col, float r, std::string const& type, bool active = true, std::string const& camType = "world")
+    EntityState(Vec3 const& pos, EulerAngles const& orient, Rgba8 const& col, float r, std::string const& type, bool active = true, std::string const& camType = "world", uint64_t texId = 0)
         : position(pos),
           orientation(orient),
           color(col),
           radius(r),
           meshType(type),
           isActive(active),
-          cameraType(camType)  // Default to world camera if not specified
+          cameraType(camType),  // Default to world camera if not specified
+          textureId(texId)
     {
     }
 };
