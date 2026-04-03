@@ -7,6 +7,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Input/InputSystem.hpp"
@@ -173,6 +174,55 @@ void DevConsole::Execute(String const& consoleCommandText,
     }
 
     g_eventSystem->FireEvent(command, eventArgs);
+}
+
+//----------------------------------------------------------------------------------------------------
+void DevConsole::ExecuteXmlCommandScriptNode(XmlElement const& commandScriptXmlElement)
+{
+    XmlElement const* childElement = commandScriptXmlElement.FirstChildElement();
+
+    while (childElement)
+    {
+        // Element name = command name
+        String commandLine = childElement->Name();
+
+        // Attributes = arguments (key="value" pairs, quoted to preserve spaces)
+        XmlAttribute const* attr = childElement->FirstAttribute();
+
+        while (attr)
+        {
+            commandLine += Stringf(" %s=\"%s\"", attr->Name(), attr->Value());
+            attr = attr->Next();
+        }
+
+        // Execute the assembled command line through the quote-aware parser
+        Execute(commandLine);
+
+        childElement = childElement->NextSiblingElement();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void DevConsole::ExecuteXmlCommandScriptFile(std::string const& commandScriptXmlFilePathName)
+{
+    XmlDocument doc;
+    XmlResult result = doc.LoadFile(commandScriptXmlFilePathName.c_str());
+
+    if (result != tinyxml2::XML_SUCCESS)
+    {
+        AddLine(ERROR, Stringf("Failed to load XML command script: %s", commandScriptXmlFilePathName.c_str()));
+        return;
+    }
+
+    XmlElement const* rootElement = doc.RootElement();
+
+    if (!rootElement)
+    {
+        AddLine(ERROR, Stringf("XML command script has no root element: %s", commandScriptXmlFilePathName.c_str()));
+        return;
+    }
+
+    ExecuteXmlCommandScriptNode(*rootElement);
 }
 
 //----------------------------------------------------------------------------------------------------

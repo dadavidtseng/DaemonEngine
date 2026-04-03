@@ -73,6 +73,8 @@ public:
     void EndFrame();
 
     void Execute(String const& consoleCommandText, bool echoCommand = true);
+    void ExecuteXmlCommandScriptNode(XmlElement const& commandScriptXmlElement);
+    void ExecuteXmlCommandScriptFile(std::string const& commandScriptXmlFilePathName);
     void AddLine(Rgba8 const& color, String const& text);
     void Render(AABB2 const& bounds, Renderer* rendererOverride = nullptr);
     void PasteFromClipboard();
