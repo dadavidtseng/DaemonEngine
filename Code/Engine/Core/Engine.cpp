@@ -16,6 +16,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #ifdef ENGINE_SCRIPTING_ENABLED
 #include "Engine/Network/KADIWebSocketSubsystem.hpp"
+#include "Engine/Script/ScriptSubsystem.hpp"
 #endif // ENGINE_SCRIPTING_ENABLED
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Platform/WindowCommon.hpp"
@@ -24,11 +25,6 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/UI/ImGuiSubsystem.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
-#ifdef ENGINE_SCRIPTING_ENABLED
-#include "Engine/Script/ScriptSubsystem.hpp"
-#endif
-//----------------------------------------------------------------------------------------------------
-#include <algorithm>
 
 //----------------------------------------------------------------------------------------------------
 GEngine& GEngine::Get()
@@ -102,7 +98,7 @@ void GEngine::Construct()
             else
             {
                 // Fallback to hardcoded defaults if JSON file not found
-                DebuggerPrintf("LogConfig.json not found, using default configuration\n");
+                DebuggerPrintf("(GEngine::Construct)LogConfig.json not found, using default configuration\n");
 
                 config.logFilePath      = "Logs/latest.log";
                 config.enableConsole    = true;
@@ -130,7 +126,7 @@ void GEngine::Construct()
         }
         catch (nlohmann::json::exception const& e)
         {
-            DebuggerPrintf("JSON parsing error in LogConfig.json: %s\n", e.what());
+            DebuggerPrintf("(GEngine::Construct)JSON parsing error in LogConfig.json: %s\n", e.what());
 
             // Fallback to hardcoded defaults on error
             config.logFilePath                          = "Logs/latest.log";
@@ -159,7 +155,7 @@ void GEngine::Construct()
     else
     {
         g_logSubsystem = nullptr;
-        DebuggerPrintf("LogSubsystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)LogSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -177,12 +173,12 @@ void GEngine::Construct()
     {
         sEventSystemConfig constexpr sEventSystemConfig;
         g_eventSystem = new EventSystem(sEventSystemConfig);
-        DebuggerPrintf("EventSystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)EventSystem: ENABLED\n");
     }
     else
     {
         g_eventSystem = nullptr;
-        DebuggerPrintf("EventSystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)EventSystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -195,7 +191,7 @@ void GEngine::Construct()
         subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        bEnableJobSystem            = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
+        bEnableJobSystem           = std::ranges::find(coreSubsystems, "JobSystem") != coreSubsystems.end();
     }
 
     if (bEnableJobSystem)
@@ -212,19 +208,19 @@ void GEngine::Construct()
         sJobSubsystemConfig.m_ioThreadNum      = numIOThreads;
         JobSystem* jobSystem                   = new JobSystem(sJobSubsystemConfig);
         g_jobSystem                            = jobSystem;
-        DebuggerPrintf("JobSystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)JobSystem: ENABLED\n");
     }
     else
     {
         g_jobSystem = nullptr;
-        DebuggerPrintf("JobSystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)JobSystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
 #pragma region InputSystem
     // Check if InputSystem is enabled in config
     bool enableInput = true;  // Default: enabled
-    
+
     if (bHasEngineSubsystemConfig && subsystemConfig.contains("subsystems") && subsystemConfig["subsystems"].contains("input"))
     {
         enableInput = subsystemConfig["subsystems"]["input"].value("enabled", true);
@@ -243,7 +239,7 @@ void GEngine::Construct()
             // inputConfig.enableMouse = inputJsonConfig.value("enableMouse", true);
             // inputConfig.enableKeyboard = inputJsonConfig.value("enableKeyboard", true);
             // Note: sInputSystemConfig currently has no fields - reserved for future expansion
-            DebuggerPrintf("InputSystem: JSON config available but struct has no fields yet\n");
+            DebuggerPrintf("(GEngine::Construct)InputSystem: JSON config available but struct has no fields yet\n");
         }
         else
         {
@@ -252,12 +248,12 @@ void GEngine::Construct()
 
         InputSystem* inputSystem = new InputSystem(inputConfig);
         g_input                  = inputSystem;
-        DebuggerPrintf("InputSystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)InputSystem: ENABLED\n");
     }
     else
     {
         g_input = nullptr;
-        DebuggerPrintf("InputSystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)InputSystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -301,7 +297,7 @@ void GEngine::Construct()
             windowConfig.m_windowTitle            = platformJsonConfig.value("windowTitle", "DEFAULT");
             windowConfig.m_supportMultipleWindows = platformJsonConfig.value("supportMultipleWindows", false);
 
-            DebuggerPrintf("Window: Configured from JSON - Type: %s, AspectRatio: %.1f, Title: %s, MultiWindow: %s\n",
+            DebuggerPrintf("(GEngine::Construct)Window: Configured from JSON - Type: %s, AspectRatio: %.1f, Title: %s, MultiWindow: %s\n",
                            windowTypeStr.c_str(), windowConfig.m_aspectRatio, windowConfig.m_windowTitle.c_str(),
                            windowConfig.m_supportMultipleWindows ? "true" : "false");
         }
@@ -311,17 +307,17 @@ void GEngine::Construct()
             windowConfig.m_windowType  = eWindowType::WINDOWED;
             windowConfig.m_aspectRatio = 2.f;
             windowConfig.m_windowTitle = "DEFAULT";
-            DebuggerPrintf("Window: Using hardcoded defaults\n");
+            DebuggerPrintf("(GEngine::Construct)Window: Using hardcoded defaults\n");
         }
 
         windowConfig.m_inputSystem = g_input;
         g_window                   = new Window(windowConfig);
-        DebuggerPrintf("Window: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)Window: ENABLED\n");
     }
     else
     {
         g_window = nullptr;
-        DebuggerPrintf("Window: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)Window: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -339,12 +335,12 @@ void GEngine::Construct()
         sRendererConfig sRendererConfig;
         sRendererConfig.m_window = g_window;
         g_renderer               = new Renderer(sRendererConfig);
-        DebuggerPrintf("Renderer: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)Renderer: ENABLED\n");
     }
     else
     {
         g_renderer = nullptr;
-        DebuggerPrintf("Renderer: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)Renderer: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -363,18 +359,18 @@ void GEngine::Construct()
         imguiConfig.m_renderer = g_renderer;
         imguiConfig.m_window   = g_window;
         g_imgui                = new ImGuiSubsystem(imguiConfig);
-        DebuggerPrintf("ImGuiSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)ImGuiSubsystem: ENABLED\n");
     }
     else
     {
         g_imgui = nullptr;
         if (!enableImGui)
         {
-            DebuggerPrintf("ImGuiSubsystem: DISABLED (from config)\n");
+            DebuggerPrintf("(GEngine::Construct)ImGuiSubsystem: DISABLED (from config)\n");
         }
         else
         {
-            DebuggerPrintf("ImGuiSubsystem: DISABLED (missing Renderer or Window)\n");
+            DebuggerPrintf("(GEngine::Construct)ImGuiSubsystem: DISABLED (missing Renderer or Window)\n");
         }
     }
 #pragma endregion
@@ -394,12 +390,12 @@ void GEngine::Construct()
         devConsoleConfig.m_defaultRenderer = g_renderer;
         devConsoleConfig.m_defaultFontName = "DaemonFont";
         g_devConsole                       = new DevConsole(devConsoleConfig);
-        DebuggerPrintf("DevConsole: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)DevConsole: ENABLED\n");
     }
     else
     {
         g_devConsole = nullptr;
-        DebuggerPrintf("DevConsole: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)DevConsole: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -418,12 +414,12 @@ void GEngine::Construct()
         resourceSubsystemConfig.m_renderer    = g_renderer;
         resourceSubsystemConfig.m_threadCount = 4;
         g_resourceSubsystem                   = new ResourceSubsystem(resourceSubsystemConfig);
-        DebuggerPrintf("ResourceSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)ResourceSubsystem: ENABLED\n");
     }
     else
     {
         g_resourceSubsystem = nullptr;
-        DebuggerPrintf("ResourceSubsystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)ResourceSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -433,7 +429,7 @@ void GEngine::Construct()
     if (bHasEngineSubsystemConfig && subsystemConfig.contains("core") && subsystemConfig["core"].contains("subsystems"))
     {
         auto const& coreSubsystems = subsystemConfig["core"]["subsystems"];
-        enableWidgetSubsystem      = std::find(coreSubsystems.begin(), coreSubsystems.end(), "WidgetSubsystem") != coreSubsystems.end();
+        enableWidgetSubsystem      = std::ranges::find(coreSubsystems, "WidgetSubsystem") != coreSubsystems.end();
     }
 
     if (enableWidgetSubsystem)
@@ -441,12 +437,12 @@ void GEngine::Construct()
         sWidgetSubsystemConfig widgetConfig;
         // Use default config values (initialWidgetCapacity=64, initialOwnerCapacity=32)
         g_widgetSubsystem = new WidgetSubsystem(widgetConfig);
-        DebuggerPrintf("WidgetSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)WidgetSubsystem: ENABLED\n");
     }
     else
     {
         g_widgetSubsystem = nullptr;
-        DebuggerPrintf("WidgetSubsystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)WidgetSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -469,7 +465,7 @@ void GEngine::Construct()
             // auto const& audioJsonConfig = subsystemConfig["subsystems"]["audio"]["config"];
             // audioConfig.maxChannels = audioJsonConfig.value("maxChannels", 128);
             // Note: sAudioSystemConfig currently has no fields - reserved for future expansion
-            DebuggerPrintf("AudioSystem: JSON config available but struct has no fields yet\n");
+            DebuggerPrintf("(GEngine::Construct)AudioSystem: JSON config available but struct has no fields yet\n");
         }
         else
         {
@@ -478,12 +474,12 @@ void GEngine::Construct()
 
         AudioSystem* audioSystem = new AudioSystem(audioConfig);
         g_audio                  = audioSystem;
-        DebuggerPrintf("AudioSystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)AudioSystem: ENABLED\n");
     }
     else
     {
         g_audio = nullptr;
-        DebuggerPrintf("AudioSystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)AudioSystem: DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -527,12 +523,12 @@ void GEngine::Construct()
         }
 
         g_scriptSubsystem = new ScriptSubsystem(scriptConfig);
-        DebuggerPrintf("ScriptSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)ScriptSubsystem: ENABLED\n");
     }
     else
     {
         g_scriptSubsystem = nullptr;
-        DebuggerPrintf("ScriptSubsystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)ScriptSubsystem: DISABLED (from config)\n");
     }
 #pragma endregion
 #endif // ENGINE_SCRIPTING_ENABLED
@@ -556,7 +552,7 @@ void GEngine::Construct()
             if (mathJsonConfig.contains("defaultSeed") && !mathJsonConfig["defaultSeed"].is_null())
             {
                 seed = mathJsonConfig.value("defaultSeed", 0u);
-                DebuggerPrintf("Math (RandomNumberGenerator): Using custom seed %u from config\n", seed);
+                DebuggerPrintf("(GEngine::Construct)Math (RandomNumberGenerator): Using custom seed %u from config\n", seed);
             }
         }
 
@@ -568,12 +564,12 @@ void GEngine::Construct()
         {
             g_rng = new RandomNumberGenerator();  // Custom seed from JSON
         }
-        DebuggerPrintf("Math (RandomNumberGenerator): ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)Math (RandomNumberGenerator): ENABLED\n");
     }
     else
     {
         g_rng = nullptr;
-        DebuggerPrintf("Math (RandomNumberGenerator): DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)Math (RandomNumberGenerator): DISABLED (from config)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -591,13 +587,13 @@ void GEngine::Construct()
 
     if (enableNetwork)
     {
-        DebuggerPrintf("Network (NetworkTCPSubsystem): NOT YET IMPLEMENTED\n");
-        DebuggerPrintf("  - NetworkTCPSubsystem class exists in Engine/Network/\n");
-        DebuggerPrintf("  - Requires global g_networkSubsystem pointer integration\n");
+        DebuggerPrintf("(GEngine::Construct)Network (NetworkTCPSubsystem): NOT YET IMPLEMENTED\n");
+        DebuggerPrintf("(GEngine::Construct)  - NetworkTCPSubsystem class exists in Engine/Network/\n");
+        DebuggerPrintf("(GEngine::Construct)  - Requires global g_networkSubsystem pointer integration\n");
     }
     else
     {
-        DebuggerPrintf("Network (NetworkTCPSubsystem): DISABLED (from config or not integrated)\n");
+        DebuggerPrintf("(GEngine::Construct)Network (NetworkTCPSubsystem): DISABLED (from config or not integrated)\n");
     }
 #pragma endregion
     //------------------------------------------------------------------------------------------------
@@ -616,12 +612,12 @@ void GEngine::Construct()
     if (enableKADI)
     {
         g_kadiSubsystem = new KADIWebSocketSubsystem();
-        DebuggerPrintf("KADIWebSocketSubsystem: ENABLED\n");
+        DebuggerPrintf("(GEngine::Construct)KADIWebSocketSubsystem: ENABLED\n");
     }
     else
     {
         g_kadiSubsystem = nullptr;
-        DebuggerPrintf("KADIWebSocketSubsystem: DISABLED (from config)\n");
+        DebuggerPrintf("(GEngine::Construct)KADIWebSocketSubsystem: DISABLED (from config)\n");
     }
 #endif // ENGINE_SCRIPTING_ENABLED
 #pragma endregion
@@ -731,7 +727,7 @@ void GEngine::Startup()
     if (g_kadiSubsystem != nullptr)
     {
         g_kadiSubsystem->Startup();
-        DebuggerPrintf("KADIWebSocketSubsystem started\n");
+        DebuggerPrintf("(GEngine::Startup)KADIWebSocketSubsystem started\n");
     }
 #endif // ENGINE_SCRIPTING_ENABLED
 
@@ -771,7 +767,7 @@ void GEngine::Startup()
     if (g_scriptSubsystem != nullptr)
     {
         g_scriptSubsystem->Startup();
-        DebuggerPrintf("ScriptSubsystem started\n");
+        DebuggerPrintf("(GEngine::Startup)ScriptSubsystem started\n");
     }
 #endif
 
@@ -779,7 +775,7 @@ void GEngine::Startup()
     if (g_widgetSubsystem != nullptr)
     {
         g_widgetSubsystem->StartUp();
-        DebuggerPrintf("WidgetSubsystem started\n");
+        DebuggerPrintf("(GEngine::Startup)WidgetSubsystem started\n");
     }
 }
 
@@ -787,56 +783,54 @@ void GEngine::Startup()
 void GEngine::Shutdown()
 {
     // Shutdown optional subsystems conditionally (reverse order)
-
-    // Assignment 7: Shutdown WidgetSubsystem
     if (g_widgetSubsystem)
     {
         g_widgetSubsystem->ShutDown();
-        DebuggerPrintf("WidgetSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)WidgetSubsystem shutdown\n");
     }
 
 #ifdef ENGINE_SCRIPTING_ENABLED
     if (g_scriptSubsystem)
     {
         g_scriptSubsystem->Shutdown();
-        DebuggerPrintf("ScriptSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)ScriptSubsystem shutdown\n");
     }
 #endif
 
     if (g_audio)
     {
         g_audio->Shutdown();
-        DebuggerPrintf("AudioSystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)AudioSystem shutdown\n");
     }
 
     if (g_input)
     {
         g_input->Shutdown();
-        DebuggerPrintf("InputSystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)InputSystem shutdown\n");
     }
 
     // Shutdown core subsystems (reverse order of startup, check for null)
 
     DebugRenderSystemShutdown();
-    DebuggerPrintf("DebugRenderSystem shutdown\n");
+    DebuggerPrintf("(GEngine::Shutdown)DebugRenderSystem shutdown\n");
 
 
     if (g_resourceSubsystem)
     {
         g_resourceSubsystem->Shutdown();
-        DebuggerPrintf("ResourceSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)ResourceSubsystem shutdown\n");
     }
 
     if (g_devConsole)
     {
         g_devConsole->Shutdown();
-        DebuggerPrintf("DevConsole shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)DevConsole shutdown\n");
     }
 
     if (g_imgui)
     {
         g_imgui->Shutdown();
-        DebuggerPrintf("ImGuiSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)ImGuiSubsystem shutdown\n");
     }
 
     // KADI shutdown moved here to match new startup order (after ImGui, before Renderer)
@@ -844,37 +838,37 @@ void GEngine::Shutdown()
     if (g_kadiSubsystem)
     {
         g_kadiSubsystem->Shutdown();
-        DebuggerPrintf("KADIWebSocketSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)KADIWebSocketSubsystem shutdown\n");
     }
 #endif // ENGINE_SCRIPTING_ENABLED
 
     if (g_renderer)
     {
         g_renderer->Shutdown();
-        DebuggerPrintf("Renderer shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)Renderer shutdown\n");
     }
 
     if (g_window)
     {
         g_window->Shutdown();
-        DebuggerPrintf("Window shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)Window shutdown\n");
     }
 
     if (g_eventSystem)
     {
         g_eventSystem->Shutdown();
-        DebuggerPrintf("EventSystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)EventSystem shutdown\n");
     }
 
     if (g_jobSystem)
     {
         g_jobSystem->Shutdown();
-        DebuggerPrintf("JobSystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)JobSystem shutdown\n");
     }
 
     if (g_logSubsystem)
     {
         g_logSubsystem->Shutdown();
-        DebuggerPrintf("LogSubsystem shutdown\n");
+        DebuggerPrintf("(GEngine::Shutdown)LogSubsystem shutdown\n");
     }
 }
