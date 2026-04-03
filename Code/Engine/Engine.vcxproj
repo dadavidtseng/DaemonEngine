@@ -387,6 +387,7 @@
     <ClCompile Include="Core/HandlerResult.cpp" />
     <ClCompile Include="Core/DevConsole.cpp" />
     <ClCompile Include="Core/ErrorWarningAssert.cpp" />
+    <ClCompile Include="Core/EventRecipient.cpp" />
     <ClCompile Include="Core/EventSystem.cpp" />
     <ClCompile Include="Core/FileUtils.cpp" />
     <ClCompile Include="Core/HeatMaps.cpp" />
@@ -596,6 +597,7 @@
     <ClInclude Include="Core/CommandQueueBase.hpp" />
     <ClInclude Include="Core/DevConsole.hpp" />
     <ClInclude Include="Core/ErrorWarningAssert.hpp" />
+    <ClInclude Include="Core/EventRecipient.hpp" />
     <ClInclude Include="Core/EventSystem.hpp" />
     <ClInclude Include="Core/FileUtils.hpp" />
     <ClInclude Include="Core/HeatMaps.hpp" />

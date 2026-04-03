@@ -171,6 +171,9 @@
     <ClCompile Include="Core/HeatMaps.cpp">
       <Filter>Engine\Core\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Core/EventRecipient.cpp">
+      <Filter>Engine\Core\Event</Filter>
+    </ClCompile>
     <ClCompile Include="Core/EventSystem.cpp">
       <Filter>Engine\Core\Event</Filter>
     </ClCompile>
@@ -631,6 +634,9 @@
     </ClInclude>
     <ClInclude Include="Core/HeatMaps.hpp">
       <Filter>Engine\Core\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/EventRecipient.hpp">
+      <Filter>Engine\Core\Event</Filter>
     </ClInclude>
     <ClInclude Include="Core/EventSystem.hpp">
       <Filter>Engine\Core\Event</Filter>

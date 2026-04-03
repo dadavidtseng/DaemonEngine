@@ -143,6 +143,35 @@ StringList EventSystem::GetAllRegisteredEventNames() const
 }
 
 //----------------------------------------------------------------------------------------------------
+void EventSystem::UnsubscribeAllEventCallbacksForObject(void* object)
+{
+    std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
+
+    for (auto iter = m_subscriptionsByEventName.begin(); iter != m_subscriptionsByEventName.end(); )
+    {
+        SubscriptionList& subscriptions = iter->second;
+
+        subscriptions.erase(
+            std::remove_if(subscriptions.begin(), subscriptions.end(),
+                           [object](sEventSubscription const& sub)
+                           {
+                               return sub.objectInstance == object;
+                           }),
+            subscriptions.end()
+        );
+
+        if (subscriptions.empty())
+        {
+            iter = m_subscriptionsByEventName.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 void SubscribeEventCallbackFunction(String const& eventName, EventCallbackFunction const functionPtr)
 {
     if (!g_eventSystem)
@@ -177,5 +206,14 @@ void FireEvent(String const& eventName)
     if (g_eventSystem != nullptr)
     {
         g_eventSystem->FireEvent(eventName);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+void UnsubscribeAllEventCallbacksForObject(void* object)
+{
+    if (g_eventSystem)
+    {
+        g_eventSystem->UnsubscribeAllEventCallbacksForObject(object);
     }
 }
