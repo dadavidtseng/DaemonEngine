@@ -85,6 +85,7 @@ public:
     bool            IsOpen() const;
 
     static bool OnWindowKeyPressed(EventArgs& args);
+    static bool OnWindowKeyReleased(EventArgs& args);
     static bool OnWindowCharInput(EventArgs& args);
     static bool Command_Clear(EventArgs& args);
     static bool Command_Help(EventArgs& args);

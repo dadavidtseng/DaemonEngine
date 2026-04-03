@@ -48,6 +48,7 @@ void DevConsole::StartUp()
 {
     // Initialize any necessary resources for the console (fonts, etc.)
     g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyPressed", OnWindowKeyPressed);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWindowKeyReleased", OnWindowKeyReleased);
     g_eventSystem->SubscribeEventCallbackFunction("OnWindowCharInput", OnWindowCharInput);
     g_eventSystem->SubscribeEventCallbackFunction("help", Command_Help);
     g_eventSystem->SubscribeEventCallbackFunction("clear", Command_Clear);
@@ -535,6 +536,23 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
     }
 
     return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// Handle key release — reset modifier key states.
+//
+STATIC bool DevConsole::OnWindowKeyReleased(EventArgs& args)
+{
+    int const           value   = args.GetValue("OnWindowKeyReleased", -1);
+    unsigned char const keyCode = static_cast<unsigned char>(value);
+
+    if (keyCode == KEYCODE_CONTROL)
+    {
+        std::lock_guard<std::mutex> lock(g_devConsole->m_consoleMutex);
+        g_devConsole->m_isCtrlPressed = false;
+    }
+
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------
