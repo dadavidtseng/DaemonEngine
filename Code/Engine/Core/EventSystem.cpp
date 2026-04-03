@@ -7,7 +7,6 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/LogSubsystem.hpp"
-#include "Engine/Core/NamedStrings.hpp"
 
 //----------------------------------------------------------------------------------------------------
 EventSystem* g_eventSystem = nullptr;
@@ -46,9 +45,11 @@ void EventSystem::SubscribeEventCallbackFunction(String const& eventName, EventC
 {
     std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
 
-    sEventSubscription const newSubscription = {functionPtr};
+    sEventSubscription newSubscription;
+    newSubscription.callbackFunction = functionPtr;
 
-    SubscriptionList& subscriptions = m_subscriptionsByEventName[eventName];
+    HashedCaseInsensitiveString hcisName(eventName);
+    SubscriptionList& subscriptions = m_subscriptionsByEventName[hcisName];
 
     subscriptions.push_back(newSubscription);
 }
@@ -58,7 +59,8 @@ void EventSystem::UnsubscribeEventCallbackFunction(String const& eventName, Even
 {
     std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
 
-    auto const iter = m_subscriptionsByEventName.find(eventName);
+    HashedCaseInsensitiveString hcisName(eventName);
+    auto const iter = m_subscriptionsByEventName.find(hcisName);
 
     if (iter != m_subscriptionsByEventName.end())
     {
@@ -88,7 +90,8 @@ void EventSystem::FireEvent(String const& eventName, EventArgs& args)
     SubscriptionList subscriptionsCopy;
     {
         std::lock_guard<std::mutex> lock(m_subscriptionsMutex);
-        auto const iter = m_subscriptionsByEventName.find(eventName);
+        HashedCaseInsensitiveString hcisName(eventName);
+        auto const iter = m_subscriptionsByEventName.find(hcisName);
         if (iter != m_subscriptionsByEventName.end())
         {
             subscriptionsCopy = iter->second;  // Copy the subscription list
@@ -98,7 +101,18 @@ void EventSystem::FireEvent(String const& eventName, EventArgs& args)
     // Execute callbacks without holding the mutex (callbacks might subscribe/unsubscribe)
     for (sEventSubscription const& subscription : subscriptionsCopy)
     {
-        if (subscription.callbackFunction(args))
+        bool consumed = false;
+
+        if (subscription.callbackFunction)
+        {
+            consumed = subscription.callbackFunction(args);
+        }
+        else if (subscription.memberCallback)
+        {
+            consumed = subscription.memberCallback(args);
+        }
+
+        if (consumed)
         {
             break; // Event consumed; stop notifying further subscribers
         }
@@ -120,9 +134,9 @@ StringList EventSystem::GetAllRegisteredEventNames() const
     std::vector<String> eventNames;
     eventNames.reserve(m_subscriptionsByEventName.size());
 
-    for (std::pair<String const, SubscriptionList> const& pair : m_subscriptionsByEventName)
+    for (auto const& pair : m_subscriptionsByEventName)
     {
-        eventNames.push_back(pair.first);   // first for key, second for value in std::map
+        eventNames.push_back(pair.first.GetOriginalString());
     }
 
     return eventNames;

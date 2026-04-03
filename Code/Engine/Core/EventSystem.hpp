@@ -5,22 +5,24 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/HashedCaseInsensitiveString.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Core/StringUtils.hpp"
 //----------------------------------------------------------------------------------------------------
+#include <functional>
 #include <map>
 #include <mutex>
 
-//-Forward-Declaration--------------------------------------------------------------------------------
-class NamedStrings;
-
 //----------------------------------------------------------------------------------------------------
-using EventArgs = NamedStrings;
+using EventArgs             = NamedProperties;
 using EventCallbackFunction = bool (*)(EventArgs& args);
 
 //----------------------------------------------------------------------------------------------------
 struct sEventSubscription
 {
-    EventCallbackFunction callbackFunction;
+    EventCallbackFunction              callbackFunction = nullptr;
+    void*                              objectInstance   = nullptr;
+    std::function<bool(EventArgs&)>    memberCallback;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -52,7 +54,7 @@ public:
 
 protected:
     sEventSystemConfig                 m_config;
-    std::map<String, SubscriptionList> m_subscriptionsByEventName;
+    std::map<HashedCaseInsensitiveString, SubscriptionList> m_subscriptionsByEventName;
     mutable std::mutex                 m_subscriptionsMutex;  // Thread-safe access to m_subscriptionsByEventName
 };
 

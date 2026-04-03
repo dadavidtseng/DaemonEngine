@@ -6,6 +6,7 @@
 #pragma once
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Script/ScriptSubsystem.hpp"
 
