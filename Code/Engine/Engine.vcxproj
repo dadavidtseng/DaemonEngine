@@ -399,6 +399,8 @@
     <ClCompile Include="Core/FileOutputDevice.cpp" />
     <ClCompile Include="Core/OnScreenOutputDevice.cpp" />
     <ClCompile Include="Core/SmartFileOutputDevice.cpp" />
+    <ClCompile Include="Core/HashedCaseInsensitiveString.cpp" />
+    <ClCompile Include="Core/NamedProperties.cpp" />
     <ClCompile Include="Core/NamedStrings.cpp" />
     <ClCompile Include="Core/Rgba8.cpp" />
     <ClCompile Include="Core/SimpleTriangleFont.cpp" />
@@ -607,6 +609,8 @@
     <ClInclude Include="Core/FileOutputDevice.hpp" />
     <ClInclude Include="Core/OnScreenOutputDevice.hpp" />
     <ClInclude Include="Core/SmartFileOutputDevice.hpp" />
+    <ClInclude Include="Core/HashedCaseInsensitiveString.hpp" />
+    <ClInclude Include="Core/NamedProperties.hpp" />
     <ClInclude Include="Core/NamedStrings.hpp" />
     <ClInclude Include="Core/Rgba8.hpp" />
     <ClInclude Include="Core/SimpleTriangleFont.hpp" />

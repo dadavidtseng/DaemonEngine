@@ -210,6 +210,12 @@
     <ClCompile Include="Core/JobWorkerThread.cpp">
       <Filter>Engine\Core\Thread</Filter>
     </ClCompile>
+    <ClCompile Include="Core/HashedCaseInsensitiveString.cpp">
+      <Filter>Engine\Core\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Core/NamedProperties.cpp">
+      <Filter>Engine\Core\Util</Filter>
+    </ClCompile>
     <ClCompile Include="Core/NamedStrings.cpp">
       <Filter>Engine\Core\Util</Filter>
     </ClCompile>
@@ -669,6 +675,12 @@
       <Filter>Engine\Core\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Core/StringUtils.hpp">
+      <Filter>Engine\Core\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/HashedCaseInsensitiveString.hpp">
+      <Filter>Engine\Core\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Core/NamedProperties.hpp">
       <Filter>Engine\Core\Util</Filter>
     </ClInclude>
     <ClInclude Include="Core/NamedStrings.hpp">
