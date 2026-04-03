@@ -14,7 +14,6 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
 //----------------------------------------------------------------------------------------------------
-#include <sstream>
 
 //----------------------------------------------------------------------------------------------------
 #if defined ERROR
@@ -93,26 +92,60 @@ void DevConsole::EndFrame()
 void DevConsole::Execute(String const& consoleCommandText,
                          bool const    echoCommand)
 {
-    // Create an input stream and initialize it
-    std::istringstream stream;
-    stream.str(consoleCommandText);
+    // Step 1: Extract command name (first whitespace-delimited token)
+    size_t const firstSpace = consoleCommandText.find(' ');
+    String const command    = (firstSpace == String::npos)
+                                  ? consoleCommandText
+                                  : consoleCommandText.substr(0, firstSpace);
 
-    std::string command;
-    stream >> command; // Read first word and write it into command
+    // Step 2: Parse arguments with quote-aware character-by-character parser
+    String const remaining = (firstSpace == String::npos)
+                                 ? ""
+                                 : consoleCommandText.substr(firstSpace + 1);
 
     std::map<String, String> args;
-    std::string              arg;
+    String                   currentToken;
+    bool                     insideQuotes = false;
 
-    while (stream >> arg)
+    for (size_t i = 0; i < remaining.size(); ++i)
     {
-        // Parse arguments key=value
-        size_t const pos = arg.find('=');
+        char const c = remaining[i];
 
-        if (pos != std::string::npos)
+        if (c == '"')
         {
-            String       key   = arg.substr(0, pos);
-            String const value = arg.substr(pos + 1);
-            args[key]          = value;
+            insideQuotes = !insideQuotes;
+            continue; // Discard quote character — it's a delimiter, not part of the value
+        }
+
+        if (c == ' ' && !insideQuotes)
+        {
+            // End of token — parse as key=value
+            if (!currentToken.empty())
+            {
+                size_t const eqPos = currentToken.find('=');
+
+                if (eqPos != String::npos)
+                {
+                    args[currentToken.substr(0, eqPos)] = currentToken.substr(eqPos + 1);
+                }
+
+                currentToken.clear();
+            }
+
+            continue;
+        }
+
+        currentToken += c;
+    }
+
+    // Handle last token
+    if (!currentToken.empty())
+    {
+        size_t const eqPos = currentToken.find('=');
+
+        if (eqPos != String::npos)
+        {
+            args[currentToken.substr(0, eqPos)] = currentToken.substr(eqPos + 1);
         }
     }
 
