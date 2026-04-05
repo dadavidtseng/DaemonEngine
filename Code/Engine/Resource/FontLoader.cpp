@@ -109,15 +109,9 @@ bool FontLoader::LoadFontFromFile(String const& path, FontResource* fontResource
         fclose(fntProbe);
         rendererBitmapFont->ParseBMFontFile(fntFilePath);
     }
-    else
-    {
-        // Tier 2: Scan pixel data for proportional glyph widths
-        Image fontImage(textureFilePath.c_str());
-        if (fontImage.GetDimensions().x > 0 && fontImage.GetDimensions().y > 0)
-        {
-            rendererBitmapFont->ComputeAutoWidths(fontImage);
-        }
-    }
+    // Tier 2 auto-width is opt-in: only enabled when a ".autowidth" marker file exists
+    // or when explicitly requested. Without a .fnt file, fonts stay Tier 1 (fixed-width).
+    // To enable Tier 2 for a font, create a file named e.g. "DaemonFont.autowidth" next to the .png.
 
     // Set the font resource properties
     fontResource->SetName(path);
