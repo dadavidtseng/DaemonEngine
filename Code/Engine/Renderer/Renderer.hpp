@@ -61,6 +61,7 @@ public:
     static int k_cameraConstantSlot;
     static int k_modelConstantsSlot;
     static int k_blurConstantSlot;
+    static int k_fontConstantSlot;
 
     void Startup();
     void PostStartup();
@@ -79,6 +80,9 @@ public:
     void DrawVertexArray(VertexList_PCUTBN const& verts);
     void DrawVertexArray(VertexList_PCU const& verts, IndexList const& indexes);
     void DrawVertexArray(VertexList_PCUTBN const& verts, IndexList const& indexes);
+    void DrawVertexArray(int numVertexes, struct Vertex_Font const* vertexes);
+    void DrawVertexArray(VertexList_Font const& verts);
+    void DrawVertexArray(VertexList_Font const& verts, IndexList const& indexes);
 
     void BindShader(Shader const* shader) const;
     void BindTexture(Texture const* texture, int slot = 0) const;
@@ -116,6 +120,7 @@ public:
 
     // Shadowmap and Bloom
     void     SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t size, int slot);
+    void     SetFontConstants(float threshold = 0.5f, float effectIntensity = 1.f);
     void     RenderEmissive();
     void     SetDefaultRenderTargets();
     Texture* CreateRenderTexture(IntVec2 const& dimensions, char const* name);
@@ -179,12 +184,14 @@ protected:
 
     VertexBuffer*   m_immediateVBO_PCU    = nullptr;
     VertexBuffer*   m_immediateVBO_PCUTBN = nullptr;
+    VertexBuffer*   m_immediateVBO_Font   = nullptr;
     IndexBuffer*    m_immediateIBO        = nullptr;
     ConstantBuffer* m_cameraCBO           = nullptr;
     ConstantBuffer* m_lightCBO            = nullptr;
     ConstantBuffer* m_modelCBO            = nullptr;
     ConstantBuffer* m_perFrameCBO         = nullptr;
     ConstantBuffer* m_blurCBO             = nullptr;
+    ConstantBuffer* m_fontCBO             = nullptr;
 
     Texture* m_defaultTexture     = nullptr;
     bool     m_ownsDefaultTexture = false;  // Phase 4: Track if we own the fallback default texture

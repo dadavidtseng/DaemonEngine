@@ -18,6 +18,7 @@
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Renderer/Vertex_PCU.hpp"
+#include "Engine/Renderer/Vertex_Font.hpp"
 #include "Engine/Renderer/Vertex_PCUTBN.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Platform/Window.hpp"
@@ -55,6 +56,7 @@ STATIC int Renderer::k_lightConstantSlot    = 2;
 STATIC int Renderer::k_cameraConstantSlot   = 3;
 STATIC int Renderer::k_modelConstantsSlot   = 4;
 STATIC int Renderer::k_blurConstantSlot     = 5;
+STATIC int Renderer::k_fontConstantSlot     = 6;
 
 //----------------------------------------------------------------------------------------------------
 Renderer::Renderer(sRendererConfig const& config)
@@ -390,12 +392,14 @@ void Renderer::Startup()
 
     m_immediateVBO_PCU    = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_immediateVBO_PCUTBN = CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    m_immediateVBO_Font   = CreateVertexBuffer(sizeof(Vertex_Font), sizeof(Vertex_Font));
     m_immediateIBO        = CreateIndexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
     m_lightCBO            = CreateConstantBuffer(sizeof(sLightConstants));
     m_cameraCBO           = CreateConstantBuffer(sizeof(sCameraConstants));
     m_modelCBO            = CreateConstantBuffer(sizeof(sModelConstants));
     m_perFrameCBO         = CreateConstantBuffer(sizeof(sPerFrameConstants));
     m_blurCBO             = CreateConstantBuffer(sizeof(BlurConstants));
+    m_fontCBO             = CreateConstantBuffer(sizeof(sFontConstants));
 
     // Default texture is loaded in PostStartup() from ResourceSubsystem
     // (ResourceSubsystem::Startup() runs between Startup() and PostStartup())
@@ -496,12 +500,14 @@ void Renderer::Shutdown()
     delete m_blurCompositeShader;
 
     UnbindShaderResources();
+    ENGINE_SAFE_RELEASE(m_fontCBO);
     ENGINE_SAFE_RELEASE(m_blurCBO);
     ENGINE_SAFE_RELEASE(m_perFrameCBO);
     ENGINE_SAFE_RELEASE(m_modelCBO);
     ENGINE_SAFE_RELEASE(m_lightCBO);
     ENGINE_SAFE_RELEASE(m_cameraCBO);
     ENGINE_SAFE_RELEASE(m_immediateIBO);
+    ENGINE_SAFE_RELEASE(m_immediateVBO_Font);
     ENGINE_SAFE_RELEASE(m_immediateVBO_PCUTBN);
     ENGINE_SAFE_RELEASE(m_immediateVBO_PCU);
 
@@ -703,6 +709,29 @@ void Renderer::DrawVertexArray(VertexList_PCUTBN const& verts,
     CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_immediateVBO_PCUTBN);
     CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
     DrawIndexedVertexBuffer(m_immediateVBO_PCUTBN, m_immediateIBO, static_cast<int>(indexes.size()));
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::DrawVertexArray(int const          numVertexes,
+                               Vertex_Font const* vertexes)
+{
+    CopyCPUToGPU(vertexes, numVertexes * sizeof(Vertex_Font), m_immediateVBO_Font);
+    DrawVertexBuffer(m_immediateVBO_Font, numVertexes);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::DrawVertexArray(VertexList_Font const& verts)
+{
+    DrawVertexArray(static_cast<int>(verts.size()), verts.data());
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::DrawVertexArray(VertexList_Font const& verts,
+                               IndexList const&       indexes)
+{
+    CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_Font), m_immediateVBO_Font);
+    CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_immediateIBO);
+    DrawIndexedVertexBuffer(m_immediateVBO_Font, m_immediateIBO, static_cast<int>(indexes.size()));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -979,7 +1008,7 @@ Shader* Renderer::CreateShader(char const*       shaderName,
     }
 
     // Create a local array of input element descriptions that defines the vertex layout.
-    D3D11_INPUT_ELEMENT_DESC inputElementDesc[6];
+    D3D11_INPUT_ELEMENT_DESC inputElementDesc[7];
     UINT                     numElements = 0;
 
     if (vertexType == eVertexType::VERTEX_PCU)
@@ -998,6 +1027,17 @@ Shader* Renderer::CreateShader(char const*       shaderName,
         inputElementDesc[4] = {"VERTEX_BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
         inputElementDesc[5] = {"VERTEX_NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
         numElements         = 6;
+    }
+    else if (vertexType == eVertexType::VERTEX_FONT)
+    {
+        inputElementDesc[0] = {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[1] = {"VERTEX_COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[2] = {"VERTEX_UVTEXCOORDS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[3] = {"GLYPH_POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[4] = {"TEXT_POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[5] = {"CHARACTER_INDEX", 0, DXGI_FORMAT_R32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        inputElementDesc[6] = {"EFFECT_PARAM", 0, DXGI_FORMAT_R32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0};
+        numElements         = 7;
     }
 
     hr = m_device->CreateInputLayout(
@@ -1452,6 +1492,19 @@ void Renderer::SetCustomConstantBuffer(ConstantBuffer*& cbo, void* data, size_t 
 {
     CopyCPUToGPU(data, (unsigned int)size, cbo);
     BindConstantBuffer(slot, cbo);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Renderer::SetFontConstants(float const threshold, float const effectIntensity)
+{
+    sFontConstants fontConstants;
+    fontConstants.threshold       = threshold;
+    fontConstants.effectIntensity = effectIntensity;
+    fontConstants.padding0        = 0.f;
+    fontConstants.padding1        = 0.f;
+
+    CopyCPUToGPU(&fontConstants, sizeof(sFontConstants), m_fontCBO);
+    BindConstantBuffer(k_fontConstantSlot, m_fontCBO);
 }
 
 void Renderer::RenderEmissive()

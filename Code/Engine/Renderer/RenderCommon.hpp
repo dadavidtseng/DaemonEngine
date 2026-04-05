@@ -22,6 +22,7 @@ enum class eVertexType : int8_t
 {
     VERTEX_PCU,
     VERTEX_PCUTBN,
+    VERTEX_FONT,
     COUNT
 };
 
@@ -108,4 +109,13 @@ struct BlurConstants
     float      m_lerpT;
     int        m_numSamples;
     BlurSample m_samples[k_blurMaxSamples];
+};
+
+//----------------------------------------------------------------------------------------------------
+struct sFontConstants
+{
+    float threshold;       // SDF alpha threshold (default 0.5)
+    float effectIntensity; // Effect strength multiplier
+    float padding0;
+    float padding1;
 };
