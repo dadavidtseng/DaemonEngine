@@ -91,9 +91,12 @@ protected:
     float           GetGlyphAspect(int glyphUnicode) const;
     float           GetKerningAmount(int firstChar, int secondChar) const;
     sGlyphData const* GetGlyphData(int glyphUnicode) const;
+
+public:
     void            ComputeAutoWidths(class Image const& image);
     bool            ParseBMFontFile(String const& fntFilePath);
 
+protected:
     String      m_fontFilePathNameWithNoExtension;
     SpriteSheet m_fontGlyphsSpriteSheet;
     float       m_fontDefaultAspect = 1.f;
