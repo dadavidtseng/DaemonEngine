@@ -375,6 +375,9 @@
     <ClCompile Include="Renderer/Vertex_PCU.cpp">
       <Filter>Engine\Renderer\Vertex</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer/Vertex_Font.cpp">
+      <Filter>Engine\Renderer\Vertex</Filter>
+    </ClCompile>
     <ClCompile Include="Renderer/Vertex_PCUTBN.cpp">
       <Filter>Engine\Renderer\Vertex</Filter>
     </ClCompile>
@@ -846,6 +849,9 @@
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Renderer/Vertex_PCU.hpp">
+      <Filter>Engine\Renderer\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer/Vertex_Font.hpp">
       <Filter>Engine\Renderer\Vertex</Filter>
     </ClInclude>
     <ClInclude Include="Renderer/Vertex_PCUTBN.hpp">

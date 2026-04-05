@@ -463,6 +463,7 @@
     <ClCompile Include="Renderer/VertexBuffer.cpp" />
     <ClCompile Include="Renderer/VertexUtils.cpp" />
     <ClCompile Include="Renderer/Vertex_PCU.cpp" />
+    <ClCompile Include="Renderer/Vertex_Font.cpp" />
     <ClCompile Include="Renderer/Vertex_PCUTBN.cpp" />
   </ItemGroup>
   <ItemGroup Label="InputSubsystemSources">
@@ -675,6 +676,7 @@
     <ClInclude Include="Renderer/VertexBuffer.hpp" />
     <ClInclude Include="Renderer/VertexUtils.hpp" />
     <ClInclude Include="Renderer/Vertex_PCU.hpp" />
+    <ClInclude Include="Renderer/Vertex_Font.hpp" />
     <ClInclude Include="Renderer/Vertex_PCUTBN.hpp" />
   </ItemGroup>
   <ItemGroup Label="InputSubsystemHeaders">

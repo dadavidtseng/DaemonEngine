@@ -27,6 +27,7 @@ struct Vec3;
 //----------------------------------------------------------------------------------------------------
 using VertexList_PCU    = std::vector<Vertex_PCU>;
 using VertexList_PCUTBN = std::vector<Vertex_PCUTBN>;
+using VertexList_Font   = std::vector<struct Vertex_Font>;
 using IndexList         = std::vector<unsigned int>;
 
 //----------------------------------------------------------------------------------------------------

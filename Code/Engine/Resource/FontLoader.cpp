@@ -8,9 +8,11 @@
 #include "Engine/Resource/ResourceCommon.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/Image.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include <algorithm>
@@ -96,6 +98,25 @@ bool FontLoader::LoadFontFromFile(String const& path, FontResource* fontResource
     {
         DebuggerPrintf("Error: FontLoader could not create bitmap font '%s'.\n", path.c_str());
         return false;
+    }
+
+    // Check for BMFont .fnt metadata file — probe without triggering ERROR_RECOVERABLE
+    String const fntFilePath = Stringf("%s.fnt", path.c_str());
+    FILE*        fntProbe    = nullptr;
+    errno_t const fntErr     = fopen_s(&fntProbe, fntFilePath.c_str(), "rb");
+    if (fntErr == 0 && fntProbe)
+    {
+        fclose(fntProbe);
+        rendererBitmapFont->ParseBMFontFile(fntFilePath);
+    }
+    else
+    {
+        // Tier 2: Scan pixel data for proportional glyph widths
+        Image fontImage(textureFilePath.c_str());
+        if (fontImage.GetDimensions().x > 0 && fontImage.GetDimensions().y > 0)
+        {
+            rendererBitmapFont->ComputeAutoWidths(fontImage);
+        }
     }
 
     // Set the font resource properties
