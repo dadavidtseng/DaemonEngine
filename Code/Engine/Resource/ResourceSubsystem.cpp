@@ -108,14 +108,21 @@ void ResourceSubsystem::PreloadResources(const std::vector<std::string>& paths)
     }
 
     // Submit jobs to JobSystem for async loading
+    std::vector<std::future<void>> futures;
     for (const auto& path : paths)
     {
         // Create a simple lambda-based job for preloading
         // Note: This uses std::async temporarily until we create a dedicated PreloadJob class
-        std::async(std::launch::async, [this, path]()
+        futures.push_back(std::async(std::launch::async, [this, path]()
         {
             LoadResourceInternal(path);
-        });
+        }));
+    }
+
+    // Wait for all preload tasks to complete
+    for (auto& f : futures)
+    {
+        f.get();
     }
 }
 
