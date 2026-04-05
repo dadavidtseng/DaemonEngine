@@ -158,7 +158,16 @@ void DevConsole::Execute(String const& consoleCommandText,
 
         StringList registeredEventNames = g_eventSystem->GetAllRegisteredEventNames();
 
-        bool isCommandValid = std::find(registeredEventNames.begin(), registeredEventNames.end(), command) != registeredEventNames.end();
+        // Case-insensitive command validation (matches FireEvent's HCIS-based lookup)
+        bool isCommandValid = false;
+        for (String const& name : registeredEventNames)
+        {
+            if (_stricmp(name.c_str(), command.c_str()) == 0)
+            {
+                isCommandValid = true;
+                break;
+            }
+        }
 
         if (!isCommandValid)
         {
@@ -450,7 +459,8 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
             if (g_devConsole->m_historyIndex + 1 < (int)g_devConsole->m_commandHistory.size())
             {
                 g_devConsole->m_historyIndex += 1;
-                g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
+                int const reverseIdx = (int)g_devConsole->m_commandHistory.size() - g_devConsole->m_historyIndex;
+                g_devConsole->m_inputText              = g_devConsole->m_commandHistory[reverseIdx - 1];
                 g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
             }
         }
@@ -468,7 +478,8 @@ STATIC bool DevConsole::OnWindowKeyPressed(EventArgs& args)
                 }
                 else
                 {
-                    g_devConsole->m_inputText              = g_devConsole->m_commandHistory[g_devConsole->m_historyIndex];
+                    int const reverseIdx = (int)g_devConsole->m_commandHistory.size() - g_devConsole->m_historyIndex;
+                    g_devConsole->m_inputText              = g_devConsole->m_commandHistory[reverseIdx - 1];
                     g_devConsole->m_insertionPointPosition = (int)g_devConsole->m_inputText.size();
                 }
             }
@@ -655,10 +666,13 @@ void DevConsole::Render_OpenFull(AABB2 const&      bounds,
     }
     else if (m_historyIndex >= 0 && m_historyIndex < static_cast<int>(g_devConsole->m_commandHistory.size()))
     {
-        AABB2 const commandHistoryTextBounds =
-            AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(m_commandHistory[m_historyIndex].size()), lineHeight));
+        int const    reverseIdx  = static_cast<int>(m_commandHistory.size()) - m_historyIndex - 1;
+        String const historyText = m_commandHistory[reverseIdx];
 
-        font.AddVertsForTextInBox2D(textVerts, m_commandHistory[m_historyIndex], commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
+        AABB2 const commandHistoryTextBounds =
+            AABB2(Vec2::ZERO, Vec2(1600.f / lineHeight * static_cast<float>(historyText.size()), lineHeight));
+
+        font.AddVertsForTextInBox2D(textVerts, historyText, commandHistoryTextBounds, lineHeight, Rgba8::WHITE, fontAspect);
     }
 
     AABB2 commandTextBounds = bounds;
