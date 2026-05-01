@@ -17,6 +17,10 @@
 #include "Engine/Script/ScriptReloader.hpp"
 #include "ThirdParty/json/json.hpp"
 //----------------------------------------------------------------------------------------------------
+#include <thread>
+#include <atomic>
+#include <chrono>
+//----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 // Any changes that you made to the warning state between push and pop are undone.
@@ -888,6 +892,204 @@ bool ScriptSubsystem::ExecuteUnregisteredScript(String const& script)
     m_stats.totalExecutionTime += static_cast<size_t>(executionTime * 1000); // Convert to milliseconds
 
     return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// ValidateScript — Parse-only validation (no execution)
+//----------------------------------------------------------------------------------------------------
+ScriptValidationResult ScriptSubsystem::ValidateScript(String const& source, String const& scriptName)
+{
+    ScriptValidationResult result;
+
+    if (!m_isInitialized)
+    {
+        result.valid = false;
+        result.errors.push_back({"ScriptSubsystem is not initialized", -1, -1});
+        return result;
+    }
+
+    if (source.empty())
+    {
+        result.valid = false;
+        result.errors.push_back({"Script source is empty", -1, -1});
+        return result;
+    }
+
+    v8::Locker                   locker(m_impl->isolate);
+    v8::Isolate::Scope           isolateScope(m_impl->isolate);
+    v8::HandleScope              handleScope(m_impl->isolate);
+    v8::Local<v8::Context> const localContext = m_impl->globalContext.Get(m_impl->isolate);
+    v8::Context::Scope           contextScope(localContext);
+
+    v8::TryCatch tryCatch(m_impl->isolate);
+
+    v8::Local<v8::String> v8Source = v8::String::NewFromUtf8(m_impl->isolate, source.c_str()).ToLocalChecked();
+    v8::Local<v8::String> v8Name  = v8::String::NewFromUtf8(m_impl->isolate, scriptName.c_str()).ToLocalChecked();
+    v8::ScriptOrigin      origin(v8Name);
+
+    v8::Local<v8::Script> compiledScript;
+    if (!v8::Script::Compile(localContext, v8Source, &origin).ToLocal(&compiledScript))
+    {
+        result.valid = false;
+
+        if (tryCatch.HasCaught())
+        {
+            v8::Local<v8::Message> message = tryCatch.Message();
+            ScriptSyntaxError      syntaxError;
+
+            v8::String::Utf8Value errorMsg(m_impl->isolate, tryCatch.Exception());
+            syntaxError.message = *errorMsg ? *errorMsg : "Unknown syntax error";
+
+            if (!message.IsEmpty())
+            {
+                syntaxError.line   = message->GetLineNumber(localContext).FromMaybe(-1);
+                syntaxError.column = message->GetStartColumn(localContext).FromMaybe(-1);
+            }
+
+            result.errors.push_back(syntaxError);
+        }
+        else
+        {
+            result.errors.push_back({"Compilation failed (unknown error)", -1, -1});
+        }
+
+        return result;
+    }
+
+    // Compilation succeeded — script is syntactically valid (NOT executed)
+    result.valid = true;
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+// RunScriptTest — Sandboxed execution with timeout and output capture
+//----------------------------------------------------------------------------------------------------
+ScriptTestResult ScriptSubsystem::RunScriptTest(String const& source, String const& scriptName, int timeoutMs)
+{
+    ScriptTestResult result;
+
+    if (!m_isInitialized)
+    {
+        result.errors.push_back("ScriptSubsystem is not initialized");
+        return result;
+    }
+
+    if (source.empty())
+    {
+        result.errors.push_back("Script source is empty");
+        return result;
+    }
+
+    v8::Locker         locker(m_impl->isolate);
+    v8::Isolate::Scope isolateScope(m_impl->isolate);
+    v8::HandleScope    handleScope(m_impl->isolate);
+
+    // Create a fresh sandboxed context (no game globals)
+    v8::Local<v8::ObjectTemplate> globalTemplate = v8::ObjectTemplate::New(m_impl->isolate);
+    v8::Local<v8::Context>        sandboxContext = v8::Context::New(m_impl->isolate, nullptr, globalTemplate);
+    v8::Context::Scope            contextScope(sandboxContext);
+
+    // Capture console output into a shared string
+    struct ConsoleCapture
+    {
+        std::string output;
+    };
+    auto* capture = new ConsoleCapture();
+
+    v8::Local<v8::External> captureExternal = v8::External::New(m_impl->isolate, capture);
+
+    // Set up console.log in the sandbox
+    v8::Local<v8::Object> console = v8::Object::New(m_impl->isolate);
+
+    auto consoleCallback = [](v8::FunctionCallbackInfo<v8::Value> const& args)
+    {
+        auto* cap = static_cast<ConsoleCapture*>(v8::Local<v8::External>::Cast(args.Data())->Value());
+        v8::Isolate* iso = args.GetIsolate();
+        for (int i = 0; i < args.Length(); ++i)
+        {
+            if (i > 0) cap->output += " ";
+            v8::String::Utf8Value str(iso, args[i]);
+            cap->output += *str ? *str : "(null)";
+        }
+        cap->output += "\n";
+    };
+
+    v8::Local<v8::Function> logFn = v8::Function::New(sandboxContext, consoleCallback, captureExternal).ToLocalChecked();
+    console->Set(sandboxContext, v8::String::NewFromUtf8(m_impl->isolate, "log").ToLocalChecked(), logFn).Check();
+    console->Set(sandboxContext, v8::String::NewFromUtf8(m_impl->isolate, "warn").ToLocalChecked(), logFn).Check();
+    console->Set(sandboxContext, v8::String::NewFromUtf8(m_impl->isolate, "error").ToLocalChecked(), logFn).Check();
+
+    sandboxContext->Global()
+        ->Set(sandboxContext, v8::String::NewFromUtf8(m_impl->isolate, "console").ToLocalChecked(), console)
+        .Check();
+
+    // Set up timeout watchdog
+    std::atomic<bool> finished{false};
+    v8::Isolate*      isolatePtr = m_impl->isolate;
+
+    std::thread watchdog([isolatePtr, timeoutMs, &finished]()
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
+        if (!finished.load())
+        {
+            isolatePtr->TerminateExecution();
+        }
+    });
+
+    // Compile and execute
+    v8::TryCatch tryCatch(m_impl->isolate);
+
+    v8::Local<v8::String> v8Source = v8::String::NewFromUtf8(m_impl->isolate, source.c_str()).ToLocalChecked();
+    v8::Local<v8::String> v8Name  = v8::String::NewFromUtf8(m_impl->isolate, scriptName.c_str()).ToLocalChecked();
+    v8::ScriptOrigin      origin(v8Name);
+
+    v8::Local<v8::Script> compiledScript;
+    if (!v8::Script::Compile(sandboxContext, v8Source, &origin).ToLocal(&compiledScript))
+    {
+        finished.store(true);
+        watchdog.join();
+
+        if (tryCatch.HasCaught())
+        {
+            v8::String::Utf8Value errorMsg(m_impl->isolate, tryCatch.Exception());
+            result.errors.push_back(*errorMsg ? *errorMsg : "Compilation error");
+        }
+        else
+        {
+            result.errors.push_back("Compilation failed");
+        }
+
+        result.output = capture->output;
+        delete capture;
+        return result;
+    }
+
+    v8::Local<v8::Value> runResult;
+    bool                 executed = compiledScript->Run(sandboxContext).ToLocal(&runResult);
+
+    finished.store(true);
+    watchdog.join();
+
+    // Check for timeout
+    if (tryCatch.HasTerminated())
+    {
+        result.timedOut = true;
+        result.errors.push_back(StringFormat("Script execution timed out after %dms", timeoutMs));
+        m_impl->isolate->CancelTerminateExecution();
+    }
+    else if (tryCatch.HasCaught())
+    {
+        v8::String::Utf8Value errorMsg(m_impl->isolate, tryCatch.Exception());
+        result.errors.push_back(*errorMsg ? *errorMsg : "Runtime error");
+    }
+    else if (executed)
+    {
+        result.success = true;
+    }
+
+    result.output = capture->output;
+    delete capture;
+    return result;
 }
 
 bool ScriptSubsystem::ExecuteScriptWithOrigin(String const& script, String const& scriptName)

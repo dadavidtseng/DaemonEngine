@@ -70,6 +70,28 @@ struct sScriptSubsystemConfig
 };
 
 //----------------------------------------------------------------------------------------------------
+struct ScriptSyntaxError
+{
+    std::string message;
+    int         line   = -1;
+    int         column = -1;
+};
+
+struct ScriptValidationResult
+{
+    bool                          valid = true;
+    std::vector<ScriptSyntaxError> errors;
+};
+
+struct ScriptTestResult
+{
+    bool                    success = false;
+    std::string             output;
+    std::vector<std::string> errors;
+    bool                    timedOut = false;
+};
+
+//----------------------------------------------------------------------------------------------------
 // ScriptSubsystem - Merged V8 and Hot-reload functionality
 // Provides JavaScript execution environment with hot-reload capabilities
 // Supports Chrome DevTools integration and script bindings
@@ -92,6 +114,12 @@ public:
     //------------------------------------------------------------------------------------------------
     bool ExecuteScript(String const& script);
     bool ExecuteScriptFile(String const& scriptFilename);
+
+    // Script validation (parse-only, no execution)
+    ScriptValidationResult ValidateScript(String const& source, String const& scriptName = "validate");
+
+    // Script testing (sandboxed execution with timeout and output capture)
+    ScriptTestResult RunScriptTest(String const& source, String const& scriptName = "test", int timeoutMs = 10000);
 
     // SCRIPT REGISTRY APPROACH: Selective Chrome DevTools integration
     bool ExecuteRegisteredScript(String const& script, String const& scriptName);
