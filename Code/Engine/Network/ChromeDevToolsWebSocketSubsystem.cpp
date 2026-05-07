@@ -110,6 +110,12 @@ void ChromeDevToolsWebSocketSubsystem::OnWebSocketUpgraded(SOCKET const clientSo
 
     // Auto-enable Chrome DevTools domains for proper panel population
     EnableDevToolsDomains(clientSocket);
+
+    // Request script replay on next main-thread tick (thread-safe)
+    if (m_scriptSubsystem)
+    {
+        m_scriptSubsystem->RequestScriptReplay();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -175,6 +181,24 @@ void ChromeDevToolsWebSocketSubsystem::ProcessQueuedMessages()
             // Log dropped message during shutdown
             DAEMON_LOG(LogNetwork, eLogVerbosity::Verbose,
                        "Dropped inspector message during shutdown");
+        }
+    }
+}
+
+void ChromeDevToolsWebSocketSubsystem::ProcessQueuedMessagesNoLock()
+{
+    std::lock_guard lock(m_messageQueueMutex);
+
+    while (!m_inspectorMessageQueue.empty())
+    {
+        String message = m_inspectorMessageQueue.front();
+        m_inspectorMessageQueue.pop();
+
+        if (m_inspectorSession)
+        {
+            v8_inspector::StringView messageView(
+                reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
+            m_inspectorSession->dispatchProtocolMessage(messageView);
         }
     }
 }

@@ -65,6 +65,9 @@ public:
     // Process queued V8 Inspector messages (call from main thread - must be public for ScriptSubsystem)
     void ProcessQueuedMessages() override;
 
+    // Process queued messages without acquiring V8 lock (for use during debugger pause)
+    void ProcessQueuedMessagesNoLock();
+
 protected:
     //----------------------------------------------------------------------------------------------------
     // BaseWebSocketSubsystem Pure Virtual Implementations
