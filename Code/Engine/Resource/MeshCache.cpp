@@ -8,9 +8,12 @@
 #include "Engine/Resource/MeshCache.hpp"
 
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/LogSubsystem.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Resource/ObjModelLoader.hpp"
 
 //----------------------------------------------------------------------------------------------------
 VertexList_PCU const* MeshCache::GetOrCreate(std::string const& meshType, float radius, Rgba8 const& color)
@@ -107,7 +110,50 @@ VertexList_PCU const* MeshCache::GetOrCreate(std::string const& meshType, float 
 }
 
 //----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+ModelMeshData const* MeshCache::GetOrCreateModel(std::string const& meshType)
+{
+	auto it = m_modelCache.find(meshType);
+	if (it != m_modelCache.end())
+	{
+		return &it->second;
+	}
+
+	if (meshType.substr(0, 4) != "obj:")
+	{
+		return nullptr;
+	}
+
+	std::string path = meshType.substr(4);
+
+	VertexList_PCUTBN verts;
+	IndexList         indices;
+	bool              hasNormals = false;
+	bool              hasUVs     = false;
+
+	bool loaded = ObjModelLoader::Load(path, verts, indices, hasNormals, hasUVs);
+	if (!loaded || verts.empty())
+	{
+		DAEMON_LOG(LogCore, eLogVerbosity::Warning,
+		           Stringf("MeshCache: Failed to load OBJ model: %s", path.c_str()));
+		return nullptr;
+	}
+
+	DAEMON_LOG(LogCore, eLogVerbosity::Log,
+	           Stringf("MeshCache: Loaded OBJ model '%s' (%zu verts, %zu indices, normals=%d, uvs=%d)",
+	               path.c_str(), verts.size(), indices.size(), hasNormals, hasUVs));
+
+	ModelMeshData data;
+	data.vertices = std::move(verts);
+	data.indices  = std::move(indices);
+
+	auto [insertIt, _] = m_modelCache.emplace(meshType, std::move(data));
+	return &insertIt->second;
+}
+
+//----------------------------------------------------------------------------------------------------
 void MeshCache::Clear()
 {
 	m_cache.clear();
+	m_modelCache.clear();
 }

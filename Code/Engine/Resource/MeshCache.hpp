@@ -17,6 +17,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Renderer/Vertex_PCUTBN.hpp"
 #include <string>
 #include <unordered_map>
 
@@ -30,19 +31,28 @@
 //   VertexList_PCU const* verts = meshCache->GetOrCreate("cube", 1.0f, Rgba8::WHITE);
 //   if (verts) renderer->DrawVertexArray(verts->size(), verts->data());
 //----------------------------------------------------------------------------------------------------
+struct ModelMeshData
+{
+	VertexList_PCUTBN vertices;
+	IndexList         indices;
+};
+
+//----------------------------------------------------------------------------------------------------
+
 class MeshCache
 {
 public:
-	// Get cached vertex data for meshType, creating it on first access.
-	// Returns nullptr for unknown meshType strings.
+	// Get cached PCU vertex data for primitive meshType, creating it on first access.
 	VertexList_PCU const* GetOrCreate(std::string const& meshType, float radius, Rgba8 const& color);
 
-	// Number of unique mesh types currently cached.
-	size_t GetMeshTypeCount() const { return m_cache.size(); }
+	// Get cached PCUTBN vertex + index data for OBJ models, loading on first access.
+	ModelMeshData const* GetOrCreateModel(std::string const& meshType);
 
-	// Release all cached vertex data.
+	size_t GetMeshTypeCount() const { return m_cache.size() + m_modelCache.size(); }
+
 	void Clear();
 
 private:
 	std::unordered_map<std::string, VertexList_PCU> m_cache;
+	std::unordered_map<std::string, ModelMeshData>  m_modelCache;
 };
