@@ -9,6 +9,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Script/IScriptableObject.hpp"
 //----------------------------------------------------------------------------------------------------
+#include <atomic>
 #include <functional>
 #include <mutex>
 #include <queue>
@@ -282,6 +283,12 @@ public:
     void        StoreScriptIdMapping(const std::string& scriptId, const std::string& url);
     void        StoreScriptNotificationForReplay(const std::string& notification);
 
+    // DevTools Module Registration (used by ModuleLoader to make modules visible in DevTools)
+    std::string RegisterScriptForDevTools(const std::string& scriptPath, const std::string& source);
+
+    // Request script replay on next main-thread tick (thread-safe, called from network thread)
+    void RequestScriptReplay() { m_replayRequested.store(true); }
+
     // DevTools Panel Event Generation
     void SendPerformanceTimelineEvent(const std::string& eventType, const std::string& name, double timestamp);
     void SendNetworkRequestEvent(const std::string& url, const std::string& method, int statusCode);
@@ -383,6 +390,7 @@ private:
     // Priority-based script notification storage for better Chrome DevTools experience
     std::vector<std::string> m_priorityScriptNotifications; // High-priority scripts (JSEngine.js, JSGame.js)
     std::vector<std::string> m_scriptNotifications;         // Regular script notifications
+    std::atomic<bool>        m_replayRequested{false};      // Thread-safe flag for replay from network thread
 
     // Callback data storage (avoid memory leaks)
     std::vector<std::unique_ptr<MethodCallbackData>>   m_methodCallbacks;

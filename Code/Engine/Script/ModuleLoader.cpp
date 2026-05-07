@@ -330,9 +330,16 @@ v8::MaybeLocal<v8::Module> ModuleLoader::CompileModule(v8::Isolate*           is
     // Create source code string
     v8::Local<v8::String> sourceCode = v8::String::NewFromUtf8(isolate, code.c_str()).ToLocalChecked();
 
-    // Create script origin for better error messages and debugging
+    // Register with DevTools for source visibility and convert to DevTools-friendly URL
+    std::string resourceName = name;
+    if (m_scriptSystem)
+    {
+        resourceName = m_scriptSystem->RegisterScriptForDevTools(name, code);
+    }
+
+    // Create script origin with DevTools URL for Chrome DevTools visibility
     v8::ScriptOrigin origin(
-        v8::String::NewFromUtf8(isolate, name.c_str()).ToLocalChecked(),  // resource_name
+        v8::String::NewFromUtf8(isolate, resourceName.c_str()).ToLocalChecked(),  // resource_name
         0,                                                                  // line_offset
         0,                                                                  // column_offset
         false,                                                              // is_shared_cross_origin
@@ -364,7 +371,7 @@ v8::MaybeLocal<v8::Module> ModuleLoader::CompileModule(v8::Isolate*           is
     }
 
     DAEMON_LOG(LogScript, eLogVerbosity::Log,
-        StringFormat("ModuleLoader: Successfully compiled module: {}", name));
+        StringFormat("ModuleLoader: Successfully compiled module: {} (DevTools: {})", name, resourceName));
 
     return handleScope.Escape(module);
 }

@@ -165,19 +165,32 @@ class V8InspectorClientImpl : public v8_inspector::V8InspectorClient
 {
 public:
     explicit V8InspectorClientImpl(ScriptSubsystem* scriptSubsystem)
+        : m_scriptSubsystem(scriptSubsystem)
     {
-        UNUSED(scriptSubsystem); // Suppress unreferenced parameter warning
     }
+
+    void SetDevToolsServer(ChromeDevToolsWebSocketSubsystem* server) { m_devToolsServer = server; }
 
     void runMessageLoopOnPause(int contextGroupId) override
     {
         DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Paused on context group {}", contextGroupId));
-        // Message loop handling would go here for breakpoint debugging
+        m_paused = true;
+        while (m_paused)
+        {
+            // Process incoming DevTools messages while paused (step, resume, inspect)
+            // Use NoLock variant since V8 lock is already held during pause callback
+            if (m_devToolsServer)
+            {
+                m_devToolsServer->ProcessQueuedMessagesNoLock();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
 
     void quitMessageLoopOnPause() override
     {
-        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Quit message loop on pause"));
+        DAEMON_LOG(LogScript, eLogVerbosity::Log, StringFormat("Chrome DevTools: Resumed"));
+        m_paused = false;
     }
 
     void runIfWaitingForDebugger(int contextGroupId) override
@@ -222,6 +235,10 @@ public:
     }
 
 private:
+    ScriptSubsystem*                  m_scriptSubsystem = nullptr;
+    ChromeDevToolsWebSocketSubsystem* m_devToolsServer  = nullptr;
+    std::atomic<bool>                 m_paused{false};
+
     std::string StringViewToStdString(const v8_inspector::StringView& view)
     {
         if (view.is8Bit())
@@ -376,6 +393,12 @@ void ScriptSubsystem::Startup()
                 m_impl->inspectorChannel.get()->SetDevToolsServer(m_devToolsServer.get());
             }
 
+            // Update the inspector client for breakpoint pause support
+            if (m_impl->inspectorClient)
+            {
+                m_impl->inspectorClient->SetDevToolsServer(m_devToolsServer.get());
+            }
+
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("Chrome DevTools server started successfully on {}:{}",
                                     devToolsConfig.host, devToolsConfig.port));
@@ -497,6 +520,12 @@ void ScriptSubsystem::Update()
         // THREAD SAFETY FIX: Process queued V8 Inspector messages on main thread
         m_devToolsServer->ProcessQueuedMessages();
 
+        // Replay script notifications if requested by network thread (DevTools just connected)
+        if (m_replayRequested.exchange(false))
+        {
+            ReplayScriptsToDevTools();
+        }
+
         // DEVTOOLS PANEL POPULATION: Generate sample events for panels
         static int updateCounter = 0;
         updateCounter++;
@@ -509,14 +538,6 @@ void ScriptSubsystem::Update()
             DAEMON_LOG(LogScript, eLogVerbosity::Display,
                        StringFormat("DEVTOOLS DEBUG: Triggering Performance event (frame {})", updateCounter));
             SendPerformanceTimelineEvent("ScriptUpdate", "JSEngine.update", timestamp);
-        }
-
-        // Generate Network request events every 120 frames (~2 seconds)
-        if (updateCounter % 120 == 0)
-        {
-            DAEMON_LOG(LogScript, eLogVerbosity::Display,
-                       StringFormat("DEVTOOLS DEBUG: Triggering Network event (frame {})", updateCounter));
-            SendNetworkRequestEvent("file:///FirstV8/Scripts/main.js", "GET", 200);
         }
 
         // Generate Memory heap snapshots every 300 frames (~5 seconds)
@@ -1172,7 +1193,7 @@ bool ScriptSubsystem::ExecuteScriptWithOrigin(String const& script, String const
         SendPerformanceTimelineEvent("ScriptExecution", scriptName, timestamp);
 
         // Network event for script loading (simulate file request)
-        std::string scriptURL = "file:///FirstV8/Scripts/" + scriptName;
+        std::string scriptURL = "file:///DaemonAgent/Scripts/" + scriptName;
         SendNetworkRequestEvent(scriptURL, "GET", 200);
     }
 
@@ -1519,7 +1540,7 @@ void ScriptSubsystem::SendPerformanceTimelineEvent(const std::string& eventType,
             "\"callFrame\": {" +
             "\"functionName\": \"" + name + "\"," +
             "\"scriptId\": \"1\"," +
-            "\"url\": \"file:///FirstV8/Scripts/" + name + ".js\"," +
+            "\"url\": \"file:///DaemonAgent/Scripts/" + name + ".js\"," +
             "\"lineNumber\": 0," +
             "\"columnNumber\": 0" +
             "}," +
@@ -1555,12 +1576,12 @@ void ScriptSubsystem::SendNetworkRequestEvent(const std::string& url, const std:
         "params": {
             "requestId": ")" + requestId + R"(",
             "loaderId": "loader1",
-            "documentURL": "file://FirstV8",
+            "documentURL": "file://DaemonAgent",
             "request": {
                 "url": ")" + url + R"(",
                 "method": ")" + method + R"(",
                 "headers": {
-                    "User-Agent": "FirstV8/1.0"
+                    "User-Agent": "DaemonAgent/1.0"
                 }
             },
             "timestamp": )" + std::to_string(timestamp) + R"(,
@@ -1653,7 +1674,7 @@ void ScriptSubsystem::SendMemoryHeapSnapshot()
             "}," +
             "\"nodes\": [9, 0, 1, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 1, 2, " + std::to_string(usage.usedHeapSize / 3) + ", 1, 0, 9, 2, 3, " + std::to_string(usage.usedHeapSize / 3) + ", 0, 0]," +
             "\"edges\": [1, 1, 2, 1, 2, 3]," +
-            "\"strings\": [\"FirstV8\", \"JSEngine\", \"V8Context\"]" +
+            "\"strings\": [\"DaemonAgent\", \"JSEngine\", \"V8Context\"]" +
             "}";
 
         // Escape the JSON for embedding in the notification
@@ -1686,28 +1707,27 @@ void ScriptSubsystem::SendMemoryHeapSnapshot()
 
 std::string ScriptSubsystem::ConvertToDevToolsURL(const std::string& scriptPath)
 {
-    // [Same implementation as V8Subsystem.cpp:652-681]
     // Convert relative script paths to Chrome DevTools-friendly URLs
-    // Transform "Data/Scripts/JSEngine.js" → "file:///FirstV8/Scripts/JSEngine.js"
+    // Transform "Data/Scripts/JSEngine.js" → "file:///DaemonAgent/Scripts/JSEngine.js"
 
     std::string url;
     if (scriptPath.find("Data/Scripts/") == 0)
     {
-        // Extract filename from Data/Scripts/ path
-        std::string filename = scriptPath.substr(13); // Remove "Data/Scripts/"
-        url                  = "file:///FirstV8/Scripts/" + filename;
+        // Extract relative path from Data/Scripts/ prefix
+        std::string relativePath = scriptPath.substr(13); // Remove "Data/Scripts/"
+        url                      = "file:///DaemonAgent/Scripts/" + relativePath;
     }
     else if (scriptPath.find("/") != std::string::npos || scriptPath.find("\\") != std::string::npos)
     {
-        // Handle other paths - use the basename
+        // Handle other paths - preserve subdirectory structure
         size_t      lastSlash = scriptPath.find_last_of("/\\");
         std::string filename  = (lastSlash != std::string::npos) ? scriptPath.substr(lastSlash + 1) : scriptPath;
-        url                   = "file:///FirstV8/Scripts/" + filename;
+        url                   = "file:///DaemonAgent/Scripts/" + filename;
     }
     else
     {
         // Simple filename
-        url = "file:///FirstV8/Scripts/" + scriptPath;
+        url = "file:///DaemonAgent/Scripts/" + scriptPath;
     }
 
     DAEMON_LOG(LogScript, eLogVerbosity::Display,
@@ -1736,6 +1756,13 @@ std::string ScriptSubsystem::GetScriptSourceByURL(const std::string& url)
     DAEMON_LOG(LogScript, eLogVerbosity::Warning,
                StringFormat("Script source not found for URL: {}", url));
     return "";
+}
+
+std::string ScriptSubsystem::RegisterScriptForDevTools(const std::string& scriptPath, const std::string& source)
+{
+    std::string devToolsURL = ConvertToDevToolsURL(scriptPath);
+    StoreScriptSource(devToolsURL, source);
+    return devToolsURL;
 }
 
 void ScriptSubsystem::ForwardConsoleMessageToDevTools(const std::string& message)
@@ -1858,7 +1885,7 @@ bool ScriptSubsystem::InitializeV8Engine() const
 
         // Register the JavaScript context with the inspector
         v8_inspector::StringView contextName = v8_inspector::StringView(
-            reinterpret_cast<const uint8_t*>("FirstV8 JavaScript Context"), 26
+            reinterpret_cast<const uint8_t*>("DaemonAgent JavaScript Context"), 31
         );
 
         v8_inspector::V8ContextInfo contextInfo(localContext, m_impl->kContextGroupId, contextName);
@@ -1893,7 +1920,7 @@ bool ScriptSubsystem::InitializeV8Engine() const
             );
             m_impl->inspectorSession->dispatchProtocolMessage(consoleMessage);
 
-            // Enable Debugger domain for source visibility and breakpoints
+            // Enable Debugger domain during init so V8 records script URLs at compile time
             std::string              enableDebugger = "{\"id\":3,\"method\":\"Debugger.enable\"}";
             v8_inspector::StringView debuggerMessage(
                 reinterpret_cast<const uint8_t*>(enableDebugger.c_str()),
@@ -1902,7 +1929,6 @@ bool ScriptSubsystem::InitializeV8Engine() const
             m_impl->inspectorSession->dispatchProtocolMessage(debuggerMessage);
 
             // Enable HeapProfiler domain for Memory Panel visibility
-            // This is ESSENTIAL for Chrome DevTools Memory Panel to detect the JavaScript VM instance
             std::string              enableHeapProfiler = "{\"id\":4,\"method\":\"HeapProfiler.enable\"}";
             v8_inspector::StringView heapProfilerMessage(
                 reinterpret_cast<const uint8_t*>(enableHeapProfiler.c_str()),
@@ -1953,8 +1979,8 @@ bool ScriptSubsystem::InitializeV8Engine() const
                     "params": {
                         "context": {
                             "id": 1,
-                            "origin": "file://FirstV8",
-                            "name": "FirstV8 JavaScript Context",
+                            "origin": "file://DaemonAgent",
+                            "name": "DaemonAgent JavaScript Context",
                             "auxData": {
                                 "isDefault": true,
                                 "type": "default",
