@@ -477,6 +477,12 @@ v8::MaybeLocal<v8::Module> ModuleLoader::ResolveModuleCallback(v8::Local<v8::Con
         DAEMON_LOG(LogScript, eLogVerbosity::Log,
             StringFormat("ResolveModuleCallback: Module '{}' found in cache", resolvedPath));
 
+        // Register dependency even for cached modules
+        if (!referrerPath.empty() && referrerPath != loader->m_basePath)
+        {
+            loader->m_registry->AddDependency(referrerPath, resolvedPath);
+        }
+
         v8::Local<v8::Module> cachedModule = loader->m_registry->GetModule(resolvedPath);
         return handleScope.Escape(cachedModule);
     }
@@ -506,9 +512,11 @@ v8::MaybeLocal<v8::Module> ModuleLoader::ResolveModuleCallback(v8::Local<v8::Con
 
     v8::Local<v8::Module> module = maybeModule.ToLocalChecked();
 
-    // Add dependency relationship
-    // Get referrer URL - for now, we'll skip this as it requires more complex tracking
-    // loader->m_registry->AddDependency(referrerUrl, resolvedPath);
+    // Register dependency: referrerPath imports resolvedPath
+    if (loader->m_registry && !referrerPath.empty() && referrerPath != loader->m_basePath)
+    {
+        loader->m_registry->AddDependency(referrerPath, resolvedPath);
+    }
 
     DAEMON_LOG(LogScript, eLogVerbosity::Display,
         StringFormat("ResolveModuleCallback: Successfully resolved and compiled module: {}", resolvedPath));
