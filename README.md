@@ -46,7 +46,7 @@ Main Thread (Rendering)           Worker Thread (JavaScript)
 - Render from Front Buffers        - V8 Isolate Unlock
 - EndFrame()
 
-Module Index (paths & key headers)
+Module Index (paths & key headers / entry points)
 | Module | Path | Key headers / entry points |
 |---|---:|---|
 | Core | Code/Engine/Core/ | EngineCommon.hpp, EventSystem.hpp, StateBuffer.hpp, BufferParser.hpp, Engine.hpp (GEngine) |
@@ -88,6 +88,24 @@ StateBuffer (lock-free double-buffering)
 - Location: Code/Engine/Core/StateBuffer.hpp (referenced in CLAUDE.md)
 - Purpose: generic template used for passing state (entities, camera, audio) between worker and main threads without locks.
 - Notes: Used to implement front/back buffers such as EntityStateBuffer, CameraStateBuffer, and AudioStateBuffer. Module-specific POD structs (e.g., AudioState) are designed to be copyable and efficient for this pattern.
+
+EntityID (entity identifier type)
+- File: Code/Engine/Entity/EntityID.hpp
+- Definition: using EntityID = uint64_t;
+- Purpose: unique identifier type used across the engine (Entity, Renderer, Physics, networking, etc.).
+- Notes:
+  - 64-bit unsigned provides a very large space for incremental ID generation.
+  - JavaScript compatibility is considered: JS safe integer range is up to 2^53-1 (9,007,199,254,740,991). When passing EntityID to JS, take care if IDs may exceed that range (common designs avoid exceeding 2^53).
+  - Typical usage: EntityID id = 12345;
+
+BufferParser (binary parsing helper)
+- File: Code/Engine/Core/BufferParser.hpp
+- Purpose: utility to parse binary data buffers for resource loading and network messages.
+- Primary API (selected):
+  - Primitives: ParseByte(), ParseChar(), ParseUshort(), ParseShort(), ParseUint32(), ParseInt32(), ParseUint64(), ParseInt64(), ParseFloat(), ParseDouble()
+  - Strings: ParseZeroTerminatedString(std::string&), ParseLengthPrecededString(std::string&)
+  - Engine semi-primitives: ParseVec2(), ParseVec3(), ParseIntVec2(), ParseRgba8(), ParseAABB2()
+- Usage: construct with pointer+size or std::vector<uint8_t> and call parsers in order to decode binary formats.
 
 JobSystem shutdown pattern (CRITICAL)
 - Always stop worker threads before deleting objects that worker threads may access.
