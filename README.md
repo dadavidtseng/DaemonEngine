@@ -3,6 +3,8 @@
 This README documents the Engine module (C++20) for Daemon Engine — a modular, performance-oriented game engine with V8 JavaScript integration, DirectX 11 rendering, FMOD audio, and a lock-free async architecture for dual-language game logic.
 
 Changelog (highlights)
+- 2025-12-07: Audio async pattern implementation — added Code/Engine/Audio/AudioState.hpp:
+  - AudioState is a POD struct (~72 bytes) representing per-source playback state for use with the double-buffered AudioStateBuffer (soundId, soundPath, position, volume, isPlaying, isLooped, isLoaded, isActive). Used to safely communicate audio playback state between worker and main threads.
 - 2025-11-09: Documented JobSystem shutdown pattern. Critical: stop JobSystem BEFORE deleting objects accessible to worker threads. See SimpleMiner's App.cpp for an example three-stage shutdown:
   1. g_jobSystem->Shutdown()
   2. Delete game objects (chunks, world, entities)
@@ -110,7 +112,7 @@ Common File Layout (select)
   - Renderer.hpp
   - Camera.hpp
   - CameraAPI.hpp
-- Code/Engine/Scripting/ (see Code/Engine/Script/)
+- Code/Engine/Script/
   - V8Subsystem.hpp
   - IJSGameLogicContext.hpp
 - Code/Engine/Audio/
