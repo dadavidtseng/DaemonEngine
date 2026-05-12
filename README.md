@@ -37,25 +37,28 @@ Main Thread (Rendering) and Worker Thread (JavaScript) interact using front/back
 Main Thread (Rendering)           Worker Thread (JavaScript)
 - BeginFrame()                     - V8 Isolate Lock
 - Process RenderCommands           - JSEngine.update()
-- SwapBuffers()                    - Write to Back Buffers (entities, camera...)
+- SwapBuffers()                    - Write to Back Buffers (entities, camera, audio...)
   - EntityStateBuffer
-  - CameraStateBuffer               - Submit RenderCommands
+  - CameraStateBuffer
+  - AudioStateBuffer                 - Submit RenderCommands
 - Render from Front Buffers        - V8 Isolate Unlock
 - EndFrame()
 
 Module Index (paths & key headers)
 | Module | Path | Key headers / entry points |
 |---|---:|---|
-| Core | Code/Engine/Core/ | EngineCommon.hpp, EventSystem.hpp, StateBuffer.hpp, GEngine (Code/Engine/Core/Engine.hpp) |
-| Entity | Code/Engine/Entity/ | EntityAPI.hpp, EntityScriptInterface.hpp |
+| Core | Code/Engine/Core/ | EngineCommon.hpp, EventSystem.hpp, StateBuffer.hpp, BufferParser.hpp, Engine.hpp (GEngine) |
+| Entity | Code/Engine/Entity/ | EntityAPI.hpp, EntityScriptInterface.hpp, EntityID.hpp |
 | Renderer | Code/Engine/Renderer/ | Renderer.hpp, Camera.hpp, CameraAPI.hpp |
-| Audio | Code/Engine/Audio/ | AudioSystem.hpp |
-| Input | Code/Engine/Input/ | InputSystem.hpp |
-| Math | Code/Engine/Math/ | MathUtils.hpp, Vec3.hpp, Mat44.hpp |
-| Scripting | Code/Engine/Scripting/ | V8Subsystem.hpp, IJSGameLogicContext.hpp |
+| Audio | Code/Engine/Audio/ | AudioSystem.hpp, AudioState.hpp |
+| Input | Code/Engine/Input/ | InputSystem.hpp, AnalogJoystick.hpp |
+| Math | Code/Engine/Math/ | MathUtils.hpp, Vec2.hpp, Vec3.hpp, Mat44.hpp, AABB2.hpp |
+| Script | Code/Engine/Script/ | V8Subsystem.hpp, IJSGameLogicContext.hpp |
 | Resource | Code/Engine/Resource/ | ResourceSubsystem.hpp |
-| Network | Code/Engine/Network/ | NetworkSubsystem.hpp |
+| Network | Code/Engine/Network/ | NetworkSubsystem.hpp, BaseWebSocketSubsystem.hpp |
 | Platform | Code/Engine/Platform/ | Window.hpp |
+| UI | Code/Engine/UI/ | (UI subsystem headers) |
+| Widget | Code/Engine/Widget/ | (Widget subsystem headers) |
 
 Key Engine Concepts and APIs
 
@@ -81,7 +84,8 @@ IJSGameLogicContext (scripting integration)
 
 StateBuffer (lock-free double-buffering)
 - Location: Code/Engine/Core/StateBuffer.hpp (referenced in CLAUDE.md)
-- Purpose: generic template used for passing state (entities, camera) between worker and main threads without locks.
+- Purpose: generic template used for passing state (entities, camera, audio) between worker and main threads without locks.
+- Notes: Used to implement front/back buffers such as EntityStateBuffer, CameraStateBuffer, and AudioStateBuffer. Module-specific POD structs (e.g., AudioState) are designed to be copyable and efficient for this pattern.
 
 JobSystem shutdown pattern (CRITICAL)
 - Always stop worker threads before deleting objects that worker threads may access.
@@ -96,21 +100,36 @@ Common File Layout (select)
   - EngineCommon.hpp
   - EventSystem.hpp
   - StateBuffer.hpp
+  - BufferParser.hpp
   - Engine.hpp (GEngine)
 - Code/Engine/Entity/
   - EntityAPI.hpp
   - EntityScriptInterface.hpp
+  - EntityID.hpp
 - Code/Engine/Renderer/
   - Renderer.hpp
   - Camera.hpp
   - CameraAPI.hpp
-- Code/Engine/Scripting/
+- Code/Engine/Scripting/ (see Code/Engine/Script/)
   - V8Subsystem.hpp
   - IJSGameLogicContext.hpp
 - Code/Engine/Audio/
   - AudioSystem.hpp
+  - AudioState.hpp
 - Code/Engine/Input/
   - InputSystem.hpp
+  - AnalogJoystick.hpp
+- Code/Engine/Math/
+  - MathUtils.hpp
+  - Vec2.hpp
+  - Vec3.hpp
+  - Mat44.hpp
+  - AABB2.hpp
+- Code/Engine/Network/
+  - NetworkSubsystem.hpp
+  - BaseWebSocketSubsystem.hpp
+- Code/Engine/Platform/
+  - Window.hpp
 
 Build & Run
 
@@ -172,7 +191,8 @@ Testing Strategy
 Notes, References, and Examples
 - See Code/Engine/Core/CLAUDE.md and Code/Engine/Renderer/CLAUDE.md for per-module architecture notes.
 - Example project SimpleMiner demonstrates the recommended JobSystem shutdown pattern in App.cpp.
-- IJSGameLogicContext and JSGameLogicJob are central to the lock-free async JavaScript integration — see Code/Engine/Scripting/ for implementation details.
+- IJSGameLogicContext and JSGameLogicJob are central to the lock-free async JavaScript integration — see Code/Engine/Script/ for implementation details.
+- Module-specific POD structs (e.g., Code/Engine/Audio/AudioState.hpp) are used with StateBuffer double-buffering for efficient audio state synchronization.
 
 Contributing
 - Follow C++20 practices used throughout the codebase.
