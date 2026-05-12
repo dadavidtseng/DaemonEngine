@@ -1,13 +1,182 @@
-I don’t see the source files or context attached. To generate a specific, accurate README that includes actual tool names, config fields, and file paths from your codebase, I need the repository/source context.
+# Daemon Engine (Engine Module)
 
-Please provide one or more of the following files or their contents (paste or attach):
-- package.json (or equivalent manifest)
-- kadi.yaml or kadi.json (if used)
-- Any tool registration files (e.g., tools/*.ts, tools/*.js, registry/*.cpp)
-- engine C++ entry points (e.g., src/main.cpp, src/engine.cpp)
-- CMakeLists.txt or build scripts
-- config schema or example config (e.g., config/engine.config.json, config/*.yaml)
-- Any README or docs in the repo that reference paths (e.g., docs/, src/, bin/)
-- A short list of tools the engine registers (names and one-line descriptions) if you prefer not to paste files
+This README documents the Engine module (C++20) for Daemon Engine — a modular, performance-oriented game engine with V8 JavaScript integration, DirectX 11 rendering, FMOD audio, and a lock-free async architecture for dual-language game logic.
 
-If you want a generic but complete template README (with reasonable placeholders for file paths, config fields, and tool names) instead of one derived from your actual files, say “Generate generic README” and I will produce it immediately.
+Changelog (highlights)
+- 2025-11-09: Documented JobSystem shutdown pattern. Critical: stop JobSystem BEFORE deleting objects accessible to worker threads. See SimpleMiner's App.cpp for an example three-stage shutdown:
+  1. g_jobSystem->Shutdown()
+  2. Delete game objects (chunks, world, entities)
+  3. GEngine::Get().Shutdown()
+- 2025-10-27: M4-T8 Async Architecture refactor:
+  - Added Entity module and async entity management (EntityAPI, EntityScriptInterface)
+  - Introduced generic StateBuffer template for lock-free double-buffering (Core module)
+  - Camera system refactor: CameraAPI + CameraStateBuffer
+  - Introduced IJSGameLogicContext to invert dependency between Engine and Game
+  - Thread-safe state synchronization between worker and main threads
+
+Project Vision
+- Modular, subsystem-based engine designed for education and production use.
+- Emphasizes performance, data-oriented design, and an event-driven subsystem model.
+- Provides DirectX11 renderer, FMOD audio, input systems, networking, resource management, and V8 scripting with async worker threads.
+
+Technical Stack (engine module)
+- Language: C++20
+- Graphics: DirectX 11
+- Audio: FMOD (3D audio)
+- Scripting: V8 (async worker architecture)
+- Platform: Windows x64
+- Build: Visual Studio / MSBuild (Engine.sln)
+
+Architecture Overview
+- The engine is organized into independent modules that communicate via an EventSystem and well-defined interfaces.
+- Async JavaScript integration uses lock-free double-buffering (StateBuffer) to synchronize state between the main thread (rendering) and worker threads (V8 JS logic).
+
+Async Architecture Pattern (M4-T8)
+Main Thread (Rendering) and Worker Thread (JavaScript) interact using front/back StateBuffers and a render command queue.
+
+Main Thread (Rendering)           Worker Thread (JavaScript)
+- BeginFrame()                     - V8 Isolate Lock
+- Process RenderCommands           - JSEngine.update()
+- SwapBuffers()                    - Write to Back Buffers (entities, camera...)
+  - EntityStateBuffer
+  - CameraStateBuffer               - Submit RenderCommands
+- Render from Front Buffers        - V8 Isolate Unlock
+- EndFrame()
+
+Module Index (paths & key headers)
+| Module | Path | Key headers / entry points |
+|---|---:|---|
+| Core | Code/Engine/Core/ | EngineCommon.hpp, EventSystem.hpp, StateBuffer.hpp, GEngine (Code/Engine/Core/Engine.hpp) |
+| Entity | Code/Engine/Entity/ | EntityAPI.hpp, EntityScriptInterface.hpp |
+| Renderer | Code/Engine/Renderer/ | Renderer.hpp, Camera.hpp, CameraAPI.hpp |
+| Audio | Code/Engine/Audio/ | AudioSystem.hpp |
+| Input | Code/Engine/Input/ | InputSystem.hpp |
+| Math | Code/Engine/Math/ | MathUtils.hpp, Vec3.hpp, Mat44.hpp |
+| Scripting | Code/Engine/Scripting/ | V8Subsystem.hpp, IJSGameLogicContext.hpp |
+| Resource | Code/Engine/Resource/ | ResourceSubsystem.hpp |
+| Network | Code/Engine/Network/ | NetworkSubsystem.hpp |
+| Platform | Code/Engine/Platform/ | Window.hpp |
+
+Key Engine Concepts and APIs
+
+GEngine (global engine singleton)
+- File: Code/Engine/Core/Engine.hpp (GEngine.hpp)
+- Purpose: central singleton providing access to core subsystems and encapsulating lifecycle operations.
+- Important methods:
+  - static GEngine& Get();
+  - void Construct();
+  - void Destruct();
+  - void Startup();
+  - void Shutdown();
+- Notes: Subsystems should be initialized before use. Some subsystems may be optional (e.g., AudioSystem, InputSystem).
+
+IJSGameLogicContext (scripting integration)
+- File: Code/Engine/Script/IJSGameLogicContext.hpp
+- Purpose: abstract interface for game-specific JavaScript execution context. Engine's JSGameLogicJob depends on this interface so the Engine library can compile without concrete Game code.
+- Responsibilities:
+  - Provide worker-thread callbacks like UpdateJSWorkerThread(...)
+  - Implementations must be thread-safe (typically using v8::Locker)
+- Usage example:
+  - class Game : public IJSGameLogicContext { void UpdateJSWorkerThread(float dt, ...) override; };
+
+StateBuffer (lock-free double-buffering)
+- Location: Code/Engine/Core/StateBuffer.hpp (referenced in CLAUDE.md)
+- Purpose: generic template used for passing state (entities, camera) between worker and main threads without locks.
+
+JobSystem shutdown pattern (CRITICAL)
+- Always stop worker threads before deleting objects that worker threads may access.
+- Recommended shutdown sequence (example):
+  1. g_jobSystem->Shutdown()  // stop all workers
+  2. Delete game objects (chunks, world, entities, resources)
+  3. GEngine::Get().Shutdown() // destroy engine systems
+- Rationale: avoids race conditions and memory access-after-free when workers are still processing.
+
+Common File Layout (select)
+- Code/Engine/Core/
+  - EngineCommon.hpp
+  - EventSystem.hpp
+  - StateBuffer.hpp
+  - Engine.hpp (GEngine)
+- Code/Engine/Entity/
+  - EntityAPI.hpp
+  - EntityScriptInterface.hpp
+- Code/Engine/Renderer/
+  - Renderer.hpp
+  - Camera.hpp
+  - CameraAPI.hpp
+- Code/Engine/Scripting/
+  - V8Subsystem.hpp
+  - IJSGameLogicContext.hpp
+- Code/Engine/Audio/
+  - AudioSystem.hpp
+- Code/Engine/Input/
+  - InputSystem.hpp
+
+Build & Run
+
+Prerequisites
+- Windows 10 (x64)
+- Visual Studio 2019 or later with C++20 support
+- Windows 10 SDK (10.0.18362.0 or later)
+- DirectX 11 capable GPU
+- Git
+
+Build instructions
+1. Clone repository:
+   git clone https://github.com/dadavidtseng/DaemonEngine.git
+   cd DaemonEngine
+2. Open Engine.sln in Visual Studio:
+   start Engine.sln
+3. Set solution configuration:
+   - Platform: x64
+   - Debug / Release as needed
+4. Build solution (Ctrl+Shift+B)
+
+Basic Engine Initialization (adapted from architecture docs)
+```cpp
+#include "Code/Engine/Core/EngineCommon.hpp"
+#include "Code/Engine/Renderer/Renderer.hpp"
+#include "Code/Engine/Audio/AudioSystem.hpp"
+#include "Code/Engine/Core/EventSystem.hpp"
+
+// Create and wire subsystems (example)
+g_theRenderer = new Renderer();
+g_theAudio = new AudioSystem();
+g_eventSystem = new EventSystem();
+
+// Initialize engine singleton
+GEngine::Get().Construct();
+GEngine::Get().Startup();
+
+// Game loop skeleton
+while (isRunning) {
+    g_theRenderer->BeginFrame();
+    // game logic, input processing, submit render commands
+    g_theRenderer->EndFrame();
+}
+
+// Shutdown sequence must follow JobSystem shutdown pattern
+```
+
+Testing Strategy
+- Current practices:
+  - Manual testing via developer console
+  - Visual debugging (DebugRenderSystem)
+  - Memory tracking and leak detection
+  - Thread-safety analysis for async architecture
+- Recommended additions:
+  - Integrate Google Test for unit tests
+  - Automated regression tests and performance benchmarks
+  - Async stress tests for StateBuffer/JobSystem interactions
+
+Notes, References, and Examples
+- See Code/Engine/Core/CLAUDE.md and Code/Engine/Renderer/CLAUDE.md for per-module architecture notes.
+- Example project SimpleMiner demonstrates the recommended JobSystem shutdown pattern in App.cpp.
+- IJSGameLogicContext and JSGameLogicJob are central to the lock-free async JavaScript integration — see Code/Engine/Scripting/ for implementation details.
+
+Contributing
+- Follow C++20 practices used throughout the codebase.
+- Use PascalCase for classes and enums (e.g., AudioSystem).
+- Keep subsystem boundaries clear and prefer dependency inversion for testability (e.g., IJSGameLogicContext).
+
+If you want a deeper, per-file reference (public APIs, methods, and examples) or a generated header/API list, provide the repository or specific files and I will update this README with API signatures and code examples extracted directly from the source.
